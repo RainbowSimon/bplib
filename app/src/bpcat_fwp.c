@@ -147,7 +147,7 @@ static BPLib_Status_t BPA_ADUP_RemoveApplication(uint32_t ChanId)
     return BPLIB_SUCCESS;
 }
 
-static BPLib_Status_t BPA_CLAP_ContactSetup(uint32_t ContactId, BPLib_CLA_ContactsSet_t ContactInfo)
+static BPLib_Status_t BPA_CLAP_ContactSetup(uint32_t ContactId)
 {
     return BPLIB_SUCCESS;
 }
