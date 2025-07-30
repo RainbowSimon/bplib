@@ -114,14 +114,14 @@ BPLib_Status_t BPLib_NC_Init_Impl(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
     return Status;
 }
 
-BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, BPLib_FWP_ProxyCallbacks_t* Callbacks,
+BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
                                 BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
                                 void* PoolMem, size_t PoolMemLen)
 {
     BPLib_Status_t Status;
 
     /* Initialize FWP */
-    Status = BPLib_FWP_Init(Callbacks);
+    Status = BPLib_FWP_Init((BPLib_FWP_ProxyCallbacks_t*) Callbacks);
     if (Status != BPLIB_SUCCESS)
     {
         Status = BPLIB_NC_FWP_INIT_ERR;

@@ -32,7 +32,6 @@
 #include "bplib_arp.h"
 #include "bplib_pdb.h"
 #include "bplib_stor.h"
-#include "bplib_fwp.h"
 
 /* ======== */
 /* Typedefs */
@@ -115,6 +114,12 @@ BPLib_Status_t BPLib_NC_Init_Impl(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
 /**
   * \brief      Initialize all BPLib subsystems
   * \details    Initialize FWP, EM, TIME, NC, QM, and MEM
+  * \note       Callbacks is a void* because bplib_nc.h include bplib_fwp.h
+  *             which includes bplib_nc.h. This cycle creates a scenario where
+  *             BPLib_FWP_ProxyCallbacks_t is not defined. Since bplib.fwp.h needs
+  *             bplib_nc.h prototypes for proxies and bplib_nc.h needs bplib_fwp.h
+  *             for the proxy struct, Callbacks was chosen to become a void* by
+  *             pulling a rabbit from a hat and selecting based on the fur color
   * \param[in]  ConfigPtrs      Pointer to configurations for BPLib populated by BPNode
   * \param[in]  Callbacks       Pointer to callback functions for BPLib, populated by BPNode
   * \param[out] Instance        The instance to be initialized
@@ -131,7 +136,7 @@ BPLib_Status_t BPLib_NC_Init_Impl(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
   * \retval     BPLIB_NC_QM_INIT_ERR: QM initialization error
   * \retval     BPLIB_NC_MEM_INIT_ERR: MEM initialization error
   */
-BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, BPLib_FWP_ProxyCallbacks_t* Callbacks,
+BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
                                 BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
                                 void* PoolMem, size_t PoolMemLen);
 
