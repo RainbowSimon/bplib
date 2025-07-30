@@ -32,6 +32,7 @@
 #include "bplib_arp.h"
 #include "bplib_pdb.h"
 #include "bplib_stor.h"
+#include "bplib_fwp.h"
 
 /* ======== */
 /* Typedefs */
@@ -98,28 +99,35 @@ extern BPLib_NC_ConfigPtrs_t BPLib_NC_ConfigPtrs;
 /* =================== */
 
 /**
- * \brief     Initialize the NC module
- * \details   Initialize source and node MIB configuration payloads, the channel and
- *            contacts statistics packet payload. Initialize the RW locks used in
- *            configuration management. Capture the configuration pointers passed in
- *            from BPNode. Save the instance EID in a place that is easily
- *            accessible. Initialize the CRC table. Initialize AS.
- * \param[in] ConfigPtrs Pointer to configurations for BPLib populated by BPNode
- * \return    Execution status
- * \retval    BPLIB_SUCCESS: Successful initialization of the NC module
- * \retval    BPLIB_FWP_CONFIG_PTRS_INIT_ERROR: At least one passed in configuration is NULL
+ * \brief      Initialize the NC module
+ * \details    Initialize source and node MIB configuration payloads, the channel
+ *             and contacts statistics packet payload. Initialize the RW locks
+ *             used in configuration management. Capture the configuration
+ *             pointers passed in from BPNode. Save the instance EID in a place
+ *             that is easily accessible. Initialize the CRC table. Initialize AS
+ * \param[in]  ConfigPtrs Pointer to configurations for BPLib populated by BPNode
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Successful initialization of the NC module
+ * \retval     BPLIB_FWP_CONFIG_PTRS_INIT_ERROR: At least one passed in configuration is NULL
  */
 BPLib_Status_t BPLib_NC_Init_Impl(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
 
 /**
-  * \brief     Initialize all BPLib subsystems
-  * \details   Initialize FWP, EM, TIME, NC, QM, and MEM
-  * \param[in] ConfigPtrs Pointer to configurations for BPLib populated by BPNode
-  * \return    Execution status
-  * \retval    BPLIB_SUCCESS: Initialization of subsystems was successful
-  * \retval    TBD
+  * \brief      Initialize all BPLib subsystems
+  * \details    Initialize FWP, EM, TIME, NC, QM, and MEM
+  * \param[in]  ConfigPtrs      Pointer to configurations for BPLib populated by BPNode
+  * \param[in]  Callbacks       Pointer to callback functions for BPLib, populated by BPNode
+  * \param[out] Instance        The instance to be initialized
+  * \param[in]  MaxUnsortedJobs The maximum number of jobs that can be queued
+  * \param[out] PoolMem         Pointer to the initial memory for the pool
+  * \param[in]  PoolMemLen      Size of the initial memory
+  * \return     Execution status
+  * \retval     BPLIB_SUCCESS: Initialization of subsystems was successful
+  * \retval     TBD
   */
-BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
+BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, BPLib_FWP_ProxyCallbacks_t* Callbacks,
+                                BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
+                                void* PoolMem, size_t PoolMemLen);
 
 /**
  * \brief Acquires the reader lock on the node configuration.
