@@ -189,7 +189,7 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
 
     if (InitStatus != BPLIB_SUCCESS)
     {
-        BPLib_EM_SendEvent(BPLIB_NC_INIT_DBG_EID, BPLib_EM_EventType_ERROR,
+        BPLib_EM_SendEvent(BPLIB_NC_INIT_ERR_EID, BPLib_EM_EventType_ERROR,
                             "NC: Initialization error, RC = %d",
                             InitStatus);
     }
