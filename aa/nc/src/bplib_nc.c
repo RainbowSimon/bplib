@@ -108,23 +108,81 @@ BPLib_Status_t BPLib_NC_Init_Impl(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
             /* Initialize contact/channel status telemetry with table values */
             BPLib_NC_UpdateContactHkTlm();
             BPLib_NC_UpdateChannelHkTlm();
-
-            /* Initialize CRC tables */
-            BPLib_CRC_Init();
-
-            /* Initialize AS */
-            Status = BPLib_AS_Init();
         }
     }
 
     return Status;
 }
 
-BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
+BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, BPLib_FWP_ProxyCallbacks_t* Callbacks,
+                                BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
+                                void* PoolMem, size_t PoolMemLen)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_NC_Init_Impl(ConfigPtrs);
+    /* Initialize FWP */
+    Status = BPLib_FWP_Init(Callbacks);
+    if (Status != BPLIB_SUCCESS)
+    {
+        Status = BPLIB_NC_FWP_INIT_ERR;
+    }
+    else
+    {
+        /* Register with Event Services */
+        Status = BPLib_EM_Init();
+        if (Status != BPLIB_SUCCESS)
+        {
+            Status = BPLIB_NC_EM_INIT_ERR;
+        }
+        else
+        {
+            /* Initialize time */
+            Status = BPLib_TIME_Init();
+            if (Status != BPLIB_SUCCESS)
+            {
+                Status = BPLIB_NC_TIME_INIT_ERR;
+            }
+            else
+            {
+                /* Initialize NC */
+                Status = BPLib_NC_Init_Impl(ConfigPtrs);
+                if (Status != BPLIB_SUCCESS)
+                {
+                    Status = BPLIB_NC_INIT_ERR;
+                }
+                else
+                {
+                    /* Initialize CRC tables */
+                    BPLib_CRC_Init();
+
+                    /* Initialize AS */
+                    Status = BPLib_AS_Init();
+                    if (Status != BPLIB_SUCCESS)
+                    {
+                        Status = BPLIB_NC_AS_INIT_ERR;
+                    }
+                    else
+                    {
+                        /* Initialize QM */
+                        Status = BPLib_QM_QueueTableInit(Instance, MaxUnsortedJobs);
+                        if (Status != BPLIB_SUCCESS)
+                        {
+                            Status = BPLIB_NC_QM_INIT_ERR;
+                        }
+                        else
+                        {
+                            /* Initialize MEM */
+                            Status = BPLib_MEM_PoolInit(&(Instance->pool), PoolMem, PoolMemLen);
+                            if (Status != BPLIB_SUCCESS)
+                            {
+                                Status = BPLIB_NC_MEM_INIT_ERR;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     return Status;
 }
