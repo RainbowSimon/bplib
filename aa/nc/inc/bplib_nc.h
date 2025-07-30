@@ -123,7 +123,13 @@ BPLib_Status_t BPLib_NC_Init_Impl(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
   * \param[in]  PoolMemLen      Size of the initial memory
   * \return     Execution status
   * \retval     BPLIB_SUCCESS: Initialization of subsystems was successful
-  * \retval     TBD
+  * \retval     BPLIB_NC_FWP_INIT_ERR: FWP initialization error
+  * \retval     BPLIB_NC_EM_INIT_ERR: EM initialization error
+  * \retval     BPLIB_NC_TIME_INIT_ERR: TIME initialization error
+  * \retval     BPLIB_NC_INIT_ERR: NC initialization error
+  * \retval     BPLIB_NC_AS_INIT_ERR: AS initialization error
+  * \retval     BPLIB_NC_QM_INIT_ERR: QM initialization error
+  * \retval     BPLIB_NC_MEM_INIT_ERR: MEM initialization error
   */
 BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, BPLib_FWP_ProxyCallbacks_t* Callbacks,
                                 BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
