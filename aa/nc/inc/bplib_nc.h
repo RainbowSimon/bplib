@@ -98,12 +98,25 @@ extern BPLib_NC_ConfigPtrs_t BPLib_NC_ConfigPtrs;
 /* =================== */
 
 /**
-  * \brief     Initialize NC
-  * \details   Node Configuration initialization
+ * \brief   Initialize the NC module
+ * \details Initialize source and node MIB configuration payloads, the channel and
+ *          contacts statistics packet payload. Initialize the RW locks used in
+ *          configuration management. Capture the configuration pointers passed in
+ *          from BPNode. Save the instance EID in a place that is easily
+ *          accessible. Initialize the CRC table. Initialize AS.
+ * \return  Execution status
+ * \retval  BPLIB_SUCCESS: Successful initialization of the NC module
+ * \retval  BPLIB_FWP_CONFIG_PTRS_INIT_ERROR: At least one passed in configuration is NULL
+ */
+BPLib_Status_t BPLib_NC_Init_Impl(void);
+
+/**
+  * \brief     Initialize all BPLib subsystems
+  * \details   Initialize FWP, EM, TIME, NC, QM, and MEM
   * \param[in] ConfigPtrs (BPLib_NC_ConfigPtrs_t*) Pointer to configurations for BPLib populated by BPNode
   * \return    Execution status
-  * \retval    BPLIB_SUCCESS: Initialization was successful
-  * \retval    BPLIB_FWP_CONFIG_PTRS_INIT_ERROR: At least one passed in configuration is NULL
+  * \retval    BPLIB_SUCCESS: Initialization of subsystems was successful
+  * \retval    TBD
   */
 BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
 

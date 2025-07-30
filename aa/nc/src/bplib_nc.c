@@ -54,6 +54,13 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(void);
 /* Function Definitions */
 /* ==================== */
 
+BPLib_Status_t BPLib_NC_Init_Impl(void)
+{
+    BPLib_Status_t Status;
+    Status = BPLIB_SUCCESS;
+    return Status;
+}
+
 BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
 {
     BPLib_Status_t Status;
