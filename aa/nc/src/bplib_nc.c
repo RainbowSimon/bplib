@@ -118,37 +118,40 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
                                 BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
                                 void* PoolMem, size_t PoolMemLen)
 {
-    BPLib_Status_t Status;
+    BPLib_Status_t InitStatus;
+    BPLib_Status_t OutputStatus;
+
+    OutputStatus = BPLIB_SUCCESS;
 
     /* Initialize FWP */
-    Status = BPLib_FWP_Init((BPLib_FWP_ProxyCallbacks_t*) Callbacks);
-    if (Status != BPLIB_SUCCESS)
+    InitStatus = BPLib_FWP_Init((BPLib_FWP_ProxyCallbacks_t*) Callbacks);
+    if (InitStatus != BPLIB_SUCCESS)
     {
-        Status = BPLIB_NC_FWP_INIT_ERR;
+        OutputStatus = BPLIB_NC_FWP_INIT_ERR;
     }
     else
     {
         /* Register with Event Services */
-        Status = BPLib_EM_Init();
-        if (Status != BPLIB_SUCCESS)
+        InitStatus = BPLib_EM_Init();
+        if (InitStatus != BPLIB_SUCCESS)
         {
-            Status = BPLIB_NC_EM_INIT_ERR;
+            OutputStatus = BPLIB_NC_EM_INIT_ERR;
         }
         else
         {
             /* Initialize time */
-            Status = BPLib_TIME_Init();
-            if (Status != BPLIB_SUCCESS)
+            InitStatus = BPLib_TIME_Init();
+            if (InitStatus != BPLIB_SUCCESS)
             {
-                Status = BPLIB_NC_TIME_INIT_ERR;
+                OutputStatus = BPLIB_NC_TIME_INIT_ERR;
             }
             else
             {
                 /* Initialize NC */
-                Status = BPLib_NC_Init_Impl(ConfigPtrs);
-                if (Status != BPLIB_SUCCESS)
+                InitStatus = BPLib_NC_Init_Impl(ConfigPtrs);
+                if (InitStatus != BPLIB_SUCCESS)
                 {
-                    Status = BPLIB_NC_INIT_ERR;
+                    OutputStatus = BPLIB_NC_INIT_ERR;
                 }
                 else
                 {
@@ -156,26 +159,26 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
                     BPLib_CRC_Init();
 
                     /* Initialize AS */
-                    Status = BPLib_AS_Init();
-                    if (Status != BPLIB_SUCCESS)
+                    InitStatus = BPLib_AS_Init();
+                    if (InitStatus != BPLIB_SUCCESS)
                     {
-                        Status = BPLIB_NC_AS_INIT_ERR;
+                        OutputStatus = BPLIB_NC_AS_INIT_ERR;
                     }
                     else
                     {
                         /* Initialize QM */
-                        Status = BPLib_QM_QueueTableInit(Instance, MaxUnsortedJobs);
-                        if (Status != BPLIB_SUCCESS)
+                        InitStatus = BPLib_QM_QueueTableInit(Instance, MaxUnsortedJobs);
+                        if (InitStatus != BPLIB_SUCCESS)
                         {
-                            Status = BPLIB_NC_QM_INIT_ERR;
+                            OutputStatus = BPLIB_NC_QM_INIT_ERR;
                         }
                         else
                         {
                             /* Initialize MEM */
-                            Status = BPLib_MEM_PoolInit(&(Instance->pool), PoolMem, PoolMemLen);
-                            if (Status != BPLIB_SUCCESS)
+                            InitStatus = BPLib_MEM_PoolInit(&(Instance->pool), PoolMem, PoolMemLen);
+                            if (InitStatus != BPLIB_SUCCESS)
                             {
-                                Status = BPLIB_NC_MEM_INIT_ERR;
+                                OutputStatus = BPLIB_NC_MEM_INIT_ERR;
                             }
                         }
                     }
@@ -184,7 +187,14 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
         }
     }
 
-    return Status;
+    if (InitStatus != BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_NC_INIT_DBG_EID, BPLib_EM_EventType_ERROR,
+                            "NC: Initialization error, RC = %d",
+                            InitStatus);
+    }
+
+    return OutputStatus;
 }
 
 /*******************************************************************************
