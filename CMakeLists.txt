@@ -123,6 +123,7 @@ if (IS_CFS_ARCH_BUILD)
   add_cfe_app(bplib ${BPLIB_SRC})
 
   # link with the requisite dependencies
+  set_target_properties(bplib PROPERTIES LINK_FLAGS "-Wl,-rpath,${BPLIB_RUNTIME_SEARCH_PATH}")
   target_link_libraries(bplib qcbor m sqlite3)
 
 else()
@@ -134,7 +135,6 @@ else()
   add_library(bplib ${BPLIB_SRC})
 
   # link with the requisite dependencies
-  set_target_properties(bplib PROPERTIES LINK_FLAGS "-Wl,-rpath,${BPLIB_RUNTIME_SEARCH_PATH}")
   target_link_libraries(bplib qcbor m sqlite3)
 
   # Add in the required link libraries based on OS adapter selection
