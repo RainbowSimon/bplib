@@ -178,12 +178,11 @@ void Test_BPLib_NC_Init_Nominal(void)
     BPLib_FWP_ProxyCallbacks_t TestCallbacks;
     BPLib_Instance_t           Instance;
     uint16_t                   MaxJobs;
-    uint8_t*                   PoolMem;
+    uint8_t                    PoolMem[100];
     size_t                     PoolMemLen;
 
     MaxJobs    = 10;
     PoolMemLen = 100;
-    PoolMem    = NULL;
 
     memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
     memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
@@ -215,12 +214,11 @@ void Test_BPLib_NC_Init_FWP_Err(void)
     BPLib_FWP_ProxyCallbacks_t TestCallbacks;
     BPLib_Instance_t           Instance;
     uint16_t                   MaxJobs;
-    uint8_t*                   PoolMem;
+    uint8_t                    PoolMem[100];
     size_t                     PoolMemLen;
 
     MaxJobs    = 10;
     PoolMemLen = 100;
-    PoolMem    = NULL;
 
     memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
     memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
@@ -255,12 +253,11 @@ void Test_BPLib_NC_Init_EM_Err(void)
     BPLib_FWP_ProxyCallbacks_t TestCallbacks;
     BPLib_Instance_t           Instance;
     uint16_t                   MaxJobs;
-    uint8_t*                   PoolMem;
+    uint8_t                    PoolMem[100];
     size_t                     PoolMemLen;
 
     MaxJobs    = 10;
     PoolMemLen = 100;
-    PoolMem    = NULL;
 
     memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
     memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
@@ -295,13 +292,12 @@ void Test_BPLib_NC_Init_TIME_Err(void)
     BPLib_FWP_ProxyCallbacks_t TestCallbacks;
     BPLib_Instance_t           Instance;
     uint16_t                   MaxJobs;
-    uint8_t*                   PoolMem;
+    uint8_t                    PoolMem[100];
     size_t                     PoolMemLen;
 
     MaxJobs    = 10;
     PoolMemLen = 100;
-    PoolMem    = NULL;
-
+    
     memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
     memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
     memset((void*) PoolMem, 0, PoolMemLen);
@@ -335,14 +331,13 @@ void Test_BPLib_NC_Init_NC_Err(void)
     BPLib_FWP_ProxyCallbacks_t TestCallbacks;
     BPLib_Instance_t           Instance;
     uint16_t                   MaxJobs;
-    uint8_t*                   PoolMem;
+    uint8_t                    PoolMem[100];
     size_t                     PoolMemLen;
 
     MaxJobs                      = 10;
     PoolMemLen                   = 100;
     TestConfigPtrs.AuthConfigPtr = NULL;
-    PoolMem                      = NULL;
-
+    
     memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
     memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
     memset((void*) PoolMem, 0, PoolMemLen);
@@ -376,13 +371,12 @@ void Test_BPLib_NC_Init_AS_Err(void)
     BPLib_FWP_ProxyCallbacks_t TestCallbacks;
     BPLib_Instance_t           Instance;
     uint16_t                   MaxJobs;
-    uint8_t*                   PoolMem;
+    uint8_t                    PoolMem[100];
     size_t                     PoolMemLen;
 
     MaxJobs    = 10;
     PoolMemLen = 100;
-    PoolMem    = NULL;
-
+    
     memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
     memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
     memset((void*) PoolMem, 0, PoolMemLen);
@@ -416,13 +410,12 @@ void Test_BPLib_NC_Init_QM_Err(void)
     BPLib_FWP_ProxyCallbacks_t TestCallbacks;
     BPLib_Instance_t           Instance;
     uint16_t                   MaxJobs;
-    uint8_t*                   PoolMem;
+    uint8_t                    PoolMem[100];
     size_t                     PoolMemLen;
 
     MaxJobs    = 10;
     PoolMemLen = 100;
-    PoolMem    = NULL;
-
+    
     memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
     memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
     memset((void*) PoolMem, 0, PoolMemLen);
@@ -456,13 +449,12 @@ void Test_BPLib_NC_Init_MEM_Err(void)
     BPLib_FWP_ProxyCallbacks_t TestCallbacks;
     BPLib_Instance_t           Instance;
     uint16_t                   MaxJobs;
-    uint8_t*                   PoolMem;
+    uint8_t                    PoolMem[100];
     size_t                     PoolMemLen;
 
     MaxJobs    = 10;
     PoolMemLen = 100;
-    PoolMem    = NULL;
-
+    
     memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
     memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
     memset((void*) PoolMem, 0, PoolMemLen);
