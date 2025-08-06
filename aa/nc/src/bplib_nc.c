@@ -118,76 +118,62 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
                                 BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
                                 void* PoolMem, size_t PoolMemLen)
 {
-    BPLib_Status_t InitStatus;
-    BPLib_Status_t OutputStatus;
+    BPLib_Status_t Status;
 
-    OutputStatus = BPLIB_SUCCESS;
+    Status = BPLIB_SUCCESS;
 
     /* Initialize FWP */
-    InitStatus = BPLib_FWP_Init((BPLib_FWP_ProxyCallbacks_t*) Callbacks);
-    if (InitStatus != BPLIB_SUCCESS)
-    {
-        OutputStatus = BPLIB_NC_FWP_INIT_ERR;
-    }
-    else
-    {
-        /* Register with Event Services */
-        InitStatus = BPLib_EM_Init();
-        if (InitStatus != BPLIB_SUCCESS)
-        {
-            OutputStatus = BPLIB_NC_EM_INIT_ERR;
-        }
-        else
-        {
-            /* Initialize time */
-            InitStatus = BPLib_TIME_Init();
-            if (InitStatus != BPLIB_SUCCESS)
-            {
-                OutputStatus = BPLIB_NC_TIME_INIT_ERR;
-            }
-            else
-            {
-                /* Initialize NC */
-                InitStatus = BPLib_NC_Init_Impl(ConfigPtrs);
-                if (InitStatus != BPLIB_SUCCESS)
-                {
-                    OutputStatus = BPLIB_NC_INIT_ERR;
-                }
-                else
-                {
-                    /* Initialize CRC tables */
-                    BPLib_CRC_Init();
-
-                    /* Initialize AS */
-                    InitStatus = BPLib_AS_Init();
-                    if (InitStatus != BPLIB_SUCCESS)
-                    {
-                        OutputStatus = BPLIB_NC_AS_INIT_ERR;
-                    }
-                    else
-                    {
-                        /* Initialize QM */
-                        InitStatus = BPLib_QM_QueueTableInit(Instance, MaxUnsortedJobs);
-                        if (InitStatus != BPLIB_SUCCESS)
-                        {
-                            OutputStatus = BPLIB_NC_QM_INIT_ERR;
-                        }
-                        else
-                        {
-                            /* Initialize MEM */
-                            InitStatus = BPLib_MEM_PoolInit(&(Instance->pool), PoolMem, PoolMemLen);
-                            if (InitStatus != BPLIB_SUCCESS)
-                            {
-                                OutputStatus = BPLIB_NC_MEM_INIT_ERR;
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    Status = BPLib_FWP_Init((BPLib_FWP_ProxyCallbacks_t*) Callbacks);
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of FWP */
+        return BPLIB_NC_FWP_INIT_ERR;
     }
 
-    return OutputStatus;
+    /* Register with Event Services */
+    Status = BPLib_EM_Init();
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of EM */
+        return BPLIB_NC_EM_INIT_ERR;
+    }
+
+    /* Initialize time */
+    Status = BPLib_TIME_Init();
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of TIME */
+        return BPLIB_NC_TIME_INIT_ERR;
+    }
+
+    /* Initialize NC */
+    Status = BPLib_NC_Init_Impl(ConfigPtrs);
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of NC */
+        return BPLIB_NC_INIT_ERR;
+    }
+
+    /* Initialize CRC tables */
+    BPLib_CRC_Init();
+
+    /* Initialize AS */
+    Status = BPLib_AS_Init();
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of AS */
+        return BPLIB_NC_AS_INIT_ERR;
+    }
+
+    /* Initialize QM */
+    Status = BPLib_QM_QueueTableInit(Instance, MaxUnsortedJobs);
+    if (Status != BPLIB_SUCCESS)
+    {
+        return BPLIB_NC_QM_INIT_ERR;
+    }
+    
+    Status = BPLib_MEM_PoolInit(&(Instance->pool), PoolMem, PoolMemLen);
+    if (Status != BPLIB_SUCCESS)
+    {
+        return BPLIB_NC_MEM_INIT_ERR;
+    }
+
+    return Status;
 }
 
 /*******************************************************************************
