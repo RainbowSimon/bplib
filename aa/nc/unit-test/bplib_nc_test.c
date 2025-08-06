@@ -35,7 +35,7 @@ void Test_BPLib_NC_Init_Impl_Nominal(void)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
     UtAssert_True(BPLib_NC_ConfigPtrs.ChanConfigPtr      == TestConfigPtrs.ChanConfigPtr,      "BPLib_NC_ConfigPtrs ChanConfigPtr successfully modified");
@@ -57,7 +57,7 @@ void Test_BPLib_NC_Init_Impl_NullConfigPtrs_Error(void)
     BPLib_NC_ConfigPtrs_t* NullConfigPtr;
 
     NullConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(NullConfigPtr);
+    Status = BPLib_NC_InitImpl(NullConfigPtr);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -67,7 +67,7 @@ void Test_BPLib_NC_Init_Impl_NullChanTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.ChanConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -77,7 +77,7 @@ void Test_BPLib_NC_Init_Impl_NullContactsTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.ContactsConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -87,7 +87,7 @@ void Test_BPLib_NC_Init_Impl_NullCrsTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.CrsConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -97,7 +97,7 @@ void Test_BPLib_NC_Init_Impl_NullCustodianTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.CustodianConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -107,7 +107,7 @@ void Test_BPLib_NC_Init_Impl_NullCustodyTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.CustodyConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -117,7 +117,7 @@ void Test_BPLib_NC_Init_Impl_NullMibPnTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.MibPnConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -127,7 +127,7 @@ void Test_BPLib_NC_Init_Impl_NullMibPsTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.MibPsConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -137,7 +137,7 @@ void Test_BPLib_NC_Init_Impl_NullReportTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.ReportConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -147,7 +147,7 @@ void Test_BPLib_NC_Init_Impl_NullAuthTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.AuthConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -157,7 +157,7 @@ void Test_BPLib_NC_Init_Impl_NullLatTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.LatConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -167,7 +167,7 @@ void Test_BPLib_NC_Init_Impl_NullStorTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.StorConfigPtr = NULL;
-    Status = BPLib_NC_Init_Impl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }

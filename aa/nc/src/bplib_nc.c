@@ -54,7 +54,7 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(void);
 /* Function Definitions */
 /* ==================== */
 
-BPLib_Status_t BPLib_NC_Init_Impl(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
+BPLib_Status_t BPLib_NC_InitImpl(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
 {
     BPLib_Status_t Status;
     
@@ -144,7 +144,7 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
     }
 
     /* Initialize NC */
-    Status = BPLib_NC_Init_Impl(ConfigPtrs);
+    Status = BPLib_NC_InitImpl(ConfigPtrs);
     if (Status != BPLIB_SUCCESS)
     { /* Failed initialization of NC */
         return BPLIB_NC_INIT_ERR;

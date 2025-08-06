@@ -109,7 +109,7 @@ extern BPLib_NC_ConfigPtrs_t BPLib_NC_ConfigPtrs;
  * \retval     BPLIB_SUCCESS: Successful initialization of the NC module
  * \retval     BPLIB_FWP_CONFIG_PTRS_INIT_ERROR: At least one passed in configuration is NULL
  */
-BPLib_Status_t BPLib_NC_Init_Impl(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
+BPLib_Status_t BPLib_NC_InitImpl(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
 
 /**
   * \brief      Initialize all BPLib subsystems
