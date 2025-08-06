@@ -76,6 +76,11 @@ static void BPA_PERFLOGP_Exit(uint32_t PerfLogID)
     return;
 }
 
+static BPLib_Status_t BPA_TABLEP_TableInit(void)
+{
+    return BPLIB_SUCCESS;
+}
+
 static BPLib_Status_t BPA_TABLEP_TableUpdate(uint8_t TableType, void** TblPtr)
 {
     return BPLIB_SUCCESS;

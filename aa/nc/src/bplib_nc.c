@@ -120,8 +120,6 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
 {
     BPLib_Status_t Status;
 
-    Status = BPLIB_SUCCESS;
-
     /* Initialize FWP */
     Status = BPLib_FWP_Init((BPLib_FWP_ProxyCallbacks_t*) Callbacks);
     if (Status != BPLIB_SUCCESS)
@@ -134,6 +132,13 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
     if (Status != BPLIB_SUCCESS)
     { /* Failed initialization of EM */
         return BPLIB_NC_EM_INIT_ERR;
+    }
+
+    /* Initialize the table proxy */
+    Status = ((BPLib_FWP_ProxyCallbacks_t*)Callbacks)->BPA_TABLEP_TableInit();
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of TABLEP */
+        return BPLIB_NC_TABLEP_INIT_ERR;
     }
 
     /* Initialize time */
