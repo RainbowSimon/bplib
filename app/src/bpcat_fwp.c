@@ -169,42 +169,37 @@ static void BPA_CLAP_ContactTeardown(uint32_t ContactId)
 
 static BPLib_FWP_ProxyCallbacks_t Callbacks = {
     /* Time Proxy */
-    .BPA_TIMEP_GetMonotonicTime = BPA_TIMEP_GetMonotonicTime,
-    .BPA_TIMEP_GetHostEpoch = BPA_TIMEP_GetHostEpoch,
-    .BPA_TIMEP_GetHostClockState = BPA_TIMEP_GetHostClockState,
-    .BPA_TIMEP_GetHostTime = BPA_TIMEP_GetHostTime,
-
+    .BPA_TIMEP_GetMonotonicTime          = BPA_TIMEP_GetMonotonicTime,
+    .BPA_TIMEP_GetHostEpoch              = BPA_TIMEP_GetHostEpoch,
+    .BPA_TIMEP_GetHostClockState         = BPA_TIMEP_GetHostClockState,
+    .BPA_TIMEP_GetHostTime               = BPA_TIMEP_GetHostTime,
     /* Perf Log Proxy */
-    .BPA_PERFLOGP_Entry = BPA_PERFLOGP_Entry,
-    .BPA_PERFLOGP_Exit = BPA_PERFLOGP_Exit,
-
+    .BPA_PERFLOGP_Entry                  = BPA_PERFLOGP_Entry,
+    .BPA_PERFLOGP_Exit                   = BPA_PERFLOGP_Exit,
     /* Table Proxy */
-    .BPA_TABLEP_TableUpdate = BPA_TABLEP_TableUpdate,
-
+    .BPA_TABLEP_TableInit                = BPA_TABLEP_TableInit,
+    .BPA_TABLEP_TableUpdate              = BPA_TABLEP_TableUpdate,
     /* Event Proxy */
-    .BPA_EVP_Init = BPA_EVP_Init,
-    .BPA_EVP_SendEvent = BPA_EVP_SendEvent,
-
+    .BPA_EVP_Init                        = BPA_EVP_Init,
+    .BPA_EVP_SendEvent                   = BPA_EVP_SendEvent,
     /* ADU Proxy */
-    .BPA_ADUP_AddApplication = BPA_ADUP_AddApplication,
-    .BPA_ADUP_StartApplication = BPA_ADUP_StartApplication,
-    .BPA_ADUP_StopApplication = BPA_ADUP_StopApplication,
-    .BPA_ADUP_RemoveApplication = BPA_ADUP_RemoveApplication,
-
+    .BPA_ADUP_AddApplication             = BPA_ADUP_AddApplication,
+    .BPA_ADUP_StartApplication           = BPA_ADUP_StartApplication,
+    .BPA_ADUP_StopApplication            = BPA_ADUP_StopApplication,
+    .BPA_ADUP_RemoveApplication          = BPA_ADUP_RemoveApplication,
     /* Telemetry Proxy */
-    .BPA_TLMP_SendNodeMibConfigPkt = BPA_TLMP_SendNodeMibConfigPkt,
-    .BPA_TLMP_SendPerSourceMibConfigPkt = BPA_TLMP_SendPerSourceMibConfigPkt,
-    .BPA_TLMP_SendNodeMibReportsPkt = BPA_TLMP_SendNodeMibReportsPkt,
-    .BPA_TLMP_SendNodeMibCounterPkt = BPA_TLMP_SendNodeMibCounterPkt,
+    .BPA_TLMP_SendNodeMibConfigPkt       = BPA_TLMP_SendNodeMibConfigPkt,
+    .BPA_TLMP_SendPerSourceMibConfigPkt  = BPA_TLMP_SendPerSourceMibConfigPkt,
+    .BPA_TLMP_SendNodeMibCounterPkt      = BPA_TLMP_SendNodeMibCounterPkt,
     .BPA_TLMP_SendPerSourceMibCounterPkt = BPA_TLMP_SendPerSourceMibCounterPkt,
-    .BPA_TLMP_SendChannelContactPkt = BPA_TLMP_SendChannelContactPkt,
-    .BPA_TLMP_SendStoragePkt = BPA_TLMP_SendStoragePkt,
-
+    .BPA_TLMP_SendNodeMibReportsPkt      = BPA_TLMP_SendNodeMibReportsPkt,
+    .BPA_TLMP_SendChannelContactPkt      = BPA_TLMP_SendChannelContactPkt,
+    .BPA_TLMP_SendStoragePkt             = BPA_TLMP_SendStoragePkt,
     /* CLA Proxy */
-    .BPA_CLAP_ContactSetup = BPA_CLAP_ContactSetup,
-    .BPA_CLAP_ContactStart = BPA_CLAP_ContactStart,
-    .BPA_CLAP_ContactStop = BPA_CLAP_ContactStop,
-    .BPA_CLAP_ContactTeardown = BPA_CLAP_ContactTeardown,
+    .BPA_CLAP_ContactSetup               = BPA_CLAP_ContactSetup,
+    .BPA_CLAP_ContactStart               = BPA_CLAP_ContactStart,
+    .BPA_CLAP_ContactStop                = BPA_CLAP_ContactStop,
+    .BPA_CLAP_ContactTeardown            = BPA_CLAP_ContactTeardown,
 };
 
 BPCat_Status_t BPCat_FWP_Init()
