@@ -163,13 +163,13 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
     /* Initialize QM */
     Status = BPLib_QM_QueueTableInit(Instance, MaxUnsortedJobs);
     if (Status != BPLIB_SUCCESS)
-    {
+    { /* Failed initialization of QM */
         return BPLIB_NC_QM_INIT_ERR;
     }
     
     Status = BPLib_MEM_PoolInit(&(Instance->pool), PoolMem, PoolMemLen);
     if (Status != BPLIB_SUCCESS)
-    {
+    { /* Failed initialization of MEM */
         return BPLIB_NC_MEM_INIT_ERR;
     }
 
