@@ -23,6 +23,7 @@
 /* ======== */
 
 #include "bplib_eid.h"
+#include <stdio.h>
 
 /* =========== */
 /* Global Data */
@@ -275,4 +276,77 @@ bool BPLib_EID_PatternsAreMatch(BPLib_EID_Pattern_t* PatternActual, BPLib_EID_Pa
             PatternActual->MinNode      == PatternReference->MinNode &&
             PatternActual->MaxService   == PatternReference->MaxService &&
             PatternActual->MinService   == PatternReference->MinService);
+}
+
+void BPLib_EID_GetPatternString(BPLib_EID_Pattern_t* Pattern, char* StrBuf, size_t StrLen)
+{
+    if (Pattern == NULL || StrBuf == NULL)
+    {
+        return;
+    }
+
+    if (Pattern->Scheme == BPLIB_EID_SCHEME_DTN)
+    {
+        strncpy(StrBuf, "dtn:none", StrLen);
+    }
+    else if (Pattern->Scheme == BPLIB_EID_SCHEME_IPN)
+    {
+        if (Pattern->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT)
+        {
+            snprintf(StrBuf, StrLen, "ipn:[%ld-%ld].[%ld-%ld]",
+                        Pattern->MinNode, Pattern->MaxNode, 
+                        Pattern->MinService, Pattern->MaxService);
+        }
+        else if (Pattern->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_THREE_DIGIT)
+        {
+            snprintf(StrBuf, StrLen, "ipn:[%ld-%ld].[%ld-%ld].[%ld-%ld]",
+                        Pattern->MinAllocator, Pattern->MaxAllocator,
+                        Pattern->MinNode, Pattern->MaxNode, 
+                        Pattern->MinService, Pattern->MaxService);            
+        }
+        else
+        {
+            strncpy(StrBuf, "INVALID EID", StrLen);
+        }
+    }
+    else
+    {
+        strncpy(StrBuf, "INVALID EID", StrLen);
+    }
+
+    return;
+}
+
+void BPLib_EID_GetString(BPLib_EID_t* EID, char* StrBuf, size_t StrLen)
+{
+    if (EID == NULL || StrBuf == NULL)
+    {
+        return;
+    }
+
+    if (EID->Scheme == BPLIB_EID_SCHEME_DTN)
+    {
+        strncpy(StrBuf, "dtn:none", StrLen);
+    }
+    else if (EID->Scheme == BPLIB_EID_SCHEME_IPN)
+    {
+        if (EID->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT)
+        {
+            snprintf(StrBuf, StrLen, "ipn:%ld.%ld", EID->Node, EID->Service);
+        }
+        else if (EID->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_THREE_DIGIT)
+        {
+            snprintf(StrBuf, StrLen, "ipn:%ld.%ld.%ld", EID->Allocator, EID->Node, EID->Service);          
+        }
+        else
+        {
+            strncpy(StrBuf, "INVALID EID", StrLen);
+        }
+    }
+    else
+    {
+        strncpy(StrBuf, "INVALID EID", StrLen);
+    }
+
+    return;
 }

@@ -116,60 +116,66 @@ BPLib_Status_t BPLib_CLA_Egress(BPLib_Instance_t* Inst, uint32_t ContId, void *B
 BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData)
 {
     BPLib_CLA_ContactsTable_t *TblDataPtr = (BPLib_CLA_ContactsTable_t *)TblData;
-    uint32_t ContId1;
-    uint32_t DestIdIdx1;
-    uint32_t ContId2;
-    uint32_t DestIdIdx2;
+    uint32_t ContId;
+    uint32_t DestIdIdx;
+    BPLib_EID_Pattern_t* TempEidArr[BPLIB_MAX_NUM_CONTACTS * BPLIB_MAX_CONTACT_DEST_EIDS];
+    uint32_t ArrLen = 0;
+    uint32_t ArrIdx1;
+    uint32_t ArrIdx2;
+    char EidStr[BPLIB_MAX_STR_LENGTH];
 
-    for (ContId1 = 0; ContId1 < BPLIB_MAX_NUM_CONTACTS; ContId1++)
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
     {
         /* Validate destination EIDs */
-        for (DestIdIdx1 = 0; DestIdIdx1 < BPLIB_MAX_CONTACT_DEST_EIDS; DestIdIdx1++)
+        for (DestIdIdx = 0; DestIdIdx < BPLIB_MAX_CONTACT_DEST_EIDS; DestIdIdx++)
         {
-            if (TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1].Scheme != BPLIB_EID_SCHEME_RESERVED &&
-                (TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1].Scheme == BPLIB_EID_SCHEME_DTN ||
-                !BPLib_EID_PatternIsValid(&TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1])))
+            /* Check only EIDs with a non-zero scheme */
+            if (TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx].Scheme != BPLIB_EID_SCHEME_RESERVED)
             {
-                return BPLIB_INVALID_CONFIG_ERR;
-            }
-
-            /* Check for any duplicate destination EIDs (sorry for the four nested for loops...)*/
-            for (ContId2 = 0; ContId2 < ContId1; ContId2++)
-            {
-                for (DestIdIdx2 = 0; DestIdIdx2 < DestIdIdx1; DestIdIdx2++)
+                if (TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx].Scheme == BPLIB_EID_SCHEME_DTN ||
+                    !BPLib_EID_PatternIsValid(&TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx]))
                 {
-                    /* Only check for duplicates of non-zero EIDs */
-                    if (TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1].MaxAllocator != 0 &&
-                        TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1].MaxNode != 0 &&
-                        TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1].MaxService != 0 &&
-                        BPLib_EID_PatternsAreMatch(&TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1],
-                                        &TblDataPtr->ContactSet[ContId2].DestEIDs[DestIdIdx2]))
-                    {
-                        BPLib_EM_SendEvent(BPLIB_CLA_DUPLICATE_EIDS_WRN_EID,
-                                            BPLib_EM_EventType_WARNING,
-                                            "Duplicate destination EID for contacts %d and %d at EID indices %d and %d.",
-                                            ContId1, ContId2, DestIdIdx1, DestIdIdx2);
-                    }
+                    return BPLIB_INVALID_CONFIG_ERR;
                 }
+
+                /* Copy pattern into flat array */
+                TempEidArr[ArrLen] = &TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx];
+                // BPLib_EID_CopyEidPatterns(&TempEidArr[ArrLen], 
+                //                     TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx]);
+                ArrLen++;
             }
-        }
+        }        
 
         /* Validate retransmit timeout */
-        if (TblDataPtr->ContactSet[ContId1].RetransmitTimeout > BPLIB_MAX_RETRANSMIT_ALLOWED)
+        if (TblDataPtr->ContactSet[ContId].RetransmitTimeout > BPLIB_MAX_RETRANSMIT_ALLOWED)
         {
             return BPLIB_INVALID_CONFIG_ERR;
         }
 
         /* Validate CS time trigger */
-        if (TblDataPtr->ContactSet[ContId1].CSTimeTrigger > BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED)
+        if (TblDataPtr->ContactSet[ContId].CSTimeTrigger > BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED)
         {
             return BPLIB_INVALID_CONFIG_ERR;
         }
 
         /* Validate CS size trigger */
-        if (TblDataPtr->ContactSet[ContId1].CSSizeTrigger > BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED)
+        if (TblDataPtr->ContactSet[ContId].CSSizeTrigger > BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED)
         {
             return BPLIB_INVALID_CONFIG_ERR;
+        }
+    }
+
+    for (ArrIdx1 = 0; ArrIdx1 < ArrLen; ArrIdx1++)
+    {
+        for (ArrIdx2 = 0; ArrIdx2 < ArrIdx1; ArrIdx2++)
+        {
+            if (BPLib_EID_PatternsAreMatch(TempEidArr[ArrIdx1], TempEidArr[ArrIdx2]))
+            {
+                BPLib_EID_GetPatternString(TempEidArr[ArrIdx1], EidStr, BPLIB_MAX_STR_LENGTH);
+                BPLib_EM_SendEvent(BPLIB_CLA_DUPLICATE_EIDS_WRN_EID, BPLib_EM_EventType_WARNING,
+                                    "Duplicate destination EIDs detected in contact table, %s.",
+                                    EidStr);
+            }
         }
     }
 

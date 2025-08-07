@@ -91,6 +91,34 @@ void BPLib_EID_CopyEids(BPLib_EID_t *EID_Actual, BPLib_EID_t EID_Reference)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_EID_GetPatternString()
+ * ----------------------------------------------------
+ */
+void BPLib_EID_GetPatternString(BPLib_EID_Pattern_t *Pattern, char *StrBuf, size_t StrLen)
+{
+    UT_GenStub_AddParam(BPLib_EID_GetPatternString, BPLib_EID_Pattern_t *, Pattern);
+    UT_GenStub_AddParam(BPLib_EID_GetPatternString, char *, StrBuf);
+    UT_GenStub_AddParam(BPLib_EID_GetPatternString, size_t, StrLen);
+
+    UT_GenStub_Execute(BPLib_EID_GetPatternString, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_EID_GetString()
+ * ----------------------------------------------------
+ */
+void BPLib_EID_GetString(BPLib_EID_t *EID, char *StrBuf, size_t StrLen)
+{
+    UT_GenStub_AddParam(BPLib_EID_GetString, BPLib_EID_t *, EID);
+    UT_GenStub_AddParam(BPLib_EID_GetString, char *, StrBuf);
+    UT_GenStub_AddParam(BPLib_EID_GetString, size_t, StrLen);
+
+    UT_GenStub_Execute(BPLib_EID_GetString, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_EID_IsMatch()
  * ----------------------------------------------------
  */
