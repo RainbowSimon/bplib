@@ -138,10 +138,8 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData)
                     return BPLIB_INVALID_CONFIG_ERR;
                 }
 
-                /* Copy pattern into flat array */
+                /* Copy pattern reference into flat array */
                 TempEidArr[ArrLen] = &TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx];
-                // BPLib_EID_CopyEidPatterns(&TempEidArr[ArrLen], 
-                //                     TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx]);
                 ArrLen++;
             }
         }        
@@ -165,6 +163,7 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData)
         }
     }
 
+    /* Look for duplicate EIDs */
     for (ArrIdx1 = 0; ArrIdx1 < ArrLen; ArrIdx1++)
     {
         for (ArrIdx2 = 0; ArrIdx2 < ArrIdx1; ArrIdx2++)
