@@ -171,3 +171,20 @@ bool BPLib_EID_PatternIsValid(BPLib_EID_Pattern_t *EID_Pattern)
 
     return UT_GenStub_GetReturnValue(BPLib_EID_PatternIsValid, bool);
 }
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_EID_PatternsAreMatch()
+ * ----------------------------------------------------
+ */
+bool BPLib_EID_PatternsAreMatch(BPLib_EID_Pattern_t *PatternActual, BPLib_EID_Pattern_t *PatternReference)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_EID_PatternsAreMatch, bool);
+
+    UT_GenStub_AddParam(BPLib_EID_PatternsAreMatch, BPLib_EID_Pattern_t *, PatternActual);
+    UT_GenStub_AddParam(BPLib_EID_PatternsAreMatch, BPLib_EID_Pattern_t *, PatternReference);
+
+    UT_GenStub_Execute(BPLib_EID_PatternsAreMatch, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_EID_PatternsAreMatch, bool);
+}

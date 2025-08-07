@@ -186,4 +186,6 @@ void BPLib_EID_CopyEidPatterns(BPLib_EID_Pattern_t *EID_Actual, BPLib_EID_Patter
  */
 bool BPLib_EID_PatternIsMatch(BPLib_EID_t* EID_Actual, BPLib_EID_Pattern_t* EID_Pattern);
 
+bool BPLib_EID_PatternsAreMatch(BPLib_EID_Pattern_t* PatternActual, BPLib_EID_Pattern_t* PatternReference);
+
 #endif /* BPLIB_EID_H */

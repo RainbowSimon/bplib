@@ -163,9 +163,12 @@ bool BPLib_EID_IsValid(BPLib_EID_t* EID)
 
 bool BPLib_EID_PatternIsValid(BPLib_EID_Pattern_t* EID_Pattern)
 {
-    return (EID_Pattern->MaxAllocator >= EID_Pattern->MinAllocator &&
-            EID_Pattern->MaxNode      >= EID_Pattern->MinNode      &&
-            EID_Pattern->MaxService   >= EID_Pattern->MinService);
+    return (EID_Pattern->MaxAllocator  >= EID_Pattern->MinAllocator &&
+            EID_Pattern->MaxNode       >= EID_Pattern->MinNode      &&
+            EID_Pattern->MaxService    >= EID_Pattern->MinService   &&
+            EID_Pattern->Scheme        == BPLIB_EID_SCHEME_IPN      &&
+            (EID_Pattern->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_THREE_DIGIT ||
+             EID_Pattern->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT));
 }
 
 bool BPLib_EID_IsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID_Reference)
@@ -260,4 +263,16 @@ bool BPLib_EID_PatternIsMatch(BPLib_EID_t* EID_Actual, BPLib_EID_Pattern_t* EID_
     }
 
     return IsMatch;
+}
+
+bool BPLib_EID_PatternsAreMatch(BPLib_EID_Pattern_t* PatternActual, BPLib_EID_Pattern_t* PatternReference)
+{
+    return (PatternActual->Scheme       == PatternReference->Scheme &&
+            PatternActual->IpnSspFormat == PatternReference->IpnSspFormat &&
+            PatternActual->MaxAllocator == PatternReference->MaxAllocator &&
+            PatternActual->MinAllocator == PatternReference->MinAllocator &&
+            PatternActual->MaxNode      == PatternReference->MaxNode &&
+            PatternActual->MinNode      == PatternReference->MinNode &&
+            PatternActual->MaxService   == PatternReference->MaxService &&
+            PatternActual->MinService   == PatternReference->MinService);
 }
