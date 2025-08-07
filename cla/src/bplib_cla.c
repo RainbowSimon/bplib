@@ -126,8 +126,9 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData)
         /* Validate destination EIDs */
         for (DestIdIdx1 = 0; DestIdIdx1 < BPLIB_MAX_CONTACT_DEST_EIDS; DestIdIdx1++)
         {
-            if (TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1].Scheme == BPLIB_EID_SCHEME_DTN ||
-                !BPLib_EID_PatternIsValid(&TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1]))
+            if (TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1].Scheme != BPLIB_EID_SCHEME_RESERVED &&
+                (TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1].Scheme == BPLIB_EID_SCHEME_DTN ||
+                !BPLib_EID_PatternIsValid(&TblDataPtr->ContactSet[ContId1].DestEIDs[DestIdIdx1])))
             {
                 return BPLIB_INVALID_CONFIG_ERR;
             }
