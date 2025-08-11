@@ -27,6 +27,7 @@
 #include "bpcat_cla.h"
 #include "bpcat_nc.h"
 #include "bplib.h"
+#include "fwp.h"
 
 #include "osapi.h"
 #include <unistd.h>
@@ -191,6 +192,41 @@ void BPCat_Main()
     BPLib_Status_t BPLibStatus;
     BPCat_Status_t Status;
 
+    BPLib_FWP_ProxyCallbacks_t Callbacks = {
+        /* Time Proxy */
+        .BPA_TIMEP_GetMonotonicTime          = BPA_TIMEP_GetMonotonicTime,
+        .BPA_TIMEP_GetHostEpoch              = BPA_TIMEP_GetHostEpoch,
+        .BPA_TIMEP_GetHostClockState         = BPA_TIMEP_GetHostClockState,
+        .BPA_TIMEP_GetHostTime               = BPA_TIMEP_GetHostTime,
+        /* Perf Log Proxy */
+        .BPA_PERFLOGP_Entry                  = BPA_PERFLOGP_Entry,
+        .BPA_PERFLOGP_Exit                   = BPA_PERFLOGP_Exit,
+        /* Table Proxy */
+        .BPA_TABLEP_TableInit                = BPA_TABLEP_TableInit,
+        .BPA_TABLEP_TableUpdate              = BPA_TABLEP_TableUpdate,
+        /* Event Proxy */
+        .BPA_EVP_Init                        = BPA_EVP_Init,
+        .BPA_EVP_SendEvent                   = BPA_EVP_SendEvent,
+        /* ADU Proxy */
+        .BPA_ADUP_AddApplication             = BPA_ADUP_AddApplication,
+        .BPA_ADUP_StartApplication           = BPA_ADUP_StartApplication,
+        .BPA_ADUP_StopApplication            = BPA_ADUP_StopApplication,
+        .BPA_ADUP_RemoveApplication          = BPA_ADUP_RemoveApplication,
+        /* Telemetry Proxy */
+        .BPA_TLMP_SendNodeMibConfigPkt       = BPA_TLMP_SendNodeMibConfigPkt,
+        .BPA_TLMP_SendPerSourceMibConfigPkt  = BPA_TLMP_SendPerSourceMibConfigPkt,
+        .BPA_TLMP_SendNodeMibCounterPkt      = BPA_TLMP_SendNodeMibCounterPkt,
+        .BPA_TLMP_SendPerSourceMibCounterPkt = BPA_TLMP_SendPerSourceMibCounterPkt,
+        .BPA_TLMP_SendNodeMibReportsPkt      = BPA_TLMP_SendNodeMibReportsPkt,
+        .BPA_TLMP_SendChannelContactPkt      = BPA_TLMP_SendChannelContactPkt,
+        .BPA_TLMP_SendStoragePkt             = BPA_TLMP_SendStoragePkt,
+        /* CLA Proxy */
+        .BPA_CLAP_ContactSetup               = BPA_CLAP_ContactSetup,
+        .BPA_CLAP_ContactStart               = BPA_CLAP_ContactStart,
+        .BPA_CLAP_ContactStop                = BPA_CLAP_ContactStop,
+        .BPA_CLAP_ContactTeardown            = BPA_CLAP_ContactTeardown,
+    };
+
     /* MEM */
     AppData.PoolMem = calloc(BPCAT_MEMPOOL_LEN, 1);
     if (AppData.PoolMem == NULL)
@@ -200,7 +236,7 @@ void BPCat_Main()
     }
 
     /* Node Config */
-    Status = BPCat_NC_Init(&AppData.ConfigPtrs, Callbacks, &(AppData.BPLibInst), BPCAT_QM_MAX_JOBS, AppData.PoolMem, (size_t) BPCAT_MEMPOOL_LEN);
+    Status = BPCat_NC_Init(&AppData.ConfigPtrs, (void*) &Callbacks, &(AppData.BPLibInst), BPCAT_QM_MAX_JOBS, AppData.PoolMem, (size_t) BPCAT_MEMPOOL_LEN);
     if (Status != BPCAT_SUCCESS)
     {
         fprintf(stderr, "Failed to init NC\n");
