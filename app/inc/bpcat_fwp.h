@@ -38,7 +38,6 @@
   * \retval    BPCAT_SUCCESS: Execution was successful
   * \retval    BPCAT_FWP_ERR: An error occured while running BPLib_FWP_Init
   */
-
 BPCat_Status_t BPCat_FWP_Init(BPLib_FWP_ProxyCallbacks_t* Callbacks);
 
 #endif /* BPLIB_BPCAT_FWP_H */
