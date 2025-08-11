@@ -20,6 +20,7 @@
 
 #include "bpcat_nc.h"
 #include "bplib.h"
+#include "bpcat_fwp.h"
 
 static BPLib_PI_ChannelTable_t     ChanTbl;
 static BPLib_CLA_ContactsTable_t ContactsTbl =
@@ -75,7 +76,8 @@ static BPLib_PDB_SrcAuthTable_t    AuthTbl;
 static BPLib_PDB_SrcLatencyTable_t LatencyTbl;
 static BPLib_STOR_StorageTable_t   StorTbl;
 
-BPCat_Status_t BPCat_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
+BPCat_Status_t BPCat_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks, BPLib_Instance_t* Instance,
+                                uint16_t MaxUnsortedJobs, void *PoolMem, size_t PoolMemLen)
 {
     BPLib_Status_t NCStatus;
 
@@ -96,7 +98,7 @@ BPCat_Status_t BPCat_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
     ConfigPtrs->LatConfigPtr       = &LatencyTbl;
     ConfigPtrs->StorConfigPtr      = &StorTbl;    
 
-    NCStatus = BPLib_NC_Init(ConfigPtrs);
+    NCStatus = BPLib_NC_Init(ConfigPtrs, Callbacks, Instance, MaxUnsortedJobs, PoolMem, PoolMemLen);
     if (NCStatus != BPLIB_SUCCESS)
     {
         fprintf(stderr, "Failed to Initialize Node Config, RC=%d\n", NCStatus);
