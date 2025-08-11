@@ -20,8 +20,78 @@
 #ifndef BPLIB_BPCAT_FWP_H
 #define BPLIB_BPCAT_FWP_H
 
+/* ======== */
+/* Includes */
+/* ======== */
+
 #include "bpcat_types.h"
 
-BPCat_Status_t BPCat_FWP_Init();
+/* ================ */
+/* Type Definitions */
+/* ================ */
+
+typedef struct
+{
+    /* Time Proxy function callbacks */
+    int64_t (*BPA_TIMEP_GetMonotonicTime)(void);
+    void (*BPA_TIMEP_GetHostEpoch)(BPLib_TIME_Epoch_t *Epoch);
+    BPLib_TIME_ClockState_t (*BPA_TIMEP_GetHostClockState)(void);
+    int64_t (*BPA_TIMEP_GetHostTime)(void);
+
+    /* PerfLog Proxy function callbacks */
+    void (*BPA_PERFLOGP_Entry)(uint32_t PerfLogID);
+    void (*BPA_PERFLOGP_Exit)(uint32_t PerfLogID);
+
+    /* Table Proxy function callbacks */
+    BPLib_Status_t (*BPA_TABLEP_TableInit)(void);
+    BPLib_Status_t (*BPA_TABLEP_TableUpdate)(uint8_t TableType, void** TblPtr);
+
+    /* Event Proxy function callbacks */
+    BPLib_Status_t (*BPA_EVP_Init)(void);
+    BPLib_Status_t (*BPA_EVP_SendEvent)(uint16_t EventID, BPLib_EM_EventType_t EventType, char const* EventText);
+
+    /* Telemetry Proxy function callbacks */
+    BPLib_Status_t (*BPA_TLMP_SendNodeMibConfigPkt)(BPLib_NodeMibConfigHkTlm_Payload_t* NodeMIBConfigTlmPayload);
+    BPLib_Status_t (*BPA_TLMP_SendPerSourceMibConfigPkt)(BPLib_SourceMibConfigHkTlm_Payload_t* SrcMIBConfigTlmPayload);
+    BPLib_Status_t (*BPA_TLMP_SendNodeMibCounterPkt)(BPLib_NodeMibCountersHkTlm_Payload_t* NodeMIBCounterTlmPayload);
+    BPLib_Status_t (*BPA_TLMP_SendPerSourceMibCounterPkt)(BPLib_SourceMibCountersHkTlm_Payload_t* SrcMIBCounterTlmPayload);
+    BPLib_Status_t (*BPA_TLMP_SendNodeMibReportsPkt)(BPLib_NodeMibReportsHkTlm_Payload_t* NodeMibReportsPayload);
+    BPLib_Status_t (*BPA_TLMP_SendChannelContactPkt)(BPLib_ChannelContactStatHkTlm_Payload_t* ChannelContactTlmPayload);
+    BPLib_Status_t (*BPA_TLMP_SendStoragePkt)(BPLib_StorageHkTlm_Payload_t* StorTlmPayload);
+
+    /* ADU Proxy function callbacks */
+    BPLib_Status_t (*BPA_ADUP_AddApplication)(uint32_t ChanId);
+    BPLib_Status_t (*BPA_ADUP_StartApplication)(uint32_t ChanId);
+    BPLib_Status_t (*BPA_ADUP_StopApplication)(uint32_t ChanId);
+    BPLib_Status_t (*BPA_ADUP_RemoveApplication)(uint32_t ChanId);
+
+    /* CLA Proxy function callbacks */
+    BPLib_Status_t (*BPA_CLAP_ContactSetup)(uint32_t ContactId, BPLib_CLA_ContactsSet_t ContactInfo);
+    BPLib_Status_t (*BPA_CLAP_ContactStart)(uint32_t ContactId);
+    BPLib_Status_t (*BPA_CLAP_ContactStop)(uint32_t ContactId);
+    void           (*BPA_CLAP_ContactTeardown)(uint32_t ContactId);
+
+    /* Add other proxies' function callbacks here: TODO */
+
+} BPLib_FWP_ProxyCallbacks_t;
+
+/* =========== */
+/* Global Data */
+/* =========== */
+
+extern BPLib_FWP_ProxyCallbacks_t BPLib_FWP_ProxyCallbacks;
+
+/* =================== */
+/* Function Prototypes */
+/* =================== */
+
+/**
+  * \brief     Framework Proxy initialization
+  * \param[in] Callbacks (BPLib_FWP_ProxyCallbacks_t*) Pointer to callback functions for BPLib populated by BPNode
+  * \return    Execution status
+  * \retval    TBD
+  */
+
+BPCat_Status_t BPCat_FWP_Init(BPLib_FWP_ProxyCallbacks_t* Callbacks);
 
 #endif /* BPLIB_BPCAT_FWP_H */
