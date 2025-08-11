@@ -191,63 +191,19 @@ void BPCat_Main()
     BPLib_Status_t BPLibStatus;
     BPCat_Status_t Status;
 
-    /* FWP */
-    Status = BPCat_FWP_Init();
-    if (Status != BPLIB_SUCCESS)
-    {
-        fprintf(stderr, "Failed to init FWP\n");
-        return;
-    }
-
-    /* EM */
-    BPLibStatus = BPLib_EM_Init();
-    if (BPLibStatus != BPLIB_SUCCESS)
-    {
-        fprintf(stderr, "Failed to init EM\n");
-        return;
-    }
-
-    /* Time Management */
-    /* Without modifying the TIME module, I was unable to get this to work.
-    ** We need a follow-on ticket to abstract the TIME module and AS module's
-    ** use of OSAL. Because no data is being put into BPLib, nothing will break
-    ** by having this commented out.
-    BPLibStatus = BPLib_TIME_Init();
-    if (BPLibStatus != BPLIB_SUCCESS)
-    {
-        printf("Failed to init time\n");
-        return;
-    }
-    */
-
-    /* Node Config */
-    Status = BPCat_NC_Init(&AppData.ConfigPtrs);
-    if (Status != BPCAT_SUCCESS)
-    {
-        fprintf(stderr, "Failed to init NC\n");
-        return;
-    }
-
     /* MEM */
-    AppData.PoolMem = (void *)calloc(BPCAT_MEMPOOL_LEN, 1);
+    AppData.PoolMem = calloc(BPCAT_MEMPOOL_LEN, 1);
     if (AppData.PoolMem == NULL)
     {
         fprintf(stderr, "Failed to calloc() memory for the BPLib Memory Pool\n");
         return;
     }
-    BPLibStatus = BPLib_MEM_PoolInit(&AppData.BPLibInst.pool, AppData.PoolMem,
-        (size_t)BPCAT_MEMPOOL_LEN);
-    if (BPLibStatus != BPLIB_SUCCESS)
-    {
-        fprintf(stderr, "Failed to initialize MEM\n");
-        return;
-    }
 
-    /* QM */
-    BPLibStatus = BPLib_QM_QueueTableInit(&AppData.BPLibInst, BPCAT_QM_MAX_JOBS);
-    if (BPLibStatus != BPLIB_SUCCESS)
+    /* Node Config */
+    Status = BPCat_NC_Init(&AppData.ConfigPtrs, Callbacks, &(AppData.BPLibInst), BPCAT_QM_MAX_JOBS, AppData.PoolMem, (size_t) BPCAT_MEMPOOL_LEN);
+    if (Status != BPCAT_SUCCESS)
     {
-        fprintf(stderr, "Failed to initialize QM\n");
+        fprintf(stderr, "Failed to init NC\n");
         return;
     }
 
