@@ -22,12 +22,11 @@
 ** Includes
 */
 #include "bpcat_types.h"
-#include "bpcat_fwp.h"
 #include "bpcat_task.h"
 #include "bpcat_cla.h"
 #include "bpcat_nc.h"
 #include "bplib.h"
-#include "fwp.h"
+#include "bpcat_fwp.h"
 
 #include "osapi.h"
 #include <unistd.h>

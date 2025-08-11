@@ -25,7 +25,6 @@ set(BPAPP_LINK_LIBRARIES bplib)
 add_executable(bpcat
     bpcat.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/bpcat_task.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/bpcat_fwp.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/bpcat_nc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/bpcat_cla.c
 )

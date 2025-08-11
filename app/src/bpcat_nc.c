@@ -20,7 +20,6 @@
 
 #include "bpcat_nc.h"
 #include "bplib.h"
-#include "bpcat_fwp.h"
 
 static BPLib_PI_ChannelTable_t     ChanTbl;
 static BPLib_CLA_ContactsTable_t ContactsTbl =
