@@ -71,7 +71,7 @@ BPLib_Status_t BPA_ADUP_StopApplication(uint32_t ChanId);
 
 BPLib_Status_t BPA_ADUP_RemoveApplication(uint32_t ChanId);
 
-BPLib_Status_t BPA_CLAP_ContactSetup(uint32_t ContactId, BPLib_CLA_ContactsSet_t ContactInfo);
+BPLib_Status_t BPA_CLAP_ContactSetup(uint32_t ContactId);
 
 BPLib_Status_t BPA_CLAP_ContactStart(uint32_t ContactId);
 
