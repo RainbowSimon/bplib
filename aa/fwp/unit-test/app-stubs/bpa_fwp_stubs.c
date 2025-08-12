@@ -209,6 +209,20 @@ void BPA_PERFLOGP_Exit(uint32_t PerfLogID)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPA_TABLEP_TableInit()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPA_TABLEP_TableInit(void)
+{
+    UT_GenStub_SetupReturnBuffer(BPA_TABLEP_TableInit, BPLib_Status_t);
+
+    UT_GenStub_Execute(BPA_TABLEP_TableInit, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPA_TABLEP_TableInit, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPA_TABLEP_TableUpdate()
  * ----------------------------------------------------
  */

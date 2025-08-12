@@ -63,6 +63,8 @@ target_include_directories(coverage-bplib_nc-testrunner PRIVATE
     $<TARGET_PROPERTY:bplib_eid,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:bplib_cla,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:bplib_crc,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:bplib_mem,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:bplib_qm,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 target_link_libraries(coverage-bplib_nc-testrunner PUBLIC
@@ -78,6 +80,8 @@ target_link_libraries(coverage-bplib_nc-testrunner PUBLIC
     bplib_crc_stubs
     bplib_pi_stubs
     bplib_time_stubs
+    bplib_mem_stubs
+    bplib_qm_stubs
 )
 
 add_test(coverage-bplib_nc-testrunner coverage-bplib_nc-testrunner)
