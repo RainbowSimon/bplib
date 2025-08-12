@@ -205,7 +205,11 @@ void Test_BPLib_NC_Init_Nominal(void)
     UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
     UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
     UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
-    UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
     UtAssert_STUB_COUNT(BPLib_CRC_Init, 1);
     UtAssert_STUB_COUNT(BPLib_AS_Init, 1);
     UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 1);
@@ -327,6 +331,7 @@ void Test_BPLib_NC_Init_TABLEP_Err(void)
     UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 0);
 }
 
+#ifdef CFS_BUILD
 void Test_BPLib_NC_Init_TIME_Err(void)
 {
     BPLib_Status_t             Status;
@@ -366,6 +371,7 @@ void Test_BPLib_NC_Init_TIME_Err(void)
     UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 0);
     UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 0);
 }
+#endif
 
 void Test_BPLib_NC_Init_NC_Err(void)
 {
@@ -401,7 +407,11 @@ void Test_BPLib_NC_Init_NC_Err(void)
     UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
     UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
     UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
-    UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
     UtAssert_STUB_COUNT(BPLib_CRC_Init, 0);
     UtAssert_STUB_COUNT(BPLib_AS_Init, 0);
     UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 0);
@@ -441,7 +451,11 @@ void Test_BPLib_NC_Init_AS_Err(void)
     UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
     UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
     UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
-    UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
     UtAssert_STUB_COUNT(BPLib_CRC_Init, 1);
     UtAssert_STUB_COUNT(BPLib_AS_Init, 1);
     UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 0);
@@ -481,7 +495,11 @@ void Test_BPLib_NC_Init_QM_Err(void)
     UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
     UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
     UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
-    UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
     UtAssert_STUB_COUNT(BPLib_CRC_Init, 1);
     UtAssert_STUB_COUNT(BPLib_AS_Init, 1);
     UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 1);
@@ -521,7 +539,11 @@ void Test_BPLib_NC_Init_MEM_Err(void)
     UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
     UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
     UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
-    UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
     UtAssert_STUB_COUNT(BPLib_CRC_Init, 1);
     UtAssert_STUB_COUNT(BPLib_AS_Init, 1);
     UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 1);
@@ -2201,7 +2223,11 @@ void TestBplibNc_Register(void)
     ADD_TEST(Test_BPLib_NC_Init_Nominal);
     ADD_TEST(Test_BPLib_NC_Init_FWP_Err);
     ADD_TEST(Test_BPLib_NC_Init_EM_Err);
+
+    #ifdef CFS_BUILD
     ADD_TEST(Test_BPLib_NC_Init_TIME_Err);
+    #endif
+
     ADD_TEST(Test_BPLib_NC_Init_NC_Err);
     ADD_TEST(Test_BPLib_NC_Init_AS_Err);
     ADD_TEST(Test_BPLib_NC_Init_QM_Err);
