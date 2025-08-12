@@ -49,11 +49,11 @@ typedef enum
 
 typedef enum
 {
-    UDPType = 0x00000000,
-    TCPType = 0x00000001,
-    EPPType = 0x00000002,
-    LTPType = 0x00000003,
-    SBType  = 0x00000004,
+    BPLib_UDP_CLA = 0,
+    BPLib_TCP_CLA = 1,
+    BPLib_EPP_CLA = 2,
+    BPLib_LTP_CLA = 3,
+    BPLib_SB_CLA  = 4,
 } BPLib_CLA_Type_t;
 
 typedef struct
