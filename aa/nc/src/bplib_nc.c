@@ -54,68 +54,134 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(void);
 /* Function Definitions */
 /* ==================== */
 
-BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
+BPLib_Status_t BPLib_NC_InitImpl(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
 {
     BPLib_Status_t Status;
-
+    
+    /* Empty out and initialize the NC managed payloads */
     memset((void*) &BPLib_NC_SourceMibConfigPayload,     0, sizeof(BPLib_NC_SourceMibConfigPayload));
     memset((void*) &BPLib_NC_NodeMibConfigPayload,       0, sizeof(BPLib_NC_NodeMibConfigPayload));
     memset((void*) &BPLib_NC_ChannelContactStatsPayload, 0, sizeof(BPLib_NC_ChannelContactStatsPayload));
 
     /* Initialize the configuration lock */
     Status = BPLib_NC_RWLock_Init(&BPLib_NC_CfgLock);
+    if (Status == BPLIB_SUCCESS)
+    {
+        /* Capture configuration pointers in the global configuration struct */
+        if (ConfigPtrs                     == NULL ||
+            ConfigPtrs->ChanConfigPtr      == NULL ||
+            ConfigPtrs->ContactsConfigPtr  == NULL ||
+            ConfigPtrs->CrsConfigPtr       == NULL ||
+            ConfigPtrs->CustodianConfigPtr == NULL ||
+            ConfigPtrs->CustodyConfigPtr   == NULL ||
+            ConfigPtrs->MibPnConfigPtr     == NULL ||
+            ConfigPtrs->MibPsConfigPtr     == NULL ||
+            ConfigPtrs->ReportConfigPtr    == NULL ||
+            ConfigPtrs->AuthConfigPtr      == NULL ||
+            ConfigPtrs->LatConfigPtr       == NULL ||
+            ConfigPtrs->StorConfigPtr      == NULL)
+        {
+            Status = BPLIB_NC_INIT_CONFIG_PTRS_ERROR;
+        }
+        else
+        {
+            /* Initialize configurations */
+            BPLib_NC_ConfigPtrs.ChanConfigPtr      = ConfigPtrs->ChanConfigPtr;
+            BPLib_NC_ConfigPtrs.ContactsConfigPtr  = ConfigPtrs->ContactsConfigPtr;
+            BPLib_NC_ConfigPtrs.CrsConfigPtr       = ConfigPtrs->CrsConfigPtr;
+            BPLib_NC_ConfigPtrs.CustodianConfigPtr = ConfigPtrs->CustodianConfigPtr;
+            BPLib_NC_ConfigPtrs.CustodyConfigPtr   = ConfigPtrs->CustodyConfigPtr;
+            BPLib_NC_ConfigPtrs.MibPnConfigPtr     = ConfigPtrs->MibPnConfigPtr;
+            BPLib_NC_ConfigPtrs.MibPsConfigPtr     = ConfigPtrs->MibPsConfigPtr;
+            BPLib_NC_ConfigPtrs.ReportConfigPtr    = ConfigPtrs->ReportConfigPtr;
+            BPLib_NC_ConfigPtrs.AuthConfigPtr      = ConfigPtrs->AuthConfigPtr;
+            BPLib_NC_ConfigPtrs.LatConfigPtr       = ConfigPtrs->LatConfigPtr;
+            BPLib_NC_ConfigPtrs.StorConfigPtr      = ConfigPtrs->StorConfigPtr;
+
+            /* Set the instance EID */
+            BPLib_EID_CopyEids(&BPLIB_EID_INSTANCE, BPLib_NC_ConfigPtrs.MibPnConfigPtr->InstanceEID);
+
+            /* Set telemetry values */
+            memcpy(&(BPLib_NC_NodeMibConfigPayload.Values), BPLib_NC_ConfigPtrs.MibPnConfigPtr, 
+                                                                sizeof(BPLib_NC_MibPerNodeConfig_t));
+
+            /* Initialize contact/channel status telemetry with table values */
+            BPLib_NC_UpdateContactHkTlm();
+            BPLib_NC_UpdateChannelHkTlm();
+        }
+    }
+
+    return Status;
+}
+
+BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
+                                BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
+                                void* PoolMem, size_t PoolMemLen)
+{
+    BPLib_Status_t Status;
+
+    /* Initialize FWP */
+    Status = BPLib_FWP_Init((BPLib_FWP_ProxyCallbacks_t*) Callbacks);
     if (Status != BPLIB_SUCCESS)
-    {
-        return Status;
+    { /* Failed initialization of FWP */
+        return BPLIB_NC_FWP_INIT_ERR;
     }
 
-    /* Capture configuration pointers in the global configuration struct */
-    if (ConfigPtrs                     == NULL ||
-        ConfigPtrs->ChanConfigPtr      == NULL ||
-        ConfigPtrs->ContactsConfigPtr  == NULL ||
-        ConfigPtrs->CrsConfigPtr       == NULL ||
-        ConfigPtrs->CustodianConfigPtr == NULL ||
-        ConfigPtrs->CustodyConfigPtr   == NULL ||
-        ConfigPtrs->MibPnConfigPtr     == NULL ||
-        ConfigPtrs->MibPsConfigPtr     == NULL ||
-        ConfigPtrs->ReportConfigPtr    == NULL ||
-        ConfigPtrs->AuthConfigPtr      == NULL ||
-        ConfigPtrs->LatConfigPtr       == NULL ||
-        ConfigPtrs->StorConfigPtr      == NULL)
-    {
-        Status = BPLIB_NC_INIT_CONFIG_PTRS_ERROR;
+    /* Register with Event Services */
+    Status = BPLib_EM_Init();
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of EM */
+        return BPLIB_NC_EM_INIT_ERR;
     }
-    else
-    {
-        /* Initialize configurations */
-        BPLib_NC_ConfigPtrs.ChanConfigPtr      = ConfigPtrs->ChanConfigPtr;
-        BPLib_NC_ConfigPtrs.ContactsConfigPtr  = ConfigPtrs->ContactsConfigPtr;
-        BPLib_NC_ConfigPtrs.CrsConfigPtr       = ConfigPtrs->CrsConfigPtr;
-        BPLib_NC_ConfigPtrs.CustodianConfigPtr = ConfigPtrs->CustodianConfigPtr;
-        BPLib_NC_ConfigPtrs.CustodyConfigPtr   = ConfigPtrs->CustodyConfigPtr;
-        BPLib_NC_ConfigPtrs.MibPnConfigPtr     = ConfigPtrs->MibPnConfigPtr;
-        BPLib_NC_ConfigPtrs.MibPsConfigPtr     = ConfigPtrs->MibPsConfigPtr;
-        BPLib_NC_ConfigPtrs.ReportConfigPtr    = ConfigPtrs->ReportConfigPtr;
-        BPLib_NC_ConfigPtrs.AuthConfigPtr      = ConfigPtrs->AuthConfigPtr;
-        BPLib_NC_ConfigPtrs.LatConfigPtr       = ConfigPtrs->LatConfigPtr;
-        BPLib_NC_ConfigPtrs.StorConfigPtr      = ConfigPtrs->StorConfigPtr;
 
-        /* Set the instance EID */
-        BPLib_EID_CopyEids(&BPLIB_EID_INSTANCE, BPLib_NC_ConfigPtrs.MibPnConfigPtr->InstanceEID);
+    /* Initialize the table proxy */
+    Status = ((BPLib_FWP_ProxyCallbacks_t*)Callbacks)->BPA_TABLEP_TableInit();
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of TABLEP */
+        return BPLIB_NC_TABLEP_INIT_ERR;
+    }
 
-        /* Set telemetry values */
-        memcpy(&(BPLib_NC_NodeMibConfigPayload.Values), BPLib_NC_ConfigPtrs.MibPnConfigPtr, 
-                                                            sizeof(BPLib_NC_MibPerNodeConfig_t));
+    /* Time Management */
+    /* Without modifying the TIME module, this was unable to work in BPCat. The
+    ** TIME and AS module's use of OSAL needs to be abstracted because no data is
+    ** being put into BPLib by BPCat */
+    #ifdef CFS_BUILD
+        /* Initialize time */
+        Status = BPLib_TIME_Init();
+        if (Status != BPLIB_SUCCESS)
+        { /* Failed initialization of TIME */
+            return BPLIB_NC_TIME_INIT_ERR;
+        }
+    #endif
 
-        /* Initialize contact/channel status telemetry with table values */
-        BPLib_NC_UpdateContactHkTlm();
-        BPLib_NC_UpdateChannelHkTlm();
+    /* Initialize NC */
+    Status = BPLib_NC_InitImpl(ConfigPtrs);
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of NC */
+        return BPLIB_NC_INIT_ERR;
+    }
 
-        /* Initialize CRC tables */
-        BPLib_CRC_Init();
+    /* Initialize CRC tables */
+    BPLib_CRC_Init();
 
-        /* Initialize AS */
-        Status = BPLib_AS_Init();
+    /* Initialize AS */
+    Status = BPLib_AS_Init();
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of AS */
+        return BPLIB_NC_AS_INIT_ERR;
+    }
+
+    /* Initialize QM */
+    Status = BPLib_QM_QueueTableInit(Instance, MaxUnsortedJobs);
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of QM */
+        return BPLIB_NC_QM_INIT_ERR;
+    }
+    
+    Status = BPLib_MEM_PoolInit(&(Instance->pool), PoolMem, PoolMemLen);
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of MEM */
+        return BPLIB_NC_MEM_INIT_ERR;
     }
 
     return Status;
