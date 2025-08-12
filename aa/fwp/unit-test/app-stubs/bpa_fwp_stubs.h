@@ -78,7 +78,7 @@ BPLib_Status_t BPA_TABLEP_TableInit(void);
 
 BPLib_Status_t BPA_TABLEP_TableUpdate(uint8_t TableType, void** TblPtr);
 
-BPLib_Status_t BPA_CLAP_ContactSetup(uint32_t ContactId, BPLib_CLA_ContactsSet_t ContactInfo);
+BPLib_Status_t BPA_CLAP_ContactSetup(uint32_t ContactId);
 
 BPLib_Status_t BPA_CLAP_ContactStart(uint32_t ContactId);
 

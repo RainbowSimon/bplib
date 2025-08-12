@@ -75,7 +75,7 @@ typedef struct
     BPLib_Status_t (*BPA_ADUP_RemoveApplication)(uint32_t ChanId);
 
     /* CLA Proxy function callbacks */
-    BPLib_Status_t (*BPA_CLAP_ContactSetup)(uint32_t ContactId, BPLib_CLA_ContactsSet_t ContactInfo);
+    BPLib_Status_t (*BPA_CLAP_ContactSetup)(uint32_t ContactId);
     BPLib_Status_t (*BPA_CLAP_ContactStart)(uint32_t ContactId);
     BPLib_Status_t (*BPA_CLAP_ContactStop)(uint32_t ContactId);
     void           (*BPA_CLAP_ContactTeardown)(uint32_t ContactId);
