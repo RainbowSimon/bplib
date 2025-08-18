@@ -142,7 +142,7 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData)
                 TempEidArr[ArrLen] = &TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx];
                 ArrLen++;
             }
-        }        
+        }
 
         /* Validate retransmit timeout */
         if (TblDataPtr->ContactSet[ContId].RetransmitTimeout > BPLIB_MAX_RETRANSMIT_ALLOWED)
