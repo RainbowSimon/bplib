@@ -20,6 +20,7 @@
 #include "bplib_stor_sql.h"
 #include "bplib_qm.h"
 #include "bplib_as.h"
+#include "bplib_nc.h"
 
 #include <stdio.h>
 
@@ -43,12 +44,23 @@ static sqlite3_stmt* InsertBlobStmt;
 static int BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
 {
     int SQLStatus;
+    uint64_t EffectiveLifetime;
+
+    /* Ensure the lifetime is less than or equal to the max allowed lifetime */
+    BPLib_NC_ReaderLock();
+    EffectiveLifetime = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_LIFETIME];
+    BPLib_NC_ReaderUnlock();
+
+    if (EffectiveLifetime > Bundle->blocks.PrimaryBlock.Lifetime)
+    {
+        EffectiveLifetime = Bundle->blocks.PrimaryBlock.Lifetime;
+    }    
 
     sqlite3_reset(InsertMetadataStmt);
 
     /* Add the value of the timestamp used as an indicator for some action to the InsertMetadataStmt variable */
     SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 1, (int64_t)Bundle->blocks.PrimaryBlock.Timestamp.CreateTime + 
-                                                          (int64_t)Bundle->blocks.PrimaryBlock.Lifetime);
+                                                          (int64_t)EffectiveLifetime);
 
     if (SQLStatus == SQLITE_OK)
     {

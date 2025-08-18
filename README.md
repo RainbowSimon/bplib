@@ -20,7 +20,7 @@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 ```
 
-The Bundle Protocol library (BPLib) implements a subset of the [RFC-9171 Bundle Protocol](https://www.rfc-editor.org/rfc/rfc9171.html) andtargets embedded space flight applications via [BPNode](https://github.com/nasa/bp), with the goal of implementing the entirety
+The Bundle Protocol library (BPLib) implements a subset of the [RFC-9171 Bundle Protocol](https://www.rfc-editor.org/rfc/rfc9171.html) and targets embedded space flight applications via [BPNode](https://github.com/nasa/bp), with the goal of implementing the entirety
 of RFC-9171. The build 7.0 library uses a UDP convergance layer to manage the process of encapsulating
 application data in bundles, and extracting application data out of bundles.
 
@@ -35,13 +35,13 @@ expiration
 
 ## 2. Prerequisites
 
-1. The build has only been tested on Ubuntu 22.04.4 LTS, the __cmake__ build system and a compiler
+1. The build has only been tested on Ubuntu 20.04.6 LTS, the __cmake__ build system and a compiler
 toolchain (by default __gcc__). Additionally, the __pkg-config__ tool is used to manage the flags
 required for dependencies. These can typically be installed via the built-in package management
 system on most Linux distributions. The required packages and versions on Ubuntu are the following:
 - cmake version 3.22.1
 - pkg-config 0.29.1
-- gcc  (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0
+- gcc 9.4.0
 - libsqlite3-dev
 
 2. Create and store an install directory
@@ -93,7 +93,7 @@ git clone https://github.com/nasa/bplib
 cd bplib
 
 # Clone the OSAL repository
-git clone https://github.com/nasa/OSAL
+git clone https://github.com/nasa/OSAL osal
 
 ```
 
@@ -102,14 +102,14 @@ If you wish to modify the contact configurations, such as the UDP address or des
 3. Define build environment variables
 
 ```
-export NasaOsal_DIR="${INSTALL_DIR}/bplib/osal-staging/usr/local/lib/cmake
+export NasaOsal_DIR="${INSTALL_DIR}/bplib/osal-staging/usr/local/lib/cmake"
 export BPLIB_OS_LAYER=OSAL
 
 # Choose a build configuration - choose between Debug or Release
 export MATRIX_BUILD_TYPE=Release
 
 # Define bplib build directory
-export BPLIB_BUILD="${BPLIB_HOME}/bplib-build-matrix-${MATRIX_BUILD_TYPE}-POSIX"
+export BPLIB_BUILD="${INSTALL_DIR}/bplib/bplib-build-matrix-${MATRIX_BUILD_TYPE}-POSIX"
 ```
 
 4. Build and Install OSAL
@@ -122,10 +122,10 @@ cd $INSTALL_DIR/bplib
 cd osal/
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DOSAL_SYSTEM_BSPTYPE=generic-linux \
-      -DCMAKE_BUILD_TYPE="${MATRIX_BUILD_TYPE}"$ \
+      -DCMAKE_BUILD_TYPE="${MATRIX_BUILD_TYPE}" \
       -DOSAL_OMIT_DEPRECATED=TRUE \
       -DENABLE_UNIT_TESTS=TRUE \
-      -DOSAL_CONFIG_DEBUG_PERMISSIVE_MODE=ON" -B ../osal-build
+      -DOSAL_CONFIG_DEBUG_PERMISSIVE_MODE=ON -B ../osal-build
 cd ../osal-build
 make DESTDIR=../osal-staging install
 ```
@@ -153,6 +153,6 @@ ctest --output-on-failure 2>&1 | tee ctest.log
 ## 6. Building a Standalone
 ```
 # Run bpcat executable
-cd $INSTALL_DIR/bplib/app
+cd $BPLIB_BUILD/app
 ./bpcat
 ```

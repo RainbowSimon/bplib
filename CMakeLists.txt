@@ -52,6 +52,10 @@ set(BPLIB_VERSION_STRING "3.0.99") # development
 set(BPLIB_SRC)
 set(BPLIB_COMMON_COMPILE_OPTIONS)
 
+if (IS_CFS_ARCH_BUILD)
+  add_definitions(-DCFS_BUILD)
+endif()
+
 # If using an external OSAL package, then locate it now
 # This needs to be done at the top level so the imported targets are
 # available to all submodules, for unit testing in particular.

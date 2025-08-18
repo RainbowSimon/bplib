@@ -41,27 +41,28 @@
 /* There are 4 types of control message types, received from CL*/
 typedef enum
 {
-    SentIt              = 0, /* LTP Only, CL sends out */
-    SessionComplete     = 1, /*For LTP, Other end received*/
-    SessionCancelled    = 2, /* Session is cancelled, do nothing*/
-    SessionStarted      = 3 /* Session started, do nothing*/
+    SentIt           = 0, /* LTP Only, CL sends out */
+    SessionComplete  = 1, /* For LTP, Other end received */
+    SessionCancelled = 2, /* Session is cancelled, do nothing */
+    SessionStarted   = 3  /* Session started, do nothing */
 }BPLib_CLA_CtrlMsgTypes_t;
 
 typedef enum
 {
-    UDPType = 0x00000000,
-    TCPType = 0x00000001,
-    EPPType = 0x00000002,
-    LTPType = 0x00000003,
+    BPLib_UDP_CLA = 0,
+    BPLib_TCP_CLA = 1,
+    BPLib_EPP_CLA = 2,
+    BPLib_LTP_CLA = 3,
+    BPLib_SB_CLA  = 4,
 } BPLib_CLA_Type_t;
 
 typedef struct
 {
-    char        CtrlMsgTag[8]; /* "BPNMSG" */
-    uint32_t    SessionID;
-    uint32_t    BundleID;
-    BPLib_CLA_Type_t   ClaType;
-    uint8_t     MsgTypes;
+    char             CtrlMsgTag[8]; /* "BPNMSG" */
+    uint32_t         SessionID;
+    uint32_t         BundleID;
+    BPLib_CLA_Type_t ClaType;
+    uint8_t          MsgTypes;
 } BPLib_CLA_CtrlMsg_t;
 
 typedef enum
@@ -230,16 +231,5 @@ BPLib_Status_t BPLib_CLA_ContactTeardown(BPLib_Instance_t *Inst, uint32_t Contac
   * \retval     BPLIB_INVALID_CONT_ID_ERR: Provided contact ID is invalid
   */
 BPLib_Status_t BPLib_CLA_GetContactRunState(uint32_t ContactId, BPLib_CLA_ContactRunState_t* ReturnState);
-
-/**
-  * \brief     Set the run state of the provided contact to BPLIB_CLA_EXITED
-  * \note      This function is for external use of the contact run state accessor. Only exiting the application is allowed
-  *            for the non-BPLib-CLA scope.
-  * \param[in] ContactId (uint32_t) Contact ID from the Contacts Configuration whose run state is being requested to change
-  * \return    Execution status (Status assigned by BPLib_CLA_SetContactRunState)
-  * \retval    BPLIB_SUCCESS: Successfully changed the run state of the provided contact ID to the provided run state
-  * \retval    BPLIB_INVALID_CONT_ID_ERR: Provided contact ID does not match a contact ID in the Contacts Configuration
-  */
-BPLib_Status_t BPLib_CLA_SetContactExited(uint32_t ContactId);
 
 #endif /* BPLIB_CLA_H */

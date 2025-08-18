@@ -139,12 +139,6 @@
 /* STOR event IDs */
 /* ============== */
 
-#define BPLIB_STOR_SCAN_CACHE_INVALID_ARG_ERR_EID       (600u)
-#define BPLIB_STOR_SCAN_CACHE_GOT_NULL_BUNDLE_WARN_EID  (602u)
-#define BPLIB_STOR_SCAN_CACHE_ADD_JOB_ERR_EID           (603u)
-#define BPLIB_STOR_CACHE_RECVD_BUNDLE_DBG_EID           (604u)
-#define BPLIB_STOR_CACHE_QUEUE_ERR_EID                  (605u)
-
 #define BPLIB_NC_TBL_UPDATE_INF_EID                     (606u)
 #define BPLIB_NC_TBL_UPDATE_ERR_EID                     (607u)
 
@@ -166,6 +160,7 @@
 #define BPLIB_CLA_CONTACT_NO_STATE_CHG_DBG_EID          (661u)
 #define BPLIB_CLA_INVALID_CONTACT_ID_DBG_EID            (662u)
 #define BPLIB_CLA_REMOVE_QUEUE_FLUSH_DGB_EID            (663u)
+#define BPLIB_CLA_DUPLICATE_EIDS_WRN_EID                (664u)
 
 /* ============ */
 /* PI event IDs */
@@ -189,5 +184,11 @@
 
 /* QM event IDs */
 #define BPLIB_QM_EBP_OUT_ERR_EID                        (700u)
+
+/* ================== */
+/* NC Debug Event IDs */
+/* ================== */
+
+#define BPLIB_NC_INIT_ERR_EID                           (701u)
 
 #endif /* BPLIB_EVENTIDS_H */
