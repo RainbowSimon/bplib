@@ -185,4 +185,10 @@
 /* QM event IDs */
 #define BPLIB_QM_EBP_OUT_ERR_EID                        (700u)
 
+/* ================== */
+/* NC Debug Event IDs */
+/* ================== */
+
+#define BPLIB_NC_INIT_ERR_EID                           (701u)
+
 #endif /* BPLIB_EVENTIDS_H */
