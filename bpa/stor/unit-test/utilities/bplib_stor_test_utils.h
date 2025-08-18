@@ -36,6 +36,7 @@
 #include "bplib_em_handlers.h"
 #include "bplib_qm_handlers.h"
 #include "bpa_fwp_stubs.h"
+#include "bplib_nc.h"
 
 /*
 ** Global Data

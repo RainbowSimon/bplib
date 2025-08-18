@@ -316,6 +316,7 @@ void Test_BPLib_CLA_ContactsTblValidateFunc_Nominal(void)
     /* Run unit test and check results */
     ReturnStatus = BPLib_CLA_ContactsTblValidateFunc(&TestTblData);
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_SUCCESS);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 0);
 }
 
 void Test_BPLib_CLA_ContactsTblValidateFunc_DtnDestEid(void)
@@ -331,6 +332,7 @@ void Test_BPLib_CLA_ContactsTblValidateFunc_DtnDestEid(void)
     /* Run unit test and check results */
     ReturnStatus = BPLib_CLA_ContactsTblValidateFunc(&TestTblData);
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_INVALID_CONFIG_ERR);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 0);
 }
 
 void Test_BPLib_CLA_ContactsTblValidateFunc_InvDestEid(void)
@@ -341,11 +343,14 @@ void Test_BPLib_CLA_ContactsTblValidateFunc_InvDestEid(void)
     /* Set input table to all valid values */
     memset(&TestTblData, 0, sizeof(TestTblData));
 
+    TestTblData.ContactSet[0].DestEIDs[0].Scheme = BPLIB_EID_SCHEME_IPN;
+
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_PatternIsValid), false);
 
     /* Run unit test and check results */
     ReturnStatus = BPLib_CLA_ContactsTblValidateFunc(&TestTblData);
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_INVALID_CONFIG_ERR);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 0);
 }
 
 void Test_BPLib_CLA_ContactsTblValidateFunc_InvTimeout(void)
@@ -363,6 +368,7 @@ void Test_BPLib_CLA_ContactsTblValidateFunc_InvTimeout(void)
     /* Run unit test and check results */
     ReturnStatus = BPLib_CLA_ContactsTblValidateFunc(&TestTblData);
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_INVALID_CONFIG_ERR);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 0);
 }
 
 void Test_BPLib_CLA_ContactsTblValidateFunc_InvTimeTrig(void)
@@ -380,6 +386,7 @@ void Test_BPLib_CLA_ContactsTblValidateFunc_InvTimeTrig(void)
     /* Run unit test and check results */
     ReturnStatus = BPLib_CLA_ContactsTblValidateFunc(&TestTblData);
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_INVALID_CONFIG_ERR);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 0);
 }
 
 void Test_BPLib_CLA_ContactsTblValidateFunc_InvSizeTrig(void)
@@ -397,6 +404,28 @@ void Test_BPLib_CLA_ContactsTblValidateFunc_InvSizeTrig(void)
     /* Run unit test and check results */
     ReturnStatus = BPLib_CLA_ContactsTblValidateFunc(&TestTblData);
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_INVALID_CONFIG_ERR);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 0);
+}
+
+void Test_BPLib_CLA_ContactsTblValidateFunc_DuplEids(void)
+{
+    BPLib_Status_t ReturnStatus;
+    BPLib_CLA_ContactsTable_t TestTblData;
+
+    /* Set input table to all valid values */
+    memset(&TestTblData, 0, sizeof(TestTblData));
+
+    TestTblData.ContactSet[0].DestEIDs[0].Scheme = BPLIB_EID_SCHEME_IPN;
+    TestTblData.ContactSet[0].DestEIDs[1].Scheme = BPLIB_EID_SCHEME_IPN;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_PatternIsValid), true);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_PatternsAreMatch), true);
+
+    /* Run unit test and check results */
+    ReturnStatus = BPLib_CLA_ContactsTblValidateFunc(&TestTblData);
+    UtAssert_INT32_EQ(ReturnStatus, BPLIB_SUCCESS);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 1);
+    UtAssert_STUB_COUNT(BPLib_EID_PatternsAreMatch, 1);
 }
 
 
@@ -766,6 +795,7 @@ void TestBplibCla_Register(void)
     ADD_TEST(Test_BPLib_CLA_ContactsTblValidateFunc_InvTimeout);
     ADD_TEST(Test_BPLib_CLA_ContactsTblValidateFunc_InvTimeTrig);
     ADD_TEST(Test_BPLib_CLA_ContactsTblValidateFunc_InvSizeTrig);
+    ADD_TEST(Test_BPLib_CLA_ContactsTblValidateFunc_DuplEids);
 
     ADD_TEST(Test_BPLib_CLA_ContactSetup_Nominal);
     ADD_TEST(Test_BPLib_CLA_ContactSetup_InvalidContactId);
