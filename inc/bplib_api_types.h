@@ -325,6 +325,16 @@ typedef enum
 #define BPLIB_BI_INVALID_BUNDLE_ERR                    ((BPLib_Status_t) -240)
 #define BPLIB_BI_EXPIRED_BUNDLE_ERR                    ((BPLib_Status_t) -241)
 
+/* Extra Node Configuration errors */
+#define BPLIB_NC_FWP_INIT_ERR                          ((BPLib_Status_t) -242)
+#define BPLIB_NC_EM_INIT_ERR                           ((BPLib_Status_t) -243)
+#define BPLIB_NC_TABLEP_INIT_ERR                       ((BPLib_Status_t) -244)
+#define BPLIB_NC_TIME_INIT_ERR                         ((BPLib_Status_t) -245)
+#define BPLIB_NC_INIT_ERR                              ((BPLib_Status_t) -246)
+#define BPLIB_NC_AS_INIT_ERR                           ((BPLib_Status_t) -247)
+#define BPLIB_NC_QM_INIT_ERR                           ((BPLib_Status_t) -248)
+#define BPLIB_NC_MEM_INIT_ERR                          ((BPLib_Status_t) -249)
+
 /** @} */
 
 #ifdef __cplusplus

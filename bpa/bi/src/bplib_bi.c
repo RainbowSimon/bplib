@@ -140,6 +140,7 @@ BPLib_Status_t BPLib_BI_ValidateBundle(BPLib_Bundle_t *CandidateBundle)
     bool     PrevNodePresent = false;
     bool     AgeBlockPresent = false;
     bool     HopCountPresent = false;
+    uint64_t EffectiveLifetime;
 
     if (CandidateBundle == NULL)
     {
@@ -216,11 +217,21 @@ BPLib_Status_t BPLib_BI_ValidateBundle(BPLib_Bundle_t *CandidateBundle)
         }
     }
 
+    /* Ensure the lifetime is less than or equal to the max allowed lifetime */
+    BPLib_NC_ReaderLock();
+    EffectiveLifetime = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_LIFETIME];
+    BPLib_NC_ReaderUnlock();
+
+    if (EffectiveLifetime > CandidateBundle->blocks.PrimaryBlock.Lifetime)
+    {
+        EffectiveLifetime = CandidateBundle->blocks.PrimaryBlock.Lifetime;
+    }
+
     /* If an age block is present, make sure the bundle is not expired */
     if (AgeBlockPresent && CandidateBundle->blocks.PrimaryBlock.Timestamp.CreateTime == 0)
     {
-        if ((BPLib_TIME_GetMonotonicTime() - CandidateBundle->blocks.PrimaryBlock.MonoTime.Time + AgeBlkTime) >= 
-             CandidateBundle->blocks.PrimaryBlock.Lifetime)
+        if ((BPLib_TIME_GetMonotonicTime() - CandidateBundle->blocks.PrimaryBlock.MonoTime.Time + 
+                AgeBlkTime) >= EffectiveLifetime)
         {
             return BPLIB_BI_EXPIRED_BUNDLE_ERR;
         }
@@ -237,7 +248,7 @@ BPLib_Status_t BPLib_BI_ValidateBundle(BPLib_Bundle_t *CandidateBundle)
         {
             /* If the current DTN time is 0 (implying it's invalid), bundle won't expire */
             if ((CandidateBundle->blocks.PrimaryBlock.Timestamp.CreateTime + 
-                 CandidateBundle->blocks.PrimaryBlock.Lifetime) <= BPLib_TIME_GetCurrentDtnTime())
+                 EffectiveLifetime) <= BPLib_TIME_GetCurrentDtnTime())
             {
                 return BPLIB_BI_EXPIRED_BUNDLE_ERR;
             }

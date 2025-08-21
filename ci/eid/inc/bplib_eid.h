@@ -186,4 +186,41 @@ void BPLib_EID_CopyEidPatterns(BPLib_EID_Pattern_t *EID_Actual, BPLib_EID_Patter
  */
 bool BPLib_EID_PatternIsMatch(BPLib_EID_t* EID_Actual, BPLib_EID_Pattern_t* EID_Pattern);
 
+/**
+ * \brief     Checks if two patterns match each other
+ * \details   The various members of each pattern are compared for equivalence
+ * \note      Wildcards are represented as a BPLib_EID_Pattern_t::Min<Field> == 0
+ *            and a BPLib_EID_Pattern_t::Max<Field> == 0xFFFF FFFF FFFF FFFF, where
+ *            Field is Allocator, Node, or Service
+ * \param[in] PatternActual (BPLib_EID_Pattern_t*) First pattern to compare
+ * \param[in] PatternReference (BPLib_EID_Pattern_t*) Second pattern to compare
+ * \return    Pattern match
+ * \retval    true: The two patterns match
+ * \retval    false: The two patterns do not match
+ * \ref       BPLib_EID_Pattern_t
+ */
+bool BPLib_EID_PatternsAreMatch(BPLib_EID_Pattern_t* PatternActual, BPLib_EID_Pattern_t* PatternReference);
+
+/**
+ * \brief     Get an EID pattern as a string
+ * \details   Given an EID pattern, generate a string with the correct formatting to
+ *            represent that pattern's value
+ * \param[in] Pattern (BPLib_EID_Pattern_t*) Pattern to turn into a string
+ * \param[in] StrLen (size_t) Length of the string buffer
+ * \param[out] StrBuf (char*) Pattern string to return
+ * \ref       BPLib_EID_Pattern_t
+ */
+void BPLib_EID_GetPatternString(BPLib_EID_Pattern_t* Pattern, char* StrBuf, size_t StrLen);
+
+/**
+ * \brief     Get an EID as a string
+ * \details   Given an EID, generate a string with the correct formatting to
+ *            represent that EID's value
+ * \param[in] Pattern (BPLib_EID_t*) Pattern to turn into a string
+ * \param[in] StrLen (size_t) Length of the string buffer
+ * \param[out] StrBuf (char*) EID string to return
+ * \ref       BPLib_EID_t
+ */
+void BPLib_EID_GetString(BPLib_EID_t* EID, char* StrBuf, size_t StrLen);
+
 #endif /* BPLIB_EID_H */
