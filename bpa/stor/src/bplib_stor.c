@@ -355,6 +355,9 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
         CacheInst->BundleCountStored -= NumDiscarded;
+
+        BPLib_EM_SendEvent(BPLIB_STOR_EXPIRE_DBG_EID, BPLib_EM_EventType_DEBUG,
+            "Discarded %d expired bundles from storage", NumDiscarded);
     }
 
     Status = BPLib_SQL_DiscardEgressed(Inst, &NumDiscarded);
@@ -368,6 +371,9 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
         CacheInst->BundleCountStored -= NumDiscarded;
+
+        BPLib_EM_SendEvent(BPLIB_STOR_DELETE_DBG_EID, BPLib_EM_EventType_DEBUG,
+            "Discarded %d egressed bundles from storage", NumDiscarded);
     }
 
     pthread_mutex_unlock(&CacheInst->lock);
