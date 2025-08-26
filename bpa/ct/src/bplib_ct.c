@@ -23,6 +23,9 @@
 */
 
 #include "bplib_ct.h"
+#include "bplib_bblocks.h"
+#include "bplib_eid.h"
+#include "bplib_mem.h"
 
 
 /*
@@ -30,5 +33,35 @@
 */
 
 int BPLib_CT_Init(void) {
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
+{
+    uint64_t UniqueIdArr[BPLIB_CT_BUNDLE_IDENTIFIER_ARRAY_LEN];
+
+    if (Bundle == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    UniqueIdArr[0] = Bundle->blocks.PrimaryBlock.Timestamp.SequenceNumber;
+    UniqueIdArr[1] = Bundle->blocks.PrimaryBlock.Timestamp.CreateTime;
+    UniqueIdArr[2] = Bundle->blocks.PrimaryBlock.SrcEID.Scheme;
+    UniqueIdArr[3] = Bundle->blocks.PrimaryBlock.SrcEID.IpnSspFormat;
+    UniqueIdArr[4] = Bundle->blocks.PrimaryBlock.SrcEID.Allocator;
+    UniqueIdArr[5] = Bundle->blocks.PrimaryBlock.SrcEID.Node;
+    UniqueIdArr[6] = Bundle->blocks.PrimaryBlock.SrcEID.Service;
+
+    /* 
+    ** Add any additional unique identifiers for a bundle here 
+    ** (and increase the array length accordingly) 
+    */
+
+    /* Use a CRC-32C as a quick hash function to get a unique ID for this bundle */
+    Bundle->blocks.PrimaryBlock.BundleId = BPLib_CRC_Calculate((void *) ((uintptr_t) UniqueIdArr), 
+                                BPLIB_CT_BUNDLE_IDENTIFIER_ARRAY_LEN * sizeof(uint64_t), 
+                                BPLib_CRC_Type_CRC32C);
+
     return BPLIB_SUCCESS;
 }

@@ -40,6 +40,15 @@ static BPLib_QM_JobState_t ContactIn_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 
 static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
+    BPLib_Status_t Status;
+
+    Status = BPLib_CT_SetBundleId(Bundle);
+
+    if (Status != BPLIB_SUCCESS)
+    {
+        return NO_NEXT_STATE;
+    }
+    
     return CONTACT_IN_CT_TO_STOR;
 }
 
@@ -75,6 +84,15 @@ static BPLib_QM_JobState_t ChannelIn_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 
 static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
+    BPLib_Status_t Status;
+
+    Status = BPLib_CT_SetBundleId(Bundle);
+
+    if (Status != BPLIB_SUCCESS)
+    {
+        return NO_NEXT_STATE;
+    }
+    
     return CHANNEL_IN_CT_TO_STOR;
 }
 

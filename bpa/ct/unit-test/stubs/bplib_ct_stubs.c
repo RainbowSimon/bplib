@@ -40,3 +40,19 @@ int BPLib_CT_Init(void)
 
     return UT_GenStub_GetReturnValue(BPLib_CT_Init, int);
 }
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_SetBundleId()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_SetBundleId, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CT_SetBundleId, BPLib_Bundle_t *, Bundle);
+
+    UT_GenStub_Execute(BPLib_CT_SetBundleId, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_SetBundleId, BPLib_Status_t);
+}
