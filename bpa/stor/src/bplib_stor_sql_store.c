@@ -41,6 +41,29 @@ static sqlite3_stmt* InsertBlobStmt;
 /*******************************************************************************
 ** Static Functions
 */
+
+#if 0
+/* 
+** Helper function to print contents of sqlite bundle_data table for debugging. Should be
+** kept commented out in main. Use by calling:
+**      sqlite3_exec(db, "SELECT * FROM bundle_data;", BPLib_SQL_PrintTbl, 0, 0);
+*/
+static int BPLib_SQL_PrintTbl(void* data, int argc, char** argv, char** azColName)
+{
+    int i;
+
+    printf("*******************\n");
+    fprintf(stderr, "%s: ", (const char*)data);
+
+    for (i = 0; i < argc; i++) {
+        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    }
+
+    printf("*******************\n");
+    return 0;
+}
+#endif 
+
 static int BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
 {
     int SQLStatus;

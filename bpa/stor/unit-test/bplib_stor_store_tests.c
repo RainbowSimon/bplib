@@ -157,22 +157,26 @@ void Test_BPLib_STOR_StoreBundle_SQLFail(void)
 /* Test that storing a batch worth of bundles places the bundles in persistent storage */
 void Test_BPLib_STOR_StoreBundle_StoreBatch(void)
 {
-    BPLib_Bundle_t Bundle;
+    BPLib_Bundle_t Bundles[BPLIB_STOR_INSERTBATCHSIZE];
     int i;
-    BPLib_STOR_Test_CreateTestBundle(&Bundle);
 
     /* Store a batch worth of bundles */
     for (i = 0; i < BPLIB_STOR_INSERTBATCHSIZE - 1; i++)
     {
-        UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
-        Bundle.blocks.PrimaryBlock.Timestamp.CreateTime += 1;
+        BPLib_STOR_Test_CreateTestBundle(&Bundles[i]);
+        UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundles[i]), BPLIB_SUCCESS);
+        Bundles[i].blocks.PrimaryBlock.Timestamp.CreateTime = i;
+        Bundles[i].blocks.PrimaryBlock.BundleId = i; /* To prevent duplicates */
     }
 
     /* At this point, batch size should be INSERTBATCHSIZE - 1, and nothing should have been flushed */
     UtAssert_INT32_EQ(BplibInst.BundleStorage.InsertBatchSize, BPLIB_STOR_INSERTBATCHSIZE - 1);
 
     /* Store the bundle that triggers the batch */
-    UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
+    BPLib_STOR_Test_CreateTestBundle(&Bundles[BPLIB_STOR_INSERTBATCHSIZE - 1]);
+    Bundles[i].blocks.PrimaryBlock.Timestamp.CreateTime = BPLIB_STOR_INSERTBATCHSIZE - 1;
+    Bundles[i].blocks.PrimaryBlock.BundleId = BPLIB_STOR_INSERTBATCHSIZE - 1; /* To prevent duplicates */
+    UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundles[i]), BPLIB_SUCCESS);
     UtAssert_INT32_EQ(BplibInst.BundleStorage.InsertBatchSize, 0);
 
     /* No events */
@@ -184,8 +188,11 @@ void Test_BPLib_STOR_StoreBundle_StoreBatch(void)
     /* Ensure batch size was reset */
     UtAssert_INT32_EQ(BplibInst.BundleStorage.InsertBatchSize, 0);
 
-    /* Free the test bundle (for most test cases this is done in utils.c) */
-    BPLib_STOR_Test_FreeTestBundle(&Bundle);
+    /* Free the test bundles (for most test cases this is done in utils.c) */
+    for (i = 0; i < BPLIB_STOR_INSERTBATCHSIZE; i++)
+    {
+        BPLib_STOR_Test_FreeTestBundle(&Bundles[i]);
+    }
 }
 
 void TestBplib_STOR_Store_Register(void)

@@ -77,6 +77,7 @@ static BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, DuplicateBundlesIgnored);
             BPLib_EM_SendEvent(BPLIB_STOR_DUPL_DBG_EID, BPLib_EM_EventType_DEBUG,
                 "Ignored %ld duplicate bundles in store batch.", DuplicateBundlesIgnored);
+            printf("found duplicate %ld\n", DuplicateBundlesIgnored);
         }
     }
     else if (Status == BPLIB_STOR_DB_FULL_ERR)
@@ -92,9 +93,9 @@ static BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
         BPLib_EM_SendEvent(BPLIB_STOR_SQL_STORE_ERR_EID, BPLib_EM_EventType_ERROR,
-            "BPLib_SQL_Store failed to store bundle. RC=%d", Status);
-        
+            "BPLib_SQL_Store failed to store bundle. RC=%d", Status);        
     }
+    
     /* Free the bundles, as they're now persistent
     ** Note: even if the storage fails, we free everything to avoid a leak.
     */
