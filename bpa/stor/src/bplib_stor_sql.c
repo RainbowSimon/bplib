@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  */
+
+/* ======== */
+/* Includes */
+/* ======== */
+
 #include "bplib_stor_sql.h"
 #include "bplib_qm.h"
 #include "bplib_time.h"
@@ -25,31 +30,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
-
-/*******************************************************************************
-** SQL Query Definitions
-*/
-
-/* Expire Bundles */
-static const char* DiscardExpiredSQL =
-    "WITH to_delete AS ("
-    "    SELECT id FROM bundle_data "
-    "    WHERE (action_timestamp < ?) AND (egress_attempted = 0) "
-    "    LIMIT ?"
-    ") "
-    "DELETE FROM bundle_data "
-    "WHERE id IN (SELECT id FROM to_delete);";
-static sqlite3_stmt* DiscardExpiredStmt;
-
-static const char* DiscardEgressedSQL =
-    "WITH to_delete AS ("
-    "    SELECT id FROM bundle_data "
-    "    WHERE egress_attempted = 1 "
-    "    LIMIT ?"
-    ") "
-    "DELETE FROM bundle_data "
-    "WHERE id IN (SELECT id FROM to_delete);";
-static sqlite3_stmt* DiscardEgressedStmt;
 
 /* ==================== */
 /* Function Definitions */
@@ -326,9 +306,22 @@ BPLib_Status_t BPLib_SQL_GetDbSize(BPLib_Instance_t *Inst, size_t *DbSize)
 
 BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDiscarded)
 {
-    int SQLStatus;
-    sqlite3* db = Inst->BundleStorage.db;
-    BPLib_Status_t Status = BPLIB_SUCCESS;
+    SQL_Status_t   SQLStatus;
+    sqlite3*       db;
+    BPLib_Status_t Status;
+    sqlite3_stmt*  DiscardExpiredStmt;
+
+    const char* DiscardExpiredSQL =
+    "WITH to_delete AS ("
+    "    SELECT id FROM bundle_data "
+    "    WHERE (action_timestamp < ?) AND (egress_attempted = 0) "
+    "    LIMIT ?"
+    ") "
+    "DELETE FROM bundle_data "
+    "WHERE id IN (SELECT id FROM to_delete);";
+
+    Status = BPLIB_SUCCESS;
+    db     = Inst->BundleStorage.db;
 
     SQLStatus = sqlite3_prepare_v2(db, DiscardExpiredSQL, -1, &DiscardExpiredStmt, 0);
     if (SQLStatus != SQLITE_OK)
@@ -339,7 +332,7 @@ BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDisca
 
     if (Status == BPLIB_SUCCESS)
     {
-        SQLStatus = BPLib_SQL_DiscardExpiredImpl(db, NumDiscarded, &(Inst->BundleStorage));
+        SQLStatus = BPLib_SQL_DiscardExpiredImpl(db, NumDiscarded, &(Inst->BundleStorage), DiscardExpiredStmt);
         if (SQLStatus != SQLITE_OK)
         {
             Status = BPLIB_STOR_SQL_DISCARD_ERR;
@@ -352,7 +345,7 @@ BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDisca
     return Status;
 }
 
-SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache)
+SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache, sqlite3_stmt*  DiscardExpiredStmt)
 {
     int SQLStatus;
     //BPLib_TIME_MonotonicTime_t DtnMonotonicTime;
@@ -486,9 +479,22 @@ SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPL
 
 BPLib_Status_t BPLib_SQL_DiscardEgressed(BPLib_Instance_t* Inst, size_t* NumDiscarded)
 {
-    int SQLStatus;
-    sqlite3* db = Inst->BundleStorage.db;
-    BPLib_Status_t Status = BPLIB_SUCCESS;
+    int            SQLStatus;
+    sqlite3*       db;
+    BPLib_Status_t Status;
+    sqlite3_stmt*  DiscardEgressedStmt;
+
+    const char* DiscardEgressedSQL =
+    "WITH to_delete AS ("
+    "    SELECT id FROM bundle_data "
+    "    WHERE egress_attempted = 1 "
+    "    LIMIT ?"
+    ") "
+    "DELETE FROM bundle_data "
+    "WHERE id IN (SELECT id FROM to_delete);";
+
+    Status = BPLIB_SUCCESS;
+    db     = Inst->BundleStorage.db;
 
     SQLStatus = sqlite3_prepare_v2(db, DiscardEgressedSQL, -1, &DiscardEgressedStmt, 0);
     if (SQLStatus != SQLITE_OK)
@@ -499,7 +505,7 @@ BPLib_Status_t BPLib_SQL_DiscardEgressed(BPLib_Instance_t* Inst, size_t* NumDisc
 
     if (Status == BPLIB_SUCCESS)
     {
-        SQLStatus = BPLib_SQL_DiscardEgressedImpl(db, NumDiscarded, &(Inst->BundleStorage));
+        SQLStatus = BPLib_SQL_DiscardEgressedImpl(db, NumDiscarded, &(Inst->BundleStorage), DiscardEgressedStmt);
         if (SQLStatus != SQLITE_OK)
         {
             Status = BPLIB_STOR_SQL_DISCARD_ERR;
@@ -512,11 +518,12 @@ BPLib_Status_t BPLib_SQL_DiscardEgressed(BPLib_Instance_t* Inst, size_t* NumDisc
     return Status;
 }
 
-SQL_Status_t BPLib_SQL_DiscardEgressedImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache)
+SQL_Status_t BPLib_SQL_DiscardEgressedImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache, sqlite3_stmt*  DiscardEgressedStmt)
 {
-    int SQLStatus;
-    size_t EgressedBytes ;
+    int           SQLStatus;
+    size_t        EgressedBytes ;
     sqlite3_stmt* EgressedBytesStmt;
+
     const char* EgressedBytesSQL =
     "WITH egressed_bytes AS (\n"
     "   SELECT id, bundle_bytes FROM bundle_data\n"
