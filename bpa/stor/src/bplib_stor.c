@@ -98,33 +98,12 @@ void BPLib_STOR_Destroy(BPLib_Instance_t* Inst)
     pthread_mutex_destroy(&Inst->BundleStorage.lock);
 }
 
-BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t* Inst)
+/* Validate Storage table data */
+BPLib_Status_t BPLib_STOR_StorageTblValidateFunc(void *TblData)
 {
-    BPLib_Status_t       Status;
-    BPLib_BundleCache_t* CacheInst;
+    BPLib_Status_t ReturnCode = BPLIB_SUCCESS;
 
-    if (Inst == NULL)
-    {
-        return BPLIB_NULL_PTR_ERROR;
-    }
-
-    CacheInst = &Inst->BundleStorage;
-
-    pthread_mutex_lock(&CacheInst->lock);
-
-    if (CacheInst->InsertBatchSize > 0)
-    {
-        Status = BPLib_STOR_FlushPendingUnlocked(Inst);
-    }
-    else
-    {
-        /* Don't go further if there's nothing to store */
-        Status = BPLIB_SUCCESS;
-    }
-
-    pthread_mutex_unlock(&CacheInst->lock);
-
-    return Status;
+    return ReturnCode;
 }
 
 BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
@@ -148,6 +127,35 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
     if (CacheInst->InsertBatchSize == BPLIB_STOR_INSERTBATCHSIZE)
     {
         Status = BPLib_STOR_FlushPendingUnlocked(Inst);
+    }
+
+    pthread_mutex_unlock(&CacheInst->lock);
+
+    return Status;
+}
+
+BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t* Inst)
+{
+    BPLib_Status_t       Status;
+    BPLib_BundleCache_t* CacheInst;
+
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    CacheInst = &Inst->BundleStorage;
+
+    pthread_mutex_lock(&CacheInst->lock);
+
+    if (CacheInst->InsertBatchSize > 0)
+    {
+        Status = BPLib_STOR_FlushPendingUnlocked(Inst);
+    }
+    else
+    {
+        /* Don't go further if there's nothing to store */
+        Status = BPLIB_SUCCESS;
     }
 
     pthread_mutex_unlock(&CacheInst->lock);
@@ -352,14 +360,6 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
     pthread_mutex_unlock(&CacheInst->lock);
 
     return Status;
-}
-
-/* Validate Storage table data */
-BPLib_Status_t BPLib_STOR_StorageTblValidateFunc(void *TblData)
-{
-    BPLib_Status_t ReturnCode = BPLIB_SUCCESS;
-
-    return ReturnCode;
 }
 
 void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
