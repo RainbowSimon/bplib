@@ -33,6 +33,7 @@
 #include "bplib_stor_sql.h"
 #include "bplib_stor_sql_store.h"
 #include "bplib_stor_sql_load.h"
+#include "bplib_stor_internal.h"
 
 #include <stdio.h>
 
@@ -41,65 +42,6 @@
 */
 
 BPLib_StorageHkTlm_Payload_t BPLib_STOR_StoragePayload;
-
-
-/*******************************************************************************
-* Definitions and types
-*/
-/* We conditionally allow this to be defined by a compile time variable
-** so that the unit tests can pass in :memory: here and avoid using the disk
-*/
-#ifndef BPLIB_STOR_DBNAME
-#define BPLIB_STOR_DBNAME       "bplib-storage.db"
-#endif
-
-/*******************************************************************************
-* Static Functions
-*/
-static BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
-{
-    BPLib_Status_t Status;
-    BPLib_BundleCache_t* CacheInst;
-    int i;
-    size_t TotalBytesStored = 0;
-
-    CacheInst = &Inst->BundleStorage;
-
-    Status = BPLib_SQL_Store(Inst, &TotalBytesStored);
-
-    if (Status == BPLIB_SUCCESS) 
-    {
-        CacheInst->BytesStorageInUse += TotalBytesStored;
-        CacheInst->BundleCountStored += CacheInst->InsertBatchSize;
-    }
-    else if (Status == BPLIB_STOR_DB_FULL_ERR)
-    {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, CacheInst->InsertBatchSize);
-        BPLib_EM_SendEvent(BPLIB_STOR_DB_FULL_INF_EID, BPLib_EM_EventType_INFORMATION,
-            "SQLite database is full, dropping %d bundles", CacheInst->InsertBatchSize);        
-    }
-    else
-    {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
-        BPLib_EM_SendEvent(BPLIB_STOR_SQL_STORE_ERR_EID, BPLib_EM_EventType_ERROR,
-            "BPLib_SQL_Store failed to store bundle. RC=%d", Status);
-        
-    }
-    /* Free the bundles, as they're now persistent
-    ** Note: even if the storage fails, we free everything to avoid a leak.
-    */
-    for (i = 0; i < CacheInst->InsertBatchSize; i++)
-    {
-        BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
-    }
-
-    CacheInst->InsertBatchSize = 0;
-
-    return Status;
-}
 
 /*******************************************************************************
 * Exported Functions
