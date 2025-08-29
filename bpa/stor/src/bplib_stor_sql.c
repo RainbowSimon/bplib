@@ -37,9 +37,9 @@
  * This schema is designed to support efficient queries and operations on bundle metadata and associated blob data.
  * The following indexes are created:
  *
- * 1. idx_bundle_blobs_bundle_id:
- *    - Index on the 'bundle_id' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
- *      by its associated bundleID in the 'bundle_data' table.
+ * 1. idx_bundle_blobs_bundle_row:
+ *    - Index on the 'bundle_row' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
+ *      by its associated bundle_row in the 'bundle_data' table.
  *
  * 2. idx_action_timestamp:
  *    - Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter
@@ -54,10 +54,20 @@
  * 4. idx_egress_attempted:
  *    - Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up
  *      DELETE queries and other queries filtering by 'egress_attempted'.
+ * 
+ * 5. idx_bundle_id
+ *    - Index on the bplib-assigned unique 'bundle_id' in the 'bundle_data' table. This is used to detect duplicate bundles
+ *      in storage and by Custody Transfer to request the deletion or retransmission of custodial bundles. Whether or not
+ *      to allow duplicate bundles in storage is toggled by the BPLIB_ALLOW_DUPLICATE_BUNDLES flag.
  */
 static const char* CreateTableSQL = 
 "CREATE TABLE IF NOT EXISTS bundle_data (\n"
 "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+"    bundle_id INTEGER UNIQUE,\n"
+#else
+"    bundle_id INTEGER,\n"
+#endif
 "    action_timestamp INTEGER,\n"
 "    egress_attempted INTEGER DEFAULT 0,\n"
 "    dest_node INTEGER,\n"
@@ -67,13 +77,14 @@ static const char* CreateTableSQL =
 "\n"
 "CREATE TABLE IF NOT EXISTS bundle_blobs (\n"
 "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-"    bundle_id INTEGER,\n"
+"    bundle_row INTEGER,\n"
 "    blob_data BLOB,\n"
-"    FOREIGN KEY (bundle_id) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
+"    FOREIGN KEY (bundle_row) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
 ");\n"
 "\n"
-"CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_id);\n"
+"CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_row);\n"
 "CREATE INDEX IF NOT EXISTS idx_action_timestamp ON bundle_data (action_timestamp);\n"
+"CREATE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
 "\n"
 "CREATE INDEX IF NOT EXISTS idx_egress_id\n"
 "ON bundle_data (\n"

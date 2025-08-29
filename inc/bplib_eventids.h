@@ -149,6 +149,7 @@
 #define BPLIB_STOR_DB_GET_SIZE_ERR_EID                  (612u)
 #define BPLIB_STOR_EXPIRE_DBG_EID                       (613u)
 #define BPLIB_STOR_DELETE_DBG_EID                       (614u)
+#define BPLIB_STOR_DUPL_DBG_EID                         (615u)
 
 /* ============ */
 /* BI event IDs */

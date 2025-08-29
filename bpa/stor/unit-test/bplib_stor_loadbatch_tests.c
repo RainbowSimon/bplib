@@ -112,7 +112,7 @@ void Test_BPLib_STOR_LoadBatch_AddIDNominal(void)
     /* Add an ID with space available. This should succeed */
     Batch.Size = 0;
     UtAssert_INT32_EQ(BPLib_STOR_LoadBatch_AddID(&Batch, 123), BPLIB_SUCCESS);
-    UtAssert_INT32_EQ(Batch.BundleIDs[0], 123);
+    UtAssert_INT32_EQ(Batch.BundleRowIDs[0], 123);
 
     /* Add an ID with no space available. This should return BATCH_FULL */
     Batch.Size = BPLIB_STOR_LOADBATCHSIZE;
@@ -141,7 +141,7 @@ void Test_BPLib_STOR_LoadBatch_PeekNextIDNominal(void)
     /* Peek with a bundle ID available */
     Batch.ReadIndex = 0;
     Batch.Size = 1;
-    Batch.BundleIDs[0] = 123;
+    Batch.BundleRowIDs[0] = 123;
     UtAssert_INT32_EQ(BPLib_STOR_LoadBatch_PeekNextID(&Batch, &RetID), BPLIB_SUCCESS);
     UtAssert_INT32_EQ(RetID, 123);
 

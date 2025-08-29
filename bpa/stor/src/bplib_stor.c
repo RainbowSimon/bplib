@@ -60,15 +60,24 @@ static BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     BPLib_BundleCache_t* CacheInst;
     int i;
     size_t TotalBytesStored = 0;
+    size_t DuplicateBundlesIgnored = 0;
 
     CacheInst = &Inst->BundleStorage;
 
-    Status = BPLib_SQL_Store(Inst, &TotalBytesStored);
+    Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored);
 
     if (Status == BPLIB_SUCCESS) 
     {
         CacheInst->BytesStorageInUse += TotalBytesStored;
-        CacheInst->BundleCountStored += CacheInst->InsertBatchSize;
+        CacheInst->BundleCountStored += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
+
+        if (DuplicateBundlesIgnored > 0)
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, DuplicateBundlesIgnored);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, DuplicateBundlesIgnored);
+            BPLib_EM_SendEvent(BPLIB_STOR_DUPL_DBG_EID, BPLib_EM_EventType_DEBUG,
+                "Ignored %ld duplicate bundles in store batch.", DuplicateBundlesIgnored);
+        }
     }
     else if (Status == BPLIB_STOR_DB_FULL_ERR)
     {
@@ -354,7 +363,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
         BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID, BPLib_EM_EventType_ERROR,
             "BPLib_SQL_DiscardExpired failed. RC=%d", Status);
     }
-    else
+    else if (NumDiscarded > 0)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_EXPIRED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
@@ -371,7 +380,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
         BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID, BPLib_EM_EventType_ERROR,
             "BPLib_SQL_DiscardEgressed failed. RC=%d", Status);
     }
-    else
+    else if (NumDiscarded > 0)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
