@@ -30,63 +30,6 @@
 ** SQL Query Definitions
 */
 
-/* Create Table */
-/*
- * Table and Index Creation for bundle_data and bundle_blobs
- *
- * This schema is designed to support efficient queries and operations on bundle metadata and associated blob data.
- * The following indexes are created:
- *
- * 1. idx_bundle_blobs_bundle_id:
- *    - Index on the 'bundle_id' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
- *      by its associated bundleID in the 'bundle_data' table.
- *
- * 2. idx_action_timestamp:
- *    - Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter
- *      based on the timestamp of the bundle: This is used for expiring bundles
- *
- * 3. idx_find_bundle (Composite Index):
- *    - Composite index on the columns 'dest_node', 'dest_service', 'egress_attempted', 'action_timestamp', and 'id'.
- *    - This index optimizes queries that filter by node and service ranges, filter by egress_attempted (0),
- *      and sort by action_timestamp. It can also enable an index-only scan to quickly retrieve 'id'.
- *    - This composite index is designed for loading egress bundles by batch for a particular EgressID (A channel or contact)
- *
- * 4. idx_egress_attempted:
- *    - Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up
- *      DELETE queries and other queries filtering by 'egress_attempted'.
- */
-static const char* CreateTableSQL = 
-"CREATE TABLE IF NOT EXISTS bundle_data (\n"
-"    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-"    action_timestamp INTEGER,\n"
-"    egress_attempted INTEGER DEFAULT 0,\n"
-"    dest_node INTEGER,\n"
-"    dest_service INTEGER,\n"
-"    bundle_bytes INTEGER\n"
-");\n"
-"\n"
-"CREATE TABLE IF NOT EXISTS bundle_blobs (\n"
-"    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-"    bundle_id INTEGER,\n"
-"    blob_data BLOB,\n"
-"    FOREIGN KEY (bundle_id) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
-");\n"
-"\n"
-"CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_id);\n"
-"CREATE INDEX IF NOT EXISTS idx_action_timestamp ON bundle_data (action_timestamp);\n"
-"\n"
-"CREATE INDEX IF NOT EXISTS idx_egress_id\n"
-"ON bundle_data (\n"
-"    dest_node,\n"
-"    dest_service,\n"
-"    egress_attempted,\n"
-"    action_timestamp,\n"
-"    id\n"
-");\n"
-"\n"
-"CREATE INDEX IF NOT EXISTS idx_egress_attempted\n"
-"ON bundle_data (egress_attempted);\n";
-
 /* Expire Bundles */
 static const char* DiscardExpiredSQL =
     "WITH to_delete AS ("
@@ -108,11 +51,11 @@ static const char* DiscardEgressedSQL =
     "WHERE id IN (SELECT id FROM to_delete);";
 static sqlite3_stmt* DiscardEgressedStmt;
 
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
 
-/*******************************************************************************
-** Static Functions
-*/
-static int BPLib_SQL_GetNumStoredBundles(sqlite3 *db, uint32_t *BundleCnt)
+SQL_Status_t BPLib_SQL_GetNumStoredBundles(sqlite3 *db, uint32_t *BundleCnt)
 {
     const char *sql = "SELECT COUNT(*) FROM bundle_data;";
     sqlite3_stmt *stmt;
@@ -136,7 +79,7 @@ static int BPLib_SQL_GetNumStoredBundles(sqlite3 *db, uint32_t *BundleCnt)
     return SQLITE_OK;
 }
 
-static int BPLib_SQL_GetTotalBundleBytes(sqlite3* db, uint64_t* TotalBytes)
+SQL_Status_t BPLib_SQL_GetTotalBundleBytes(sqlite3* db, uint64_t* TotalBytes)
 {
     sqlite3_stmt* stmt;
     int SQLStatus;
@@ -176,96 +119,6 @@ static int BPLib_SQL_GetTotalBundleBytes(sqlite3* db, uint64_t* TotalBytes)
     return SQLStatus;
 }
 
-static int BPLib_SQL_InitImpl(BPLib_Instance_t *Inst, sqlite3** db, const char* DbName)
-{
-    int SQLStatus;
-    sqlite3* ActiveDB;
-    int ForeignKeysEnabled;
-    sqlite3_stmt* ForeignKeyCheckStmt;
-    uint32_t NumStoredBundles;
-    uint64_t TotalBundleBytes;
-    
-    NumStoredBundles = 0;
-    TotalBundleBytes = 0;
-
-    SQLStatus = sqlite3_open(DbName, db);
-    if (SQLStatus != SQLITE_OK)
-    {
-        return SQLStatus;
-    }
-    ActiveDB = *db;
-
-    /* Initialize SQLite3 Pragmas we need for our use case */
-    SQLStatus = sqlite3_exec(ActiveDB, "PRAGMA journal_mode=WAL;", 0, 0, NULL);
-    if (SQLStatus != SQLITE_OK)
-    {
-        return SQLStatus;
-    }
-    SQLStatus = sqlite3_exec(ActiveDB, "PRAGMA foreign_keys=ON;", 0, 0, NULL);
-    if (SQLStatus != SQLITE_OK)
-    {
-        return SQLStatus;
-    }
-    SQLStatus = sqlite3_exec(ActiveDB, "PRAGMA synchronous=OFF;", 0, 0, NULL);
-    if (SQLStatus != SQLITE_OK)
-    {
-        return SQLStatus;
-    }
-
-    /* Page size should already be 4096 by default, this just enforces it */
-    SQLStatus = sqlite3_exec(ActiveDB, "PRAGMA page_size=4096;", 0, 0, NULL);
-    if (SQLStatus != SQLITE_OK)
-    {
-        return SQLStatus;
-    }
-
-    /* Note: Apparently SQLite3 can have foreign_keys=ON fail SILENTLY if
-    ** libsqlite3.so wasn't compiled with foreign key support. We have to manually
-    ** check if foreign keys were enabled by reading the setting back.
-    */
-    ForeignKeysEnabled = 0;
-    SQLStatus = sqlite3_prepare_v2(ActiveDB, "PRAGMA foreign_keys;", -1, &ForeignKeyCheckStmt, NULL);
-    if (SQLStatus != SQLITE_OK)
-    {
-        return SQLStatus;
-    }
-    if (sqlite3_step(ForeignKeyCheckStmt) == SQLITE_ROW)
-    {
-        ForeignKeysEnabled = sqlite3_column_int(ForeignKeyCheckStmt, 0);
-    }
-    sqlite3_finalize(ForeignKeyCheckStmt);
-    if (ForeignKeysEnabled != 1)
-    {
-        fprintf(stderr, "Please use a SQLite3 compiled with Foreign Key Support.\n");
-        return SQLITE_MISUSE;
-    }
-
-    /* Create the table if it doesn't already exist */
-    SQLStatus = sqlite3_exec(ActiveDB, CreateTableSQL, 0, 0, NULL);
-    if (SQLStatus != SQLITE_OK)
-    {
-        return SQLStatus;
-    }
-
-    /* Determine how many bundles are presently in storage, and set the stored counter to this value */
-    if (BPLib_SQL_GetNumStoredBundles(ActiveDB, &NumStoredBundles) != SQLITE_OK)
-    {
-        return SQLStatus;
-    }
-    
-    Inst->BundleStorage.BundleCountStored = NumStoredBundles;
-
-    /* Find the total number of bytes of bundles stored */
-    SQLStatus = BPLib_SQL_GetTotalBundleBytes(ActiveDB, &TotalBundleBytes);
-    if (SQLStatus == SQLITE_OK)
-    {
-        Inst->BundleStorage.BytesStorageInUse = TotalBundleBytes;
-    }
-
-    /* Expecting SQLITE_OK */
-    return SQLStatus;
-}
-
 BPLib_Status_t BPLib_SQL_GetDbSize(BPLib_Instance_t *Inst, size_t *DbSize)
 {
     sqlite3_stmt* PageCntStmt;
@@ -289,7 +142,7 @@ BPLib_Status_t BPLib_SQL_GetDbSize(BPLib_Instance_t *Inst, size_t *DbSize)
     return BPLIB_SUCCESS;
 }
 
-static int BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache)
+SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache)
 {
     int SQLStatus;
     //BPLib_TIME_MonotonicTime_t DtnMonotonicTime;
@@ -421,7 +274,7 @@ static int BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib
     return SQLITE_OK;
 }
 
-static int BPLib_SQL_DiscardEgressedImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache)
+SQL_Status_t BPLib_SQL_DiscardEgressedImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache)
 {
     int SQLStatus;
     size_t EgressedBytes ;
@@ -532,16 +385,180 @@ static int BPLib_SQL_DiscardEgressedImpl(sqlite3* db, size_t* NumDiscarded, BPLi
     return SQLITE_OK;
 }
 
-/*******************************************************************************
-** Exported Functions
-*/
+SQL_Status_t BPLib_SQL_InitDb(const char* DbName, sqlite3** ActiveDbPtr)
+{
+    SQL_Status_t  SQLStatus;
+    sqlite3*      ActiveDb;
+    uint8_t       ForeignKeysEnabled;
+    sqlite3_stmt* ForeignKeyCheckStmt;
+
+    ActiveDb = *ActiveDbPtr;
+
+    SQLStatus = sqlite3_open(DbName, ActiveDbPtr);
+    if (SQLStatus != SQLITE_OK)
+    {
+        return SQLStatus;
+    }
+
+    /* Set the atomic commit and rollback method to write-ahead log */
+    SQLStatus = sqlite3_exec(ActiveDb, "PRAGMA journal_mode=WAL;", 0, 0, NULL);
+    if (SQLStatus != SQLITE_OK)
+    {
+        return SQLStatus;
+    }
+
+    /* Enable foreign key support */
+    SQLStatus = sqlite3_exec(ActiveDb, "PRAGMA foreign_keys=ON;", 0, 0, NULL);
+    if (SQLStatus != SQLITE_OK)
+    {
+        return SQLStatus;
+    }
+
+    /* Disable synchronization */
+    SQLStatus = sqlite3_exec(ActiveDb, "PRAGMA synchronous=OFF;", 0, 0, NULL);
+    if (SQLStatus != SQLITE_OK)
+    {
+        return SQLStatus;
+    }
+
+    /* Page size should already be 4096 by default, this just enforces it */
+    SQLStatus = sqlite3_exec(ActiveDb, "PRAGMA page_size=4096;", 0, 0, NULL);
+    if (SQLStatus != SQLITE_OK)
+    {
+        return SQLStatus;
+    }
+
+    /* Note: Apparently SQLite3 can have foreign_keys=ON fail SILENTLY if
+    ** libsqlite3.so wasn't compiled with foreign key support. We have to manually
+    ** check if foreign keys were enabled by reading the setting back.
+    */
+    ForeignKeysEnabled = 0;
+    SQLStatus = sqlite3_prepare_v2(ActiveDb, "PRAGMA foreign_keys;", -1, &ForeignKeyCheckStmt, NULL);
+    if (SQLStatus != SQLITE_OK)
+    {
+        return SQLStatus;
+    }
+
+    /* Check if the execution of foreign key enabling succeeded */
+    if (sqlite3_step(ForeignKeyCheckStmt) == SQLITE_ROW)
+    {
+        ForeignKeysEnabled = sqlite3_column_int(ForeignKeyCheckStmt, 0);
+    }
+
+    sqlite3_finalize(ForeignKeyCheckStmt);
+    if (ForeignKeysEnabled != 1)
+    {
+        fprintf(stderr, "Please use a SQLite3 compiled with Foreign Key Support.\n");
+        return SQLITE_MISUSE;
+    }
+
+    return SQLITE_OK;
+}
+
+SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst)
+{
+    SQL_Status_t SQLStatus;
+    uint32_t     NumStoredBundles;
+    uint64_t     TotalBundleBytes;
+    
+    /*
+    ** Table and Index Creation for bundle_data and bundle_blobs
+    **
+    ** This schema is designed to support efficient queries and operations on bundle metadata and associated blob data.
+    ** The following indexes are created:
+    **
+    ** 1. idx_bundle_blobs_bundle_id:
+    **    - Index on the 'bundle_id' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
+    **      by its associated bundleID in the 'bundle_data' table.
+    **
+    ** 2. idx_action_timestamp:
+    **    - Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter
+    **      based on the timestamp of the bundle: This is used for expiring bundles
+    **
+    ** 3. idx_find_bundle (Composite Index):
+    **    - Composite index on the columns 'dest_node', 'dest_service', 'egress_attempted', 'action_timestamp', and 'id'.
+    **    - This index optimizes queries that filter by node and service ranges, filter by egress_attempted (0),
+    **      and sort by action_timestamp. It can also enable an index-only scan to quickly retrieve 'id'.
+    **    - This composite index is designed for loading egress bundles by batch for a particular EgressID (A channel or contact)
+    **
+    ** 4. idx_egress_attempted:
+    **    - Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up
+    **      DELETE queries and other queries filtering by 'egress_attempted'.
+    */
+
+    const char* CreateTableSQL = 
+    "CREATE TABLE IF NOT EXISTS bundle_data (\n"
+    "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+    "    action_timestamp INTEGER,\n"
+    "    egress_attempted INTEGER DEFAULT 0,\n"
+    "    dest_node INTEGER,\n"
+    "    dest_service INTEGER,\n"
+    "    bundle_bytes INTEGER\n"
+    ");\n"
+    "\n"
+    "CREATE TABLE IF NOT EXISTS bundle_blobs (\n"
+    "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+    "    bundle_id INTEGER,\n"
+    "    blob_data BLOB,\n"
+    "    FOREIGN KEY (bundle_id) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
+    ");\n"
+    "\n"
+    "CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_id);\n"
+    "CREATE INDEX IF NOT EXISTS idx_action_timestamp ON bundle_data (action_timestamp);\n"
+    "\n"
+    "CREATE INDEX IF NOT EXISTS idx_egress_id\n"
+    "ON bundle_data (\n"
+    "    dest_node,\n"
+    "    dest_service,\n"
+    "    egress_attempted,\n"
+    "    action_timestamp,\n"
+    "    id\n"
+    ");\n"
+    "\n"
+    "CREATE INDEX IF NOT EXISTS idx_egress_attempted\n"
+    "ON bundle_data (egress_attempted);\n";
+
+    NumStoredBundles = 0;
+    TotalBundleBytes = 0;
+
+    /* Create the table if it doesn't already exist */
+    SQLStatus = sqlite3_exec(Inst->BundleStorage.db, CreateTableSQL, 0, 0, NULL);
+    if (SQLStatus != SQLITE_OK)
+    {
+        return SQLStatus;
+    }
+
+    /* Determine how many bundles are presently in storage, and set the stored counter to this value */
+    if (BPLib_SQL_GetNumStoredBundles(Inst->BundleStorage.db, &NumStoredBundles) != SQLITE_OK)
+    {
+        return SQLStatus;
+    }
+    
+    Inst->BundleStorage.BundleCountStored = NumStoredBundles;
+
+    /* Find the total number of bytes of bundles stored */
+    SQLStatus = BPLib_SQL_GetTotalBundleBytes(Inst->BundleStorage.db, &TotalBundleBytes);
+    if (SQLStatus == SQLITE_OK)
+    {
+        Inst->BundleStorage.BytesStorageInUse = TotalBundleBytes;
+    }
+
+    return SQLStatus;
+}
+
 BPLib_Status_t BPLib_SQL_Init(BPLib_Instance_t* Inst, const char* DbName)
 {
-    int SQLStatus;
-    BPLib_Status_t Status = BPLIB_SUCCESS;
-    sqlite3** db = &Inst->BundleStorage.db;
+    SQL_Status_t   SQLStatus;
+    BPLib_Status_t Status;
 
-    SQLStatus = BPLib_SQL_InitImpl(Inst, db, DbName);
+    Status = BPLIB_SUCCESS;
+
+    SQLStatus = BPLib_SQL_InitDb(DbName, &Inst->BundleStorage.db);
+    if (SQLStatus == SQLITE_OK)
+    {
+        SQLStatus = BPLib_SQL_InitTable(Inst);
+    }
+
     if (SQLStatus != SQLITE_OK)
     {
         Status = BPLIB_STOR_SQL_INIT_ERR;

@@ -45,7 +45,7 @@
 /* ======== */
 
 /*
-** Result codes of SQLite executions:
+** Result codes of SQLite3 executions:
 ** SQLITE_OK                      =  0  Successful result
 ** SQLITE_ERROR                   =  1  Generic error
 ** SQLITE_INTERNAL                =  2  Internal logic error in SQLite
@@ -158,21 +158,24 @@ typedef uint16_t SQL_Status_t;
 /* Function Prototypes */
 /* =================== */
 
-BPLib_Status_t BPLib_SQL_Init(BPLib_Instance_t* Inst, const char* DbName);
+SQL_Status_t BPLib_SQL_GetNumStoredBundles(sqlite3 *db, uint32_t *BundleCnt);
 
-BPLib_Status_t BPLib_SQL_Store(BPLib_Instance_t* Inst, size_t *TotalBytesStored);
+SQL_Status_t BPLib_SQL_GetTotalBundleBytes(sqlite3* db, uint64_t* TotalBytes);
+
+BPLib_Status_t BPLib_SQL_GetDbSize(BPLib_Instance_t *Inst, size_t *DbSize);
+
+SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache);
+
+SQL_Status_t BPLib_SQL_DiscardEgressedImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache);
+
+SQL_Status_t BPLib_SQL_InitDb(const char* DbName, sqlite3** ActiveDbPtr);
+
+SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst);
+
+BPLib_Status_t BPLib_SQL_Init(BPLib_Instance_t* Inst, const char* DbName);
 
 BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDiscarded);
 
-BPLib_Status_t BPLib_SQL_DiscardEgressed(BPLib_Instance_t* Inst, size_t* NumDiscarded);
-
-BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
-    BPLib_EID_Pattern_t *DestEIDs, size_t NumEIDs);
-
-BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch);
-
-BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleID, BPLib_Bundle_t** Bundle);
-
-BPLib_Status_t BPLib_SQL_GetDbSize(BPLib_Instance_t *Inst, size_t *DbSize);
+BPLib_Status_t BPLib_SQL_DiscardEgressed(BPLib_Instance_t* Inst, size_t* NumDiscarded)
 
 #endif /* BPLIB_STOR_SQL_H */
