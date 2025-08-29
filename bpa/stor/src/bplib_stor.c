@@ -31,6 +31,8 @@
 #include "bplib_eid.h"
 #include "bplib_as.h"
 #include "bplib_stor_sql.h"
+#include "bplib_stor_sql_store.h"
+#include "bplib_stor_sql_load.h"
 
 #include <stdio.h>
 

@@ -21,6 +21,7 @@
 #include "bplib_qm.h"
 #include "bplib_as.h"
 #include "bplib_nc.h"
+#include "bplib_stor_sql_store.h"
 
 #include <stdio.h>
 
@@ -38,10 +39,11 @@ const char* InsertBlobSQL =
     "INSERT INTO bundle_blobs (bundle_id, blob_data) VALUES (?, ?)";
 static sqlite3_stmt* InsertBlobStmt;
 
-/*******************************************************************************
-** Static Functions
-*/
-static int BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
+
+SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
 {
     int SQLStatus;
     uint64_t EffectiveLifetime;
@@ -102,7 +104,7 @@ static int BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* 
     return SQLStatus;
 }
 
-static int BPLib_SQL_StoreChunk(int64_t BundleRowID, const void* Chunk, size_t ChunkSize)
+SQL_Status_t BPLib_SQL_StoreChunk(int64_t BundleRowID, const void* Chunk, size_t ChunkSize)
 {
     int SQLStatus;
 
@@ -119,7 +121,7 @@ static int BPLib_SQL_StoreChunk(int64_t BundleRowID, const void* Chunk, size_t C
     return SQLStatus;
 }
 
-static int BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
+SQL_Status_t BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
 {
     int SQLStatus;
     int BundleRowID;
@@ -157,7 +159,7 @@ static int BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_Bund
     return SQLStatus;
 }
 
-static int BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStored)
+SQL_Status_t BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStored)
 {
     int SQLStatus;
     int i;
@@ -226,9 +228,6 @@ static int BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStored)
     return SQLStatus;
 }
 
-/*******************************************************************************
-** Exported Functions
-*/
 BPLib_Status_t BPLib_SQL_Store(BPLib_Instance_t* Inst, size_t *TotalBytesStored)
 {
     BPLib_Status_t Status = BPLIB_SUCCESS;

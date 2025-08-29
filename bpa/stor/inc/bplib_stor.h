@@ -21,17 +21,20 @@
 #ifndef BPLIB_STOR_H
 #define BPLIB_STOR_H
 
-/*
-** Include
-*/
+/* ======== */
+/* Includes */
+/* ======== */
 
 #include "bplib_api_types.h"
 #include "bplib_cfg.h"
 #include "bplib_eid.h"
 #include "bplib_mem.h"
 #include "bplib_stor_loadbatch.h"
+#include "bplib_stor_sql.h"
 
-#include <sqlite3.h>
+/* ====== */
+/* Macros */
+/* ====== */
 
 #ifndef BPLIB_STOR_INSERTBATCHSIZE
 #define BPLIB_STOR_INSERTBATCHSIZE 100
@@ -40,6 +43,10 @@
 #ifndef BPLIB_STOR_DISCARDBATCHSIZE
 #define BPLIB_STOR_DISCARDBATCHSIZE 25000
 #endif
+
+/* ======== */
+/* Typedefs */
+/* ======== */
 
 struct BPLib_BundleCache
 {
