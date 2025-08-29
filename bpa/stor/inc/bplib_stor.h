@@ -50,10 +50,10 @@
 
 struct BPLib_BundleCache
 {
-    pthread_mutex_t lock;
-    sqlite3* db;
-    BPLib_Bundle_t* InsertBatch[BPLIB_STOR_INSERTBATCHSIZE];
-    size_t InsertBatchSize;
+    pthread_mutex_t        lock;
+    sqlite3*               db;
+    BPLib_Bundle_t*        InsertBatch[BPLIB_STOR_INSERTBATCHSIZE];
+    size_t                 InsertBatchSize;
     BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
     BPLib_STOR_LoadBatch_t ContactLoadBatches[BPLIB_MAX_NUM_CONTACTS];
 
@@ -71,13 +71,13 @@ typedef struct BPLib_StorageHkTlm_Payload BPLib_StorageHkTlm_Payload_t;
 
 struct BPLib_StorageHkTlm_Payload
 {
-    size_t BytesMemInUse;     /** \brief Bytes in memory that are in use */
-    size_t BytesMemFree;      /** \brief Number of bytes free */
-    size_t BytesMemHighWater; /** \brief Memory high water mark in bytes */
-    size_t KbStorageInUse;    /** \brief Kilobytes of storage currently in use */
-    size_t KbBundlesInStor;   /** \brief Kilobytes of storage currently occupied by bundles */
-    int64_t  MonotonicTime;     /** \brief Monotonic Time Counter */
-    int64_t  CorrelationFactor; /** \brief Time Correlation Factor */
+    size_t  BytesMemInUse;     /** \brief Bytes in memory that are in use */
+    size_t  BytesMemFree;      /** \brief Number of bytes free */
+    size_t  BytesMemHighWater; /** \brief Memory high water mark in bytes */
+    size_t  KbStorageInUse;    /** \brief Kilobytes of storage currently in use */
+    size_t  KbBundlesInStor;   /** \brief Kilobytes of storage currently occupied by bundles */
+    int64_t MonotonicTime;     /** \brief Monotonic Time Counter */
+    int64_t CorrelationFactor; /** \brief Time Correlation Factor */
 };
 
 /*
@@ -144,8 +144,8 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
 
 BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t* Inst);
 
-BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery,
-    size_t* NumEgressed);
+BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
+                                        bool LocalDelivery, size_t* NumEgressed);
 
 BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst);
 

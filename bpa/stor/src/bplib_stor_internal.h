@@ -26,6 +26,7 @@
 /* ======== */
 
 #include "bplib_api_types.h"
+#include "bplib_stor_sql.h"
 
 /* ====== */
 /* Macros */
@@ -37,6 +38,41 @@
 #ifndef BPLIB_STOR_DBNAME
 #define BPLIB_STOR_DBNAME       "bplib-storage.db"
 #endif
+
+/* ======= */
+/* Globals */
+/* ======= */
+
+/* SQL query statements */
+extern sqlite3_stmt* FindForEgressIDStmt;
+extern sqlite3_stmt* MarkEgressedStmt;
+extern sqlite3_stmt* FindBlobStmt;
+extern sqlite3_stmt* InsertBlobStmt;
+extern sqlite3_stmt* InsertMetadataStmt;
+extern sqlite3_stmt* ForeignKeyCheckStmt;
+extern sqlite3_stmt* GetNumBundlesStmt;
+extern sqlite3_stmt* TotalBytesStmt;
+extern sqlite3_stmt* PageCntStmt;
+extern sqlite3_stmt* DiscardExpiredStmt;
+extern sqlite3_stmt* ExpiredBytesStmt;
+extern sqlite3_stmt* DiscardEgressedStmt;
+extern sqlite3_stmt* EgressedBytesStmt;
+
+/* SQL query strings */
+extern       char  WhereClause[BPLIB_SQL_MAX_STRLEN / 2];
+extern       char  FindForEgressIdSQL[BPLIB_SQL_MAX_STRLEN];
+extern const char* FindForEgressID_RangeClause;
+extern const char* MarkEgressedSQL;
+extern const char* FindBlobSQL;
+extern const char* InsertBlobSQL;
+extern const char* InsertMetadataSQL;
+extern const char* GetNumBundlesSQL;
+extern const char* TotalBytesSQL;
+extern const char* DiscardExpiredSQL;
+extern const char* ExpiredBytesSQL;
+extern const char* DiscardEgressedSQL;
+extern const char* EgressedBytesSQL;
+extern const char* CreateTableSQL;
 
 /* =================== */
 /* Function Prototypes */

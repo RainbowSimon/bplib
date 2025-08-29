@@ -31,22 +31,23 @@
 /* Function Prototypes */
 /* =================== */
 
-SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleID,
-                                        BPLib_Bundle_t** Bundle);
-
-SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch, 
-                                        BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs,
-                                        size_t MaxBundles);
-
-SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch);
-
 bool BPLib_SQL_HasOverflowed(size_t PrevOffset, size_t NewOffset);
 
 BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
                                         BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs);
 
+SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
+                                        BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs,
+                                        size_t MaxBundles);
+
 BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch);
 
-BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleID, BPLib_Bundle_t** Bundle);
+SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch);
+
+BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleID,
+                                    BPLib_Bundle_t** Bundle);
+
+SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleID,
+                                        BPLib_Bundle_t** Bundle);
 
 #endif

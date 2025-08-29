@@ -25,6 +25,8 @@
 /* Includes */
 /* ======== */
 
+#include "bplib_stor_sql.h"
+
 /* =================== */
 /* Function Prototypes */
 /* =================== */

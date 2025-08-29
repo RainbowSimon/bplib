@@ -37,19 +37,20 @@
 
 #include <stdio.h>
 
-/* 
+/*
 ** Globals
 */
 
 BPLib_StorageHkTlm_Payload_t BPLib_STOR_StoragePayload;
 
-/*******************************************************************************
-* Exported Functions
-*/
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
+
 BPLib_Status_t BPLib_STOR_Init(BPLib_Instance_t* Inst)
 {
     BPLib_Status_t Status;
-    int i;
+    uint8_t        i;
 
     if (Inst == NULL)
     {
@@ -59,8 +60,11 @@ BPLib_Status_t BPLib_STOR_Init(BPLib_Instance_t* Inst)
     /* Zero-out the storage housekeeping payload */
     memset((void*) &BPLib_STOR_StoragePayload, 0, sizeof(BPLib_StorageHkTlm_Payload_t));
 
+    /* Zero-out the bundle storage */
     memset(&Inst->BundleStorage, 0, sizeof(BPLib_BundleCache_t));
+
     pthread_mutex_init(&Inst->BundleStorage.lock, NULL);
+
     for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
     {
         Status = BPLib_STOR_LoadBatch_Init(&Inst->BundleStorage.ChannelLoadBatches[i]);
@@ -69,6 +73,7 @@ BPLib_Status_t BPLib_STOR_Init(BPLib_Instance_t* Inst)
             return Status;
         }
     }
+
     for (i = 0; i < BPLIB_MAX_NUM_CONTACTS; i++)
     {
         Status = BPLib_STOR_LoadBatch_Init(&Inst->BundleStorage.ContactLoadBatches[i]);
@@ -78,7 +83,8 @@ BPLib_Status_t BPLib_STOR_Init(BPLib_Instance_t* Inst)
         }
     }
 
-    Status = BPLib_SQL_Init(Inst, (const char *)BPLIB_STOR_DBNAME);
+    Status = BPLib_SQL_Init(Inst, (const char*) BPLIB_STOR_DBNAME);
+
     return Status;
 }
 
@@ -94,7 +100,7 @@ void BPLib_STOR_Destroy(BPLib_Instance_t* Inst)
 
 BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t* Inst)
 {
-    BPLib_Status_t Status;
+    BPLib_Status_t       Status;
     BPLib_BundleCache_t* CacheInst;
 
     if (Inst == NULL)
@@ -105,6 +111,7 @@ BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t* Inst)
     CacheInst = &Inst->BundleStorage;
 
     pthread_mutex_lock(&CacheInst->lock);
+
     if (CacheInst->InsertBatchSize > 0)
     {
         Status = BPLib_STOR_FlushPendingUnlocked(Inst);
@@ -114,6 +121,7 @@ BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t* Inst)
         /* Don't go further if there's nothing to store */
         Status = BPLIB_SUCCESS;
     }
+
     pthread_mutex_unlock(&CacheInst->lock);
 
     return Status;
@@ -121,8 +129,10 @@ BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t* Inst)
 
 BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
-    BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_Status_t       Status;
     BPLib_BundleCache_t* CacheInst;
+
+    Status = BPLIB_SUCCESS;
 
     if ((Inst == NULL) || (Bundle == NULL) || (Bundle->blob == NULL))
     {
@@ -130,6 +140,7 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
     }
 
     CacheInst = &Inst->BundleStorage;
+
     pthread_mutex_lock(&CacheInst->lock);
 
     /* Add to the next batch */
@@ -138,33 +149,40 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
     {
         Status = BPLib_STOR_FlushPendingUnlocked(Inst);
     }
+
     pthread_mutex_unlock(&CacheInst->lock);
 
     return Status;
 }
 
-BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery,
-    size_t* NumEgressed)
+BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
+                                        bool LocalDelivery, size_t* NumEgressed)
 {
-    BPLib_Status_t Status = BPLIB_SUCCESS;
-    BPLib_BundleCache_t* CacheInst;
+    BPLib_Status_t          Status;
+    BPLib_BundleCache_t*    CacheInst;
     BPLib_STOR_LoadBatch_t* LoadBatch;
-    BPLib_Bundle_t* CurrBundle = NULL;
-    BPLib_EID_Pattern_t LocalEID;
-    BPLib_EID_Pattern_t* DestEIDs;
-    BPLib_QM_WaitQueue_t* EgressQueue;
-    size_t EgressCnt = 0;
-    int64_t CurrBundleID;
-    size_t NumEIDs;
+    BPLib_Bundle_t*         CurrBundle;
+    BPLib_EID_Pattern_t     LocalEID;
+    BPLib_EID_Pattern_t*    DestEIDs;
+    BPLib_QM_WaitQueue_t*   EgressQueue;
+    size_t                  EgressCnt;
+    int64_t                 CurrBundleID;
+    size_t                  NumEIDs;
+
+    Status     = BPLIB_SUCCESS;
+    CurrBundle = NULL;
+    EgressCnt  = 0;
 
     if ((Inst == NULL) || (NumEgressed == NULL))
     {
         return BPLIB_NULL_PTR_ERROR;
     }
+
     if (LocalDelivery && EgressID >= BPLIB_MAX_NUM_CHANNELS)
     {
         return BPLIB_STOR_PARAM_ERR;
     }
+
     if (!LocalDelivery && EgressID >= BPLIB_MAX_NUM_CONTACTS)
     {
         return BPLIB_STOR_PARAM_ERR;
@@ -177,30 +195,34 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
         ** to use all of its CPU resources for ingress.
         */
         *NumEgressed = 0;
+
         return BPLIB_SUCCESS;
     }
 
     /* Determine which channel or contact's batch we're examining */
     BPLib_NC_ReaderLock();
+
     CacheInst = &Inst->BundleStorage;
+
     if (LocalDelivery)
     {
-        LoadBatch = &(CacheInst->ChannelLoadBatches[EgressID]);
-        LocalEID.MaxNode = BPLIB_EID_INSTANCE.Node;
-        LocalEID.MinNode = BPLIB_EID_INSTANCE.Node;
+        LoadBatch           = &(CacheInst->ChannelLoadBatches[EgressID]);
+        LocalEID.MaxNode    = BPLIB_EID_INSTANCE.Node;
+        LocalEID.MinNode    = BPLIB_EID_INSTANCE.Node;
         LocalEID.MaxService = BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[EgressID].LocalServiceNumber;
         LocalEID.MinService = BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[EgressID].LocalServiceNumber;
-        DestEIDs = &LocalEID;
-        NumEIDs = 1;
-        EgressQueue = &(Inst->ChannelEgressJobs[EgressID]);
+        DestEIDs            = &LocalEID;
+        NumEIDs             = 1;
+        EgressQueue         = &(Inst->ChannelEgressJobs[EgressID]);
     }
     else
     {
-        LoadBatch = &(CacheInst->ContactLoadBatches[EgressID]);
-        DestEIDs = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[EgressID].DestEIDs;
-        NumEIDs = BPLIB_MAX_CONTACT_DEST_EIDS;
+        LoadBatch   = &(CacheInst->ContactLoadBatches[EgressID]);
+        DestEIDs    = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[EgressID].DestEIDs;
+        NumEIDs     = BPLIB_MAX_CONTACT_DEST_EIDS;
         EgressQueue = &(Inst->ContactEgressJobs[EgressID]);
     }
+
     BPLib_NC_ReaderUnlock();
 
     pthread_mutex_lock(&CacheInst->lock);
@@ -212,24 +234,22 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
         Status = BPLib_SQL_FindForEIDs(Inst, LoadBatch, DestEIDs, NumEIDs);
         if (Status != BPLIB_SUCCESS)
         {
-            BPLib_EM_SendEvent(BPLIB_STOR_SQL_LOAD_ERR_EID, BPLib_EM_EventType_ERROR,
-                "BPLib_SQL_FindForEIDs failed to load bundle. RC=%d", Status);
+            BPLib_EM_SendEvent(BPLIB_STOR_SQL_LOAD_ERR_EID,
+                                BPLib_EM_EventType_ERROR,
+                                "BPLib_SQL_FindForEIDs failed to load bundle. RC=%d",
+                                Status);
         }
     }
-
-    /* All of the bundles for this batch have been egressed */
     else if (BPLib_STOR_LoadBatch_IsConsumed(LoadBatch))
-    {
+    { /* All of the bundles for this batch have been egressed */
         /* Mark the batch as egressed */
         Status = BPLib_SQL_MarkBatchEgressed(Inst, LoadBatch);
 
         /* Clear the batch */
         (void) BPLib_STOR_LoadBatch_Reset(LoadBatch);
     }
-
-    /* There are bundles in the current batch that need to be egressed */
     else
-    {
+    { /* There are bundles in the current batch that need to be egressed */
         while (BPLib_STOR_LoadBatch_PeekNextID(LoadBatch, &CurrBundleID) == BPLIB_SUCCESS)
         {
             /* Set the metadata EID */
@@ -239,10 +259,11 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
                 CurrBundle->Meta.EgressID = EgressID;
                 if (BPLib_QM_WaitQueueTryPush(EgressQueue, &CurrBundle, QM_NO_WAIT) == false)
                 {
-                    /* If QM couldn't accept the bundle, free it. It will be reloaded 
+                    /* If QM couldn't accept the bundle, free it. It will be reloaded
                     ** next time.
                     */
                     BPLib_MEM_BundleFree(&Inst->pool, CurrBundle);
+
                     break;
                 }
 
@@ -271,9 +292,11 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
 
 BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
 {
-    BPLib_Status_t Status;
+    BPLib_Status_t       Status;
     BPLib_BundleCache_t* CacheInst;
-    size_t NumDiscarded = 0;
+    size_t               NumDiscarded;
+
+    NumDiscarded = 0;
 
     if (Inst == NULL)
     {
@@ -290,32 +313,39 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
     }
 
     CacheInst = &Inst->BundleStorage;
+
     pthread_mutex_lock(&CacheInst->lock);
 
     Status = BPLib_SQL_DiscardExpired(Inst, &NumDiscarded);
     if (Status != BPLIB_SUCCESS)
     {
-        BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID, BPLib_EM_EventType_ERROR,
-            "BPLib_SQL_DiscardExpired failed. RC=%d", Status);
+        BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID,
+                            BPLib_EM_EventType_ERROR,
+                            "BPLib_SQL_DiscardExpired failed. RC=%d",
+                            Status);
     }
     else
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_EXPIRED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
+
         CacheInst->BundleCountStored -= NumDiscarded;
     }
 
     Status = BPLib_SQL_DiscardEgressed(Inst, &NumDiscarded);
     if (Status != BPLIB_SUCCESS)
     {
-        BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID, BPLib_EM_EventType_ERROR,
-            "BPLib_SQL_DiscardEgressed failed. RC=%d", Status);
+        BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID,
+                            BPLib_EM_EventType_ERROR,
+                            "BPLib_SQL_DiscardEgressed failed. RC=%d",
+                            Status);
     }
     else
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
+
         CacheInst->BundleCountStored -= NumDiscarded;
     }
 
@@ -335,7 +365,7 @@ BPLib_Status_t BPLib_STOR_StorageTblValidateFunc(void *TblData)
 void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
 {
     BPLib_Status_t Status;
-    size_t DbSize;
+    size_t         DbSize;
 
     Status = BPLib_SQL_GetDbSize(Inst, &DbSize);
     if (Status == BPLIB_SUCCESS)
@@ -345,8 +375,10 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
     }
     else
     {
-        BPLib_EM_SendEvent(BPLIB_STOR_DB_GET_SIZE_ERR_EID, BPLib_EM_EventType_ERROR,
-            "Error getting database size, RC = %d.", Status);    
+        BPLib_EM_SendEvent(BPLIB_STOR_DB_GET_SIZE_ERR_EID,
+                            BPLib_EM_EventType_ERROR,
+                            "Error getting database size, RC = %d.",
+                            Status);
     }
 
     /* Update the memory in use*/
