@@ -36,7 +36,7 @@
 
 typedef struct BPLib_STOR_LoadBatch
 {
-    int64_t BundleIDs[BPLIB_STOR_LOADBATCHSIZE];
+    int64_t BundleRowIDs[BPLIB_STOR_LOADBATCHSIZE];
     size_t Size;
     size_t ReadIndex;
 } BPLib_STOR_LoadBatch_t;
@@ -49,9 +49,9 @@ bool BPLib_STOR_LoadBatch_IsEmpty(BPLib_STOR_LoadBatch_t* Batch);
 
 bool BPLib_STOR_LoadBatch_IsConsumed(BPLib_STOR_LoadBatch_t* Batch);
 
-BPLib_Status_t BPLib_STOR_LoadBatch_AddID(BPLib_STOR_LoadBatch_t* Batch, int64_t BundleID);
+BPLib_Status_t BPLib_STOR_LoadBatch_AddID(BPLib_STOR_LoadBatch_t* Batch, int64_t BundleRowID);
 
-BPLib_Status_t BPLib_STOR_LoadBatch_PeekNextID(BPLib_STOR_LoadBatch_t* Batch, int64_t *BundleID);
+BPLib_Status_t BPLib_STOR_LoadBatch_PeekNextID(BPLib_STOR_LoadBatch_t* Batch, int64_t *BundleRowID);
 
 BPLib_Status_t BPLib_STOR_LoadBatch_AdvanceReader(BPLib_STOR_LoadBatch_t* Batch);
 

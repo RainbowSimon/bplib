@@ -37,7 +37,7 @@ static sqlite3_stmt* FindForEgressIDStmt;
 static const char* FindBlobSQL = 
 "SELECT id\n"
 "FROM bundle_blobs\n"
-"WHERE bundle_id = ?;";
+"WHERE bundle_row = ?;";
 static sqlite3_stmt* FindBlobStmt;
 
 /* Mark Egressed */
@@ -48,7 +48,7 @@ static sqlite3_stmt* MarkEgressedStmt;
 /*******************************************************************************
 ** Static Functions
 */
-static int BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleID,
+static int BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowID,
     BPLib_Bundle_t** Bundle)
 {
     sqlite3_blob* blob = NULL;
@@ -63,7 +63,7 @@ static int BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleID,
     BPLib_MEM_Pool_t* Pool = &Inst->pool;
 
     sqlite3_reset(FindBlobStmt);
-    SQLStatus = sqlite3_bind_int(FindBlobStmt, 1, BundleID);
+    SQLStatus = sqlite3_bind_int(FindBlobStmt, 1, BundleRowID);
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "bind failed: %s\n", sqlite3_errmsg(db));
@@ -208,7 +208,7 @@ static int BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
 {
     int SQLStatus;
     sqlite3* db = Inst->BundleStorage.db;
-    int CurrBundleID, i, BindIndex;
+    int CurrBundleRowID, i, BindIndex;
 
     /* Bind parameters for metadata query */
     sqlite3_reset(FindForEgressIDStmt);
@@ -252,8 +252,8 @@ static int BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     while (SQLStatus == SQLITE_ROW)
     {
         /* Load a single bundle from storage that matches the query */
-        CurrBundleID = sqlite3_column_int64(FindForEgressIDStmt, 0);
-        if (BPLib_STOR_LoadBatch_AddID(Batch, CurrBundleID) != BPLIB_SUCCESS)
+        CurrBundleRowID = sqlite3_column_int64(FindForEgressIDStmt, 0);
+        if (BPLib_STOR_LoadBatch_AddID(Batch, CurrBundleRowID) != BPLIB_SUCCESS)
         {
             break;
         }
@@ -289,7 +289,7 @@ static int BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_Lo
     for (i = 0; i < Batch->Size; i++)
     {
         sqlite3_reset(MarkEgressedStmt);
-        sqlite3_bind_int64(MarkEgressedStmt, 1, Batch->BundleIDs[i]);
+        sqlite3_bind_int64(MarkEgressedStmt, 1, Batch->BundleRowIDs[i]);
         SQLStatus = sqlite3_step(MarkEgressedStmt);
         if (SQLStatus != SQLITE_DONE)
         {
@@ -457,7 +457,7 @@ BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, BPLib_STOR_Lo
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleID, BPLib_Bundle_t** Bundle)
+BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleRowID, BPLib_Bundle_t** Bundle)
 {
     int SQLStatus;
     sqlite3* db = Inst->BundleStorage.db;
@@ -467,7 +467,7 @@ BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleID, BP
     {
         return BPLIB_NULL_PTR_ERROR;
     }
-    if (BundleID < 0)
+    if (BundleRowID < 0)
     {
         return BPLIB_STOR_PARAM_ERR;
     }
@@ -481,7 +481,7 @@ BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleID, BP
 
     if (Status == BPLIB_SUCCESS)
     {
-        SQLStatus = BPLib_SQL_LoadBundleImpl(Inst, BundleID, Bundle);
+        SQLStatus = BPLib_SQL_LoadBundleImpl(Inst, BundleRowID, Bundle);
     }
 
     sqlite3_finalize(FindBlobStmt);

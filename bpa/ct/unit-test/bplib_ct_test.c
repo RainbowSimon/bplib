@@ -24,17 +24,30 @@
 
 #include "bplib_ct_test_utils.h"
 
-/*
-** Test function for
-** int BPLib_CT_Init()
-*/
-void Test_BPLib_CT_Init(void)
+/* Test nominal case for BPLib_CT_SetBundleId */
+void Test_BPLib_CT_SetBundleId_Nominal(void)
 {
-    UtAssert_INT32_EQ(BPLib_CT_Init(), BPLIB_SUCCESS);
+    BPLib_Bundle_t Bundle;
+
+    memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_CRC_Calculate), 0xdeadbeef);
+
+    UtAssert_INT32_EQ(BPLib_CT_SetBundleId(&Bundle), BPLIB_SUCCESS);
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 1);
+    UtAssert_UINT32_EQ(Bundle.blocks.PrimaryBlock.BundleId, 0xdeadbeef);
 }
 
+/* Test null case for BPLib_CT_SetBundleId */
+void Test_BPLib_CT_SetBundleId_Null(void)
+{
+    UtAssert_INT32_EQ(BPLib_CT_SetBundleId(NULL), BPLIB_NULL_PTR_ERROR);
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 0);
+}
 
 void TestBplibCt_Register(void)
 {
-    UtTest_Add(Test_BPLib_CT_Init, BPLib_CT_Test_Setup, BPLib_CT_Test_Teardown, "Test_BPLib_CT_Init");
+    ADD_TEST(Test_BPLib_CT_SetBundleId_Nominal);
+    ADD_TEST(Test_BPLib_CT_SetBundleId_Null);
 }

@@ -85,15 +85,7 @@ void Test_BPLib_STOR_GarbageCollect_NominalExpired(void)
     UT_SetDeferredRetcode(UT_KEY(BPA_TIMEP_GetHostTime), 1, BPLIB_STOR_EPOCHOFFSET + 1);
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
 
-    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED_EXPIRED, 
-                                                Context_BPLib_AS_Increment[0].Counter);
-    UtAssert_INT32_EQ(0, Context_BPLib_AS_Increment[0].Amount);
-    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED, 
-                                                Context_BPLib_AS_Increment[1].Counter);
-    UtAssert_INT32_EQ(0, Context_BPLib_AS_Increment[1].Amount);
-    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DISCARDED, 
-                                                Context_BPLib_AS_Increment[2].Counter);
-    UtAssert_INT32_EQ(0, Context_BPLib_AS_Increment[2].Amount);
+    UtAssert_STUB_COUNT(BPLib_AS_Increment, 0);
     UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, 1);
 
     /* Skip counters 3,4 which are for DiscardEgressed */
@@ -102,14 +94,14 @@ void Test_BPLib_STOR_GarbageCollect_NominalExpired(void)
     UT_SetDeferredRetcode(UT_KEY(BPA_TIMEP_GetHostTime), 1, INT64_MAX);
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED_EXPIRED, 
-                                                Context_BPLib_AS_Increment[5].Counter);
-    UtAssert_INT32_EQ(1, Context_BPLib_AS_Increment[5].Amount);
+                                                Context_BPLib_AS_Increment[0].Counter);
+    UtAssert_INT32_EQ(1, Context_BPLib_AS_Increment[0].Amount);
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED, 
-                                                Context_BPLib_AS_Increment[6].Counter);
-    UtAssert_INT32_EQ(1, Context_BPLib_AS_Increment[6].Amount);
+                                                Context_BPLib_AS_Increment[1].Counter);
+    UtAssert_INT32_EQ(1, Context_BPLib_AS_Increment[1].Amount);
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DISCARDED, 
-                                                Context_BPLib_AS_Increment[7].Counter);
-    UtAssert_INT32_EQ(1, Context_BPLib_AS_Increment[7].Amount);
+                                                Context_BPLib_AS_Increment[2].Counter);
+    UtAssert_INT32_EQ(1, Context_BPLib_AS_Increment[2].Amount);
     UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, 0);
 }
 

@@ -54,6 +54,7 @@ void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle)
     Bundle->blocks.PrimaryBlock.Lifetime = 5000;
     Bundle->blocks.PrimaryBlock.DestEID.Node = 100;
     Bundle->blocks.PrimaryBlock.DestEID.Service = 1;
+    Bundle->blocks.PrimaryBlock.BundleId = 0;
     Bundle->Meta.TotalBytes = 1000;
 
     /* MEM is stubbed so the tests can check the call's in UTAssert 
