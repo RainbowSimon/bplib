@@ -44,6 +44,47 @@
 #define BPLIB_STOR_DISCARDBATCHSIZE 25000
 #endif
 
+/* We conditionally allow this to be defined by a compile time variable
+** so that the unit tests can pass in :memory: here and avoid using the disk
+*/
+#ifndef BPLIB_STOR_DBNAME
+#define BPLIB_STOR_DBNAME       "bplib-storage.db"
+#endif
+
+/* ======= */
+/* Globals */
+/* ======= */
+
+/* SQL query statements */
+extern sqlite3_stmt* FindForEgressIDStmt;
+extern sqlite3_stmt* MarkEgressedStmt;
+extern sqlite3_stmt* FindBlobStmt;
+extern sqlite3_stmt* InsertBlobStmt;
+extern sqlite3_stmt* InsertMetadataStmt;
+extern sqlite3_stmt* ForeignKeyCheckStmt;
+extern sqlite3_stmt* GetNumBundlesStmt;
+extern sqlite3_stmt* TotalBytesStmt;
+extern sqlite3_stmt* PageCntStmt;
+extern sqlite3_stmt* DiscardExpiredStmt;
+extern sqlite3_stmt* ExpiredBytesStmt;
+extern sqlite3_stmt* DiscardEgressedStmt;
+extern sqlite3_stmt* EgressedBytesStmt;
+
+/* SQL query strings */
+extern       char  FindForEgressIdSQL[BPLIB_SQL_MAX_STRLEN];
+extern const char* FindForEgressID_RangeClause;
+extern const char* MarkEgressedSQL;
+extern const char* FindBlobSQL;
+extern const char* InsertBlobSQL;
+extern const char* InsertMetadataSQL;
+extern const char* GetNumBundlesSQL;
+extern const char* TotalBytesSQL;
+extern const char* DiscardExpiredSQL;
+extern const char* ExpiredBytesSQL;
+extern const char* DiscardEgressedSQL;
+extern const char* EgressedBytesSQL;
+extern const char* CreateTableSQL;
+
 /* ======== */
 /* Typedefs */
 /* ======== */
@@ -156,5 +197,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst);
  * \return void
  */
 void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst);
+
+BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst);
 
 #endif /* BPLIB_STOR_H */

@@ -26,7 +26,6 @@
 #include "bplib_qm.h"
 #include "bplib_time.h"
 #include "bplib_fwp.h"
-#include "bplib_stor_internal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
