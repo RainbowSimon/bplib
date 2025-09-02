@@ -18,7 +18,6 @@
  *
  */
 
-#include "bplib_stor_internal.h"
 #include "bplib_stor_sql.h"
 #include "bplib_stor_sql_load.h"
 #include "bplib_qm.h"
@@ -30,14 +29,6 @@
 /* Function Definitions */
 /* ==================== */
 
-/* Helper function to make sure offset hasn't overflowed */
-bool BPLib_SQL_HasOverflowed(size_t PrevOffset, size_t NewOffset)
-{
-    return (PrevOffset > NewOffset)                                ||
-           (sizeof(WhereClause) - NewOffset) > sizeof(WhereClause) ||
-           (NewOffset >= sizeof(WhereClause));
-}
-
 BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
                                         BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs)
 {
@@ -45,11 +36,13 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     SQL_Status_t   SQLStatus;
     uint8_t        i;
     sqlite3*       db;
-    size_t         Offset;
-    size_t         PrevOffset;
+    size_t         MaxWhereLen;
+    char           WhereClause[BPLIB_SQL_MAX_STRLEN]        = {0};
+    char           FindForEgressIdSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 
-    Status = BPLIB_SUCCESS;
-    db     = Inst->BundleStorage.db;
+    Status      = BPLIB_SUCCESS;
+    db          = Inst->BundleStorage.db;
+    MaxWhereLen = BPLIB_SQL_MAX_STRLEN - 102; /* size of final query minus the non-where clause stuff */
 
     if ((Inst == NULL) || (Batch == NULL) || (DestEIDs == NULL))
     {
@@ -69,49 +62,46 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     ** "((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))" and appending it once
     **  for each DestEID in the EgressID array.
     */
-    Offset = 0;
+
+    /*
+    ** There's no risk of overflow here since the size of
+    ** FindForEgressID_RangeClause is known and much less than the buffer size
+    */
+    strncat(WhereClause, FindForEgressID_RangeClause, MaxWhereLen);
+
     for (i = 0; i < NumEIDs; i++)
     {
-        if (i > 0)
+        if ((strlen(WhereClause) + strlen(" OR ")) < MaxWhereLen)
         {
-            PrevOffset  = Offset;
-            Offset     += snprintf(WhereClause + Offset, sizeof(WhereClause) - Offset, " OR ");
-
-            /* Sanity check math */
-            if (BPLib_SQL_HasOverflowed(PrevOffset, Offset))
-            {
-                fprintf(stderr, "Programming Error: WHERE clause too long\n");
-                return BPLIB_STOR_SQL_OVERFLOW_ERR;
-            }
-
+            strncat(WhereClause, " OR ", MaxWhereLen - strlen(WhereClause));
         }
-
-        PrevOffset  = Offset;
-        Offset     += snprintf(WhereClause + Offset, sizeof(WhereClause) - Offset, "%s",
-                                FindForEgressID_RangeClause);
-
-        /* Sanity check math */
-        if (BPLib_SQL_HasOverflowed(PrevOffset, Offset))
+        else
         {
             fprintf(stderr, "Programming Error: WHERE clause too long\n");
             return BPLIB_STOR_SQL_OVERFLOW_ERR;
         }
+
+        if ((strlen(WhereClause) + strlen(FindForEgressID_RangeClause)) < MaxWhereLen)
+        {
+            strncat(WhereClause, FindForEgressID_RangeClause, MaxWhereLen - strlen(WhereClause));
+        }
+        else
+        {
+            fprintf(stderr, "Programming Error: WHERE clause too long\n");
+            return BPLIB_STOR_SQL_OVERFLOW_ERR;
+        }
+
+        printf("%s\n", WhereClause);
     }
 
-    WhereClause[Offset] = '\0';
+    WhereClause[strlen(WhereClause)] = '\0';
 
     /* Build the final query */
-    Offset = snprintf(FindForEgressIdSQL, sizeof(FindForEgressIdSQL),
-                        "SELECT id FROM bundle_data WHERE (%s) AND egress_attempted = 0 ORDER BY action_timestamp ASC LIMIT ?;",
-                        WhereClause);
+    snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN,
+            "SELECT id FROM bundle_data WHERE (%s) AND egress_attempted = 0 ORDER BY action_timestamp ASC LIMIT ?;",
+            WhereClause);
 
-    if (Offset >= sizeof(FindForEgressIdSQL))
-    {
-        fprintf(stderr, "Programming Error: final SQL query too long\n");
-        return BPLIB_STOR_SQL_OVERFLOW_ERR;
-    }
-
-    FindForEgressIdSQL[Offset] = '\0';
+    FindForEgressIdSQL[strlen(FindForEgressIdSQL)] = '\0';
 
     /* Prepare Search Statements needed for this batch query */
     SQLStatus = sqlite3_prepare_v2(db, FindForEgressIdSQL, -1, &FindForEgressIDStmt, 0);

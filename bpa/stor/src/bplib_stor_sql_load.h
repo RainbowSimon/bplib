@@ -31,8 +31,6 @@
 /* Function Prototypes */
 /* =================== */
 
-bool BPLib_SQL_HasOverflowed(size_t PrevOffset, size_t NewOffset);
-
 BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
                                         BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs);
 
