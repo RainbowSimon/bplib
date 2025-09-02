@@ -90,8 +90,6 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
             fprintf(stderr, "Programming Error: WHERE clause too long\n");
             return BPLIB_STOR_SQL_OVERFLOW_ERR;
         }
-
-        printf("%s\n", WhereClause);
     }
 
     WhereClause[strlen(WhereClause)] = '\0';
