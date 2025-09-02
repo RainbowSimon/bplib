@@ -29,20 +29,6 @@
 
 /*
  * ----------------------------------------------------
- * Generated stub function for BPLib_CT_Init()
- * ----------------------------------------------------
- */
-int BPLib_CT_Init(void)
-{
-    UT_GenStub_SetupReturnBuffer(BPLib_CT_Init, int);
-
-    UT_GenStub_Execute(BPLib_CT_Init, Basic, NULL);
-
-    return UT_GenStub_GetReturnValue(BPLib_CT_Init, int);
-}
-
-/*
- * ----------------------------------------------------
  * Generated stub function for BPLib_CT_SetBundleId()
  * ----------------------------------------------------
  */

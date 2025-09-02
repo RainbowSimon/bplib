@@ -32,10 +32,6 @@
 ** Function Definitions
 */
 
-int BPLib_CT_Init(void) {
-    return BPLIB_SUCCESS;
-}
-
 BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
 {
     uint64_t UniqueIdArr[BPLIB_CT_BUNDLE_IDENTIFIER_ARRAY_LEN];

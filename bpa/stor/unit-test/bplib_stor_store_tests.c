@@ -195,6 +195,42 @@ void Test_BPLib_STOR_StoreBundle_StoreBatch(void)
     }
 }
 
+/* Test that storing a batch worth of duplicate bundles only stores one bundle */
+void Test_BPLib_STOR_StoreBundle_Duplicates(void)
+{
+    BPLib_Bundle_t Bundle;
+    int i;
+
+    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+
+    /* Store a batch worth of bundles */
+    for (i = 0; i < BPLIB_STOR_INSERTBATCHSIZE - 1; i++)
+    {
+        UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
+    }
+
+    /* At this point, batch size should be INSERTBATCHSIZE - 1, and nothing should have been flushed */
+    UtAssert_INT32_EQ(BplibInst.BundleStorage.InsertBatchSize, BPLIB_STOR_INSERTBATCHSIZE - 1);
+
+    /* Store the bundle that triggers the batch */
+    UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BplibInst.BundleStorage.InsertBatchSize, 0);
+
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 1);
+    UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_STOR_DUPL_DBG_EID);
+    UtAssert_STRINGBUF_EQ("Ignored %ld duplicate bundles in store batch.", BPLIB_EM_EXPANDED_EVENT_SIZE, 
+                            context_BPLib_EM_SendEvent[0].Spec, BPLIB_EM_EXPANDED_EVENT_SIZE);
+
+    /* Ensure the bundle was freed from memory after being stored */
+    UtAssert_STUB_COUNT(BPLib_MEM_BundleFree, BPLIB_STOR_INSERTBATCHSIZE);
+
+    /* Ensure batch size was reset */
+    UtAssert_INT32_EQ(BplibInst.BundleStorage.InsertBatchSize, 0);
+
+    /* Free the test bundle (for most test cases this is done in utils.c) */
+    BPLib_STOR_Test_FreeTestBundle(&Bundle);
+}
+
 void TestBplib_STOR_Store_Register(void)
 {
     /* Store Tests */
@@ -202,6 +238,9 @@ void TestBplib_STOR_Store_Register(void)
     UtTest_Add(Test_BPLib_STOR_StoreBundle_Nominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPlib_STOR_StoreBundleNominal");
     UtTest_Add(Test_BPLib_STOR_StoreBundle_SQLFail, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_SQLFail");
     UtTest_Add(Test_BPLib_STOR_StoreBundle_StoreBatch, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_StoreBatch");
+#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+    UtTest_Add(Test_BPLib_STOR_StoreBundle_Duplicates, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_Duplicates");
+#endif
 
     /* FlushPending Tests */
     UtTest_Add(Test_BPLib_STOR_FlushPending_NullParams, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_FlushPending_NullParams");

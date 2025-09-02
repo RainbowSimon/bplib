@@ -41,20 +41,6 @@
 */
 
 /**
- * \brief Custody Transfer initialization
- *
- *  \par Description
- *       CT initialization function
- *
- *  \par Assumptions, External Events, and Notes:
- *       None
- *
- *  \return Execution status
- *  \retval BPLIB_SUCCESS Initialization was successful
- */
-int BPLib_CT_Init(void);
-
-/**
  * \brief Set bundle ID
  *
  *  \par Description

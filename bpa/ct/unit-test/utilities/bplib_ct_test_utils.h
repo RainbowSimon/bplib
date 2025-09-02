@@ -31,6 +31,12 @@
 
 #include "bplib_api_types.h"
 #include "bplib_ct.h"
+#include "bplib_bblocks.h"
+#include "bplib_eid.h"
+#include "bplib_mem.h"
+
+/* Macro to add test case */
+#define ADD_TEST(test) UtTest_Add(test, BPLib_CT_Test_Setup, BPLib_CT_Test_Teardown, #test)
 
 
 /*
