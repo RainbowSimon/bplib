@@ -41,13 +41,13 @@ SQL_Status_t BPLib_SQL_InitDb(const char* DbName, sqlite3** ActiveDbPtr)
     sqlite3*     ActiveDb;
     uint8_t      ForeignKeysEnabled;
 
-    ActiveDb = *ActiveDbPtr;
-
     SQLStatus = sqlite3_open(DbName, ActiveDbPtr);
     if (SQLStatus != SQLITE_OK)
     {
         return SQLStatus;
     }
+
+    ActiveDb = *ActiveDbPtr;
 
     /* Set the atomic commit and rollback method to write-ahead log */
     SQLStatus = sqlite3_exec(ActiveDb, "PRAGMA journal_mode=WAL;", 0, 0, NULL);
