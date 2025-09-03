@@ -64,13 +64,15 @@ const char* MarkEgressedSQL =
 const char* FindBlobSQL =
 "SELECT id\n"
 "FROM bundle_blobs\n"
-"WHERE bundle_id = ?;";
+"WHERE bundle_row = ?;";
 
+/* Insert Bundle Blob */
 const char* InsertBlobSQL =
-"INSERT INTO bundle_blobs (bundle_id, blob_data) VALUES (?, ?)";
+"INSERT INTO bundle_blobs (bundle_row, blob_data) VALUES (?, ?)";
 
+/* Insert Bundle Metadata (duplicate bundle_id entries are ignored) */
 const char* InsertMetadataSQL =
-"INSERT INTO bundle_data (action_timestamp, dest_node, dest_service, bundle_bytes) VALUES (?, ?, ?, ?);";
+"INSERT INTO bundle_data (bundle_id, action_timestamp, dest_node, dest_service, bundle_bytes) VALUES (?, ?, ?, ?, ?);";
 
 const char* GetNumBundlesSQL =
 "SELECT COUNT(*) FROM bundle_data;";
@@ -124,9 +126,9 @@ const char* EgressedBytesSQL =
 ** This schema is designed to support efficient queries and operations on bundle metadata and associated blob data.
 ** The following indexes are created:
 **
-** 1. idx_bundle_blobs_bundle_id:
-**    - Index on the 'bundle_id' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
-**      by its associated bundleID in the 'bundle_data' table.
+** 1. idx_bundle_blobs_bundle_row:
+**    - Index on the 'bundle_row' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
+**      by its associated bundle_row in the 'bundle_data' table.
 **
 ** 2. idx_action_timestamp:
 **    - Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter
@@ -141,11 +143,21 @@ const char* EgressedBytesSQL =
 ** 4. idx_egress_attempted:
 **    - Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up
 **      DELETE queries and other queries filtering by 'egress_attempted'.
-*/
+**
+** 5. idx_bundle_id
+**    - Index on the bplib-assigned unique 'bundle_id' in the 'bundle_data' table. This is used to detect duplicate bundles
+**      in storage and by Custody Transfer to request the deletion or retransmission of custodial bundles. Whether or not
+**      to allow duplicate bundles in storage is toggled by the BPLIB_ALLOW_DUPLICATE_BUNDLES flag.
+**/
 
 const char* CreateTableSQL =
 "CREATE TABLE IF NOT EXISTS bundle_data (\n"
 "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+"    bundle_id INTEGER UNIQUE,\n"
+#else
+"    bundle_id INTEGER,\n"
+#endif
 "    action_timestamp INTEGER,\n"
 "    egress_attempted INTEGER DEFAULT 0,\n"
 "    dest_node INTEGER,\n"
@@ -155,13 +167,14 @@ const char* CreateTableSQL =
 "\n"
 "CREATE TABLE IF NOT EXISTS bundle_blobs (\n"
 "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-"    bundle_id INTEGER,\n"
+"    bundle_row INTEGER,\n"
 "    blob_data BLOB,\n"
-"    FOREIGN KEY (bundle_id) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
+"    FOREIGN KEY (bundle_row) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
 ");\n"
 "\n"
-"CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_id);\n"
+"CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_row);\n"
 "CREATE INDEX IF NOT EXISTS idx_action_timestamp ON bundle_data (action_timestamp);\n"
+"CREATE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
 "\n"
 "CREATE INDEX IF NOT EXISTS idx_egress_id\n"
 "ON bundle_data (\n"
@@ -466,13 +479,18 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
                             "BPLib_SQL_DiscardExpired failed. RC=%d",
                             Status);
     }
-    else
+    else if (NumDiscarded > 0)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_EXPIRED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
 
         CacheInst->BundleCountStored -= NumDiscarded;
+
+        BPLib_EM_SendEvent(BPLIB_STOR_EXPIRE_DBG_EID,
+                            BPLib_EM_EventType_DEBUG,
+                            "Discarded %d expired bundles from storage",
+                            NumDiscarded);
     }
 
     Status = BPLib_SQL_DiscardEgressed(Inst, &NumDiscarded);
@@ -483,12 +501,17 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
                             "BPLib_SQL_DiscardEgressed failed. RC=%d",
                             Status);
     }
-    else
+    else if (NumDiscarded > 0)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
 
         CacheInst->BundleCountStored -= NumDiscarded;
+
+        BPLib_EM_SendEvent(BPLIB_STOR_DELETE_DBG_EID,
+                            BPLib_EM_EventType_DEBUG,
+                            "Discarded %d egressed bundles from storage",
+                            NumDiscarded);
     }
 
     pthread_mutex_unlock(&CacheInst->lock);
@@ -539,16 +562,29 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     BPLib_BundleCache_t* CacheInst;
     uint8_t              i;
     size_t               TotalBytesStored;
+    size_t               DuplicateBundlesIgnored;
 
-    TotalBytesStored = 0;
-    CacheInst        = &Inst->BundleStorage;
+    CacheInst               = &Inst->BundleStorage;
+    TotalBytesStored        = 0;
+    DuplicateBundlesIgnored = 0;
 
-    Status = BPLib_SQL_Store(Inst, &TotalBytesStored);
+    Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored);
 
     if (Status == BPLIB_SUCCESS)
     {
         CacheInst->BytesStorageInUse += TotalBytesStored;
-        CacheInst->BundleCountStored += CacheInst->InsertBatchSize;
+        CacheInst->BundleCountStored += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
+
+        if (DuplicateBundlesIgnored > 0)
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, DuplicateBundlesIgnored);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, DuplicateBundlesIgnored);
+            BPLib_EM_SendEvent(BPLIB_STOR_DUPL_DBG_EID,
+                                BPLib_EM_EventType_DEBUG,
+                                "Ignored %ld duplicate bundles in store batch.",
+                                DuplicateBundlesIgnored);
+        }
+
     }
     else if (Status == BPLIB_STOR_DB_FULL_ERR)
     {

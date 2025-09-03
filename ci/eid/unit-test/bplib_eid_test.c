@@ -582,8 +582,8 @@ void Test_BPLib_EID_PatternIsValid_Nominal(void)
 
     Pattern.Scheme = BPLIB_EID_SCHEME_IPN;
     Pattern.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
-    Pattern.MaxAllocator = 10;
-    Pattern.MinAllocator = 9;
+    Pattern.MaxAllocator = 0;
+    Pattern.MinAllocator = 0;
     Pattern.MaxNode = 10;
     Pattern.MinNode = 9;
     Pattern.MaxService = 10;

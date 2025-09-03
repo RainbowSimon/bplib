@@ -93,6 +93,7 @@ typedef struct
     size_t                    BlockOffsetStart;
     size_t                    BlockOffsetEnd;
     BPLib_TIME_MonotonicTime_t MonoTime;   /** \brief Creation *monotonic* time */
+    uint32_t                  BundleId;
 } BPLib_PrimaryBlock_t;
 
 /**
