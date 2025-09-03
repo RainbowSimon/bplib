@@ -34,9 +34,9 @@
 BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
                                         BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs);
 
-SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
-                                        BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs,
-                                        size_t MaxBundles);
+SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, sqlite3_stmt** FindForEgressIDStmt, 
+                                        BPLib_STOR_LoadBatch_t* Batch, BPLib_EID_Pattern_t* DestEIDs,
+                                        size_t NumEIDs, size_t MaxBundles);
 
 BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch);
 

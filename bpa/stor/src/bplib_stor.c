@@ -41,7 +41,6 @@
 /* ======= */
 
 /* SQL query statements */
-sqlite3_stmt* FindForEgressIDStmt;
 sqlite3_stmt* MarkEgressedStmt;
 sqlite3_stmt* FindBlobStmt;
 sqlite3_stmt* InsertBlobStmt;
