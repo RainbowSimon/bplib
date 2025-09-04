@@ -37,11 +37,6 @@
 
 #define BPLIB_SQL_MAX_STRLEN 4096
 
-/* This is a temporary define denoting milliseconds between POSIX and DTN time
-** It is used until a more mature boot-era solution is implemented in BPLIB_TIME
-*/
-#define BPLIB_STOR_EPOCHOFFSET 946684800000
-
 /* ======== */
 /* Typedefs */
 /* ======== */
