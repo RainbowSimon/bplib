@@ -57,18 +57,15 @@ static int BPLib_SQL_PrintTbl(void* data, int argc, char** argv, char** azColNam
 
 SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
 {
-    SQL_Status_t SQLStatus;
-    uint64_t     EffectiveLifetime;
+    SQL_Status_t         SQLStatus;
+    BPLib_PrimaryBlock_t PrimaryBlock;
+    uint64_t             AgeBlockTime;
+    uint64_t             ExpirationTime;
+    uint64_t             MonoTimeAge;
+    uint64_t             MonoTimeRemaining;
+    uint16_t             ExtensionBlockIdx;
 
-    /* Ensure the lifetime is less than or equal to the max allowed lifetime */
-    BPLib_NC_ReaderLock();
-    EffectiveLifetime = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_LIFETIME];
-    BPLib_NC_ReaderUnlock();
-
-    if (EffectiveLifetime > Bundle->blocks.PrimaryBlock.Lifetime)
-    {
-        EffectiveLifetime = Bundle->blocks.PrimaryBlock.Lifetime;
-    }    
+    PrimaryBlock = Bundle->blocks.PrimaryBlock;
 
     sqlite3_reset(InsertMetadataStmt);
 
@@ -82,9 +79,37 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     }
     else
     {
-        /* Add the value of the timestamp used as an indicator for some action to the InsertMetadataStmt variable */
-        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 2, 
-            (int64_t)Bundle->blocks.PrimaryBlock.Timestamp.CreateTime + (int64_t)EffectiveLifetime);
+        /* Add the value of the timestamp used as an indicator for some action to the InsertMetadataStmt variable (action_timestamp) */
+        
+        if (PrimaryBlock.Timestamp.CreateTime != 0)
+        { /* Bundle has a valid creation time */
+            if (BPLib_TIME_GetCurrentDtnTime() != 0)
+            { /* DTN time is valid */
+                MonoTimeAge       = BPLib_TIME_GetCurrentDtnTime() - PrimaryBlock.Timestamp.CreateTime;
+                MonoTimeRemaining = PrimaryBlock.Lifetime          - MonoTimeAge;
+                ExpirationTime    = BPLib_TIME_GetMonotonicTime()  + MonoTimeRemaining;
+            }
+            else
+            { /* DTN time is invalid */
+                ExpirationTime = PrimaryBlock.MonoTime.Time + PrimaryBlock.Lifetime;
+            }
+        }
+        else
+        { /* Bundle creation time is invalid */
+            for (ExtensionBlockIdx = 0; ExtensionBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtensionBlockIdx++)
+            {
+                if (Bundle->blocks.ExtBlocks[ExtensionBlockIdx].Header.BlockType == BPLib_BlockType_Age)
+                {
+                    MonoTimeAge    = PrimaryBlock.MonoTime.Time + PrimaryBlock.Lifetime;
+                    AgeBlockTime   = Bundle->blocks.ExtBlocks[ExtensionBlockIdx].BlockData.AgeBlockData.Age;
+                    ExpirationTime = MonoTimeAge - AgeBlockTime;
+
+                    break;
+                }
+            }
+        }
+        
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 2, (sqlite3_int64) ExpirationTime);
     }
 
     if (SQLStatus != SQLITE_OK)
