@@ -198,5 +198,6 @@ BPLib_Status_t BPLib_PDB_SrcAuthTblValidateFunc(void *TblData);
  */
 BPLib_Status_t BPLib_PDB_SrcLatencyTblValidateFunc(void *TblData);
 
+bool BPLib_PDB_CanCustodyBeAccepted(BPLib_Bundle_t *Bundle);
 
 #endif /* BPLIB_PDB_H */

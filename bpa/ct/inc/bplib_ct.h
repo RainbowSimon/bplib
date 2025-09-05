@@ -35,6 +35,52 @@
 
 #define BPLIB_CT_BUNDLE_IDENTIFIER_ARRAY_LEN        (7u)
 
+/**
+ * \brief Maximum sequence range length. Must always be an odd number
+ */
+#define BPLIB_CT_MAX_SEQ_RANGE_LEN                  (11u)
+
+#define BPLIB_CT_MAX_RAW_CCS                        (10u)
+#define BPLIB_CT_MAX_SEQ_COLLECTIONS                (2u)
+
+
+/*
+** Type Definitions
+*/
+
+typedef enum
+{
+    BPLib_CT_CustodyAccepted = 1,
+    BPLib_CT_CustodyRefused = -1
+} BPLib_CT_DispositionCode_t;
+
+typedef enum
+{
+    BPLib_CT_CustodyAccepted_Idx = 0,
+    BPLib_CT_CustodyRefused_Idx = -1
+} BPLib_CT_SeqCollectionIdx_t;
+
+typedef struct
+{
+    uint64_t SeqId;
+    uint64_t FirstSeqNum;
+    uint64_t SeqRange[BPLIB_CT_MAX_SEQ_RANGE_LEN];
+    size_t   SeqRangeLen;
+    size_t   LastSeqNumAdded;
+    BPLib_CT_DispositionCode_t DispositionCode;
+} BPLib_CT_BundleSeqCollection_t;
+
+typedef struct
+{
+    BPLib_EID_t                    SourceAdminEid;
+    BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
+} BPLib_CT_RawCcs_t;
+
+typedef struct 
+{
+    BPLib_CT_RawCcs_t RawCcss[BPLIB_CT_MAX_RAW_CCS];
+} BPLib_CT_Database_t;
+
 
 /*
 ** Exported Functions
@@ -58,5 +104,7 @@
  *  \retval BPLIB_NULL_PTR_ERR The bundle was null
  */
 BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle);
+
+BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle);
 
 #endif /* BPLIB_CT_H */

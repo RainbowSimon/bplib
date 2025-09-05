@@ -26,7 +26,7 @@
 #include "bplib_bblocks.h"
 #include "bplib_eid.h"
 #include "bplib_mem.h"
-
+#include "bplib_pdb.h"
 
 /*
 ** Function Definitions
@@ -60,4 +60,61 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
                                 BPLib_CRC_Type_CRC32C);
 
     return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_CT_AddBundleToCcs(BPLib_Bundle_t *Bundle, bool CustodyAccepted)
+{
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle)
+{
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+
+    if (Bundle == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    /* Set bundle ID for both custodial and non-custodial bundles */
+    (void) BPLib_CT_SetBundleId(Bundle);
+
+    if (Bundle->Meta.IsCustodial)
+    {
+        if (BPLib_PDB_CanCustodyBeAccepted(Bundle))
+        {
+            Status = BPLib_CT_AddBundleToCcs(Bundle, true);
+        }
+        else
+        {
+            Status = BPLib_CT_AddBundleToCcs(Bundle, false);
+        }
+    }
+
+    /* Do nothing for non-custodial bundles */
+
+    return Status;
+}
+
+BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Bundle_t *Bundle)
+{
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+
+    if (Bundle->Meta.IsCustodial)
+    {
+        /* Update CTEB fields */
+
+        /*
+        Bundle->blocks.Cteb.SequenceId  = BPLib_CT_GetSequenceId(Bundle);
+        Bundle->blocks.Cteb.SequenceNum = BPLib_CT_GetNextSequenceNum(Bundle->blocks.Cteb.SequenceId);
+        BPLib_EID_CopyEids(&(Bundle->blocks.Cteb.BlkAdminEid), &BPLIB_EID_INSTANCE);
+        Bundle->blocks.Cteb.RequiresEncode = true;
+        */
+        
+
+    }
+
+    /* Do nothing for non-custodial bundles */
+
+    return Status;    
 }

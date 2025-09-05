@@ -340,6 +340,10 @@ typedef enum
 #define BPLIB_NC_QM_INIT_ERR                           ((BPLib_Status_t) -248)
 #define BPLIB_NC_MEM_INIT_ERR                          ((BPLib_Status_t) -249)
 
+/* Custody Transfer Errors */
+#define BPLIB_CT_CUSTODY_REFUSED_ERR                  ((BPLib_Status_t) -260)
+
+
 /** @} */
 
 #ifdef __cplusplus

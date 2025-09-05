@@ -23,6 +23,9 @@
 */
 
 #include "bplib_pdb.h"
+#include "bplib_bblocks.h"
+#include "bplib_eid.h"
+#include "bplib_mem.h"
 
 
 /*
@@ -75,4 +78,19 @@ BPLib_Status_t BPLib_PDB_SrcLatencyTblValidateFunc(void *TblData)
     BPLib_Status_t           ReturnCode = BPLIB_SUCCESS;
 
     return ReturnCode;
+}
+
+bool BPLib_PDB_CanCustodyBeAccepted(BPLib_Bundle_t *Bundle)
+{
+    /* Always accept custody of bundles destined for this node */
+    if (BPLib_EID_NodeIsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
+    {
+        return true;
+    }
+
+    /* TODO query storage to see if it has space left */
+
+    /* TODO add additional custody checks */
+
+    return true;
 }
