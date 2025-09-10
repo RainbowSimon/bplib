@@ -8,6 +8,8 @@
 
 add_library(bplib_ct OBJECT
     src/bplib_ct.c
+    src/bplib_ct_ccs.c
+    src/bplib_ct_db.c
 )
 
 target_include_directories(bplib_ct PUBLIC

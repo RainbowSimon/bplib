@@ -80,17 +80,17 @@ BPLib_Status_t BPLib_PDB_SrcLatencyTblValidateFunc(void *TblData)
     return ReturnCode;
 }
 
-bool BPLib_PDB_CanCustodyBeAccepted(BPLib_Bundle_t *Bundle)
+BPLib_Status_t BPLib_PDB_AcceptCustody(BPLib_Bundle_t *Bundle)
 {
     /* Always accept custody of bundles destined for this node */
     if (BPLib_EID_NodeIsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
     {
-        return true;
+        return BPLIB_SUCCESS;
     }
 
     /* TODO query storage to see if it has space left */
 
     /* TODO add additional custody checks */
 
-    return true;
+    return BPLIB_SUCCESS;
 }

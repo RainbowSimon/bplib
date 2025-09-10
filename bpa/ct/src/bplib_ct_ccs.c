@@ -23,6 +23,7 @@
 */
 
 #include "bplib_ct.h"
+#include "bplib_ct_ccs.h"
 #include "bplib_bblocks.h"
 #include "bplib_eid.h"
 #include "bplib_mem.h"
@@ -41,6 +42,9 @@ void BPLib_CT_ResetRawCcs(BPLib_CT_RawCcs_t *RawCcs)
         RawCcs->BundleSeqCollections[i].SeqRangeLen = 0;
     }
 
+    RawCcs->InProgress = false;
+    RawCcs->Size = 0;
+
     return;
 }
 
@@ -48,7 +52,6 @@ BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t Sequence
                           uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode)
 {
     BPLib_CT_BundleSeqCollection_t *Collection;
-    uint64_t MissingSeqNumLen;
 
     if (DispositionCode == BPLib_CT_CustodyAccepted)
     {
@@ -74,6 +77,9 @@ BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t Sequence
         Collection->FirstSeqNum = SequenceNum;
         Collection->SeqRange[0] = 1;
         Collection->SeqRangeLen = 1;
+
+        /* Update full CCS size accordingly */
+        RawCcs->Size += 1;
     }
     else
     {
@@ -88,10 +94,76 @@ BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t Sequence
             Collection->SeqRange[Collection->SeqRangeLen] = SequenceNum - Collection->LastSeqNumAdded;
             Collection->SeqRange[Collection->SeqRangeLen + 1] = 1;
             Collection->SeqRangeLen += 2;
+
+            /* Update full CCS size accordingly */
+            RawCcs->Size += 2;
         }
     }
 
     Collection->LastSeqNumAdded = SequenceNum;
 
     return BPLIB_SUCCESS;
+}
+
+size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Database_t *Ctdb, BPLib_EID_t *SourceAdminEID)
+{
+    size_t RawCcsIdx;
+    size_t FirstUnusedCcs = BPLIB_CT_MAX_RAW_CCS;
+    size_t MaxCcsSize = 0;
+    size_t LargestCcsIdx = BPLIB_CT_MAX_RAW_CCS;
+    size_t RetCcsIdx;
+
+    for (RawCcsIdx = 0; RawCcsIdx < BPLIB_CT_MAX_RAW_CCS; RawCcsIdx++)
+    {
+        /* See if there's already an in progress CCS with the right EID */
+        if (BPLib_EID_IsMatch(&(Ctdb->RawCcss[RawCcsIdx].SourceAdminEid), SourceAdminEID) &&
+            Ctdb->RawCcss[RawCcsIdx].InProgress == true)
+        {
+            break;
+        }
+        /* Find the first unused CCS */
+        else if (FirstUnusedCcs == BPLIB_CT_MAX_RAW_CCS && 
+                 Ctdb->RawCcss[RawCcsIdx].InProgress == false) 
+        {
+            FirstUnusedCcs = RawCcsIdx;
+        }
+        /* Find the largest CCS */
+        else if (MaxCcsSize < Ctdb->RawCcss[RawCcsIdx].Size)
+        {
+            MaxCcsSize = Ctdb->RawCcss[RawCcsIdx].Size;
+            LargestCcsIdx = RawCcsIdx;
+        }
+    }
+    
+    /* Found an in progress raw CCS with a matching EID */
+    if (RawCcsIdx != BPLIB_CT_MAX_RAW_CCS)
+    {
+        RetCcsIdx = RawCcsIdx; 
+    }
+    /* Found an unused CCS */
+    else if (FirstUnusedCcs != BPLIB_CT_MAX_RAW_CCS)
+    {
+        Ctdb->RawCcss[FirstUnusedCcs].InProgress = true;
+        BPLib_EID_CopyEids(SourceAdminEID, Ctdb->RawCcss[RawCcsIdx].SourceAdminEid);
+        
+        RetCcsIdx = FirstUnusedCcs;
+    }
+    /* No CCSs were avaiable, send the largest one and wipe it to use */
+    else
+    {
+        BPLib_CT_BuildAndSendRawCcs(&(Ctdb->RawCcss[LargestCcsIdx]));
+        
+        RetCcsIdx = LargestCcsIdx;
+    }
+
+    return RetCcsIdx;
+}
+
+void BPLib_CT_BuildAndSendRawCcs(BPLib_CT_RawCcs_t *RawCcs)
+{
+    /* Have ARP build CCS and send it */
+
+    BPLib_CT_ResetRawCcs(RawCcs);
+
+    return;
 }

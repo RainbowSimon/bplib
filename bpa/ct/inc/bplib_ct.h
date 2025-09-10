@@ -42,7 +42,7 @@
 
 #define BPLIB_CT_MAX_RAW_CCS                        (10u)
 #define BPLIB_CT_MAX_SEQ_COLLECTIONS                (2u)
-
+#define BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS          (10u)
 
 /*
 ** Type Definitions
@@ -72,19 +72,37 @@ typedef struct
 
 typedef struct
 {
+    bool                           InProgress;
+    size_t                         Size;
     BPLib_EID_t                    SourceAdminEid;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
 } BPLib_CT_RawCcs_t;
 
+typedef struct
+{
+    BPLib_EID_t                    SourceAdminEid;
+    BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS];
+    size_t                         NumBundleSeqCollections;
+} BPLib_CT_DeserializedCcs_t;
+
+typedef struct 
+{
+    uint32_t Temp;
+} BPLib_CT_PendingTransfers_t;
+
+
 typedef struct 
 {
     BPLib_CT_RawCcs_t RawCcss[BPLIB_CT_MAX_RAW_CCS];
+    BPLib_CT_PendingTransfers_t CtPending;
 } BPLib_CT_Database_t;
 
 
 /*
 ** Exported Functions
 */
+
+BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst);
 
 /**
  * \brief Set bundle ID
@@ -106,5 +124,9 @@ typedef struct
 BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle);
 
 BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle);
+
+BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Bundle_t *Bundle);
+
+BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_DeserializedCcs_t *Ccs);
 
 #endif /* BPLIB_CT_H */
