@@ -109,6 +109,8 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
             }
             else
             {
+                /* Check size trigger of this CCS TODO */
+
                 /* Add bundle to CTDB */
                 // Status = BPLib_CT_AddToCtdb(Inst, Bundle->Cteb.SeqId, Bundle->Cteb.SeqNum, 
                 //                                         Bundle->blocks.PrimaryBlock.BundeId)
