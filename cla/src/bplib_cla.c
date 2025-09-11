@@ -410,3 +410,20 @@ BPLib_Status_t BPLib_CLA_GetContactRunState(uint32_t ContactId, BPLib_CLA_Contac
         return BPLIB_INVALID_CONT_ID_ERR;
     }
 }
+
+BPLib_Status_t BPLib_CLA_SetContactRunState(uint32_t ContactId, BPLib_CLA_ContactRunState_t RunState)
+{
+    BPLib_Status_t Status;
+
+    if (ContactId < BPLIB_MAX_NUM_CONTACTS)
+    {
+        BPLib_CLA_ContactRunStates[ContactId] = RunState;
+        Status = BPLIB_SUCCESS;
+    }
+    else
+    {
+        Status = BPLIB_INVALID_CONT_ID_ERR;
+    }
+
+    return Status;
+}
