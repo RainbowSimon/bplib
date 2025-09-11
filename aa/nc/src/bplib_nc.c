@@ -61,7 +61,6 @@ BPLib_Status_t BPLib_NC_InitImpl(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
     /* Empty out and initialize the NC managed payloads */
     memset((void*) &BPLib_NC_SourceMibConfigPayload,     0, sizeof(BPLib_NC_SourceMibConfigPayload));
     memset((void*) &BPLib_NC_NodeMibConfigPayload,       0, sizeof(BPLib_NC_NodeMibConfigPayload));
-    memset((void*) &BPLib_NC_ChannelContactStatsPayload, 0, sizeof(BPLib_NC_ChannelContactStatsPayload));
 
     /* Initialize the configuration lock */
     Status = BPLib_NC_RWLock_Init(&BPLib_NC_CfgLock);
@@ -344,11 +343,21 @@ BPLib_Status_t BPLib_NC_MIBConfigPSTblValidateFunc(void *TblData)
 
 void BPLib_NC_SetAppState(uint8_t ChanId, BPLib_NC_ApplicationState_t State)
 {
+    if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    {
+        return;
+    }
+
     BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].State = State;
 }
 
 BPLib_NC_ApplicationState_t BPLib_NC_GetAppState(uint8_t ChanId)
 {
+    if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    {
+        return BPLIB_NC_APP_STATE_REMOVED;
+    }
+
     return BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].State;
 }
 
