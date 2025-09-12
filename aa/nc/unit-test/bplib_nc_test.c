@@ -180,6 +180,9 @@ void Test_BPLib_NC_Init_Nominal(void)
     uint16_t                   MaxJobs;
     uint8_t                    PoolMem[100];
     size_t                     PoolMemLen;
+    BPLib_CLA_ContactRunState_t RunState = BPLIB_CLA_TORNDOWN;
+    uint32_t ContId;
+    uint32_t ChanId;
 
     MaxJobs    = 10;
     PoolMemLen = 100;
@@ -198,6 +201,16 @@ void Test_BPLib_NC_Init_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_SUCCESS);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_SUCCESS);
 
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
+    {
+        BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].State = BPLIB_NC_APP_STATE_REMOVED;
+    }
+
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
+    {
+        UT_SetDataBuffer(UT_KEY(BPLib_CLA_GetContactRunState), &RunState, sizeof(RunState), false);
+    }
+
     Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -214,6 +227,48 @@ void Test_BPLib_NC_Init_Nominal(void)
     UtAssert_STUB_COUNT(BPLib_AS_Init, 1);
     UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 1);
     UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 1);
+    UtAssert_STUB_COUNT(BPLib_PI_StopApplication, 0);
+    UtAssert_STUB_COUNT(BPLib_CLA_ContactStop, 0);
+}
+
+/* Test NC initialization when a contact or application needs to be forcefully shut down */
+void Test_BPLib_NC_Init_ForceShutdown(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+    BPLib_CLA_ContactRunState_t RunState = BPLIB_CLA_STARTED;
+    uint32_t ContId;
+    uint32_t ChanId;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    TestCallbacks.BPA_TABLEP_TableInit = BPA_TABLEP_TableInit;
+
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
+    {
+        BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].State = BPLIB_NC_APP_STATE_STARTED;
+    }
+
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
+    {
+        UT_SetDataBuffer(UT_KEY(BPLib_CLA_GetContactRunState), &RunState, sizeof(RunState), false);
+    }
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
+
+    UtAssert_STUB_COUNT(BPLib_PI_StopApplication, BPLIB_MAX_NUM_CHANNELS);
+    UtAssert_STUB_COUNT(BPLib_CLA_ContactStop, BPLIB_MAX_NUM_CONTACTS);
 }
 
 void Test_BPLib_NC_Init_FWP_Err(void)
@@ -2099,6 +2154,12 @@ void Test_BPLib_NC_GetSetAppState_Nominal(void)
     UtAssert_EQ(BPLib_NC_ApplicationState_t, BPLIB_NC_APP_STATE_STARTED, State);
 }
 
+void Test_BPLib_NC_GetSetAppState_InvChanId(void)
+{
+    UtAssert_EQ(BPLib_NC_ApplicationState_t, BPLib_NC_GetAppState(BPLIB_MAX_NUM_CHANNELS), BPLIB_NC_APP_STATE_REMOVED);
+    UtAssert_VOIDCALL(BPLib_NC_SetAppState(BPLIB_MAX_NUM_CHANNELS, BPLIB_NC_APP_STATE_REMOVED));
+}
+
 void Test_BPLib_NC_TableUpdate_Success_Nominal(void)
 {
     BPLib_Status_t Status;
@@ -2221,6 +2282,7 @@ void TestBplibNc_Register(void)
     ADD_TEST(Test_BPLib_NC_Init_Impl_NullLatTblPtr_Error);
     ADD_TEST(Test_BPLib_NC_Init_Impl_NullStorTblPtr_Error);
     ADD_TEST(Test_BPLib_NC_Init_Nominal);
+    ADD_TEST(Test_BPLib_NC_Init_ForceShutdown);
     ADD_TEST(Test_BPLib_NC_Init_FWP_Err);
     ADD_TEST(Test_BPLib_NC_Init_EM_Err);
 
@@ -2336,6 +2398,7 @@ void TestBplibNc_Register(void)
     ADD_TEST(Test_BPLib_NC_MIBConfigPSTblValidateFunc_Nominal);
     ADD_TEST(Test_BPLib_NC_MIBConfigPSTblValidateFunc_Invalid);
     ADD_TEST(Test_BPLib_NC_GetSetAppState_Nominal);
+    ADD_TEST(Test_BPLib_NC_GetSetAppState_InvChanId);
     ADD_TEST(Test_BPLib_NC_TableUpdate_Success_Nominal);
     ADD_TEST(Test_BPLib_NC_TableUpdate_Update_Nominal);
     ADD_TEST(Test_BPLib_NC_TableUpdate_Error_Nominal);
