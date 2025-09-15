@@ -31,6 +31,22 @@ BPLib_StorageHkTlm_Payload_t BPLib_STOR_StoragePayload;
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_STOR_Cleanup()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_STOR_Cleanup, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_STOR_Cleanup, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_STOR_Cleanup, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_STOR_Cleanup, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_STOR_Destroy()
  * ----------------------------------------------------
  */

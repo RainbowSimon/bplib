@@ -50,4 +50,6 @@ BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleRowID,
 
 BPLib_Status_t BPLib_SQL_GetDbSize(BPLib_Instance_t *Inst, size_t *DbSize);
 
+BPLib_Status_t BPLib_SQL_Cleanup(BPLib_Instance_t* Inst);
+
 #endif /* BPLIB_STOR_SQL_H */
