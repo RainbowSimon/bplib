@@ -64,5 +64,6 @@ void TestBplib_STOR_Register(void);
 void TestBplib_STOR_LoadBatch_Register(void);
 void TestBplib_STOR_Load_Register(void);
 void TestBplib_STOR_Store_Register(void);
+void TestBplib_STOR_SQL_Store_Register(void);
 
 #endif /* BPLIB_STOR_TEST_UTILS_H */

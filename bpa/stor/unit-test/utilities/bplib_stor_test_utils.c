@@ -151,4 +151,5 @@ void UtTest_Setup(void)
     TestBplib_STOR_Store_Register();
     TestBplib_STOR_LoadBatch_Register();
     TestBplib_STOR_Load_Register();
+    TestBplib_STOR_SQL_Store_Register();
 }
