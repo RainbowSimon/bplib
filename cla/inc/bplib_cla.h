@@ -232,4 +232,14 @@ BPLib_Status_t BPLib_CLA_ContactTeardown(BPLib_Instance_t *Inst, uint32_t Contac
   */
 BPLib_Status_t BPLib_CLA_GetContactRunState(uint32_t ContactId, BPLib_CLA_ContactRunState_t* ReturnState);
 
+/**
+  * \brief     Set the run state of the provided contact
+  * \param[in] ContactId (uint32_t) Contact ID from the Contacts Configuration whose run state is being requested to change
+  * \param[in] RunState  (BPLib_CLA_ContactRunState_t) Requested run state of the provided contact ID from the Contacts Configuration
+  * \return    Execution status
+  * \retval    BPLIB_SUCCESS: Successfully changed the run state of the provided contact ID to the provided run state
+  * \retval    BPLIB_INVALID_CONT_ID_ERR: Provided contact ID does not match a contact ID in the Contacts Configuration
+  */
+ BPLib_Status_t BPLib_CLA_SetContactRunState(uint32_t ContactId, BPLib_CLA_ContactRunState_t RunState);
+
 #endif /* BPLIB_CLA_H */
