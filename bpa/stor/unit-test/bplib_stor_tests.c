@@ -79,10 +79,12 @@ void Test_BPLib_STOR_GarbageCollect_NullParams(void)
 /* Test STOR_GarbageCollect discards a bundle. */
 void Test_BPLib_STOR_GarbageCollect_NominalExpired(void)
 {
+    uint64_t Offset = 946684800001;
+
     UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, 1);
 
     /* Nothing should be discarded if current time is before bundle expiration time */
-    UT_SetDeferredRetcode(UT_KEY(BPA_TIMEP_GetHostTime), 1, BPLIB_STOR_EPOCHOFFSET + 1);
+    UT_SetDeferredRetcode(UT_KEY(BPA_TIMEP_GetHostTime), 1, Offset);
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
 
     UtAssert_STUB_COUNT(BPLib_AS_Increment, 0);
