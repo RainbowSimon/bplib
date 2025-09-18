@@ -84,7 +84,7 @@ void Test_BPLib_STOR_GarbageCollect_NominalExpired(void)
     UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, 1);
 
     /* Nothing should be discarded if current time is before bundle expiration time */
-    UT_SetDeferredRetcode(UT_KEY(BPA_TIMEP_GetHostTime), 1, Offset);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, Offset);
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
 
     UtAssert_STUB_COUNT(BPLib_AS_Increment, 0);
