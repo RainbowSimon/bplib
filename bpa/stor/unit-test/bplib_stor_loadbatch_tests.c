@@ -177,30 +177,30 @@ void Test_BPLib_STOR_LoadBatch_AdvanceReaderNominal(void)
 void TestBplib_STOR_LoadBatch_Register(void)
 {
     /* Init */
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_InitNull, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_InitNull");
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_InitNominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_InitNominal");
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_InitNull);
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_InitNominal);
 
     /* Reset */
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_ResetNull, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_ResetNull");
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_ResetNominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_ResetNominal");
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_ResetNull);
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_ResetNominal);
 
     /* IsEmpty */
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_IsEmptyNull, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_IsEmptyNull");
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_IsEmptyNominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_IsEmptyNominal");
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_IsEmptyNull);
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_IsEmptyNominal);
 
     /* IsConsumed */
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_IsConsumedNull, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_IsConsumedNull");
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_IsConsumedNominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_IsConsumedNominal");
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_IsConsumedNull);
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_IsConsumedNominal);
 
     /* AddID */
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_AddIDNull, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "BPLib_STOR_LoadBatch_AddIDNull");
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_AddIDNominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_AddIDNominal");
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_AddIDNull);
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_AddIDNominal);
 
     /* PeekNextID */
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_PeekNextIDNull, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_PeekNextIDNull");
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_PeekNextIDNominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_PeekNextIDNominal");
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_PeekNextIDNull);
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_PeekNextIDNominal);
 
     /* AdvanceReader */
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_AdvanceReaderNull, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_AdvanceReaderNull");
-    UtTest_Add(Test_BPLib_STOR_LoadBatch_AdvanceReaderNominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_LoadBatch_AdvanceReaderNominal");
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_AdvanceReaderNull);
+     ADD_TEST(Test_BPLib_STOR_LoadBatch_AdvanceReaderNominal);
 }

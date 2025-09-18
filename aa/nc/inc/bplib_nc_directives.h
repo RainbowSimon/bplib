@@ -407,6 +407,16 @@ void BPLib_NC_RemoveStorageAllocation(const BPLib_RemoveStorageAllocation_Payloa
 void BPLib_NC_PerformSelfTest(void);
 
 /**
+  * \brief     Cleanup storage
+  * \details   Perform any storage cleanup operations
+  * \note      This command is just a call to BPLib_STOR_Cleanup()
+  * \param[in] Instance (BPLib_Instance_t *) The bplib instance that contains
+  *                     information needed for the storage database context
+  * \return    void
+  */
+void BPLib_NC_CleanupStorage(BPLib_Instance_t *Inst);
+
+/**
   * \brief     Send Per Node MIB Configuration telemetry packet
   * \details   Node Configuration Send Node MIB Configuration Housekeeping Packet command.
   * \note      This command is just a call to BPA_TLMP_SendNodeMibConfigPkt()

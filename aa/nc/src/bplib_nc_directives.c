@@ -1072,6 +1072,27 @@ void BPLib_NC_PerformSelfTest(void)
     */
 }
 
+void BPLib_NC_CleanupStorage(BPLib_Instance_t *Inst)
+{
+    BPLib_Status_t Status;
+
+    Status = BPLib_STOR_Cleanup(Inst);
+
+    if (Status == BPLIB_SUCCESS)
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
+        BPLib_EM_SendEvent(BPLIB_NC_STOR_CLEANUP_INF_EID, BPLib_EM_EventType_INFORMATION,
+                            "Storage cleanup has completed successfully.");
+    }
+    else
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1);
+        BPLib_EM_SendEvent(BPLIB_NC_STOR_CLEANUP_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "Storage cleanup failed, RC=%d", Status);
+
+    }
+}
+
 void BPLib_NC_SendNodeMibConfigHk(void)
 {
     BPLib_Status_t Status;

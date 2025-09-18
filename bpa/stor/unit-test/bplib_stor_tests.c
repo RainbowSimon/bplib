@@ -123,7 +123,7 @@ void Test_BPLib_STOR_UpdateHkPkt_Nominal(void)
     size_t ExpectedBytesMemInUse;
     size_t ExpectedBytesMemHighWater;
     size_t ExpectedBytesMemFree;
-    size_t ExpectedKbStorageInUse;
+    size_t ExpectedKbBundlesInStor;
 
     memset((void*) &BPLib_STOR_StoragePayload, 0, sizeof(BPLib_StorageHkTlm_Payload_t));
 
@@ -134,30 +134,41 @@ void Test_BPLib_STOR_UpdateHkPkt_Nominal(void)
     ExpectedBytesMemInUse     = ((BplibInst.pool.impl.num_blocks - BplibInst.pool.impl.num_free) * BplibInst.pool.impl.block_size);
     ExpectedBytesMemHighWater = ExpectedBytesMemInUse;
     ExpectedBytesMemFree      = (BplibInst.pool.impl.num_free * BplibInst.pool.impl.block_size);
-    ExpectedKbStorageInUse    = (BplibInst.BundleStorage.BytesStorageInUse / 1000);
+    ExpectedKbBundlesInStor    = (BplibInst.BundleStorage.BytesStorageInUse / 1000);
 
     BPLib_STOR_UpdateHkPkt(&BplibInst);
 
     UtAssert_EQ(size_t, BPLib_STOR_StoragePayload.BytesMemInUse,     ExpectedBytesMemInUse);
     UtAssert_EQ(size_t, BPLib_STOR_StoragePayload.BytesMemHighWater, ExpectedBytesMemHighWater);
     UtAssert_EQ(size_t, BPLib_STOR_StoragePayload.BytesMemFree,      ExpectedBytesMemFree);
-    UtAssert_EQ(size_t, BPLib_STOR_StoragePayload.KbStorageInUse,    ExpectedKbStorageInUse);
+    UtAssert_EQ(size_t, BPLib_STOR_StoragePayload.KbBundlesInStor,    ExpectedKbBundlesInStor);
+}
+
+void Test_BPLib_STOR_Cleanup_Nominal(void)
+{
+    BPLib_Status_t Status;
+
+    Status = BPLib_STOR_Cleanup(&BplibInst);
+
+    UtAssert_INT32_EQ(Status, BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_STOR_CLEANUP_INF_EID);
 }
 
 
 void TestBplib_STOR_Register(void)
 {
-    /* Init/Teardown */
-    UtTest_Add(Test_BPLib_STOR_Init, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_Init");
-    UtTest_Add(Test_BPLib_STOR_Init, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_Init_NullInst");
-    UtTest_Add(Test_BPLib_STOR_Destroy, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_Destroy");
-    UtTest_Add(Test_BPLib_STOR_InitStoredCount, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_InitStoredCount");
+   ADD_TEST(Test_BPLib_STOR_Init);
+   ADD_TEST(Test_BPLib_STOR_Init);
+   ADD_TEST(Test_BPLib_STOR_Destroy);
+   ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_InitStoredCount);
 
-    /* Storage Table Tests */
-    UtTest_Add(Test_BPLib_STOR_StorageTblValidateFunc_Nominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StorageTblValidateFunc_Nominal");
+   ADD_TEST(Test_BPLib_STOR_StorageTblValidateFunc_Nominal);
 
-    /* Garbage Collect Tests */
-    UtTest_Add(Test_BPLib_STOR_GarbageCollect_NullParams, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_GC_NullParams");
-    UtTest_Add(Test_BPLib_STOR_GarbageCollect_NominalExpired, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_GarbageCollect_NominalExpired");
-    UtTest_Add(Test_BPLib_STOR_GarbageCollect_SQLFail, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_GC_SQLFail");
+   ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_GarbageCollect_NullParams);
+   ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_GarbageCollect_NominalExpired);
+   ADD_TEST(Test_BPLib_STOR_GarbageCollect_SQLFail);
+
+   ADD_TEST(Test_BPLib_STOR_UpdateHkPkt_Nominal);
+
+   ADD_TEST(Test_BPLib_STOR_Cleanup_Nominal);
 }

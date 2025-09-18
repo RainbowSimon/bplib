@@ -120,6 +120,9 @@
 #define BPLIB_NC_SEND_CONTACTS_ERR_EID                  (582u)
 #define BPLIB_NC_SEND_REPORTS_ERR_EID                   (583u)
 
+#define BPLIB_NC_STOR_CLEANUP_INF_EID                   (584u)
+#define BPLIB_NC_STOR_CLEANUP_ERR_EID                   (585u)
+
 /* ============ */
 /* AS event IDs */
 /* ============ */
@@ -150,6 +153,7 @@
 #define BPLIB_STOR_EXPIRE_DBG_EID                       (613u)
 #define BPLIB_STOR_DELETE_DBG_EID                       (614u)
 #define BPLIB_STOR_DUPL_DBG_EID                         (615u)
+#define BPLIB_STOR_CLEANUP_INF_EID                      (616u)
 
 /* ============ */
 /* BI event IDs */

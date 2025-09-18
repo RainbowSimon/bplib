@@ -223,10 +223,10 @@ void Test_BPLib_STOR_EgressForID_SQLFail(void)
 void TestBplib_STOR_Load_Register(void)
 {
     /* Load (Egress) Tests */
-    UtTest_Add(Test_BPLib_STOR_EgressForID_NullParams, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_NullParams");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_NominalChan, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_NominalChan");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_NominalCont, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_NominalCont");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_WaitQueuePushFail, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_WaitQueuePushFail");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_NoBundles, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_EgressForID_NoBundles");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_SQLFail, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_SQLFail");
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_NullParams);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_NominalChan);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_NominalCont);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_WaitQueuePushFail);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_NoBundles);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_SQLFail);
 }

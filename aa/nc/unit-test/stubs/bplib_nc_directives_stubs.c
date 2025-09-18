@@ -136,6 +136,18 @@ void BPLib_NC_AddStorageAllocation(const BPLib_AddStorageAllocation_Payload_t Pa
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_NC_CleanupStorage()
+ * ----------------------------------------------------
+ */
+void BPLib_NC_CleanupStorage(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_AddParam(BPLib_NC_CleanupStorage, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_NC_CleanupStorage, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_NC_ClearVolatile()
  * ----------------------------------------------------
  */
