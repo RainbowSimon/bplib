@@ -278,7 +278,6 @@ BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDisca
 
 SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache)
 {
-    //BPLib_TIME_MonotonicTime_t DtnMonotonicTime;
     SQL_Status_t SQLStatus;
     uint64_t     DtnMonoTime;
     size_t       ExpiredBytes;
