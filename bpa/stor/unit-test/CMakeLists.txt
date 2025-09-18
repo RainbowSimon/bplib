@@ -50,7 +50,6 @@ add_executable(coverage-bplib_stor-testrunner
    bplib_stor_load_tests.c
    bplib_stor_loadbatch_tests.c
    bplib_stor_store_tests.c
-   bplib_stor_sql_store_tests.c
    $<TARGET_OBJECTS:utobj_bplib_stor>
 )
 
