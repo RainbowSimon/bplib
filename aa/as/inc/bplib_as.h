@@ -37,8 +37,8 @@
 /* Macros */
 /* ====== */
 
-#define BPLIB_AS_NUM_NODE_CNTRS      (76u)                    /** \brief Number of node counters (also total number of counters) */
-#define BPLIB_AS_NUM_SOURCE_CNTRS    (56u)                    /** \brief Number of source counters */
+#define BPLIB_AS_NUM_NODE_CNTRS      (70u)                    /** \brief Number of node counters (also total number of counters) */
+#define BPLIB_AS_NUM_SOURCE_CNTRS    (52u)                    /** \brief Number of source counters */
 #define BPLIB_AS_NODE_CNTR_INDICATOR (BPLIB_MAX_NUM_MIB_SETS) /** \brief Indicates that only the node counter passed in should be modified, not the source counter */
 
 /* ======= */
@@ -60,76 +60,70 @@ typedef enum
     BUNDLE_COUNT_CUSTODY_RE_FORWARDED      = 5,  /** \brief Number of Bundles reforward due to custody timeout */
     BUNDLE_COUNT_CUSTODY_TRANSFERRED       = 6,  /** \brief Number of successful Custody Transfers from the Local node to the next neighboring Custodian Node */
     BUNDLE_COUNT_DELETED                   = 7,  /** \brief Total Number of Bundle Deletions */
-    BUNDLE_COUNT_DELETED_BAD_EID           = 8,  /** \brief Number of Bundles deleted due to having a unrecognized destination EID */
-    BUNDLE_COUNT_DELETED_CANCELLED         = 9,  /** \brief Number of Bundles Deletions due to Transmission Cancelled Condition */
-    BUNDLE_COUNT_DELETED_EXPIRED           = 10, /** \brief Number of Bundles Deletions due to Lifetime Expired Condition */
-    BUNDLE_COUNT_DELETED_FORWARD_FAILED    = 11, /** \brief Number of Bundles Deletions due to Forwarding Failed Condition */
-    BUNDLE_COUNT_DELETED_HOP_EXCEEDED      = 12, /** \brief Number of Bundles Deletions due to Hop Limit Exceeded Condition */
-    BUNDLE_COUNT_DELETED_INVALID_PAYLOAD   = 13, /** \brief Number of Bundle Deletions due having a Corrupted Payload Block */
-    BUNDLE_COUNT_DELETED_NO_STORAGE        = 14, /** \brief Number of Bundles deleted due to insufficient storage */
-    BUNDLE_COUNT_DELETED_TOO_LONG          = 15, /** \brief Number of Bundles deleted due to being longer than paramSetMaxBundleLength */
-    BUNDLE_COUNT_DELETED_TRAFFIC_PARED     = 16, /** \brief Number of Bundles Deletions due to Traffic Pared Condition */
-    BUNDLE_COUNT_DELETED_UNAUTHORIZED      = 17, /** \brief Number of Bundles deleted due to having a unrecognized source EID. Incremented if the bundle is not in the set of authorized source EIDs configured for the node. */
-    BUNDLE_COUNT_DELETED_UNINTELLIGIBLE    = 18, /** \brief Number of Bundles Deletions due to Block Unintelligible Condition */
-    BUNDLE_COUNT_DELETED_UNSUPPORTED_BLOCK = 19, /** \brief Number of Bundles Deletions due to Unsupported Block Condition */
-    BUNDLE_COUNT_DELIVERED                 = 20, /** \brief Total number of Bundles Delivered to this node, including fragments */
-    BUNDLE_COUNT_DEPLETED                  = 21, /** \brief Number of bundles for which rejected Custody Signals generated indicating rejection due to depleted storage */
-    BUNDLE_COUNT_DISCARDED                 = 22, /** \brief Number of Bundles Discarded */
-    BUNDLE_COUNT_FORWARDED                 = 23, /** \brief Number of Bundles Forwarded to another DTN Node */
-    BUNDLE_COUNT_FORWARDED_FAILED          = 24, /** \brief Number of Bundles where forwarding to another DTN Node failed */
-    BUNDLE_COUNT_FRAGMENTED                = 25, /** \brief Number of Bundles that needed to be Fragmented  */
-    BUNDLE_COUNT_FRAGMENT_ERROR            = 26, /** \brief Number of Fragments discarded due to bad offset or ADU length */
-    BUNDLE_COUNT_GENERATED_ACCEPTED        = 27, /** \brief Number of Accepted Bundle Transmission Requests  */
-    BUNDLE_COUNT_GENERATED_CUSTODY_SIGNAL  = 28, /** \brief Number of bundles for which Custody Signals Generated */
-    BUNDLE_COUNT_GENERATED_FRAGMENT        = 29, /** \brief Number of Bundle Fragments that were Generated */
-    BUNDLE_COUNT_GENERATED_REJECTED        = 30, /** \brief Number of Rejected Bundle Transmission Requests */
-    BUNDLE_COUNT_MAX_BSR_RATE_EXCEEDED     = 31, /** \brief Number of BSR bundles not sent because sending would exceed a maximum rate. */
-    BUNDLE_COUNT_NO_CONTACT                = 32, /** \brief Number of bundles for which rejected Custody Signals generated indicating the Destination is not reachable before the Bundle expires */
-    BUNDLE_COUNT_NO_FURTHER_INFO           = 33, /** \brief Number of bundles for which successful Custody Signals generated with No Further Information */
-    BUNDLE_COUNT_NO_ROUTE                  = 34, /** \brief Number of bundles for which rejected Custody Signals generated indicating the Destination is not reachable */
-    BUNDLE_COUNT_REASSEMBLED               = 35, /** \brief Total number of Bundles delivered that were fragments and needed to be reassembled */
-    BUNDLE_COUNT_RECEIVED                  = 36, /** \brief Number of Bundles Received from another DTN Node */
-    BUNDLE_COUNT_RECEIVED_ADMIN_RECORD     = 37, /** \brief Number of admin record bundles received for this DTN Node. */
-    BUNDLE_COUNT_RECEIVED_BSR_ACCEPTED     = 38, /** \brief Number of Bundle Custody Accepted Status Report received since the last counter reset */
-    BUNDLE_COUNT_RECEIVED_BSR_DELETED      = 39, /** \brief Number of Bundle Deleted Status Report received since the last counter reset */
-    BUNDLE_COUNT_RECEIVED_BSR_DELIVERED    = 40, /** \brief Number of Bundle Delivered Status Report received since the last counter reset */
-    BUNDLE_COUNT_RECEIVED_BSR_FORWARDED    = 41, /** \brief Number of Bundle Forwarded Status Report received since the last counter reset */
-    BUNDLE_COUNT_RECEIVED_BSR_RECEIVED     = 42, /** \brief Number of Bundle Reception Status Report received since the last counter reset */
-    BUNDLE_COUNT_RECEIVED_CRS_ACCEPTED     = 43, /** \brief Number of accepted bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of accepted bundles per source node ID. */
-    BUNDLE_COUNT_RECEIVED_CRS_DELETED      = 44, /** \brief Number of deleted bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of deleted bundles per source node ID. */
-    BUNDLE_COUNT_RECEIVED_CRS_DELIVERED    = 45, /** \brief Number of delivered bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of delivered bundles per source node ID. */
-    BUNDLE_COUNT_RECEIVED_CRS_FORWARDED    = 46, /** \brief Number of forwarded bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of forwarded bundles per source node ID. */
-    BUNDLE_COUNT_RECEIVED_CRS_RECEIVED     = 47, /** \brief Number of received bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of received bundles per source node ID. */
-    BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL   = 48, /** \brief Number of bundles for which Custody Signals Received */
-    BUNDLE_COUNT_RECEIVED_FRAGMENT         = 49, /** \brief Number of Bundles Received that were Marked as Fragments */
-    BUNDLE_COUNT_REDUNDANT                 = 50, /** \brief Number of bundles for which successful Custody Signals generated for Duplicate Bundle reception */
-    BUNDLE_COUNT_REJECTED_CUSTODY          = 51, /** \brief Number of Bundles where this node rejected custody. */
-    BUNDLE_COUNT_RETURNED                  = 52, /** \brief Number of Bundles Returned to Sender */
-    BUNDLE_COUNT_UNINTELLIGIBLE_BLOCK      = 53, /** \brief Number of bundles for which Custody Signals indicating the Bundle contained an unknown block type */
-    BUNDLE_COUNT_UNINTELLIGIBLE_EID        = 54, /** \brief Number of bundles for which rejected Custody Signals generated indicating the any EID in the Primary Header is unknown */
-    BUNDLE_COUNT_UNPROCESSED_BLOCKS        = 55, /** \brief Number of Unprocessed Blocks Removed from Received Bundles */
+    BUNDLE_COUNT_DELETED_EXPIRED           = 8, /** \brief Number of Bundles Deletions due to Lifetime Expired Condition */
+    BUNDLE_COUNT_DELETED_HOP_EXCEEDED      = 9, /** \brief Number of Bundles Deletions due to Hop Limit Exceeded Condition */
+    BUNDLE_COUNT_DELETED_NO_STORAGE        = 10, /** \brief Number of Bundles deleted due to insufficient storage */
+    BUNDLE_COUNT_DELETED_TOO_LONG          = 11, /** \brief Number of Bundles deleted due to being longer than paramSetMaxBundleLength */
+    BUNDLE_COUNT_DELETED_TRAFFIC_PARED     = 12, /** \brief Number of Bundles Deletions due to Traffic Pared Condition */
+    BUNDLE_COUNT_DELETED_UNAUTHORIZED      = 13, /** \brief Number of Bundles deleted due to having a unrecognized source EID. Incremented if the bundle is not in the set of authorized source EIDs configured for the node. */
+    BUNDLE_COUNT_DELETED_UNINTELLIGIBLE    = 14, /** \brief Number of Bundles Deletions due to Block Unintelligible Condition */
+    BUNDLE_COUNT_DELETED_UNSUPPORTED_BLOCK = 15, /** \brief Number of Bundles Deletions due to Unsupported Block Condition */
+    BUNDLE_COUNT_DELIVERED                 = 16, /** \brief Total number of Bundles Delivered to this node, including fragments */
+    BUNDLE_COUNT_DEPLETED                  = 17, /** \brief Number of bundles for which rejected Custody Signals generated indicating rejection due to depleted storage */
+    BUNDLE_COUNT_DISCARDED                 = 18, /** \brief Number of Bundles Discarded */
+    BUNDLE_COUNT_FORWARDED                 = 19, /** \brief Number of Bundles Forwarded to another DTN Node */
+    BUNDLE_COUNT_FORWARDED_FAILED          = 20, /** \brief Number of Bundles where forwarding to another DTN Node failed */
+    BUNDLE_COUNT_FRAGMENTED                = 21, /** \brief Number of Bundles that needed to be Fragmented  */
+    BUNDLE_COUNT_FRAGMENT_ERROR            = 22, /** \brief Number of Fragments discarded due to bad offset or ADU length */
+    BUNDLE_COUNT_GENERATED_ACCEPTED        = 23, /** \brief Number of Accepted Bundle Transmission Requests  */
+    BUNDLE_COUNT_GENERATED_CUSTODY_SIGNAL  = 24, /** \brief Number of bundles for which Custody Signals Generated */
+    BUNDLE_COUNT_GENERATED_FRAGMENT        = 25, /** \brief Number of Bundle Fragments that were Generated */
+    BUNDLE_COUNT_GENERATED_REJECTED        = 26, /** \brief Number of Rejected Bundle Transmission Requests */
+    BUNDLE_COUNT_MAX_BSR_RATE_EXCEEDED     = 27, /** \brief Number of BSR bundles not sent because sending would exceed a maximum rate. */
+    BUNDLE_COUNT_NO_CONTACT                = 28, /** \brief Number of bundles for which rejected Custody Signals generated indicating the Destination is not reachable before the Bundle expires */
+    BUNDLE_COUNT_NO_FURTHER_INFO           = 29, /** \brief Number of bundles for which successful Custody Signals generated with No Further Information */
+    BUNDLE_COUNT_NO_ROUTE                  = 30, /** \brief Number of bundles for which rejected Custody Signals generated indicating the Destination is not reachable */
+    BUNDLE_COUNT_REASSEMBLED               = 31, /** \brief Total number of Bundles delivered that were fragments and needed to be reassembled */
+    BUNDLE_COUNT_RECEIVED                  = 32, /** \brief Number of Bundles Received from another DTN Node */
+    BUNDLE_COUNT_RECEIVED_ADMIN_RECORD     = 33, /** \brief Number of admin record bundles received for this DTN Node. */
+    BUNDLE_COUNT_RECEIVED_BSR_ACCEPTED     = 34, /** \brief Number of Bundle Custody Accepted Status Report received since the last counter reset */
+    BUNDLE_COUNT_RECEIVED_BSR_DELETED      = 35, /** \brief Number of Bundle Deleted Status Report received since the last counter reset */
+    BUNDLE_COUNT_RECEIVED_BSR_DELIVERED    = 36, /** \brief Number of Bundle Delivered Status Report received since the last counter reset */
+    BUNDLE_COUNT_RECEIVED_BSR_FORWARDED    = 37, /** \brief Number of Bundle Forwarded Status Report received since the last counter reset */
+    BUNDLE_COUNT_RECEIVED_BSR_RECEIVED     = 38, /** \brief Number of Bundle Reception Status Report received since the last counter reset */
+    BUNDLE_COUNT_RECEIVED_CRS_ACCEPTED     = 39, /** \brief Number of accepted bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of accepted bundles per source node ID. */
+    BUNDLE_COUNT_RECEIVED_CRS_DELETED      = 40, /** \brief Number of deleted bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of deleted bundles per source node ID. */
+    BUNDLE_COUNT_RECEIVED_CRS_DELIVERED    = 41, /** \brief Number of delivered bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of delivered bundles per source node ID. */
+    BUNDLE_COUNT_RECEIVED_CRS_FORWARDED    = 42, /** \brief Number of forwarded bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of forwarded bundles per source node ID. */
+    BUNDLE_COUNT_RECEIVED_CRS_RECEIVED     = 43, /** \brief Number of received bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of received bundles per source node ID. */
+    BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL   = 44, /** \brief Number of bundles for which Custody Signals Received */
+    BUNDLE_COUNT_RECEIVED_FRAGMENT         = 45, /** \brief Number of Bundles Received that were Marked as Fragments */
+    BUNDLE_COUNT_REDUNDANT                 = 46, /** \brief Number of bundles for which successful Custody Signals generated for Duplicate Bundle reception */
+    BUNDLE_COUNT_REJECTED_CUSTODY          = 47, /** \brief Number of Bundles where this node rejected custody. */
+    BUNDLE_COUNT_RETURNED                  = 48, /** \brief Number of Bundles Returned to Sender */
+    BUNDLE_COUNT_UNINTELLIGIBLE_BLOCK      = 49, /** \brief Number of bundles for which Custody Signals indicating the Bundle contained an unknown block type */
+    BUNDLE_COUNT_UNINTELLIGIBLE_EID        = 50, /** \brief Number of bundles for which rejected Custody Signals generated indicating the any EID in the Primary Header is unknown */
+    BUNDLE_COUNT_UNPROCESSED_BLOCKS        = 51, /** \brief Number of Unprocessed Blocks Removed from Received Bundles */
 
     /* Node-only counters */
-    BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT  = 56, /** \brief Number of control directives received from the Monitor and Control interface that have been accepted */
-    BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT  = 57, /** \brief Number of control directives received from the Monitor and Control interface that have been rejected as being invalid */
-    BUNDLE_COUNT_CUSTODY_SIGNAL_RECEIVED   = 58, /** \brief Number of Custody Signal Bundles received */
-    BUNDLE_COUNT_GENERATED_ANONYMOUS       = 59, /** \brief Number of Anonymous Bundles Created */
-    BUNDLE_COUNT_GENERATED_BSR_ACCEPTED    = 60, /** \brief Number of Bundle Custody Accepted Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_BSR_DELETED     = 61, /** \brief Number of Bundle Deleted Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_BSR_DELIVERED   = 62, /** \brief Number of Bundle Delivered Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_BSR_FORWARDED   = 63, /** \brief Number of Bundle Forwarded Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_BSR_RECEIVED    = 64, /** \brief Number of Bundle Reception Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS             = 65, /** \brief Number of Compressed Reporting Signal (CRS) generated since last counter reset. */
-    BUNDLE_COUNT_GENERATED_CRS_ACCEPTED    = 66, /** \brief Number of accepted bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS_DELETED     = 67, /** \brief Number of deleted bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS_DELIVERED   = 68, /** \brief Number of delivered bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS_FORWARDED   = 69, /** \brief Number of forwarded bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS_RECEIVED    = 70, /** \brief Number of received bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CUSTODY         = 71, /** \brief Number of Custody Signal Bundles generated since the last counter reset */
-    BUNDLE_COUNT_INVALID_PRIMARY_BLOCK     = 72, /** \brief Number of Unprocessed Bundles received with Invalid Primary Blocks */
-    BUNDLE_COUNT_IN_CUSTODY                = 73, /** \brief  */
-    BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED     = 74, /** \brief Number of CRS bundles not sent because sending would exceed a maximum rate. */
-    BUNDLE_COUNT_RECEIVED_CRS              = 75, /** \brief Number of Compressed Reporting Signals (CRSs) received since last counter reset. */
+    BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT  = 52, /** \brief Number of control directives received from the Monitor and Control interface that have been accepted */
+    BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT  = 53, /** \brief Number of control directives received from the Monitor and Control interface that have been rejected as being invalid */
+    BUNDLE_COUNT_CUSTODY_SIGNAL_RECEIVED   = 54, /** \brief Number of Custody Signal Bundles received */
+    BUNDLE_COUNT_GENERATED_BSR_ACCEPTED    = 55, /** \brief Number of Bundle Custody Accepted Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_BSR_DELETED     = 56, /** \brief Number of Bundle Deleted Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_BSR_DELIVERED   = 57, /** \brief Number of Bundle Delivered Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_BSR_FORWARDED   = 58, /** \brief Number of Bundle Forwarded Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_BSR_RECEIVED    = 59, /** \brief Number of Bundle Reception Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS             = 60, /** \brief Number of Compressed Reporting Signal (CRS) generated since last counter reset. */
+    BUNDLE_COUNT_GENERATED_CRS_ACCEPTED    = 61, /** \brief Number of accepted bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS_DELETED     = 62, /** \brief Number of deleted bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS_DELIVERED   = 63, /** \brief Number of delivered bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS_FORWARDED   = 64, /** \brief Number of forwarded bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS_RECEIVED    = 65, /** \brief Number of received bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CUSTODY         = 66, /** \brief Number of Custody Signal Bundles generated since the last counter reset */
+    BUNDLE_COUNT_IN_CUSTODY                = 67, /** \brief Number of bundles in custody */
+    BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED     = 68, /** \brief Number of CRS bundles not sent because sending would exceed a maximum rate. */
+    BUNDLE_COUNT_RECEIVED_CRS              = 69, /** \brief Number of Compressed Reporting Signals (CRSs) received since last counter reset. */
 } BPLib_AS_Counter_t;
 
 /**
