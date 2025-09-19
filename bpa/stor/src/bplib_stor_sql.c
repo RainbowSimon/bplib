@@ -279,21 +279,21 @@ BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDisca
 SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache)
 {
     SQL_Status_t SQLStatus;
-    uint64_t     DtnMonoTime;
+    uint64_t     MonoTime;
     size_t       ExpiredBytes;
 
     *NumDiscarded = 0;
     ExpiredBytes  = 0;
 
     /* Get DTN Time */
-    DtnMonoTime = BPLib_TIME_GetMonotonicTime();
+    MonoTime = BPLib_TIME_GetMonotonicTime();
 
     /* Collect the size of the bundles to be discarded */
     /* Load up the SQL command */
     SQLStatus = sqlite3_prepare_v2(db, ExpiredBytesSQL, -1, &ExpiredBytesStmt, NULL);
     if (SQLStatus == SQLITE_OK)
     {
-        SQLStatus = sqlite3_bind_int64(ExpiredBytesStmt, 1, (int64_t) DtnMonoTime);
+        SQLStatus = sqlite3_bind_int64(ExpiredBytesStmt, 1, (int64_t) MonoTime);
         if (SQLStatus == SQLITE_OK)
         {
             SQLStatus = sqlite3_bind_int64(ExpiredBytesStmt, 2, BPLIB_STOR_DISCARDBATCHSIZE);
@@ -343,7 +343,7 @@ SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPL
 
     sqlite3_reset(DiscardExpiredStmt);
 
-    SQLStatus = sqlite3_bind_int64(DiscardExpiredStmt, 1, (int64_t)DtnMonoTime);
+    SQLStatus = sqlite3_bind_int64(DiscardExpiredStmt, 1, (int64_t)MonoTime);
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "Failed to bind action_timestamp: %s\n", sqlite3_errmsg(db));
