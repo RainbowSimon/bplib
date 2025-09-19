@@ -334,21 +334,23 @@ void Test_BPLib_SQL_StoreMetadata_InvalidCreateTime(void)
 
 void TestBplib_STOR_Store_Register(void)
 {
-    /* Store Tests */
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_NullParams, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_NullParams");
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_Nominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPlib_STOR_StoreBundleNominal");
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_SQLFail, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_SQLFail");
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_StoreBatch, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_StoreBatch");
-#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_Duplicates, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_Duplicates");
-#endif
+    ADD_TEST(Test_BPLib_STOR_FlushPending_NullParams);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_NoBundles);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_Nominal);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_SQLFail);
 
-    /* FlushPending Tests */
-    UtTest_Add(Test_BPLib_STOR_FlushPending_NullParams, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_FlushPending_NullParams");
-    UtTest_Add(Test_BPLib_STOR_FlushPending_NoBundles, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_FlushPending_NoBundles");
-    UtTest_Add(Test_BPLib_STOR_FlushPending_Nominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_FlushPending_Nominal");
-    UtTest_Add(Test_BPLib_STOR_FlushPending_SQLFail, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_FlushPending_SQLFail");
-    UtTest_Add(Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime");
-    UtTest_Add(Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime");
-    UtTest_Add(Test_BPLib_SQL_StoreMetadata_InvalidCreateTime, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_SQL_StoreMetadata_InvalidCreateTime");
+    ADD_TEST(Test_BPLib_STOR_FlushPending_NullParams);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_NoBundles);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_Nominal);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_SQLFail);
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_NullParams);
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_Nominal);
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_SQLFail);
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_StoreBatch);
+#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_Duplicates);
+#endif
+    ADD_TEST(Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime);
+    ADD_TEST(Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime);
+    ADD_TEST(Test_BPLib_SQL_StoreMetadata_InvalidCreateTime);
 }

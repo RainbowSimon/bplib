@@ -661,3 +661,19 @@ SQL_Status_t BPLib_SQL_DiscardEgressedImpl(sqlite3* db, size_t* NumDiscarded, BP
 
     return SQLITE_OK;
 }
+
+BPLib_Status_t BPLib_SQL_Cleanup(BPLib_Instance_t* Inst)
+{
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+    int SQLStatus;
+
+    SQLStatus = sqlite3_exec(Inst->BundleStorage.db, "VACUUM;", 0, 0, NULL);
+
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to vacuum: %s\n", sqlite3_errmsg(Inst->BundleStorage.db));
+        Status = BPLIB_STOR_CLEANUP_ERR;
+    }    
+
+    return Status;
+}

@@ -473,3 +473,19 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 
     return Status;
 }
+
+BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst)
+{
+    BPLib_Status_t Status;
+
+    BPLib_EM_SendEvent(BPLIB_STOR_CLEANUP_INF_EID, BPLib_EM_EventType_INFORMATION,
+            "Beginning storage cleanup. This may take a while and may interrupt any pending storage operations.");
+
+    pthread_mutex_lock(&(Inst->BundleStorage.lock));
+
+    Status = BPLib_SQL_Cleanup(Inst);
+
+    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
+    
+    return Status;
+}

@@ -45,6 +45,14 @@
 extern BPLib_Instance_t BplibInst;
 
 /*
+** Macros
+*/
+
+#define ADD_TEST(test) UtTest_Add(test, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, #test)
+#define ADD_TEST_ONE_BUNDLE(test) UtTest_Add(test, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, #test)
+
+
+/*
 ** Helper Utilities
 */
 void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle);

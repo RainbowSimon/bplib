@@ -1821,6 +1821,33 @@ void Test_BPLib_NC_PerformSelfTest_Error(void)
     */
 }
 
+void Test_BPLib_NC_CleanupStorage_Nominal(void)
+{
+    BPLib_Instance_t Inst;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_STOR_Cleanup), BPLIB_SUCCESS);
+
+    BPLib_NC_CleanupStorage(&Inst);
+
+    Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
+    BPLib_NC_Test_Verify_Event(0, BPLIB_NC_STOR_CLEANUP_INF_EID,
+                                "Storage cleanup has completed successfully.");
+}
+
+void Test_BPLib_NC_CleanupStorage_Error(void)
+{
+    BPLib_Instance_t Inst;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_STOR_Cleanup), BPLIB_ERROR);
+
+    BPLib_NC_CleanupStorage(&Inst);
+
+    // Verify that the error was reported
+    Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
+    BPLib_NC_Test_Verify_Event(0, BPLIB_NC_STOR_CLEANUP_ERR_EID,
+                                "Storage cleanup failed, RC=%d");
+}
+
 void Test_BPLib_NC_SendNodeMibConfigHk_Nominal(void)
 {
     UT_SetDefaultReturnValue(UT_KEY(BPA_TLMP_SendNodeMibConfigPkt), BPLIB_SUCCESS);
@@ -2373,6 +2400,8 @@ void TestBplibNc_Register(void)
     ADD_TEST(Test_BPLib_NC_RemoveStorageAllocation_Error);
     ADD_TEST(Test_BPLib_NC_PerformSelfTest_Nominal);
     ADD_TEST(Test_BPLib_NC_PerformSelfTest_Error);
+    ADD_TEST(Test_BPLib_NC_CleanupStorage_Nominal);
+    ADD_TEST(Test_BPLib_NC_CleanupStorage_Error);
     ADD_TEST(Test_BPLib_NC_SendNodeMibConfigHk_Nominal);
     ADD_TEST(Test_BPLib_NC_SendNodeMibConfigHk_Error);
     ADD_TEST(Test_BPLib_NC_SendSourceMibConfigHk_Nominal);

@@ -166,4 +166,6 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst);
 
 BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst);
 
+BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst);
+
 #endif /* BPLIB_STOR_H */
