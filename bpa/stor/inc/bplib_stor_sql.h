@@ -31,6 +31,28 @@
 
 #include <sqlite3.h>
 
+/* ======= */
+/* Globals */
+/* ======= */
+
+/* SQL query statements */
+
+extern sqlite3_stmt* GetNumBundlesStmt;
+extern sqlite3_stmt* TotalBytesStmt;
+extern sqlite3_stmt* DiscardExpiredStmt;
+extern sqlite3_stmt* ExpiredBytesStmt;
+extern sqlite3_stmt* DiscardEgressedStmt;
+extern sqlite3_stmt* EgressedBytesStmt;
+
+/* SQL query strings */
+
+extern const char* GetNumBundlesSQL;
+extern const char* TotalBytesSQL;
+extern const char* DiscardExpiredSQL;
+extern const char* ExpiredBytesSQL;
+extern const char* DiscardEgressedSQL;
+extern const char* EgressedBytesSQL;
+
 /* ====== */
 /* Macros */
 /* ====== */
