@@ -89,7 +89,8 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     uint64_t             MonoTimeRemaining;
     uint16_t             ExtensionBlockIdx;
 
-    PrimaryBlock = Bundle->blocks.PrimaryBlock;
+    PrimaryBlock   = Bundle->blocks.PrimaryBlock;
+    ExpirationTime = 0;
 
     sqlite3_reset(InsertMetadataStmt);
 
