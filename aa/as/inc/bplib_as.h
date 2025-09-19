@@ -37,8 +37,8 @@
 /* Macros */
 /* ====== */
 
-#define BPLIB_AS_NUM_NODE_CNTRS      (70u)                    /** \brief Number of node counters (also total number of counters) */
-#define BPLIB_AS_NUM_SOURCE_CNTRS    (52u)                    /** \brief Number of source counters */
+#define BPLIB_AS_NUM_NODE_CNTRS      (69u)                    /** \brief Number of node counters (also total number of counters) */
+#define BPLIB_AS_NUM_SOURCE_CNTRS    (51u)                    /** \brief Number of source counters */
 #define BPLIB_AS_NODE_CNTR_INDICATOR (BPLIB_MAX_NUM_MIB_SETS) /** \brief Indicates that only the node counter passed in should be modified, not the source counter */
 
 /* ======= */
@@ -100,30 +100,29 @@ typedef enum
     BUNDLE_COUNT_RECEIVED_FRAGMENT         = 45, /** \brief Number of Bundles Received that were Marked as Fragments */
     BUNDLE_COUNT_REDUNDANT                 = 46, /** \brief Number of bundles for which successful Custody Signals generated for Duplicate Bundle reception */
     BUNDLE_COUNT_REJECTED_CUSTODY          = 47, /** \brief Number of Bundles where this node rejected custody. */
-    BUNDLE_COUNT_RETURNED                  = 48, /** \brief Number of Bundles Returned to Sender */
-    BUNDLE_COUNT_UNINTELLIGIBLE_BLOCK      = 49, /** \brief Number of bundles for which Custody Signals indicating the Bundle contained an unknown block type */
-    BUNDLE_COUNT_UNINTELLIGIBLE_EID        = 50, /** \brief Number of bundles for which rejected Custody Signals generated indicating the any EID in the Primary Header is unknown */
-    BUNDLE_COUNT_UNPROCESSED_BLOCKS        = 51, /** \brief Number of Unprocessed Blocks Removed from Received Bundles */
+    BUNDLE_COUNT_UNINTELLIGIBLE_BLOCK      = 48, /** \brief Number of bundles for which Custody Signals indicating the Bundle contained an unknown block type */
+    BUNDLE_COUNT_UNINTELLIGIBLE_EID        = 49, /** \brief Number of bundles for which rejected Custody Signals generated indicating the any EID in the Primary Header is unknown */
+    BUNDLE_COUNT_UNPROCESSED_BLOCKS        = 50, /** \brief Number of Unprocessed Blocks Removed from Received Bundles */
 
     /* Node-only counters */
-    BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT  = 52, /** \brief Number of control directives received from the Monitor and Control interface that have been accepted */
-    BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT  = 53, /** \brief Number of control directives received from the Monitor and Control interface that have been rejected as being invalid */
-    BUNDLE_COUNT_CUSTODY_SIGNAL_RECEIVED   = 54, /** \brief Number of Custody Signal Bundles received */
-    BUNDLE_COUNT_GENERATED_BSR_ACCEPTED    = 55, /** \brief Number of Bundle Custody Accepted Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_BSR_DELETED     = 56, /** \brief Number of Bundle Deleted Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_BSR_DELIVERED   = 57, /** \brief Number of Bundle Delivered Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_BSR_FORWARDED   = 58, /** \brief Number of Bundle Forwarded Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_BSR_RECEIVED    = 59, /** \brief Number of Bundle Reception Status Report generated since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS             = 60, /** \brief Number of Compressed Reporting Signal (CRS) generated since last counter reset. */
-    BUNDLE_COUNT_GENERATED_CRS_ACCEPTED    = 61, /** \brief Number of accepted bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS_DELETED     = 62, /** \brief Number of deleted bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS_DELIVERED   = 63, /** \brief Number of delivered bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS_FORWARDED   = 64, /** \brief Number of forwarded bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CRS_RECEIVED    = 65, /** \brief Number of received bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CUSTODY         = 66, /** \brief Number of Custody Signal Bundles generated since the last counter reset */
-    BUNDLE_COUNT_IN_CUSTODY                = 67, /** \brief Number of bundles in custody */
-    BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED     = 68, /** \brief Number of CRS bundles not sent because sending would exceed a maximum rate. */
-    BUNDLE_COUNT_RECEIVED_CRS              = 69, /** \brief Number of Compressed Reporting Signals (CRSs) received since last counter reset. */
+    BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT  = 51, /** \brief Number of control directives received from the Monitor and Control interface that have been accepted */
+    BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT  = 52, /** \brief Number of control directives received from the Monitor and Control interface that have been rejected as being invalid */
+    BUNDLE_COUNT_CUSTODY_SIGNAL_RECEIVED   = 53, /** \brief Number of Custody Signal Bundles received */
+    BUNDLE_COUNT_GENERATED_BSR_ACCEPTED    = 54, /** \brief Number of Bundle Custody Accepted Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_BSR_DELETED     = 55, /** \brief Number of Bundle Deleted Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_BSR_DELIVERED   = 56, /** \brief Number of Bundle Delivered Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_BSR_FORWARDED   = 57, /** \brief Number of Bundle Forwarded Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_BSR_RECEIVED    = 58, /** \brief Number of Bundle Reception Status Report generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS             = 59, /** \brief Number of Compressed Reporting Signal (CRS) generated since last counter reset. */
+    BUNDLE_COUNT_GENERATED_CRS_ACCEPTED    = 60, /** \brief Number of accepted bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS_DELETED     = 61, /** \brief Number of deleted bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS_DELIVERED   = 62, /** \brief Number of delivered bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS_FORWARDED   = 63, /** \brief Number of forwarded bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CRS_RECEIVED    = 64, /** \brief Number of received bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CUSTODY         = 65, /** \brief Number of Custody Signal Bundles generated since the last counter reset */
+    BUNDLE_COUNT_IN_CUSTODY                = 66, /** \brief Number of bundles in custody */
+    BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED     = 67, /** \brief Number of CRS bundles not sent because sending would exceed a maximum rate. */
+    BUNDLE_COUNT_RECEIVED_CRS              = 68, /** \brief Number of Compressed Reporting Signals (CRSs) received since last counter reset. */
 } BPLib_AS_Counter_t;
 
 /**
@@ -138,6 +137,8 @@ typedef struct
       * \ref   BPLib_AS_Counter_t
       */
     uint32_t NodeCounters[BPLIB_AS_NUM_NODE_CNTRS];
+
+    uint32_t Spare;
 
     int64_t  MonotonicTime;     /** \brief Monotonic Time Counter */
     int64_t  CorrelationFactor; /** \brief Time Correlation Factor */
@@ -164,8 +165,6 @@ typedef struct
       * \ref BPLib_AS_Counter_t
       */
     uint32_t SourceCounters[BPLIB_AS_NUM_SOURCE_CNTRS];
-
-    uint8_t Spare2[4]; /* Spare for alignment */
 } BPLib_SourceMibCounters_t;
 
 /**
