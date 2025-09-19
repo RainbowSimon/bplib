@@ -63,8 +63,6 @@ static BPLib_NC_MibPerNodeConfig_t MibPnTbl = {
         /* PARAM_SET_MAX_SEQUENCE NUM         */ 100000,   
         /* PARAM_SET_MAX_PAYLOAD_LENGTH       */ BPLIB_MAX_PAYLOAD_SIZE,
         /* PARAM_SET_MAX_BUNDLE_LENGTH        */ BPLIB_MAX_BUNDLE_LEN,
-        /* PARAM_SET_NODE_DTN_TIME            */ 0,
-        /* PARAM_SET_BEHAVIOR_EVENT_REPORTING */ 10,
         /* PARAM_SET_MAX_LIFETIME             */ BPLIB_MAX_LIFETIME_ALLOWED
     }
 };
