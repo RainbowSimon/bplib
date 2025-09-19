@@ -34,7 +34,7 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
 {
     BPLib_Status_t Status;
     SQL_Status_t   SQLStatus;
-    uint8_t        i;
+    size_t         i;
     sqlite3*       db;
     size_t         MaxWhereLen;
     sqlite3_stmt*  FindForEgressIDStmt;
@@ -133,9 +133,9 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, sqlite3_stmt** Fi
 {
     SQL_Status_t  SQLStatus;
     sqlite3*      db;
-    uint8_t       CurrBundleRowID;
-    uint8_t       i;
-    uint8_t       BindIndex;
+    uint64_t      CurrBundleRowID;
+    size_t        i;
+    uint64_t      BindIndex;
     sqlite3_stmt* FindStmt;
 
     db       = Inst->BundleStorage.db;
@@ -249,7 +249,7 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
 {
     SQL_Status_t SQLStatus;
     sqlite3*     db;
-    uint8_t      i;
+    size_t       i;
 
     db = Inst->BundleStorage.db;
 

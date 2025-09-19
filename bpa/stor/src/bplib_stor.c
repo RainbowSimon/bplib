@@ -197,7 +197,7 @@ BPLib_StorageHkTlm_Payload_t BPLib_STOR_StoragePayload;
 BPLib_Status_t BPLib_STOR_Init(BPLib_Instance_t* Inst)
 {
     BPLib_Status_t Status;
-    uint8_t        i;
+    size_t         i;
 
     if (Inst == NULL)
     {
@@ -560,7 +560,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 {
     BPLib_Status_t       Status;
     BPLib_BundleCache_t* CacheInst;
-    uint8_t              i;
+    size_t               i;
     size_t               TotalBytesStored;
     size_t               DuplicateBundlesIgnored;
 

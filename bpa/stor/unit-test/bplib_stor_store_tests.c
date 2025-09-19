@@ -248,20 +248,22 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime(void)
     BPLib_STOR_Test_CreateTestBundle(&Bundle);
     CurrDtnTime                             = Bundle.blocks.PrimaryBlock.Timestamp.CreateTime;
     MonoTime                                = 0;
-    BplibInst.BundleStorage.InsertBatchSize = BPLIB_STOR_INSERTBATCHSIZE - 1;
+    BplibInst.BundleStorage.InsertBatchSize = 1;
+    BplibInst.BundleStorage.InsertBatch[0]  = &Bundle;
 
     /* Feed values to functions that will determine expiration time */
-    UT_SetDataBuffer(UT_KEY(BPLib_TIME_GetCurrentDtnTime), (void*) &CurrDtnTime, sizeof(uint64_t), false);
-    UT_SetDataBuffer(UT_KEY(BPLib_TIME_GetMonotonicTime), (void*) &MonoTime, sizeof(int64_t), false);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, CurrDtnTime);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, CurrDtnTime);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, MonoTime);
 
     /* Run the function under test */
-    Status = BPLib_STOR_StoreBundle(&BplibInst, &Bundle);
+    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
 
     /* Show that the function was run successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
 
     /* Show that the correct branch was tested */
-    UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 1);
+    UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 2);
     UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 1);
 
     /* Free memory used for bundle */
@@ -281,15 +283,20 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime(void)
 
     /* Initialize values needed for testing */
     BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    BplibInst.BundleStorage.InsertBatchSize = 1;
+    BplibInst.BundleStorage.InsertBatch[0]  = &Bundle;
+
+    /* Feed values to functions that will determine expiration time */
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, 0);
 
     /* Run the function under test */
-    Status = BPLib_STOR_StoreBundle(&BplibInst, &Bundle);
+    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
 
     /* Show that the function was run successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
 
     /* Show that the correct branch was tested */
-    UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 0);
+    UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 1);
     UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 0);
 
     /* Free memory used for bundle */
@@ -304,13 +311,15 @@ void Test_BPLib_SQL_StoreMetadata_InvalidCreateTime(void)
     /* Initialize values needed for testing */
     BPLib_STOR_Test_CreateTestBundle(&Bundle);
     Bundle.blocks.PrimaryBlock.Timestamp.CreateTime = 0;
+    BplibInst.BundleStorage.InsertBatchSize         = 1;
+    BplibInst.BundleStorage.InsertBatch[0]          = &Bundle;
     
     /* Initialize the age block */
     Bundle.blocks.ExtBlocks[0].Header.BlockType           = BPLib_BlockType_Age;
     Bundle.blocks.ExtBlocks[0].BlockData.AgeBlockData.Age = 1000;
 
     /* Run the function under test */
-    Status = BPLib_STOR_StoreBundle(&BplibInst, &Bundle);
+    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
 
     /* Show that the function was run successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
