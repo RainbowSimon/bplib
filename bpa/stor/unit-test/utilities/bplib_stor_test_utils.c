@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sqlite3.h>
 
 /*
 ** Global Data
@@ -124,7 +125,17 @@ void BPLib_STOR_Test_SetupOneBundleStored(void)
 {
     BPLib_STOR_Test_Setup();
     BPLib_STOR_Test_CreateTestBundle(&TestBundle);
+
+    /* 
+    ** Assume bundle creation time is valid and DTN time is valid; assume a
+    ** nominal configuration. Also set it up such that the bundle expires in
+    ** TestBundle.blocks.PrimaryBlock.Lifetime milliseconds
+    */
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, TestBundle.blocks.PrimaryBlock.Timestamp.CreateTime);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, TestBundle.blocks.PrimaryBlock.Timestamp.CreateTime);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, TestBundle.blocks.PrimaryBlock.Timestamp.CreateTime);
     BPLib_STOR_StoreBundle(&BplibInst, &TestBundle);
+
     BPLib_STOR_FlushPending(&BplibInst);
 
     /* We expect load bundle to MEM_Alloc twice for the test bundle: Setup BlockAlloc

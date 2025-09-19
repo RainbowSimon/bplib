@@ -17,30 +17,41 @@
  * limitations under the License.
  *
  */
+
+/* ======== */
+/* Includes */
+/* ======== */
+
 #include "bplib_stor_sql.h"
 #include "bplib_qm.h"
 #include "bplib_as.h"
 #include "bplib_nc.h"
+#include "bplib_stor_sql_store.h"
 
 #include <stdio.h>
 
-/*******************************************************************************
-* SQL Query Definitions
-*/
+/* ======= */
+/* Globals */
+/* ======= */
 
-/* Insert Bundle Metadata (duplicate bundle_id entries are ignored) */
-static const char* InsertMetadataSQL = 
-    "INSERT INTO bundle_data (bundle_id, action_timestamp, dest_node, dest_service, bundle_bytes) VALUES (?, ?, ?, ?, ?);";
-static sqlite3_stmt* InsertMetadataStmt;
+/* SQL query statements */
+
+sqlite3_stmt* InsertBlobStmt;
+sqlite3_stmt* InsertMetadataStmt;
+
+/* SQL query strings */
 
 /* Insert Bundle Blob */
-const char* InsertBlobSQL = 
-    "INSERT INTO bundle_blobs (bundle_row, blob_data) VALUES (?, ?)";
-static sqlite3_stmt* InsertBlobStmt;
+const char* InsertBlobSQL =
+"INSERT INTO bundle_blobs (bundle_row, blob_data) VALUES (?, ?)";
 
-/*******************************************************************************
-** Static Functions
-*/
+/* Insert Bundle Metadata (duplicate bundle_id entries are ignored) */
+const char* InsertMetadataSQL =
+"INSERT INTO bundle_data (bundle_id, action_timestamp, dest_node, dest_service, bundle_bytes) VALUES (?, ?, ?, ?, ?);";
+
+/* ================ */
+/* Helper Functions */
+/* ================ */
 
 #if 0
 /* 
@@ -64,26 +75,28 @@ static int BPLib_SQL_PrintTbl(void* data, int argc, char** argv, char** azColNam
 }
 #endif 
 
-static int BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
+
+SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
 {
-    int SQLStatus;
-    uint64_t EffectiveLifetime;
+    SQL_Status_t         SQLStatus;
+    BPLib_PrimaryBlock_t PrimaryBlock;
+    uint64_t             AgeBlockTime;
+    uint64_t             ExpirationTime;
+    uint64_t             MonoTimeAge;
+    uint64_t             MonoTimeRemaining;
+    uint16_t             ExtensionBlockIdx;
 
-    /* Ensure the lifetime is less than or equal to the max allowed lifetime */
-    BPLib_NC_ReaderLock();
-    EffectiveLifetime = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_LIFETIME];
-    BPLib_NC_ReaderUnlock();
-
-    if (EffectiveLifetime > Bundle->blocks.PrimaryBlock.Lifetime)
-    {
-        EffectiveLifetime = Bundle->blocks.PrimaryBlock.Lifetime;
-    }    
+    PrimaryBlock   = Bundle->blocks.PrimaryBlock;
+    ExpirationTime = 0;
 
     sqlite3_reset(InsertMetadataStmt);
 
     /* Bind bundle_id to InsertMetadataStmt */
     SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 1, 
-                                        (int64_t)Bundle->blocks.PrimaryBlock.BundleId);
+                                    (int64_t)Bundle->blocks.PrimaryBlock.BundleId);
 
     if (SQLStatus != SQLITE_OK)
     {
@@ -91,9 +104,37 @@ static int BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* 
     }
     else
     {
-        /* Add the value of the timestamp used as an indicator for some action to the InsertMetadataStmt variable */
-        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 2, 
-            (int64_t)Bundle->blocks.PrimaryBlock.Timestamp.CreateTime + (int64_t)EffectiveLifetime);
+        /* Add the value of the timestamp used as an indicator for some action to the InsertMetadataStmt variable (action_timestamp) */
+        
+        if (PrimaryBlock.Timestamp.CreateTime != 0)
+        { /* Bundle has a valid creation time */
+            if (BPLib_TIME_GetCurrentDtnTime() != 0)
+            { /* DTN time is valid */
+                MonoTimeAge       = BPLib_TIME_GetCurrentDtnTime() - PrimaryBlock.Timestamp.CreateTime;
+                MonoTimeRemaining = PrimaryBlock.Lifetime          - MonoTimeAge;
+                ExpirationTime    = BPLib_TIME_GetMonotonicTime()  + MonoTimeRemaining;
+            }
+            else
+            { /* DTN time is invalid */
+                ExpirationTime = PrimaryBlock.MonoTime.Time + PrimaryBlock.Lifetime;
+            }
+        }
+        else
+        { /* Bundle creation time is invalid */
+            for (ExtensionBlockIdx = 0; ExtensionBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtensionBlockIdx++)
+            {
+                if (Bundle->blocks.ExtBlocks[ExtensionBlockIdx].Header.BlockType == BPLib_BlockType_Age)
+                {
+                    MonoTimeAge    = PrimaryBlock.MonoTime.Time + PrimaryBlock.Lifetime;
+                    AgeBlockTime   = Bundle->blocks.ExtBlocks[ExtensionBlockIdx].BlockData.AgeBlockData.Age;
+                    ExpirationTime = MonoTimeAge - AgeBlockTime;
+
+                    break;
+                }
+            }
+        }
+        
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 2, (sqlite3_int64) ExpirationTime);
     }
 
     if (SQLStatus != SQLITE_OK)
@@ -142,9 +183,9 @@ static int BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* 
     return SQLStatus;
 }
 
-static int BPLib_SQL_StoreChunk(int64_t BundleRowID, const void* Chunk, size_t ChunkSize)
+SQL_Status_t BPLib_SQL_StoreChunk(int64_t BundleRowID, const void* Chunk, size_t ChunkSize)
 {
-    int SQLStatus;
+    SQL_Status_t SQLStatus;
 
     sqlite3_reset(InsertBlobStmt);
     sqlite3_bind_int64(InsertBlobStmt, 1, BundleRowID);
@@ -159,10 +200,10 @@ static int BPLib_SQL_StoreChunk(int64_t BundleRowID, const void* Chunk, size_t C
     return SQLStatus;
 }
 
-static int BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
+SQL_Status_t BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
 {
-    int SQLStatus;
-    int BundleRowID;
+    SQL_Status_t       SQLStatus;
+    uint64_t           BundleRowID;
     BPLib_MEM_Block_t* CurrMemBlock;
 
     /* Store the indexable metadata */
@@ -171,6 +212,7 @@ static int BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_Bund
     {
         return SQLStatus;
     }
+
     BundleRowID = sqlite3_last_insert_rowid(db);
 
     /* Store the decoded metadata block */
@@ -185,11 +227,13 @@ static int BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_Bund
     while (CurrMemBlock != NULL)
     {
         SQLStatus = BPLib_SQL_StoreChunk(BundleRowID, (const void*)CurrMemBlock->user_data.raw_bytes,
-            CurrMemBlock->used_len);
+                                            CurrMemBlock->used_len);
+
         if (SQLStatus != SQLITE_DONE)
         {
             return SQLStatus;
         }
+
         CurrMemBlock = CurrMemBlock->next;
     }
 
@@ -197,13 +241,15 @@ static int BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_Bund
     return SQLStatus;
 }
 
-static int BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
+SQL_Status_t BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
                                 size_t *DuplicateBundlesIgnored)
 {
-    int SQLStatus;
-    int i;
-    sqlite3* db = Inst->BundleStorage.db;
-    size_t NewBundleBytes;
+    SQL_Status_t SQLStatus;
+    size_t       i;
+    sqlite3*     db;
+    size_t       NewBundleBytes;
+
+    db = Inst->BundleStorage.db;
 
     /* Create a batch query */
     SQLStatus = sqlite3_exec(db, "BEGIN;", 0, 0, 0);
@@ -260,17 +306,17 @@ static int BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
     {
         /* Don't want to override this error code, assume rollback works */
         (void) sqlite3_exec(db, "ROLLBACK;", 0, 0, 0);
-
     }
     else if (SQLStatus != SQLITE_OK)
     {
         /* Some other error occurred */
         fprintf(stderr, "Batch commit failed, RC=%d\n", sqlite3_extended_errcode(db));
+
         SQLStatus = sqlite3_exec(db, "ROLLBACK;", 0, 0, 0);
         if (SQLStatus != SQLITE_OK)
         {
             fprintf(stderr, "Failed to rollback transaction, RC=%d\n", 
-                                                    sqlite3_extended_errcode(db));
+                    sqlite3_extended_errcode(db));
         }
     }
 
@@ -278,15 +324,15 @@ static int BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
     return SQLStatus;
 }
 
-/*******************************************************************************
-** Exported Functions
-*/
 BPLib_Status_t BPLib_SQL_Store(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
                                 size_t *DuplicateBundlesIgnored)
 {
-    BPLib_Status_t Status = BPLIB_SUCCESS;
-    int SQLStatus;
-    sqlite3* db = Inst->BundleStorage.db;
+    BPLib_Status_t Status;
+    SQL_Status_t   SQLStatus;
+    sqlite3*       db;
+
+    Status = BPLIB_SUCCESS;
+    db     = Inst->BundleStorage.db;
 
     /* Prepare Insert Statements needed for this batch query */
     SQLStatus = sqlite3_prepare_v2(db, InsertMetadataSQL, -1, &InsertMetadataStmt, 0);
@@ -294,6 +340,7 @@ BPLib_Status_t BPLib_SQL_Store(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
     {
         Status = BPLIB_STOR_SQL_STORAGE_ERR;
     }
+
     SQLStatus = sqlite3_prepare_v2(db, InsertBlobSQL, -1, &InsertBlobStmt, 0);
     if (SQLStatus != SQLITE_OK)
     {
