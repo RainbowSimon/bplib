@@ -158,8 +158,9 @@ typedef struct
  */
 typedef struct
 {
-    uint16_t                   EgressID;   /** \brief For egressing bundles, ID of channel/contact to send to */
-    size_t                     TotalBytes; /** \brief Size of this bundle in bytes */
+    uint16_t EgressID;    /** \brief For egressing bundles, ID of channel/contact to send to */
+    size_t   TotalBytes;  /** \brief Size of this bundle in bytes */
+    bool     IsCustodial; /** \brief Tracks whether or not the bund has a CTEB */
 
     /* Additional metadata will likely get added here */
 
