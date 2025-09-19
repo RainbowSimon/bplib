@@ -82,7 +82,7 @@ void Test_BPLib_STOR_GarbageCollect_NominalExpired(void)
     UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, 1);
 
     /* Nothing should be discarded if current time is before bundle expiration time */
-    UT_SetDeferredRetcode(UT_KEY(BPA_TIMEP_GetHostTime), 1, BPLIB_STOR_EPOCHOFFSET + 1);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, 797186475264); /* 797186475264 is creation time for TestBundle */
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
 
     UtAssert_STUB_COUNT(BPLib_AS_Increment, 0);
@@ -91,7 +91,7 @@ void Test_BPLib_STOR_GarbageCollect_NominalExpired(void)
     /* Skip counters 3,4 which are for DiscardEgressed */
 
     /* Storage should be discarded because bundle timestamp is expired */
-    UT_SetDeferredRetcode(UT_KEY(BPA_TIMEP_GetHostTime), 1, INT64_MAX);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, INT64_MAX);
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED_EXPIRED, 
                                                 Context_BPLib_AS_Increment[0].Counter);
