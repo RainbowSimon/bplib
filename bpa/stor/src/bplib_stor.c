@@ -42,8 +42,6 @@
 
 /* SQL query statements */
 
-sqlite3_stmt* InsertBlobStmt;
-sqlite3_stmt* InsertMetadataStmt;
 sqlite3_stmt* ForeignKeyCheckStmt;
 sqlite3_stmt* GetNumBundlesStmt;
 sqlite3_stmt* TotalBytesStmt;
@@ -54,14 +52,6 @@ sqlite3_stmt* DiscardEgressedStmt;
 sqlite3_stmt* EgressedBytesStmt;
 
 /* SQL query strings */
-
-/* Insert Bundle Blob */
-const char* InsertBlobSQL =
-"INSERT INTO bundle_blobs (bundle_row, blob_data) VALUES (?, ?)";
-
-/* Insert Bundle Metadata (duplicate bundle_id entries are ignored) */
-const char* InsertMetadataSQL =
-"INSERT INTO bundle_data (bundle_id, action_timestamp, dest_node, dest_service, bundle_bytes) VALUES (?, ?, ?, ?, ?);";
 
 const char* GetNumBundlesSQL =
 "SELECT COUNT(*) FROM bundle_data;";

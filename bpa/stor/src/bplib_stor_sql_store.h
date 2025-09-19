@@ -27,6 +27,20 @@
 
 #include "bplib_stor_sql.h"
 
+/* ======= */
+/* Globals */
+/* ======= */
+
+/* SQL query statements */
+
+extern sqlite3_stmt* InsertBlobStmt;
+extern sqlite3_stmt* InsertMetadataStmt;
+
+/* SQL query strings */
+
+extern const char* InsertBlobSQL;
+extern const char* InsertMetadataSQL;
+
 /* =================== */
 /* Function Prototypes */
 /* =================== */

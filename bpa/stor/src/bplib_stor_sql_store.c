@@ -17,6 +17,11 @@
  * limitations under the License.
  *
  */
+
+/* ======== */
+/* Includes */
+/* ======== */
+
 #include "bplib_stor_sql.h"
 #include "bplib_qm.h"
 #include "bplib_as.h"
@@ -24,6 +29,25 @@
 #include "bplib_stor_sql_store.h"
 
 #include <stdio.h>
+
+/* ======= */
+/* Globals */
+/* ======= */
+
+/* SQL query statements */
+
+sqlite3_stmt* InsertBlobStmt;
+sqlite3_stmt* InsertMetadataStmt;
+
+/* SQL query strings */
+
+/* Insert Bundle Blob */
+const char* InsertBlobSQL =
+"INSERT INTO bundle_blobs (bundle_row, blob_data) VALUES (?, ?)";
+
+/* Insert Bundle Metadata (duplicate bundle_id entries are ignored) */
+const char* InsertMetadataSQL =
+"INSERT INTO bundle_data (bundle_id, action_timestamp, dest_node, dest_service, bundle_bytes) VALUES (?, ?, ?, ?, ?);";
 
 /* ================ */
 /* Helper Functions */
