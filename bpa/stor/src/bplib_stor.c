@@ -41,8 +41,7 @@
 /* ======= */
 
 /* SQL query statements */
-sqlite3_stmt* MarkEgressedStmt;
-sqlite3_stmt* FindBlobStmt;
+
 sqlite3_stmt* InsertBlobStmt;
 sqlite3_stmt* InsertMetadataStmt;
 sqlite3_stmt* ForeignKeyCheckStmt;
@@ -55,16 +54,6 @@ sqlite3_stmt* DiscardEgressedStmt;
 sqlite3_stmt* EgressedBytesStmt;
 
 /* SQL query strings */
-const char* FindForEgressID_RangeClause =
-"((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))";
-
-const char* MarkEgressedSQL =
-"UPDATE bundle_data SET egress_attempted = 1 WHERE id = ?;";
-
-const char* FindBlobSQL =
-"SELECT id\n"
-"FROM bundle_blobs\n"
-"WHERE bundle_row = ?;";
 
 /* Insert Bundle Blob */
 const char* InsertBlobSQL =

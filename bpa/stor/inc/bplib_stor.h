@@ -56,8 +56,6 @@
 /* ======= */
 
 /* SQL query statements */
-extern sqlite3_stmt* MarkEgressedStmt;
-extern sqlite3_stmt* FindBlobStmt;
 extern sqlite3_stmt* InsertBlobStmt;
 extern sqlite3_stmt* InsertMetadataStmt;
 extern sqlite3_stmt* ForeignKeyCheckStmt;
@@ -70,9 +68,6 @@ extern sqlite3_stmt* DiscardEgressedStmt;
 extern sqlite3_stmt* EgressedBytesStmt;
 
 /* SQL query strings */
-extern const char* FindForEgressID_RangeClause;
-extern const char* MarkEgressedSQL;
-extern const char* FindBlobSQL;
 extern const char* InsertBlobSQL;
 extern const char* InsertMetadataSQL;
 extern const char* GetNumBundlesSQL;
