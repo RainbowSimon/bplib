@@ -255,57 +255,57 @@ typedef enum
 #define BPLIB_CBOR_DEC_HOP_BLOCK_INVALID_DEC_ERR       ((BPLib_Status_t) -153) /* CBOR Hop Count block decode error: invalid block data values */
 #define BPLIB_CBOR_DEC_HOP_BLOCK_EXCEEDED_ERR          ((BPLib_Status_t) -154) /* CBOR Hop Count block decode error: hop limit exceeded */
 
-#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_ENTER_ARRAY_ERR   ((BPLib_Status_t) -149) /* CBOR Custody Transfer block decode error: enter array */
-#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_EXIT_ARRAY_ERR    ((BPLib_Status_t) -150) /* CBOR Custody Transfer block decode error: exit array */
-#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_SEQ_NUM_DEC_ERR   ((BPLib_Status_t) -151) /* CBOR Custody Transfer block decode error: bundle sequence number decode */
-#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_SEQ_ID_DEC_ERR    ((BPLib_Status_t) -152) /* CBOR Custody Transfer block decode error: bundle sequence ID decode */
-#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_SRC_EID_DEC_ERR   ((BPLib_Status_t) -153) /* CBOR Custody Transfer block decode error: block source administrative endpoint ID decode */
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_ENTER_ARRAY_ERR   ((BPLib_Status_t) -155) /* CBOR Custody Transfer block decode error: enter array */
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_EXIT_ARRAY_ERR    ((BPLib_Status_t) -156) /* CBOR Custody Transfer block decode error: exit array */
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_SEQ_NUM_DEC_ERR   ((BPLib_Status_t) -157) /* CBOR Custody Transfer block decode error: bundle sequence number decode */
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_SEQ_ID_DEC_ERR    ((BPLib_Status_t) -158) /* CBOR Custody Transfer block decode error: bundle sequence ID decode */
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_SRC_EID_DEC_ERR   ((BPLib_Status_t) -159) /* CBOR Custody Transfer block decode error: block source administrative endpoint ID decode */
 
-#define BPLIB_CBOR_DEC_UNKNOWN_BLOCK_DEC_ERR           ((BPLib_Status_t) -155) /* CBOR canon block decode error: can't process block */
-#define BPLIB_CBOR_DEC_BUNDLE_TOO_LONG_DEC_ERR         ((BPLib_Status_t) -156) /* CBOR decode error: bundle is too long */
-#define BPLIB_CBOR_DEC_EXTRA_DATA_DEC_ERR              ((BPLib_Status_t) -157) /* CBOR decode error: extra data after payload  */
-#define BPLIB_CBOR_DEC_NO_PAYLOAD_ERR                  ((BPLib_Status_t) -158) /* CBOR decode error: no payload detected in bundle */
+#define BPLIB_CBOR_DEC_UNKNOWN_BLOCK_DEC_ERR           ((BPLib_Status_t) -160) /* CBOR canon block decode error: can't process block */
+#define BPLIB_CBOR_DEC_BUNDLE_TOO_LONG_DEC_ERR         ((BPLib_Status_t) -161) /* CBOR decode error: bundle is too long */
+#define BPLIB_CBOR_DEC_EXTRA_DATA_DEC_ERR              ((BPLib_Status_t) -162) /* CBOR decode error: extra data after payload  */
+#define BPLIB_CBOR_DEC_NO_PAYLOAD_ERR                  ((BPLib_Status_t) -163) /* CBOR decode error: no payload detected in bundle */
 
-#define BPLIB_CBOR_DEC_TYPES_ENTER_DEF_ARRAY_QCBOR_ERR ((BPLib_Status_t) -158) /* CBOR decode types error: enter def array */
-#define BPLIB_CBOR_DEC_TYPES_ENTER_DEF_ARRAY_COUNT_ERR ((BPLib_Status_t) -159) /* CBOR decode types error: def array size */
-#define BPLIB_CBOR_DEC_TYPES_EXIT_DEF_ARRAY_QCBOR_ERR  ((BPLib_Status_t) -160) /* CBOR decode types error: exit def array */
-#define BPLIB_CBOR_DEC_TYPES_GET_UINT64_QCBOR_ERR      ((BPLib_Status_t) -161) /* CBOR decode types error: get uint64 */
-#define BPLIB_CBOR_DEC_TYPES_EID_ENTER_OUTER_ARRAY_ERR ((BPLib_Status_t) -162) /* CBOR decode types error: EID enter outer array */
-#define BPLIB_CBOR_DEC_TYPES_EID_SCHEME_NOT_IMPL_ERR   ((BPLib_Status_t) -163) /* CBOR decode types error: EID scheme not implemented */
-#define BPLIB_CBOR_DEC_TYPES_EID_ENTER_SSP_ARRAY_ERR   ((BPLib_Status_t) -164) /* CBOR decode types error: EID enter SSP array */
-#define BPLIB_CBOR_DEC_TYPES_EID_IPN_NODE_DEC_ERR      ((BPLib_Status_t) -165) /* CBOR decode types error: EID IPN node num decode */
-#define BPLIB_CBOR_DEC_TYPES_EID_IPN_SERV_DEC_ERR      ((BPLib_Status_t) -166) /* CBOR decode types error: EID IPN serv num decode */
-#define BPLIB_CBOR_DEC_TYPES_EID_EXIT_SSP_ARRAY_ERR    ((BPLib_Status_t) -167) /* CBOR decode types error: EID exit SSP array */
-#define BPLIB_CBOR_DEC_TYPES_EID_EXIT_OUTER_ARRAY_ERR  ((BPLib_Status_t) -168) /* CBOR decode types error: EID exit outer array */
+#define BPLIB_CBOR_DEC_TYPES_ENTER_DEF_ARRAY_QCBOR_ERR ((BPLib_Status_t) -164) /* CBOR decode types error: enter def array */
+#define BPLIB_CBOR_DEC_TYPES_ENTER_DEF_ARRAY_COUNT_ERR ((BPLib_Status_t) -165) /* CBOR decode types error: def array size */
+#define BPLIB_CBOR_DEC_TYPES_EXIT_DEF_ARRAY_QCBOR_ERR  ((BPLib_Status_t) -166) /* CBOR decode types error: exit def array */
+#define BPLIB_CBOR_DEC_TYPES_GET_UINT64_QCBOR_ERR      ((BPLib_Status_t) -167) /* CBOR decode types error: get uint64 */
+#define BPLIB_CBOR_DEC_TYPES_EID_ENTER_OUTER_ARRAY_ERR ((BPLib_Status_t) -168) /* CBOR decode types error: EID enter outer array */
+#define BPLIB_CBOR_DEC_TYPES_EID_SCHEME_NOT_IMPL_ERR   ((BPLib_Status_t) -169) /* CBOR decode types error: EID scheme not implemented */
+#define BPLIB_CBOR_DEC_TYPES_EID_ENTER_SSP_ARRAY_ERR   ((BPLib_Status_t) -170) /* CBOR decode types error: EID enter SSP array */
+#define BPLIB_CBOR_DEC_TYPES_EID_IPN_NODE_DEC_ERR      ((BPLib_Status_t) -171) /* CBOR decode types error: EID IPN node num decode */
+#define BPLIB_CBOR_DEC_TYPES_EID_IPN_SERV_DEC_ERR      ((BPLib_Status_t) -172) /* CBOR decode types error: EID IPN serv num decode */
+#define BPLIB_CBOR_DEC_TYPES_EID_EXIT_SSP_ARRAY_ERR    ((BPLib_Status_t) -173) /* CBOR decode types error: EID exit SSP array */
+#define BPLIB_CBOR_DEC_TYPES_EID_EXIT_OUTER_ARRAY_ERR  ((BPLib_Status_t) -174) /* CBOR decode types error: EID exit outer array */
 
-#define BPLIB_CBOR_DEC_TYPES_TIMESTAMP_ENTER_ARRAY_ERR ((BPLib_Status_t) -169) /* CBOR decode types error: timestamp enter array */
-#define BPLIB_CBOR_DEC_TYPES_TIMESTAMP_EXIT_ARRAY_ERR  ((BPLib_Status_t) -170) /* CBOR decode types error: timestamp exit array */
-#define BPLIB_CBOR_DEC_TYPES_TIMESTAMP_CREATE_DEC_ERR  ((BPLib_Status_t) -171) /* CBOR decode types error: timestamp create time decode */
-#define BPLIB_CBOR_DEC_TYPES_TIMESTAMP_SEQ_NUM_DEC_ERR ((BPLib_Status_t) -172) /* CBOR decode types error: timestamp seq num decode */
+#define BPLIB_CBOR_DEC_TYPES_TIMESTAMP_ENTER_ARRAY_ERR ((BPLib_Status_t) -175) /* CBOR decode types error: timestamp enter array */
+#define BPLIB_CBOR_DEC_TYPES_TIMESTAMP_EXIT_ARRAY_ERR  ((BPLib_Status_t) -176) /* CBOR decode types error: timestamp exit array */
+#define BPLIB_CBOR_DEC_TYPES_TIMESTAMP_CREATE_DEC_ERR  ((BPLib_Status_t) -177) /* CBOR decode types error: timestamp create time decode */
+#define BPLIB_CBOR_DEC_TYPES_TIMESTAMP_SEQ_NUM_DEC_ERR ((BPLib_Status_t) -178) /* CBOR decode types error: timestamp seq num decode */
 
-#define BPLIB_CBOR_DEC_TYPES_CRC_ENTER_BYTE_STR_ERR    ((BPLib_Status_t) -173) /* CBOR decode types error: CRC Val enter byte-string */
-#define BPLIB_CBOR_DEC_TYPES_CRC_16_LEN_ERR            ((BPLib_Status_t) -174) /* CBOR decode types error: CRC Val length not 16 */
-#define BPLIB_CBOR_DEC_TYPES_CRC_32_LEN_ERR            ((BPLib_Status_t) -175) /* CBOR decode types error: CRC Val length not 32 */
-#define BPLIB_CBOR_DEC_TYPES_CRC_UNSUPPORTED_TYPE_ERR  ((BPLib_Status_t) -176) /* CBOR decode types error: CRC Val type */
-#define BPLIB_CBOR_DEC_TYPES_EID_DTN_ERR               ((BPLib_Status_t) -177) /* CBOR decode types error: DTN EID decode failed */
+#define BPLIB_CBOR_DEC_TYPES_CRC_ENTER_BYTE_STR_ERR    ((BPLib_Status_t) -179) /* CBOR decode types error: CRC Val enter byte-string */
+#define BPLIB_CBOR_DEC_TYPES_CRC_16_LEN_ERR            ((BPLib_Status_t) -180) /* CBOR decode types error: CRC Val length not 16 */
+#define BPLIB_CBOR_DEC_TYPES_CRC_32_LEN_ERR            ((BPLib_Status_t) -181) /* CBOR decode types error: CRC Val length not 32 */
+#define BPLIB_CBOR_DEC_TYPES_CRC_UNSUPPORTED_TYPE_ERR  ((BPLib_Status_t) -182) /* CBOR decode types error: CRC Val type */
+#define BPLIB_CBOR_DEC_TYPES_EID_DTN_ERR               ((BPLib_Status_t) -183) /* CBOR decode types error: DTN EID decode failed */
 
 /* CBOR Encode Errors */
-#define BPLIB_CBOR_ENC_EXT_SIZES_CRRPTD_ERR            ((BPLib_Status_t) -188) /* BPLib_CBOR_EncodeExtensionBlock: Block Sizes Corrupted Error */
-#define BPLIB_CBOR_ENC_PAYL_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -189) /* BPLib_CBOR_CopyOrEncodePayload: Block Sizes Corrupted Error */
-#define BPLIB_CBOR_ENC_PRIM_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -189) /* BPLib_CBOR_CopyOrEncodePrimary: Block Sizes Corrupted Error */
-#define BPLIB_CBOR_ENC_PRIM_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -190) /* BPLib_CBOR_CopyOrEncodePrimary: Copy Size Error */
-#define BPLIB_CBOR_ENC_PAYL_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -191) /* BPLib_CBOR_CopyOrEncodePayload: Copy Size Error */
-#define BPLIB_CBOR_ENC_PRIM_QCBOR_FINISH_ERR           ((BPLib_Status_t) -192) /* BPLib_CBOR_EncodePrimary: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_EXT_INPUT_BLOCK_INDEX_ERR       ((BPLib_Status_t) -193) /* BPLib_CBOR_EncodeExtensionBlock: Ext Block Index Error */
-#define BPLIB_CBOR_ENC_EXT_QCBOR_FINISH_ERR            ((BPLib_Status_t) -194) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_HEAD_ERR      ((BPLib_Status_t) -195) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR      ((BPLib_Status_t) -196) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR      ((BPLib_Status_t) -197) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_EXT_SIZES_CRRPTD_ERR            ((BPLib_Status_t) -184) /* BPLib_CBOR_EncodeExtensionBlock: Block Sizes Corrupted Error */
+#define BPLIB_CBOR_ENC_PAYL_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -185) /* BPLib_CBOR_CopyOrEncodePayload: Block Sizes Corrupted Error */
+#define BPLIB_CBOR_ENC_PRIM_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -186) /* BPLib_CBOR_CopyOrEncodePrimary: Block Sizes Corrupted Error */
+#define BPLIB_CBOR_ENC_PRIM_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -187) /* BPLib_CBOR_CopyOrEncodePrimary: Copy Size Error */
+#define BPLIB_CBOR_ENC_PAYL_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -188) /* BPLib_CBOR_CopyOrEncodePayload: Copy Size Error */
+#define BPLIB_CBOR_ENC_PRIM_QCBOR_FINISH_ERR           ((BPLib_Status_t) -189) /* BPLib_CBOR_EncodePrimary: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_EXT_INPUT_BLOCK_INDEX_ERR       ((BPLib_Status_t) -190) /* BPLib_CBOR_EncodeExtensionBlock: Ext Block Index Error */
+#define BPLIB_CBOR_ENC_EXT_QCBOR_FINISH_ERR            ((BPLib_Status_t) -191) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_HEAD_ERR      ((BPLib_Status_t) -192) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR      ((BPLib_Status_t) -193) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR      ((BPLib_Status_t) -194) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
 
-#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_1_ERR     ((BPLib_Status_t) -198) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 1) */
-#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_2_ERR     ((BPLib_Status_t) -199) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 2) */
-#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_3_ERR     ((BPLib_Status_t) -200) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 3) */
-#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_4_ERR     ((BPLib_Status_t) -201) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 4) */
+#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_1_ERR     ((BPLib_Status_t) -195) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 1) */
+#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_2_ERR     ((BPLib_Status_t) -196) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 2) */
+#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_3_ERR     ((BPLib_Status_t) -197) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 3) */
+#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_4_ERR     ((BPLib_Status_t) -198) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 4) */
 
 /* CLA errors */
 #define BPLIB_CLA_INCORRECT_STATE                      ((BPLib_Status_t) -210) /* Contact is in the incorrect state to be modified */
