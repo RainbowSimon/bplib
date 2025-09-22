@@ -319,7 +319,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         /* TODO: Validate bundle sequence ID, if applicable */
 
         Status = CustodyBlockDataParser.BlockSrcAdminEidParser(ctx,
-            &bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.CustodyBlockData.BundleSeqId);
+            &bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.CustodyBlockData.BlockSrcAdminEID);
 
         if (Status != BPLIB_SUCCESS)
         {
