@@ -56,6 +56,13 @@ struct _HopCountBlockDataParser
     QCBOR_UInt64Parser BundleHopCountParser;
 };
 
+/* Custody Transfer Block Payload */
+struct _CustodyBlockDataParser
+{
+    QCBOR_UInt64Parser BundleSeqNumParser;
+    QCBOR_UInt64Parser BundleSeqIdParser;
+    QCBOR_EIDParser    BlockSrcAdminEidParser;
+};
 
 static struct _CanonicalBlockBaseParser CanonicalBlockParser = {
     .BlockTypeParser = BPLib_QCBOR_UInt64ParserImpl,
@@ -81,7 +88,11 @@ static struct _HopCountBlockDataParser HopCountBlockDataParser = {
     .BundleHopCountParser = BPLib_QCBOR_UInt64ParserImpl
 };
 
-
+static struct _CustodyBlockDataParser CustodyBlockDataParser = {
+    .BundleSeqNumParser     = BPLib_QCBOR_UInt64ParserImpl,
+    .BundleSeqIdParser      = BPLib_QCBOR_UInt64ParserImpl,
+    .BlockSrcAdminEidParser = BPLib_QCBOR_EidDtnNoneParserImpl,
+};
 
 /*******************************************************************************
 * RFC-9171 Canonical Block Parsers (Implementation)
