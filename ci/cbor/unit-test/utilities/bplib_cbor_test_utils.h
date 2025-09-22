@@ -21,9 +21,9 @@
 #ifndef BPLIB_CBOR_TEST_UTILS_H
 #define BPLIB_CBOR_TEST_UTILS_H
 
-/*
-** Include
-*/
+/* ======== */
+/* Includes */
+/* ======== */
 
 #include "utassert.h"
 #include "utstubs.h"
@@ -34,16 +34,21 @@
 #include "bplib_cbor_internal.h"
 #include "bplib_crc.h"
 
-/*
-** Global Data
-*/
+/* ====== */
+/* Macros */
+/* ====== */
+
+#define ADD_TEST(test) UtTest_Add(test, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, #test)
+
+/* =========== */
+/* Global Data */
+/* =========== */
 
 extern BPLib_NC_MibPerNodeConfig_t TestMibConfigPnTbl;
 
-
-/*
-** Function Definitions
-*/
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
 
 void BPLib_CBOR_Test_Setup(void);
 void BPLib_CBOR_Test_Teardown(void);
