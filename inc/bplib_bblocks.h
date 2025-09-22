@@ -64,6 +64,16 @@ typedef struct
 } BPLib_HopCountData_t;
 
 /**
+ * \brief Custody Transfer Extension Block Data
+ */
+typedef struct
+{
+    uint64_t    BundleSeqNum;
+    uint64_t    BundleSeqId;
+    BPLib_EID_t BlockSrcAdminEID;
+} BPLib_CustodyBlockData_t;
+
+/**
  * @brief Creation timestamp of a bundle
  */
 typedef struct
@@ -110,6 +120,7 @@ typedef union
     BPLib_HopCountData_t      HopCountData;
     BPLib_AgeBlockData_t      AgeBlockData;
     BPLib_PrevNodeBlockData_t PrevNodeBlockData;
+    BPLib_CustodyBlockData_t  CustodyBlockData;
 } BPLib_ExtBlockData_t;
 
 /**
