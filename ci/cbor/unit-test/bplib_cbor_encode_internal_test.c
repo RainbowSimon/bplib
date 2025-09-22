@@ -270,6 +270,25 @@ void Test_BPLib_CBOR_EncodeExtensionBlock_Skip(void)
     UtAssert_INT32_EQ(NumBytesCopied, 0);
 }
 
+void Test_BPLib_CBOR_EncodeExtensionBlock_CustodyBlock(void)
+{
+    BPLib_Status_t    Status;
+    BPLib_Bundle_t    Bundle;
+    char              OutputBuffer[512];
+    size_t            NumBytesCopied;
+    BPLib_MEM_Block_t Blob;
+
+    memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
+    Bundle.blob = &Blob;
+
+    Bundle.blocks.ExtBlocks[0].Header.BlockType       = BPLib_BlockType_CTEB;
+    Bundle.blocks.ExtBlocks[0].Header.RequiresDiscard = false;
+
+    Status = BPLib_CBOR_EncodeExtensionBlock(&Bundle, 0, OutputBuffer, sizeof(OutputBuffer), &NumBytesCopied);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
+}
+
 /* Test extension block encode when the block is unknown and needs to be copied out */
 void Test_BPLib_CBOR_EncodeExtensionBlock_UnknownBlk(void)
 {
@@ -346,16 +365,17 @@ void Test_BPLib_CBOR_EncodePayload_Nominal(void)
 
 void TestBplibCborEncodeInternal_Register(void)
 {
-    UtTest_Add(Test_BPLib_CBOR_EncodePrimary_NullInputErrors, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePrimary_NullInputErrors");
-    UtTest_Add(Test_BPLib_CBOR_EncodePrimary_Crc16, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePrimary_Crc16");
-    UtTest_Add(Test_BPLib_CBOR_EncodePrimary_Crc32, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePrimary_Crc32");
-    UtTest_Add(Test_BPLib_CBOR_EncodePrimary_CrcNone, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePrimary_CrcNone");
+    ADD_TEST(Test_BPLib_CBOR_EncodePrimary_NullInputErrors);
+    ADD_TEST(Test_BPLib_CBOR_EncodePrimary_Crc16);
+    ADD_TEST(Test_BPLib_CBOR_EncodePrimary_Crc32);
+    ADD_TEST(Test_BPLib_CBOR_EncodePrimary_CrcNone);
 
-    UtTest_Add(Test_BPLib_CBOR_EncodeExtensionBlock_NullInputErrors, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeExtensionBlock_NullInputErrors");
-    UtTest_Add(Test_BPLib_CBOR_EncodeExtensionBlock_Nominal, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeExtensionBlock_Nominal");
-    UtTest_Add(Test_BPLib_CBOR_EncodeExtensionBlock_Skip, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeExtensionBlock_Skip");
-    UtTest_Add(Test_BPLib_CBOR_EncodeExtensionBlock_UnknownBlk, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeExtensionBlock_UnknownBlk");
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_NullInputErrors);
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_Nominal);
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_Skip);
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_CustodyBlock);
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_UnknownBlk);
 
-    UtTest_Add(Test_BPLib_CBOR_EncodePayload_NullInputErrors, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePayload_NullInputErrors");
-    UtTest_Add(Test_BPLib_CBOR_EncodePayload_Nominal, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePayload_Nominal");
+    ADD_TEST(Test_BPLib_CBOR_EncodePayload_NullInputErrors);
+    ADD_TEST(Test_BPLib_CBOR_EncodePayload_Nominal);
 }
