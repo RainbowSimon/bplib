@@ -506,10 +506,10 @@ void Test_BPLib_CBOR_DecodeCanonical_CustodyBlk(void)
          CRC Value: 0x1917
     */
     uint8_t GoodCustodyBlk[] = {
-        0x86, 0x0F, 0x04, 0x00, 0x01, 0x83,
-        0x01, 0x02, 0x82, 0x02, 0x82, 0x18,
-        0xC8, 0x02, 0x42, 0x19, 0x17
-    };
+        0x86, 0x0f, 0x04, 0x00, 0x01,
+        0x83, 0x01, 0x02, 0x82, 0x02,
+        0x82, 0x18, 0xc8, 0x02, 0x19,
+        0x19, 0x17};
 
     BPLib_Bundle_t     Bundle;
     QCBORDecodeContext ctx;
@@ -617,22 +617,23 @@ void Test_BPLib_CBOR_DecodeCanonical_UnknownKeep(void)
 
 void TestBplibCborDecodeInternal_Register(void)
 {
-    UtTest_Add(Test_BPLib_CBOR_DecodePrimary_InvalidCrc, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodePrimary_InvalidCrc");
-    UtTest_Add(Test_BPLib_CBOR_DecodePrimary_InvalidFlags, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodePrimary_InvalidFlags");
-    UtTest_Add(Test_BPLib_CBOR_DecodePrimary_CrcNone, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodePrimary_CrcNone");
-    UtTest_Add(Test_BPLib_CBOR_DecodePrimary_NoCanonBlks, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodePrimary_NoCanonBlks");
+    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_InvalidCrc);
+    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_InvalidFlags);
+    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_CrcNone);
+    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_NoCanonBlks);
     
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_InvalidCrc, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_InvalidCrc");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_BadBlockNum, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_BadBlockNum");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_BadCrcType, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_BadCrcType");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_AgeBlk, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_AgeBlk");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_InvBlkNum, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_InvBlkNum");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_PrevNodeBlk, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_PrevNodeBlk");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_HopCountBlk, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_HopCountBlk");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_LimitTooSmall, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_LimitTooSmall");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_PastLimit, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_PastLimit");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_UnknownDel, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_UnknownDel");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_UnknownDisc, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_UnknownDisc");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_UnknownKeep, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_UnknownKeep");
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_InvalidCrc);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_BadBlockNum);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_BadCrcType);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_AgeBlk);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_InvBlkNum);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_PrevNodeBlk);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_HopCountBlk);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_LimitTooSmall);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_PastLimit);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_CustodyBlk);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_UnknownDel);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_UnknownDisc);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_UnknownKeep);
 
 }
