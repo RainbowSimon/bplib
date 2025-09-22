@@ -328,7 +328,6 @@ void Test_BPLib_CBOR_DecodeCanonical_InvBlkNum(void)
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, AgeBlk), BPLIB_CBOR_DEC_CANON_BLOCK_NUM_DEC_ERR);    
 }
 
-
 /* Test a valid prev node block */
 void Test_BPLib_CBOR_DecodeCanonical_PrevNodeBlk(void)
 {
@@ -485,18 +484,60 @@ void Test_BPLib_CBOR_DecodeCanonical_PastLimit(void)
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodHopCountBlk), BPLIB_CBOR_DEC_HOP_BLOCK_EXCEEDED_ERR);
 }
 
+/* Test a valid custody transfer block */
+void Test_BPLib_CBOR_DecodeCanonical_CustodyBlk(void)
+{
+    /*
+      Canonical Block [0]:
+         Block Type: 15
+         Block Number: 4
+         Flags: 0
+         CRC Type: 1
+         Block Offset Start:
+         Data Offset Start:
+         Data Size:
+         Block Offset End:
+         Block Size:
+         Custody Transfer Block Data:
+                 Custody Transfer Block MetaData Length:
+                 Bundle Sequence Number: 01
+                 Bundle Sequence ID: 02
+                 Block Source Administrative Endpoint ID: 2.200.2
+         CRC Value: 0x1917
+    */
+    uint8_t GoodCustodyBlk[] = {
+        0x86, 0x0F, 0x04, 0x00, 0x01, 0x83,
+        0x01, 0x02, 0x82, 0x02, 0x82, 0x18,
+        0xC8, 0x02, 0x42, 0x19, 0x17
+    };
+
+    BPLib_Bundle_t     Bundle;
+    QCBORDecodeContext ctx;
+    UsefulBufC         UBufC;
+
+    /* Initialize QCBOR context */
+    UBufC.ptr = (const void*)(GoodCustodyBlk);
+    UBufC.len = sizeof(GoodCustodyBlk);
+    QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
+
+    /* Set CRC calculation to return same CRC as block CRC */
+    UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x1917);
+
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodCustodyBlk), BPLIB_SUCCESS);
+}
+
 /* Test an unknown block type that will be deleted */
 void Test_BPLib_CBOR_DecodeCanonical_UnknownDel(void)
 {
     /*
       Canonical Block [0]:
-         Block Type: 15
+         Block Type: 16
          Block Number: 3
          Flags: 0x04 (delete bundle if unsupported)
          CRC Type: 1
     */
     uint8_t UnknownBlk[] = {
-        0x86, 0x0f, 0x03, 0x04, 0x01, 0x43,
+        0x86, 0x0e, 0x03, 0x04, 0x01, 0x43,
         0x82, 0x0f, 0x03, 0x42, 0xb5, 0xee
     };
 
