@@ -255,6 +255,12 @@ typedef enum
 #define BPLIB_CBOR_DEC_HOP_BLOCK_INVALID_DEC_ERR       ((BPLib_Status_t) -153) /* CBOR Hop Count block decode error: invalid block data values */
 #define BPLIB_CBOR_DEC_HOP_BLOCK_EXCEEDED_ERR          ((BPLib_Status_t) -154) /* CBOR Hop Count block decode error: hop limit exceeded */
 
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_ENTER_ARRAY_ERR   ((BPLib_Status_t) -149) /* CBOR Custody Transfer block decode error: enter array */
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_EXIT_ARRAY_ERR    ((BPLib_Status_t) -150) /* CBOR Custody Transfer block decode error: exit array */
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_SEQ_NUM_DEC_ERR   ((BPLib_Status_t) -151) /* CBOR Custody Transfer block decode error: bundle sequence number decode */
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_SEQ_ID_DEC_ERR    ((BPLib_Status_t) -152) /* CBOR Custody Transfer block decode error: bundle sequence ID decode */
+#define BPLIB_CBOR_DEC_CUSTODY_BLOCK_SRC_EID_DEC_ERR   ((BPLib_Status_t) -153) /* CBOR Custody Transfer block decode error: block source administrative endpoint ID decode */
+
 #define BPLIB_CBOR_DEC_UNKNOWN_BLOCK_DEC_ERR           ((BPLib_Status_t) -155) /* CBOR canon block decode error: can't process block */
 #define BPLIB_CBOR_DEC_BUNDLE_TOO_LONG_DEC_ERR         ((BPLib_Status_t) -156) /* CBOR decode error: bundle is too long */
 #define BPLIB_CBOR_DEC_EXTRA_DATA_DEC_ERR              ((BPLib_Status_t) -157) /* CBOR decode error: extra data after payload  */
