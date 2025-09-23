@@ -462,25 +462,6 @@ void Test_BPLib_PI_ValidateConfigs_RepToEidInv(void)
     UtAssert_INT32_EQ(BPLib_PI_ValidateConfigs(&ChanTbl), BPLIB_INVALID_CONFIG_ERR);
 }
 
-void Test_BPLib_PI_ValidateConfigs_SizeInv(void)
-{
-    BPLib_PI_ChannelTable_t ChanTbl;
-
-    memset(&ChanTbl, 0, sizeof(ChanTbl));
-
-    ChanTbl.Configs[0].HopLimit = 10;
-    ChanTbl.Configs[0].RegState = BPLIB_PI_PASSIVE_ABANDON;
-    ChanTbl.Configs[0].CrcType = BPLib_CRC_Type_CRC32C;
-    ChanTbl.Configs[0].DestEID.Scheme = BPLIB_EID_SCHEME_IPN;
-
-    /* Invalid payload size */
-    ChanTbl.Configs[0].MaxBundlePayloadSize = BPLIB_MAX_PAYLOAD_SIZE + 1;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsValid), true);
-
-    UtAssert_INT32_EQ(BPLib_PI_ValidateConfigs(&ChanTbl), BPLIB_INVALID_CONFIG_ERR);
-}
-
 void Test_BPLib_PI_ValidateConfigs_LifetimeInv(void)
 {
     BPLib_PI_ChannelTable_t ChanTbl;
@@ -872,7 +853,6 @@ void TestBplibPi_Register(void)
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_DtnDestEid);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_DestEidInv);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_RepToEidInv);
-    ADD_TEST(Test_BPLib_PI_ValidateConfigs_SizeInv);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_LifetimeInv);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_NoPayload);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_BadPayloadBlockNum);

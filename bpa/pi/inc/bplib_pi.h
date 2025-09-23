@@ -73,7 +73,6 @@ typedef struct
     size_t                  IngressBitsPerCycle;
     size_t                  EgressBitsPerCycle;
     uint64_t                LocalServiceNumber;
-    uint64_t                MaxBundlePayloadSize;    
     uint64_t                BundleProcFlags;
     uint64_t                Lifetime;
     BPLib_EID_t             DestEID;

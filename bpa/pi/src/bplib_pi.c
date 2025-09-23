@@ -365,12 +365,6 @@ BPLib_Status_t BPLib_PI_ValidateConfigs(void *TblData)
             return BPLIB_INVALID_CONFIG_ERR;
         }
 
-        /* Validate that the maximum bundle payload size doesn't exceed the system limit */
-        if (TblDataPtr->Configs[ChanId].MaxBundlePayloadSize > BPLIB_MAX_PAYLOAD_SIZE)
-        {
-            return BPLIB_INVALID_CONFIG_ERR;
-        }
-
         /* Validate that the bundle lifetime doesn't exceed the system limit */
         if (TblDataPtr->Configs[ChanId].Lifetime > BPLIB_MAX_LIFETIME_ALLOWED)
         {
