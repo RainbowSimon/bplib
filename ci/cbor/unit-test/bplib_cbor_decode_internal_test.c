@@ -489,27 +489,28 @@ void Test_BPLib_CBOR_DecodeCanonical_CustodyBlk(void)
 {
     /*
       Canonical Block [0]:
-         Block Type: 15
-         Block Number: 4
-         Flags: 0
-         CRC Type: 1
-         Block Offset Start:
-         Data Offset Start:
-         Data Size:
-         Block Offset End:
-         Block Size:
-         Custody Transfer Block Data:
-                 Custody Transfer Block MetaData Length:
-                 Bundle Sequence Number: 01
-                 Bundle Sequence ID: 02
-                 Block Source Administrative Endpoint ID: 2.200.2
-         CRC Value: 0x1917
+        Block Type: 15
+        Block Number: 4
+        Flags: 0
+        CRC Type: 1
+        Block Offset Start:
+        Data Offset Start:
+        Data Size:
+        Block Offset End:
+        Block Size:
+        Custody Transfer Block Data:
+            Custody Transfer Block MetaData Length:
+            Bundle Sequence Number: 01
+            Bundle Sequence ID: 02
+            Block Source Administrative Endpoint ID: 2.200.2
+        CRC Value: 0x4C2A
     */
+
     uint8_t GoodCustodyBlk[] = {
-        0x86, 0x0f, 0x04, 0x00, 0x01,
-        0x83, 0x01, 0x02, 0x82, 0x02,
-        0x82, 0x18, 0xc8, 0x02, 0x19,
-        0x19, 0x17};
+        0x86, 0x0F, 0x02, 0x00, 0x01,
+        0x49, 0x83, 0x01, 0x02, 0x82,
+        0x02, 0x82, 0x18, 0xC8, 0x02,
+        0x42, 0x4C, 0x2A};
 
     BPLib_Bundle_t     Bundle;
     QCBORDecodeContext ctx;
@@ -521,7 +522,7 @@ void Test_BPLib_CBOR_DecodeCanonical_CustodyBlk(void)
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
     /* Set CRC calculation to return same CRC as block CRC */
-    UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x1917);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x4C2A);
 
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodCustodyBlk), BPLIB_SUCCESS);
 }
