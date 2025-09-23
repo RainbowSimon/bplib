@@ -120,7 +120,7 @@ extern "C" {
 /**
  *  \brief This is the absolute maximum size a bundle is allowed to be.
  */
-#define BPLIB_MAX_BUNDLE_LEN                    8192
+#define BPLIB_MAX_BUNDLE_LEN                    17000
 
 /**
  * \brief This is the absolute maximum size a bundle payload is allowed to be. The real
@@ -129,7 +129,7 @@ extern "C" {
  *        value, the configurations will be rejected. This value must be smaller than
  *        \ref BPLIB_MAX_BUNDLE_LEN
  */
-#define BPLIB_MAX_PAYLOAD_SIZE                  4096
+#define BPLIB_MAX_PAYLOAD_SIZE                  16384
 
 /**
  * \brief This is the absolute maximum lifetime a bundle can have. Channel configurations
