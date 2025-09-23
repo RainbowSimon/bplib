@@ -802,7 +802,7 @@ void Test_BPLib_NC_ResetCounter_Nominal(void)
     memset((void*) &Payload, 0, sizeof(BPLib_ResetCounter_Payload_t));
 
     Payload.MibArrayIndex = 4;
-    Payload.Counter       = BUNDLE_COUNT_DELETED_CANCELLED;
+    Payload.Counter       = BUNDLE_COUNT_DELETED_EXPIRED;
 
     BPLib_NC_ResetCounter(Payload);
 
