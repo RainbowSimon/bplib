@@ -64,6 +64,16 @@ typedef struct
 } BPLib_HopCountData_t;
 
 /**
+ * \brief Custody Transfer Extension Block Data
+ */
+typedef struct
+{
+    uint64_t    BundleSeqNum;
+    uint64_t    BundleSeqId;
+    BPLib_EID_t BlockSrcAdminEID;
+} BPLib_CustodyBlockData_t;
+
+/**
  * @brief Creation timestamp of a bundle
  */
 typedef struct
@@ -110,6 +120,7 @@ typedef union
     BPLib_HopCountData_t      HopCountData;
     BPLib_AgeBlockData_t      AgeBlockData;
     BPLib_PrevNodeBlockData_t PrevNodeBlockData;
+    BPLib_CustodyBlockData_t  CustodyBlockData;
 } BPLib_ExtBlockData_t;
 
 /**
@@ -158,8 +169,9 @@ typedef struct
  */
 typedef struct
 {
-    uint16_t                   EgressID;   /** \brief For egressing bundles, ID of channel/contact to send to */
-    size_t                     TotalBytes; /** \brief Size of this bundle in bytes */
+    uint16_t EgressID;    /** \brief For egressing bundles, ID of channel/contact to send to */
+    size_t   TotalBytes;  /** \brief Size of this bundle in bytes */
+    bool     IsCustodial; /** \brief Tracks whether or not the bund has a CTEB */
 
     /* Additional metadata will likely get added here */
 

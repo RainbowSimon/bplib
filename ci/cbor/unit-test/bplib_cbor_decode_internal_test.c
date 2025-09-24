@@ -328,7 +328,6 @@ void Test_BPLib_CBOR_DecodeCanonical_InvBlkNum(void)
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, AgeBlk), BPLIB_CBOR_DEC_CANON_BLOCK_NUM_DEC_ERR);    
 }
 
-
 /* Test a valid prev node block */
 void Test_BPLib_CBOR_DecodeCanonical_PrevNodeBlk(void)
 {
@@ -485,18 +484,61 @@ void Test_BPLib_CBOR_DecodeCanonical_PastLimit(void)
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodHopCountBlk), BPLIB_CBOR_DEC_HOP_BLOCK_EXCEEDED_ERR);
 }
 
+/* Test a valid custody transfer block */
+void Test_BPLib_CBOR_DecodeCanonical_CustodyBlk(void)
+{
+    /*
+      Canonical Block [0]:
+        Block Type: 15
+        Block Number: 4
+        Flags: 0
+        CRC Type: 1
+        Block Offset Start:
+        Data Offset Start:
+        Data Size:
+        Block Offset End:
+        Block Size:
+        Custody Transfer Block Data:
+            Custody Transfer Block MetaData Length:
+            Bundle Sequence Number: 01
+            Bundle Sequence ID: 02
+            Block Source Administrative Endpoint ID: 2.200.2
+        CRC Value: 0x4C2A
+    */
+
+    uint8_t GoodCustodyBlk[] = {
+        0x86, 0x0F, 0x02, 0x00, 0x01,
+        0x49, 0x83, 0x01, 0x02, 0x82,
+        0x02, 0x82, 0x18, 0xC8, 0x02,
+        0x42, 0x4C, 0x2A};
+
+    BPLib_Bundle_t     Bundle;
+    QCBORDecodeContext ctx;
+    UsefulBufC         UBufC;
+
+    /* Initialize QCBOR context */
+    UBufC.ptr = (const void*)(GoodCustodyBlk);
+    UBufC.len = sizeof(GoodCustodyBlk);
+    QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
+
+    /* Set CRC calculation to return same CRC as block CRC */
+    UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x4C2A);
+
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodCustodyBlk), BPLIB_SUCCESS);
+}
+
 /* Test an unknown block type that will be deleted */
 void Test_BPLib_CBOR_DecodeCanonical_UnknownDel(void)
 {
     /*
       Canonical Block [0]:
-         Block Type: 15
+         Block Type: 16
          Block Number: 3
          Flags: 0x04 (delete bundle if unsupported)
          CRC Type: 1
     */
     uint8_t UnknownBlk[] = {
-        0x86, 0x0f, 0x03, 0x04, 0x01, 0x43,
+        0x86, 0x0e, 0x03, 0x04, 0x01, 0x43,
         0x82, 0x0f, 0x03, 0x42, 0xb5, 0xee
     };
 
@@ -576,22 +618,23 @@ void Test_BPLib_CBOR_DecodeCanonical_UnknownKeep(void)
 
 void TestBplibCborDecodeInternal_Register(void)
 {
-    UtTest_Add(Test_BPLib_CBOR_DecodePrimary_InvalidCrc, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodePrimary_InvalidCrc");
-    UtTest_Add(Test_BPLib_CBOR_DecodePrimary_InvalidFlags, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodePrimary_InvalidFlags");
-    UtTest_Add(Test_BPLib_CBOR_DecodePrimary_CrcNone, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodePrimary_CrcNone");
-    UtTest_Add(Test_BPLib_CBOR_DecodePrimary_NoCanonBlks, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodePrimary_NoCanonBlks");
+    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_InvalidCrc);
+    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_InvalidFlags);
+    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_CrcNone);
+    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_NoCanonBlks);
     
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_InvalidCrc, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_InvalidCrc");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_BadBlockNum, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_BadBlockNum");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_BadCrcType, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_BadCrcType");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_AgeBlk, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_AgeBlk");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_InvBlkNum, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_InvBlkNum");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_PrevNodeBlk, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_PrevNodeBlk");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_HopCountBlk, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_HopCountBlk");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_LimitTooSmall, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_LimitTooSmall");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_PastLimit, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_PastLimit");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_UnknownDel, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_UnknownDel");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_UnknownDisc, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_UnknownDisc");
-    UtTest_Add(Test_BPLib_CBOR_DecodeCanonical_UnknownKeep, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_DecodeCanonical_UnknownKeep");
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_InvalidCrc);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_BadBlockNum);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_BadCrcType);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_AgeBlk);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_InvBlkNum);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_PrevNodeBlk);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_HopCountBlk);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_LimitTooSmall);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_PastLimit);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_CustodyBlk);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_UnknownDel);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_UnknownDisc);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_UnknownKeep);
 
 }
