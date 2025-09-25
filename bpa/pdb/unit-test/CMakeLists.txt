@@ -55,6 +55,7 @@ target_include_directories(coverage-bplib_pdb-testrunner PRIVATE
 target_link_libraries(coverage-bplib_pdb-testrunner PUBLIC
     ut_coverage_link
     ut_assert
+    bplib_eid_stubs
 )
 
 add_test(coverage-bplib_pdb-testrunner coverage-bplib_pdb-testrunner)
