@@ -231,20 +231,126 @@ void Test_BPLib_STOR_StoreBundle_Duplicates(void)
     BPLib_STOR_Test_FreeTestBundle(&Bundle);
 }
 
+void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime(void)
+{
+    /* 
+    ** BPLib_SQL_StoreMetadata() needs the SQL DB set up before its operations can
+    ** be carried out. This means going through the higher level function
+    ** BPLib_STOR_StoreBundle()
+    */
+
+    BPLib_Bundle_t Bundle;
+    uint64_t       CurrDtnTime;
+    int64_t        MonoTime;
+    BPLib_Status_t Status;
+
+    /* Initialize values needed for testing */
+    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    CurrDtnTime                             = Bundle.blocks.PrimaryBlock.Timestamp.CreateTime;
+    MonoTime                                = 0;
+    BplibInst.BundleStorage.InsertBatchSize = 1;
+    BplibInst.BundleStorage.InsertBatch[0]  = &Bundle;
+
+    /* Feed values to functions that will determine expiration time */
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, CurrDtnTime);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, CurrDtnTime);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, MonoTime);
+
+    /* Run the function under test */
+    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
+
+    /* Show that the function was run successfully */
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
+
+    /* Show that the correct branch was tested */
+    UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 2);
+    UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 1);
+
+    /* Free memory used for bundle */
+    BPLib_STOR_Test_FreeTestBundle(&Bundle);
+}
+
+void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime(void)
+{
+    /* 
+    ** BPLib_SQL_StoreMetadata() needs the SQL DB set up before its operations can
+    ** be carried out. This means going through the higher level function
+    ** BPLib_STOR_StoreBundle()
+    */
+   
+    BPLib_Bundle_t Bundle;
+    BPLib_Status_t Status;
+
+    /* Initialize values needed for testing */
+    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    BplibInst.BundleStorage.InsertBatchSize = 1;
+    BplibInst.BundleStorage.InsertBatch[0]  = &Bundle;
+
+    /* Feed values to functions that will determine expiration time */
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, 0);
+
+    /* Run the function under test */
+    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
+
+    /* Show that the function was run successfully */
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
+
+    /* Show that the correct branch was tested */
+    UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 1);
+    UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 0);
+
+    /* Free memory used for bundle */
+    BPLib_STOR_Test_FreeTestBundle(&Bundle);
+}
+
+void Test_BPLib_SQL_StoreMetadata_InvalidCreateTime(void)
+{
+    BPLib_Bundle_t Bundle;
+    BPLib_Status_t Status;
+
+    /* Initialize values needed for testing */
+    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    Bundle.blocks.PrimaryBlock.Timestamp.CreateTime = 0;
+    BplibInst.BundleStorage.InsertBatchSize         = 1;
+    BplibInst.BundleStorage.InsertBatch[0]          = &Bundle;
+    
+    /* Initialize the age block */
+    Bundle.blocks.ExtBlocks[0].Header.BlockType           = BPLib_BlockType_Age;
+    Bundle.blocks.ExtBlocks[0].BlockData.AgeBlockData.Age = 1000;
+
+    /* Run the function under test */
+    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
+
+    /* Show that the function was run successfully */
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
+
+    /* Show that the correct branch was tested */
+    UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 0);
+    UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 0);
+
+    /* Free memory used for bundle */
+    BPLib_STOR_Test_FreeTestBundle(&Bundle);
+}
+
 void TestBplib_STOR_Store_Register(void)
 {
-    /* Store Tests */
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_NullParams, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_NullParams");
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_Nominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPlib_STOR_StoreBundleNominal");
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_SQLFail, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_SQLFail");
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_StoreBatch, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_StoreBatch");
-#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
-    UtTest_Add(Test_BPLib_STOR_StoreBundle_Duplicates, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_StoreBundle_Duplicates");
-#endif
+    ADD_TEST(Test_BPLib_STOR_FlushPending_NullParams);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_NoBundles);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_Nominal);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_SQLFail);
 
-    /* FlushPending Tests */
-    UtTest_Add(Test_BPLib_STOR_FlushPending_NullParams, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_FlushPending_NullParams");
-    UtTest_Add(Test_BPLib_STOR_FlushPending_NoBundles, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_FlushPending_NoBundles");
-    UtTest_Add(Test_BPLib_STOR_FlushPending_Nominal, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_FlushPending_Nominal");
-    UtTest_Add(Test_BPLib_STOR_FlushPending_SQLFail, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, "Test_BPLib_STOR_FlushPending_SQLFail");
+    ADD_TEST(Test_BPLib_STOR_FlushPending_NullParams);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_NoBundles);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_Nominal);
+    ADD_TEST(Test_BPLib_STOR_FlushPending_SQLFail);
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_NullParams);
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_Nominal);
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_SQLFail);
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_StoreBatch);
+#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+    ADD_TEST(Test_BPLib_STOR_StoreBundle_Duplicates);
+#endif
+    ADD_TEST(Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime);
+    ADD_TEST(Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime);
+    ADD_TEST(Test_BPLib_SQL_StoreMetadata_InvalidCreateTime);
 }

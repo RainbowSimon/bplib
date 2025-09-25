@@ -61,7 +61,6 @@ BPLib_Status_t BPLib_NC_InitImpl(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
     /* Empty out and initialize the NC managed payloads */
     memset((void*) &BPLib_NC_SourceMibConfigPayload,     0, sizeof(BPLib_NC_SourceMibConfigPayload));
     memset((void*) &BPLib_NC_NodeMibConfigPayload,       0, sizeof(BPLib_NC_NodeMibConfigPayload));
-    memset((void*) &BPLib_NC_ChannelContactStatsPayload, 0, sizeof(BPLib_NC_ChannelContactStatsPayload));
 
     /* Initialize the configuration lock */
     Status = BPLib_NC_RWLock_Init(&BPLib_NC_CfgLock);
@@ -118,7 +117,10 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
                                 BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
                                 void* PoolMem, size_t PoolMemLen)
 {
+    BPLib_CLA_ContactRunState_t ContState;
     BPLib_Status_t Status;
+    uint32_t ChanId;
+    uint32_t ContId;
 
     /* Initialize FWP */
     Status = BPLib_FWP_Init((BPLib_FWP_ProxyCallbacks_t*) Callbacks);
@@ -182,6 +184,29 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
     if (Status != BPLIB_SUCCESS)
     { /* Failed initialization of MEM */
         return BPLIB_NC_MEM_INIT_ERR;
+    }
+
+    /* Force stop and remove any remaining applications */
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
+    {
+        if (BPLib_NC_GetAppState(ChanId) != BPLIB_NC_APP_STATE_REMOVED)
+        {
+            (void) BPLib_PI_StopApplication(ChanId);
+            (void) BPLib_PI_RemoveApplication(Instance, ChanId);
+            (void) BPLib_NC_SetAppState(ChanId, BPLIB_NC_APP_STATE_REMOVED);
+        }
+    }
+
+    /* Force stop and tear down any remaining contacts */
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
+    {
+        Status = BPLib_CLA_GetContactRunState(ContId, &ContState);
+        if (Status == BPLIB_SUCCESS && ContState != BPLIB_CLA_TORNDOWN)
+        {
+            (void) BPLib_CLA_ContactStop(ContId);
+            (void) BPLib_CLA_ContactTeardown(Instance, ContId);
+            (void) BPLib_CLA_SetContactRunState(ContId, BPLIB_CLA_TORNDOWN);
+        }
     }
 
     return Status;
@@ -318,11 +343,21 @@ BPLib_Status_t BPLib_NC_MIBConfigPSTblValidateFunc(void *TblData)
 
 void BPLib_NC_SetAppState(uint8_t ChanId, BPLib_NC_ApplicationState_t State)
 {
+    if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    {
+        return;
+    }
+
     BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].State = State;
 }
 
 BPLib_NC_ApplicationState_t BPLib_NC_GetAppState(uint8_t ChanId)
 {
+    if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    {
+        return BPLIB_NC_APP_STATE_REMOVED;
+    }
+
     return BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].State;
 }
 

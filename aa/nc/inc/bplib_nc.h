@@ -32,6 +32,7 @@
 #include "bplib_arp.h"
 #include "bplib_pdb.h"
 #include "bplib_stor.h"
+#include "bplib_nc_directives.h"
 
 /* ======== */
 /* Typedefs */

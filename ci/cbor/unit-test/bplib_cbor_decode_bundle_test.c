@@ -57,14 +57,14 @@ Canonical Block [2]:
          CRC Value: 0xf813
          Offset Into Encoded Bundle: 72
 Canonical Block [3]: 
-         Block Type: 15 (CREB or CTEB ?)
+         Block Type: 15 (CTEB)
          Block Number: 4
          Flags: 2
          CRC Type: 1
          CRC Value: 0x25c7
          Offset Into Encoded Bundle: 84
 Canonical Block [4]: 
-         Block Type: 16 (CREB or CTEB ?)
+         Block Type: 16 (CREB?)
          Block Number: 5
          Flags: 0
          CRC Type: 1
@@ -133,7 +133,6 @@ unsigned char bundle_primary_and_payload_with_aa_x_20[] = {
     0xaa, 0xaa, 0xaa, 0xaa, 0x42, 0xc6, 0x8f, 0xff,
 };
 
-
 void Test_BPLib_CBOR_DecodeBundle_NullInputErrors(void)
 {
     BPLib_Bundle_t bundle;
@@ -147,7 +146,6 @@ void Test_BPLib_CBOR_DecodeBundle_NullInputErrors(void)
     /* CandBundle null and bundle valid */
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeBundle(NULL, 0, &bundle), BPLIB_NULL_PTR_ERROR);
 }
-
 
 void Test_BPLib_CBOR_DecodeBundle_LengthError(void)
 {
@@ -172,8 +170,6 @@ void Test_BPLib_CBOR_DecodeBundle_DecodeError(void)
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_CBOR_DEC_PRIM_SRC_EID_DEC_ERR);
 
 }
-
-
 
 void Test_BPLib_CBOR_DecodeBundle_PrimaryAndPayload(void)
 {
@@ -224,8 +220,6 @@ void Test_BPLib_CBOR_DecodeBundle_PrimaryAndPayload(void)
     UtAssert_EQ(uint64_t, bundle.blocks.PayloadHeader.BlockProcFlags, 0);
     UtAssert_EQ(uint64_t, bundle.blocks.PayloadHeader.CrcType, (uint64_t) BPLib_CRC_Type_CRC16);
 }
-
-
 
 void Test_BPLib_CBOR_DecodeBundle_MaxCanonicalBlockError(void)
 {
@@ -550,7 +544,6 @@ void Test_BPLib_CBOR_VerifyBundleProcFlags_InvalidFlags(void)
 
     UtAssert_EQ(BPLib_Status_t, BPLib_CBOR_VerifyBundleProcFlags(BundleProcFlags), BPLIB_CBOR_DEC_PRIM_WRONG_FLAG_ERR);
 }
-
 
 void TestBplibCborDecode_Register(void)
 {

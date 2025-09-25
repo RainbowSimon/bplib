@@ -18,24 +18,22 @@
  *
  */
 
-/*
-** Include
-*/
+/* ======== */
+/* Includes */
+/* ======== */
 
 #include "bplib_cbor_test_utils.h"
 #include "bplib_nc.h"
 
-
-/*
-** Global Data
-*/
+/* =========== */
+/* Global Data */
+/* =========== */
 
 BPLib_NC_MibPerNodeConfig_t TestMibConfigPnTbl;
 
-
-/*
-** Function Definitions
-*/
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
 
 void BPLib_CBOR_Test_Setup(void)
 {
