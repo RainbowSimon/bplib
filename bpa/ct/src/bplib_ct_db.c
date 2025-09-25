@@ -36,7 +36,7 @@
 
 BPLib_Status_t BPLib_CT_InitCtdb(BPLib_CT_Database_t *Ctdb)
 {
-    memset(&(Ctdb), 0, sizeof(BPLib_CT_Database_t));
+    memset(Ctdb, 0, sizeof(BPLib_CT_Database_t));
 
     return BPLIB_SUCCESS;
 }
