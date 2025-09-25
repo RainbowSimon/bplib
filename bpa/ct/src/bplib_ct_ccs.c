@@ -136,7 +136,7 @@ size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Database_t *Ctdb, BPLib_EID_t *SourceAdmin
     }
     
     /* Found an in progress raw CCS with a matching EID */
-    if (RawCcsIdx != BPLIB_CT_MAX_RAW_CCS)
+    if (RawCcsIdx < BPLIB_CT_MAX_RAW_CCS)
     {
         RetCcsIdx = RawCcsIdx; 
     }
@@ -144,7 +144,7 @@ size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Database_t *Ctdb, BPLib_EID_t *SourceAdmin
     else if (FirstUnusedCcs != BPLIB_CT_MAX_RAW_CCS)
     {
         Ctdb->RawCcss[FirstUnusedCcs].InProgress = true;
-        BPLib_EID_CopyEids(SourceAdminEID, Ctdb->RawCcss[RawCcsIdx].SourceAdminEid);
+        BPLib_EID_CopyEids(SourceAdminEID, Ctdb->RawCcss[FirstUnusedCcs].SourceAdminEid);
         
         RetCcsIdx = FirstUnusedCcs;
     }
