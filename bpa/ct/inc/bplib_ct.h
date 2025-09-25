@@ -59,7 +59,7 @@ typedef enum
 typedef enum
 {
     BPLib_CT_CustodyAccepted_Idx = 0,
-    BPLib_CT_CustodyRefused_Idx = -1
+    BPLib_CT_CustodyRefused_Idx = 1
 } BPLib_CT_SeqCollectionIdx_t;
 
 typedef struct
