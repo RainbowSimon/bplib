@@ -33,18 +33,28 @@
 ** Macro Definitions
 */
 
-#define BPLIB_CT_DB_MAX_SEQUENCE_IDS (10u)
+
+
+/*
+** Type Definitions 
+*/
+
+
 
 /*
 ** Exported Functions
 */
 
-BPLib_Status_t BPLib_CT_InitCtdb(BPLib_CT_PendingTransfers_t *CtPending);
+BPLib_Status_t BPLib_CT_InitCtdb(BPLib_CT_Database_t *Ctdb);
 
-BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqId, 
-                                                    uint64_t SeqNum, uint32_t *BundeId);
+BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqNum, 
+                                                    uint64_t SeqId, uint32_t BundleId);
 
-BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, uint64_t SeqId, 
-                                                    uint64_t SeqNum, uint32_t *BundeId);
+BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, uint64_t SeqNum, 
+                                                    uint64_t SeqId, uint32_t *BundleId);
+
+BPLib_Status_t BPLib_CT_GetSequenceId(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle, uint64_t *SeqId);
+
+uint64_t BPLib_CT_GetNextSequenceNum(BPLib_Instance_t *Inst, uint64_t SeqId);
 
 #endif /* BPLIB_CT_DB_H */

@@ -44,6 +44,8 @@
 #define BPLIB_CT_MAX_SEQ_COLLECTIONS                (2u)
 #define BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS          (10u)
 
+#define BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS                (BPLIB_MAX_NUM_CONTACTS * 3)
+
 /*
 ** Type Definitions
 */
@@ -91,10 +93,20 @@ typedef struct
 } BPLib_CT_PendingTransfers_t;
 
 
+typedef struct
+{
+    uint64_t Counter;
+    uint64_t SeqId;
+    uint32_t ContactId;
+    bool     Active;
+} BPLib_SeqCounter_t;
+
 typedef struct 
 {
     BPLib_CT_RawCcs_t RawCcss[BPLIB_CT_MAX_RAW_CCS];
     BPLib_CT_PendingTransfers_t CtPending;
+    BPLib_SeqCounter_t  SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];
+    uint32_t CurrSeqCounterIdx;
 } BPLib_CT_Database_t;
 
 
@@ -125,7 +137,7 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle);
 
 BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle);
 
-BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Bundle_t *Bundle);
+BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle);
 
 BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_DeserializedCcs_t *Ccs);
 

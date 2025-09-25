@@ -46,7 +46,7 @@ BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
     }
 
     /* Reset the pending custody transfer data */
-    return BPLib_CT_InitCtdb(&(Inst->Ctdb.CtPending));
+    return BPLib_CT_InitCtdb(&(Inst->Ctdb));
 }
 
 BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
@@ -82,10 +82,12 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
 BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle)
 {
     BPLib_Status_t Status = BPLIB_SUCCESS;
-    // size_t RawCcsIdx;
+    size_t RawCcsIdx;
     bool   DeleteBundle = false;
+    uint8_t ExtBlockIdx;
+    BPLib_CustodyBlockData_t *CtebPtr;
 
-    if (Bundle == NULL)
+    if (Bundle == NULL || Inst == NULL)
     {
         return BPLIB_NULL_PTR_ERROR;
     }
@@ -93,16 +95,29 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Set bundle ID for both custodial and non-custodial bundles */
     (void) BPLib_CT_SetBundleId(Bundle);
 
-    /* if (Bundle->Meta.IsCustodial) */
+    for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_CANONICAL_BLOCKS; ExtBlockIdx++)
     {
-        // RawCcsIdx = BPLib_CT_GetRawCcsIdx(&(Inst->Ctdb), &(Bundle->blocks.Cteb.BlkAdminEid));
+        if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
+        {
+            break;
+        }
+    }
+
+    /* A CTEB was detected, do custody operations */
+    if (ExtBlockIdx < BPLIB_MAX_NUM_CANONICAL_BLOCKS)
+    {
+        Bundle->Meta.IsCustodial = true;
         
+        CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
+
+        RawCcsIdx = BPLib_CT_GetRawCcsIdx(&(Inst->Ctdb), &(CtebPtr->BlockSrcAdminEID));
+
         /* Check if we can accept custody of this bundle */
         if (BPLib_PDB_AcceptCustody(Bundle) == BPLIB_SUCCESS)
-        {
+        {            
             /* Add to custody accepted raw CCS */
-            // Status = BPLib_CT_AddToRawCcs(Inst->Ctdb.RawCcss[RawCcsIdx], Bundle->blocks.Cteb.SequenceNum, 
-            //                     Bundle->blocks.Cteb.SequenceId, BPLib_CT_CustodyAccepted);
+            Status = BPLib_CT_AddToRawCcs(&(Inst->Ctdb.RawCcss[RawCcsIdx]), CtebPtr->BundleSeqNum, 
+                                CtebPtr->BundleSeqId, BPLib_CT_CustodyAccepted);
             if (Status != BPLIB_SUCCESS)
             {
                 DeleteBundle = true;
@@ -110,20 +125,14 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
             else
             {
                 /* Check size trigger of this CCS TODO */
-
-                /* Add bundle to CTDB */
-                // Status = BPLib_CT_AddToCtdb(Inst, Bundle->Cteb.SeqId, Bundle->Cteb.SeqNum, 
-                //                                         Bundle->blocks.PrimaryBlock.BundeId)
-
             }
         }
         else
         {
             /* Add to custody rejected raw CCS and mark bundle for deletion */
             DeleteBundle = true;
-            // Status =  BPLib_CT_AddToRawCcs(Inst->Ctdb.RawCcss[RawCcsIdx], Bundle->blocks.Cteb.SequenceNum, 
-            //                     Bundle->blocks.Cteb.SequenceId, BPLib_CT_CustodyRefused);
-            
+            Status = BPLib_CT_AddToRawCcs(&(Inst->Ctdb.RawCcss[RawCcsIdx]), CtebPtr->BundleSeqNum, 
+                                CtebPtr->BundleSeqId, BPLib_CT_CustodyRefused);            
         }
     }
 
@@ -138,22 +147,40 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     return Status;
 }
 
-BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Bundle_t *Bundle)
+BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle)
 {
     BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_CustodyBlockData_t *CtebPtr;
+    uint8_t ExtBlockIdx;
+    uint64_t SeqId;
 
-    /* if (Bundle->Meta.IsCustodial) */
+    for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_CANONICAL_BLOCKS; ExtBlockIdx++)
     {
+        if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
+        {
+            break;
+        }
+    }
+
+    /* A CTEB was detected, do custody operations */
+    if (ExtBlockIdx < BPLIB_MAX_NUM_CANONICAL_BLOCKS)
+    {
+        CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
+
         /* Update CTEB fields */
 
-        /*
-        Bundle->blocks.Cteb.SequenceId  = BPLib_CT_GetSequenceId(Bundle);
-        Bundle->blocks.Cteb.SequenceNum = BPLib_CT_GetNextSequenceNum(Bundle->blocks.Cteb.SequenceId);
-        BPLib_EID_CopyEids(&(Bundle->blocks.Cteb.BlkAdminEid), &BPLIB_EID_INSTANCE);
-        Bundle->blocks.Cteb.RequiresEncode = true;
+        Status = BPLib_CT_GetSequenceId(Inst, Bundle, &SeqId);
 
-        BPLib_CT_AddToCtdb();
-        */
+        if (Status == BPLIB_SUCCESS)
+        {
+            CtebPtr->BundleSeqId = SeqId;
+            CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(Inst, SeqId);
+            BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
+            Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
+
+            Status = BPLib_CT_AddToCtdb(Inst, CtebPtr->BundleSeqNum, 
+                            CtebPtr->BundleSeqId, Bundle->blocks.PrimaryBlock.BundleId);
+        }
     }
 
     /* Do nothing for non-custodial bundles */
@@ -232,3 +259,49 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
     return Status;
 }
 
+uint32_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t ContactId, uint64_t *SeqId)
+{
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    if (ContactId >= BPLIB_MAX_NUM_CONTACTS)
+    {
+        return BPLIB_INVALID_CONT_ID_ERR;
+    }
+
+    *SeqId = Inst->Ctdb.SeqCounters[Inst->Ctdb.CurrSeqCounterIdx].SeqId + 1;
+
+    Inst->Ctdb.CurrSeqCounterIdx++;
+
+    if (Inst->Ctdb.CurrSeqCounterIdx >= BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS)
+    {
+        Inst->Ctdb.CurrSeqCounterIdx = 0;
+    }
+
+    Inst->Ctdb.SeqCounters[Inst->Ctdb.CurrSeqCounterIdx].Counter = 0;
+    Inst->Ctdb.SeqCounters[Inst->Ctdb.CurrSeqCounterIdx].ContactId = ContactId;
+    Inst->Ctdb.SeqCounters[Inst->Ctdb.CurrSeqCounterIdx].SeqId = *SeqId;
+    Inst->Ctdb.SeqCounters[Inst->Ctdb.CurrSeqCounterIdx].Active = true;
+
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_CT_UnassignSeqCounter(BPLib_Instance_t *Inst, uint64_t SeqId)
+{
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    if (Inst->Ctdb.CurrSeqCounterIdx < SeqId)
+    {
+        // TODO get better error
+        return BPLIB_ERROR;
+    }
+
+    Inst->Ctdb.SeqCounters[SeqId % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS].Active = false;
+
+    return BPLIB_SUCCESS;
+}

@@ -148,7 +148,7 @@ size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Database_t *Ctdb, BPLib_EID_t *SourceAdmin
         
         RetCcsIdx = FirstUnusedCcs;
     }
-    /* No CCSs were avaiable, send the largest one and wipe it to use */
+    /* No CCSs were available, send the largest one and wipe it to use */
     else
     {
         BPLib_CT_BuildAndSendRawCcs(&(Ctdb->RawCcss[LargestCcsIdx]));
@@ -161,7 +161,7 @@ size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Database_t *Ctdb, BPLib_EID_t *SourceAdmin
 
 void BPLib_CT_BuildAndSendRawCcs(BPLib_CT_RawCcs_t *RawCcs)
 {
-    /* Have ARP build CCS and send it */
+    /* Have ARP build CCS and send it TODO */
 
     BPLib_CT_ResetRawCcs(RawCcs);
 

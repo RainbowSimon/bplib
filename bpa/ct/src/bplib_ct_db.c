@@ -27,27 +27,53 @@
 #include "bplib_bblocks.h"
 #include "bplib_eid.h"
 #include "bplib_mem.h"
+#include "bplib_qm.h"
 #include "bplib_pdb.h"
 
 /*
 ** Function Definitions
 */
 
-BPLib_Status_t BPLib_CT_InitCtdb(BPLib_CT_PendingTransfers_t *CtPending)
+BPLib_Status_t BPLib_CT_InitCtdb(BPLib_CT_Database_t *Ctdb)
 {
+    memset(&(Ctdb), 0, sizeof(BPLib_CT_Database_t));
+
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqId, 
-                                                    uint64_t SeqNum, uint32_t *BundeId)
+BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqNum, 
+                                                    uint64_t SeqId, uint32_t BundleId)
 {
     /* Add bundle info to CTDB */
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, uint64_t SeqId, 
-                                                    uint64_t SeqNum, uint32_t *BundeId)
+BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, uint64_t SeqNum, 
+                                                    uint64_t SeqId, uint32_t *BundleId)
 {
     /* Remove bundle info from CTDB */
     return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_CT_GetSequenceId(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle, uint64_t *SeqId)
+{
+    uint32_t CurrSeqId;
+
+    for (CurrSeqId = 0; CurrSeqId < BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS; CurrSeqId++)
+    {
+        if (Inst->Ctdb.SeqCounters[CurrSeqId].ContactId == Bundle->Meta.EgressID &&
+            Inst->Ctdb.SeqCounters[CurrSeqId].Active == true)
+        {
+            *SeqId = CurrSeqId;
+
+            return BPLIB_SUCCESS;
+        }
+    }
+
+    return BPLIB_ERROR; /* TODO better error */
+}
+
+uint64_t BPLib_CT_GetNextSequenceNum(BPLib_Instance_t *Inst, uint64_t SeqId)
+{
+    return Inst->Ctdb.SeqCounters[SeqId % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS].Counter++;
 }
