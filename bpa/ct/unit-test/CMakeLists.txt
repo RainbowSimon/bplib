@@ -21,6 +21,8 @@ target_link_libraries(bplib_ct_stubs PUBLIC ut_assert)
 # Create unit test object
 add_library(utobj_bplib_ct OBJECT
     ../src/bplib_ct.c
+    ../src/bplib_ct_ccs.c
+    ../src/bplib_ct_db.c    
 )
 
 target_compile_definitions(utobj_bplib_ct PRIVATE
@@ -56,6 +58,10 @@ target_link_libraries(coverage-bplib_ct-testrunner PUBLIC
     ut_coverage_link
     ut_assert
     bplib_crc_stubs
+    bplib_em_stubs
+    bplib_eid_stubs
+    bplib_mem_stubs
+    bplib_pdb_stubs
 )
 
 add_test(coverage-bplib_ct-testrunner coverage-bplib_ct-testrunner)
