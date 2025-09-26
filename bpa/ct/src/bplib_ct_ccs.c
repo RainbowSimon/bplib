@@ -105,7 +105,7 @@ BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t Sequence
     return BPLIB_SUCCESS;
 }
 
-size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Database_t *Ctdb, BPLib_EID_t *SourceAdminEID)
+size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID)
 {
     size_t RawCcsIdx;
     size_t FirstUnusedCcs = BPLIB_CT_MAX_RAW_CCS;
@@ -116,21 +116,21 @@ size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Database_t *Ctdb, BPLib_EID_t *SourceAdmin
     for (RawCcsIdx = 0; RawCcsIdx < BPLIB_CT_MAX_RAW_CCS; RawCcsIdx++)
     {
         /* See if there's already an in progress CCS with the right EID */
-        if (BPLib_EID_IsMatch(&(Ctdb->RawCcss[RawCcsIdx].SourceAdminEid), SourceAdminEID) &&
-            Ctdb->RawCcss[RawCcsIdx].InProgress == true)
+        if (BPLib_EID_IsMatch(&(Context->RawCcss[RawCcsIdx].SourceAdminEid), SourceAdminEID) &&
+            Context->RawCcss[RawCcsIdx].InProgress == true)
         {
             break;
         }
         /* Find the first unused CCS */
         else if (FirstUnusedCcs == BPLIB_CT_MAX_RAW_CCS && 
-                 Ctdb->RawCcss[RawCcsIdx].InProgress == false) 
+                 Context->RawCcss[RawCcsIdx].InProgress == false) 
         {
             FirstUnusedCcs = RawCcsIdx;
         }
         /* Find the largest CCS */
-        else if (MaxCcsSize < Ctdb->RawCcss[RawCcsIdx].Size)
+        else if (MaxCcsSize < Context->RawCcss[RawCcsIdx].Size)
         {
-            MaxCcsSize = Ctdb->RawCcss[RawCcsIdx].Size;
+            MaxCcsSize = Context->RawCcss[RawCcsIdx].Size;
             LargestCcsIdx = RawCcsIdx;
         }
     }
@@ -143,15 +143,15 @@ size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Database_t *Ctdb, BPLib_EID_t *SourceAdmin
     /* Found an unused CCS */
     else if (FirstUnusedCcs != BPLIB_CT_MAX_RAW_CCS)
     {
-        Ctdb->RawCcss[FirstUnusedCcs].InProgress = true;
-        BPLib_EID_CopyEids(SourceAdminEID, Ctdb->RawCcss[FirstUnusedCcs].SourceAdminEid);
+        Context->RawCcss[FirstUnusedCcs].InProgress = true;
+        BPLib_EID_CopyEids(SourceAdminEID, Context->RawCcss[FirstUnusedCcs].SourceAdminEid);
         
         RetCcsIdx = FirstUnusedCcs;
     }
     /* No CCSs were available, send the largest one and wipe it to use */
     else
     {
-        BPLib_CT_BuildAndSendRawCcs(&(Ctdb->RawCcss[LargestCcsIdx]));
+        BPLib_CT_BuildAndSendRawCcs(&(Context->RawCcss[LargestCcsIdx]));
         
         RetCcsIdx = LargestCcsIdx;
     }

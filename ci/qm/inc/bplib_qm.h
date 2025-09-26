@@ -67,8 +67,8 @@ struct BPLib_Instance
     /* Bundle Storage */
     BPLib_BundleCache_t BundleStorage;
 
-    /* Custody transfer database */
-    BPLib_CT_Database_t Ctdb;
+    /* Custody transfer context */
+    BPLib_CT_Context_t Ct;
 };
 
 /**

@@ -27,7 +27,7 @@
 
 #include "bplib_api_types.h"
 #include "bplib_mem.h"
-
+#include "bplib_rbt.h"
 
 /*
 ** Macros
@@ -44,7 +44,9 @@
 #define BPLIB_CT_MAX_SEQ_COLLECTIONS                (2u)
 #define BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS          (10u)
 
-#define BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS                (BPLIB_MAX_NUM_CONTACTS * 3)
+#define BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS           (BPLIB_MAX_NUM_CONTACTS * 3)
+
+#define BPLIB_CT_DB_MAX_ENTRIES                     (100u)
 
 /*
 ** Type Definitions
@@ -87,11 +89,14 @@ typedef struct
     size_t                         NumBundleSeqCollections;
 } BPLib_CT_DeserializedCcs_t;
 
-typedef struct 
+typedef struct
 {
-    uint32_t Temp;
-} BPLib_CT_PendingTransfers_t;
-
+    BPLib_RBT_Link_t RbtLink;
+    uint64_t SeqId;
+    uint64_t SeqNum;
+    uint32_t BundleId;
+    bool     Free;
+} BPLib_CT_DbEntry_t;
 
 typedef struct
 {
@@ -104,10 +109,14 @@ typedef struct
 typedef struct 
 {
     BPLib_CT_RawCcs_t RawCcss[BPLIB_CT_MAX_RAW_CCS];
-    BPLib_CT_PendingTransfers_t CtPending;
-    BPLib_SeqCounter_t  SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];
+    BPLib_SeqCounter_t SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];
     uint32_t CurrSeqCounterIdx;
-} BPLib_CT_Database_t;
+    BPLib_CT_DbEntry_t Ctdb[BPLIB_CT_DB_MAX_ENTRIES];
+    size_t CurrDbSize;
+    size_t LastDbEntry;
+    BPLib_RBT_Root_t CtdbRoot;
+
+} BPLib_CT_Context_t;
 
 
 /*
