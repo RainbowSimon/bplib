@@ -28,6 +28,7 @@
 #include "bplib_fwp.h"
 #include "bplib_nc.h"
 #include "bplib_stor.h"
+#include "bplib_ct.h"
 
 /* =========== */
 /* Global Data */
@@ -236,7 +237,7 @@ BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
     return Status;
 }
 
-BPLib_Status_t BPLib_CLA_ContactStart(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     BPLib_Status_t              Status;
     BPLib_CLA_ContactRunState_t RunState;
@@ -249,6 +250,7 @@ BPLib_Status_t BPLib_CLA_ContactStart(uint32_t ContactId)
             Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactStart(ContactId);
             if (Status == BPLIB_SUCCESS)
             {
+                (void) BPLib_CT_AssignSeqCounter(Inst, ContactId);
                 (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STARTED); /* Ignore return since pre-call run state is valid */
             }
         }

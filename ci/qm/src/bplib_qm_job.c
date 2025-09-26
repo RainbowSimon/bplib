@@ -56,6 +56,16 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
 
 static BPLib_QM_JobState_t ContactOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
+    BPLib_Status_t Status;
+
+    Status = BPLib_CT_UpdateBundle(Inst, Bundle);
+
+    if (Status != BPLIB_SUCCESS)
+    {
+        BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+        return NO_NEXT_STATE;
+    }
+
     return CONTACT_OUT_CT_TO_EBP;
 }
 

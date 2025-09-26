@@ -101,21 +101,20 @@ typedef struct
 typedef struct
 {
     uint64_t Counter;
-    uint64_t SeqId;
-    uint32_t ContactId;
-    bool     Active;
 } BPLib_SeqCounter_t;
 
 typedef struct 
 {
     BPLib_CT_OpenCcs_t OpenCcss[BPLIB_CT_MAX_RAW_CCS];
-    BPLib_SeqCounter_t SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];
-    uint32_t CurrSeqCounterIdx;
+
+    uint64_t SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];
+    uint64_t CurrActiveSeqIds[BPLIB_MAX_NUM_CONTACTS];
+    uint64_t LastSeqCounterId;
+
     BPLib_CT_DbEntry_t Ctdb[BPLIB_CT_DB_MAX_ENTRIES];
     size_t CurrDbSize;
     size_t LastDbEntry;
     BPLib_RBT_Root_t CtdbRoot;
-
 } BPLib_CT_Context_t;
 
 
@@ -149,5 +148,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
 BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle);
 
 BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_DeserializedCcs_t *Ccs);
+
+BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t ContactId);
 
 #endif /* BPLIB_CT_H */

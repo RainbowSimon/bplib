@@ -81,7 +81,7 @@ BPLib_Status_t BPLib_CT_GetEntryFromCtdb(BPLib_CT_Context_t *Context, uint64_t S
 
 BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_CT_Context_t *Context, BPLib_CT_DbEntry_t *DbEntry);
 
-BPLib_Status_t BPLib_CT_GetSequenceId(BPLib_CT_Context_t *Context, BPLib_Bundle_t *Bundle, uint64_t *SeqId);
+uint64_t BPLib_CT_GetSequenceId(BPLib_CT_Context_t *Context, BPLib_Bundle_t *Bundle);
 
 uint64_t BPLib_CT_GetNextSequenceNum(BPLib_CT_Context_t *Context, uint64_t SeqId);
 

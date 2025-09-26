@@ -327,10 +327,11 @@ void BPLib_NC_ContactSetup(const BPLib_ContactSetup_Payload_t Payload);
   * \brief     Start transferring bundles between underlying network and BI
   * \details   Node Configuration Contact Start command
   * \note      This command is currently unimplemented and only returns BPLIB_SUCCESS
+  * \param[in] Inst Pointer to bplib instance
   * \param[in] Payload BPLib_ContactStart_Payload_t type found in bplib_nc_payloads.h
   * \return    void
   */
-void BPLib_NC_ContactStart(const BPLib_ContactStart_Payload_t Payload);
+void BPLib_NC_ContactStart(BPLib_Instance_t *Inst, const BPLib_ContactStart_Payload_t Payload);
 
 /**
   * \brief     Stop transferring bundles, stop requesting BI for output queue bundles, and notify BI of incomplete actions

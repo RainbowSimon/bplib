@@ -133,25 +133,12 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_CT_Context_t *Context, BPLib_CT_DbE
     return Status;
 }
 
-BPLib_Status_t BPLib_CT_GetSequenceId(BPLib_CT_Context_t *Context, BPLib_Bundle_t *Bundle, uint64_t *SeqId)
+uint64_t BPLib_CT_GetSequenceId(BPLib_CT_Context_t *Context, BPLib_Bundle_t *Bundle)
 {
-    uint32_t CurrSeqId;
-
-    for (CurrSeqId = 0; CurrSeqId < BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS; CurrSeqId++)
-    {
-        if (Context->SeqCounters[CurrSeqId].ContactId == Bundle->Meta.EgressID &&
-            Context->SeqCounters[CurrSeqId].Active == true)
-        {
-            *SeqId = CurrSeqId;
-
-            return BPLIB_SUCCESS;
-        }
-    }
-
-    return BPLIB_ERROR; /* TODO better error */
+    return Context->CurrActiveSeqIds[Bundle->Meta.EgressID];
 }
 
 uint64_t BPLib_CT_GetNextSequenceNum(BPLib_CT_Context_t *Context, uint64_t SeqId)
 {
-    return Context->SeqCounters[SeqId % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS].Counter++;
+    return Context->SeqCounters[SeqId % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS]++;
 }

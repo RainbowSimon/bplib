@@ -147,6 +147,11 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
     uint8_t ExtBlockIdx;
     uint64_t SeqId;
 
+    if (Inst == NULL || Bundle == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
     for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_CANONICAL_BLOCKS; ExtBlockIdx++)
     {
         if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
@@ -161,11 +166,9 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 
         /* Update CTEB fields */
-
-        Status = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle, &SeqId);
-
-        if (Status == BPLIB_SUCCESS)
+        if (Bundle->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
         {
+            SeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle);
             CtebPtr->BundleSeqId = SeqId;
             CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), SeqId);
             BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
@@ -173,6 +176,10 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
 
             Status = BPLib_CT_AddToCtdb(&(Inst->Ct), CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum, 
                                         Bundle->blocks.PrimaryBlock.BundleId);
+        }
+        else
+        {
+            /* TODO uhhh */
         }
     }
 
@@ -262,7 +269,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
     return Status;
 }
 
-uint32_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t ContactId, uint64_t *SeqId)
+BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     if (Inst == NULL)
     {
@@ -274,37 +281,9 @@ uint32_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t ContactId, u
         return BPLIB_INVALID_CONT_ID_ERR;
     }
 
-    *SeqId = Inst->Ct.SeqCounters[Inst->Ct.CurrSeqCounterIdx].SeqId + 1;
-
-    Inst->Ct.CurrSeqCounterIdx++;
-
-    if (Inst->Ct.CurrSeqCounterIdx >= BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS)
-    {
-        Inst->Ct.CurrSeqCounterIdx = 0;
-    }
-
-    Inst->Ct.SeqCounters[Inst->Ct.CurrSeqCounterIdx].Counter = 0;
-    Inst->Ct.SeqCounters[Inst->Ct.CurrSeqCounterIdx].ContactId = ContactId;
-    Inst->Ct.SeqCounters[Inst->Ct.CurrSeqCounterIdx].SeqId = *SeqId;
-    Inst->Ct.SeqCounters[Inst->Ct.CurrSeqCounterIdx].Active = true;
-
-    return BPLIB_SUCCESS;
-}
-
-BPLib_Status_t BPLib_CT_UnassignSeqCounter(BPLib_Instance_t *Inst, uint64_t SeqId)
-{
-    if (Inst == NULL)
-    {
-        return BPLIB_NULL_PTR_ERROR;
-    }
-
-    if (Inst->Ct.CurrSeqCounterIdx < SeqId)
-    {
-        // TODO get better error
-        return BPLIB_ERROR;
-    }
-
-    Inst->Ct.SeqCounters[SeqId % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS].Active = false;
+    Inst->Ct.LastSeqCounterId++;
+    Inst->Ct.SeqCounters[Inst->Ct.LastSeqCounterId % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS] = 0;
+    Inst->Ct.CurrActiveSeqIds[ContactId] = Inst->Ct.LastSeqCounterId;
 
     return BPLIB_SUCCESS;
 }
