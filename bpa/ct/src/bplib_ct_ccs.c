@@ -33,33 +33,33 @@
 ** Function Definitions
 */
 
-void BPLib_CT_ResetRawCcs(BPLib_CT_RawCcs_t *RawCcs)
+void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
 {
     uint8_t i;
 
     for (i = 0; i < BPLIB_CT_MAX_SEQ_COLLECTIONS; i++)
     {
-        RawCcs->BundleSeqCollections[i].SeqRangeLen = 0;
+        OpenCcs->BundleSeqCollections[i].SeqRangeLen = 0;
     }
 
-    RawCcs->InProgress = false;
-    RawCcs->Size = 0;
+    OpenCcs->InProgress = false;
+    OpenCcs->Size = 0;
 
     return;
 }
 
-BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t SequenceNum, 
+BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t SequenceNum, 
                           uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode)
 {
     BPLib_CT_BundleSeqCollection_t *Collection;
 
     if (DispositionCode == BPLib_CT_CustodyAccepted)
     {
-        Collection = &(RawCcs->BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx]);
+        Collection = &(OpenCcs->BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx]);
     }
     else
     {
-        Collection = &(RawCcs->BundleSeqCollections[BPLib_CT_CustodyRefused_Idx]);
+        Collection = &(OpenCcs->BundleSeqCollections[BPLib_CT_CustodyRefused_Idx]);
     }
 
     /* Sanity checks */
@@ -70,7 +70,7 @@ BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t Sequence
         return BPLIB_ERROR;
     }
 
-    /* If RawCcs is empty, add first sequence number */
+    /* If OpenCcs is empty, add first sequence number */
     if (Collection->SeqRangeLen == 0)
     {
         Collection->SeqId = SequenceId;
@@ -79,7 +79,7 @@ BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t Sequence
         Collection->SeqRangeLen = 1;
 
         /* Update full CCS size accordingly */
-        RawCcs->Size += 1;
+        OpenCcs->Size += 1;
     }
     else
     {
@@ -96,7 +96,7 @@ BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t Sequence
             Collection->SeqRangeLen += 2;
 
             /* Update full CCS size accordingly */
-            RawCcs->Size += 2;
+            OpenCcs->Size += 2;
         }
     }
 
@@ -105,53 +105,53 @@ BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t Sequence
     return BPLIB_SUCCESS;
 }
 
-size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID)
+size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID)
 {
-    size_t RawCcsIdx;
+    size_t OpenCcsIdx;
     size_t FirstUnusedCcs = BPLIB_CT_MAX_RAW_CCS;
     size_t MaxCcsSize = 0;
     size_t LargestCcsIdx = BPLIB_CT_MAX_RAW_CCS;
     size_t RetCcsIdx;
 
-    for (RawCcsIdx = 0; RawCcsIdx < BPLIB_CT_MAX_RAW_CCS; RawCcsIdx++)
+    for (OpenCcsIdx = 0; OpenCcsIdx < BPLIB_CT_MAX_RAW_CCS; OpenCcsIdx++)
     {
         /* See if there's already an in progress CCS with the right EID */
-        if (BPLib_EID_IsMatch(&(Context->RawCcss[RawCcsIdx].SourceAdminEid), SourceAdminEID) &&
-            Context->RawCcss[RawCcsIdx].InProgress == true)
+        if (BPLib_EID_IsMatch(&(Context->OpenCcss[OpenCcsIdx].SourceAdminEid), SourceAdminEID) &&
+            Context->OpenCcss[OpenCcsIdx].InProgress == true)
         {
             break;
         }
         /* Find the first unused CCS */
         else if (FirstUnusedCcs == BPLIB_CT_MAX_RAW_CCS && 
-                 Context->RawCcss[RawCcsIdx].InProgress == false) 
+                 Context->OpenCcss[OpenCcsIdx].InProgress == false) 
         {
-            FirstUnusedCcs = RawCcsIdx;
+            FirstUnusedCcs = OpenCcsIdx;
         }
         /* Find the largest CCS */
-        else if (MaxCcsSize < Context->RawCcss[RawCcsIdx].Size)
+        else if (MaxCcsSize < Context->OpenCcss[OpenCcsIdx].Size)
         {
-            MaxCcsSize = Context->RawCcss[RawCcsIdx].Size;
-            LargestCcsIdx = RawCcsIdx;
+            MaxCcsSize = Context->OpenCcss[OpenCcsIdx].Size;
+            LargestCcsIdx = OpenCcsIdx;
         }
     }
     
     /* Found an in progress raw CCS with a matching EID */
-    if (RawCcsIdx < BPLIB_CT_MAX_RAW_CCS)
+    if (OpenCcsIdx < BPLIB_CT_MAX_RAW_CCS)
     {
-        RetCcsIdx = RawCcsIdx; 
+        RetCcsIdx = OpenCcsIdx; 
     }
     /* Found an unused CCS */
     else if (FirstUnusedCcs != BPLIB_CT_MAX_RAW_CCS)
     {
-        Context->RawCcss[FirstUnusedCcs].InProgress = true;
-        BPLib_EID_CopyEids(SourceAdminEID, Context->RawCcss[FirstUnusedCcs].SourceAdminEid);
+        Context->OpenCcss[FirstUnusedCcs].InProgress = true;
+        BPLib_EID_CopyEids(SourceAdminEID, Context->OpenCcss[FirstUnusedCcs].SourceAdminEid);
         
         RetCcsIdx = FirstUnusedCcs;
     }
     /* No CCSs were available, send the largest one and wipe it to use */
     else
     {
-        BPLib_CT_BuildAndSendRawCcs(&(Context->RawCcss[LargestCcsIdx]));
+        BPLib_CT_BuildAndSendOpenCcs(&(Context->OpenCcss[LargestCcsIdx]));
         
         RetCcsIdx = LargestCcsIdx;
     }
@@ -159,11 +159,11 @@ size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdm
     return RetCcsIdx;
 }
 
-void BPLib_CT_BuildAndSendRawCcs(BPLib_CT_RawCcs_t *RawCcs)
+void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
 {
     /* Have ARP build CCS and send it TODO */
 
-    BPLib_CT_ResetRawCcs(RawCcs);
+    BPLib_CT_ResetOpenCcs(OpenCcs);
 
     return;
 }

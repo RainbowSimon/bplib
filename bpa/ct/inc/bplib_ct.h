@@ -80,7 +80,7 @@ typedef struct
     size_t                         Size;
     BPLib_EID_t                    SourceAdminEid;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
-} BPLib_CT_RawCcs_t;
+} BPLib_CT_OpenCcs_t;
 
 typedef struct
 {
@@ -108,7 +108,7 @@ typedef struct
 
 typedef struct 
 {
-    BPLib_CT_RawCcs_t RawCcss[BPLIB_CT_MAX_RAW_CCS];
+    BPLib_CT_OpenCcs_t OpenCcss[BPLIB_CT_MAX_RAW_CCS];
     BPLib_SeqCounter_t SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];
     uint32_t CurrSeqCounterIdx;
     BPLib_CT_DbEntry_t Ctdb[BPLIB_CT_DB_MAX_ENTRIES];

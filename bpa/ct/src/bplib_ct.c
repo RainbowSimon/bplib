@@ -75,7 +75,7 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
 BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle)
 {
     BPLib_Status_t Status = BPLIB_SUCCESS;
-    size_t RawCcsIdx;
+    size_t OpenCcsIdx;
     bool   DeleteBundle = false;
     uint8_t ExtBlockIdx;
     BPLib_CustodyBlockData_t *CtebPtr;
@@ -103,13 +103,13 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         
         CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 
-        RawCcsIdx = BPLib_CT_GetRawCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID));
+        OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID));
 
         /* Check if we can accept custody of this bundle */
         if (BPLib_PDB_AcceptCustody(Bundle) == BPLIB_SUCCESS)
         {            
             /* Add to custody accepted raw CCS */
-            Status = BPLib_CT_AddToRawCcs(&(Inst->Ct.RawCcss[RawCcsIdx]), CtebPtr->BundleSeqNum, 
+            Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum, 
                                 CtebPtr->BundleSeqId, BPLib_CT_CustodyAccepted);
             if (Status != BPLIB_SUCCESS)
             {
@@ -124,7 +124,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         {
             /* Add to custody rejected raw CCS and mark bundle for deletion */
             DeleteBundle = true;
-            Status = BPLib_CT_AddToRawCcs(&(Inst->Ct.RawCcss[RawCcsIdx]), CtebPtr->BundleSeqNum, 
+            Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum, 
                                 CtebPtr->BundleSeqId, BPLib_CT_CustodyRefused);            
         }
     }

@@ -30,20 +30,48 @@
 
 
 /*
-** Macro Definitions
-*/
-
-
-
-/*
-** Type Definitions 
-*/
-
-
-
-/*
 ** Exported Functions
 */
+
+/**
+ * \brief Get pointer to the CTDB entry from the RBT link
+ *
+ *  \par Description
+ *       Given a pointer to a red-black tree link, return a pointer to the CTDB entry
+ *       that the link corresponds to.
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       Somewhat sketchy pointer logic but since the CTDB is the only implementation
+ *       of a RBT in the code, the assumption that there's an associated CTDB entry
+ *       for the provided RBT link is safe.
+ * 
+ *  \param[in] Node Pointer to a red-black tree link
+ *
+ *  \return Pointer to a CTDB entry
+ */
+BPLib_CT_DbEntry_t *BPLib_CT_GetDbEntryFromRbt(const BPLib_RBT_Link_t *Node);
+
+/**
+ * \brief Compare some value with a CTDB entry
+ *
+ *  \par Description
+ *       This function is used by RBT as a function pointer for generic search and insert
+ *       comparisons in the CTDB. We are currently using sequence IDs as the primary key
+ *       for the CTDB RBT, and then if two nodes' keys match, making further comparisons
+ *       against their respective sequence numbers.
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       This function is called as a function pointer by \ref BPLib_RBT_InsertValueGeneric
+ *       and \ref BPLib_RBT_SearchGeneric.
+ * 
+ *  \param[in] Node Pointer to a red-black tree link
+ *  \param[in] Arg Pointer to a sequence number to compare against
+ *
+ *  \retval 0 if this node matches the sequence number (Arg)
+ *  \retval 1 if the sequence number (Arg) is greater than the current node's sequence number
+ *  \retval -1 if the sequence number (Arg) is less than the current node's sequence number
+ */
+int BPLib_CT_CompareDbEntries(const BPLib_RBT_Link_t *Node, void *Arg);
 
 BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId, 
                                                     uint64_t SeqNum, uint32_t BundleId);

@@ -32,15 +32,15 @@
 ** Exported Functions
 */
 
-void BPLib_CT_ResetRawCcs(BPLib_CT_RawCcs_t *RawCcs);
+void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs);
 
-BPLib_Status_t BPLib_CT_AddToRawCcs(BPLib_CT_RawCcs_t *RawCcs, uint64_t SequenceNum, 
+BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t SequenceNum, 
                           uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode);
 
-size_t BPLib_CT_GetRawCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID);
+size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID);
 
-size_t BPLib_CT_GetRawCcsSize(BPLib_CT_RawCcs_t *RawCcs);
+size_t BPLib_CT_GetOpenCcsSize(BPLib_CT_OpenCcs_t *OpenCcs);
 
-void BPLib_CT_BuildAndSendRawCcs(BPLib_CT_RawCcs_t *RawCcs);
+void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs);
 
 #endif /* BPLIB_CT_CCS_H */
