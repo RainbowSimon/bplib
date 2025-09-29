@@ -31,13 +31,21 @@
 #include "bplib_pdb.h"
 #include "bplib_qm.h"
 
+
 /*
 ** Function Definitions
 */
 
 BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
 {
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
     memset(&(Inst->Ct), 0, sizeof(BPLib_CT_Context_t));
+
+    BPLib_RBT_InitRoot(&(Inst->Ct.CtdbRoot));
 
     return BPLIB_SUCCESS;
 }
@@ -88,7 +96,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Set bundle ID for both custodial and non-custodial bundles */
     (void) BPLib_CT_SetBundleId(Bundle);
 
-    for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_CANONICAL_BLOCKS; ExtBlockIdx++)
+    for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
     {
         if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
         {
@@ -97,13 +105,14 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     }
 
     /* A CTEB was detected, do custody operations */
-    if (ExtBlockIdx < BPLIB_MAX_NUM_CANONICAL_BLOCKS)
+    if (ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS)
     {
         Bundle->Meta.IsCustodial = true;
         
         CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 
-        OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID));
+        OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID), 
+                                                CtebPtr->BundleSeqId);
 
         /* Check if we can accept custody of this bundle */
         if (BPLib_PDB_AcceptCustody(Bundle) == BPLIB_SUCCESS)
@@ -117,7 +126,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
             }
             else
             {
-                /* Check size trigger of this CCS TODO */
+                /* indicates sanity checks failed TODO */
             }
         }
         else
@@ -152,7 +161,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         return BPLIB_NULL_PTR_ERROR;
     }
 
-    for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_CANONICAL_BLOCKS; ExtBlockIdx++)
+    for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
     {
         if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
         {
@@ -161,7 +170,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
     }
 
     /* A CTEB was detected, do custody operations */
-    if (ExtBlockIdx < BPLIB_MAX_NUM_CANONICAL_BLOCKS)
+    if (ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS)
     {
         CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 

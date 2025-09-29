@@ -91,7 +91,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
         /* If a gap in sequence numbers is detected, record missing sequence length */
         else
         {
-            Collection->SeqRange[Collection->SeqRangeLen] = SequenceNum - Collection->LastSeqNumAdded;
+            Collection->SeqRange[Collection->SeqRangeLen] = SequenceNum - Collection->LastSeqNumAdded - 1;
             Collection->SeqRange[Collection->SeqRangeLen + 1] = 1;
             Collection->SeqRangeLen += 2;
 
@@ -105,7 +105,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
     return BPLIB_SUCCESS;
 }
 
-size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID)
+size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID, uint64_t SequenceId)
 {
     size_t OpenCcsIdx;
     size_t FirstUnusedCcs = BPLIB_CT_MAX_RAW_CCS;
@@ -116,8 +116,9 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAd
     for (OpenCcsIdx = 0; OpenCcsIdx < BPLIB_CT_MAX_RAW_CCS; OpenCcsIdx++)
     {
         /* See if there's already an in progress CCS with the right EID */
-        if (BPLib_EID_IsMatch(&(Context->OpenCcss[OpenCcsIdx].SourceAdminEid), SourceAdminEID) &&
-            Context->OpenCcss[OpenCcsIdx].InProgress == true)
+        if (Context->OpenCcss[OpenCcsIdx].InProgress == true &&
+            Context->OpenCcss[OpenCcsIdx].BundleSeqCollections->SeqId == SequenceId &&
+            BPLib_EID_IsMatch(&(Context->OpenCcss[OpenCcsIdx].SourceAdminEid), SourceAdminEID))
         {
             break;
         }

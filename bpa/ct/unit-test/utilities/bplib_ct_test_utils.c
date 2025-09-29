@@ -24,6 +24,14 @@
 
 #include "bplib_ct_test_utils.h"
 
+
+/*
+** Global Data
+*/
+
+BPLib_Instance_t BplibInst;
+
+
 /*
 ** Function Definitions
 */
@@ -32,6 +40,8 @@ void BPLib_CT_Test_Setup(void)
 {
     /* Initialize test environment to default state for every test */
     UT_ResetState(0);
+
+    memset(&BplibInst, 0, sizeof(BPLib_Instance_t));
 }
 
 void BPLib_CT_Test_Teardown(void)

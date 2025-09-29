@@ -82,6 +82,7 @@ target_link_libraries(coverage-bplib_nc-testrunner PUBLIC
     bplib_time_stubs
     bplib_mem_stubs
     bplib_qm_stubs
+    bplib_ct_stubs
 )
 
 add_test(coverage-bplib_nc-testrunner coverage-bplib_nc-testrunner)

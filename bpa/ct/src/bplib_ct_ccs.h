@@ -37,7 +37,7 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs);
 BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t SequenceNum, 
                           uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode);
 
-size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID);
+size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID, uint64_t SequenceId);
 
 size_t BPLib_CT_GetOpenCcsSize(BPLib_CT_OpenCcs_t *OpenCcs);
 

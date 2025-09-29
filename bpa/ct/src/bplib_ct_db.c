@@ -94,10 +94,9 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId,
     Context->CurrDbSize++;
     Context->LastDbEntry = CurrDbEntry;
     
-    BPLib_RBT_InsertValueGeneric(SeqId, &(Context->CtdbRoot), &(Context->Ctdb[CurrDbEntry].RbtLink),
-                            BPLib_CT_CompareDbEntries, &SeqNum);
-
-    return BPLIB_SUCCESS;
+    return BPLib_RBT_InsertValueGeneric(SeqId, &(Context->CtdbRoot), 
+                                        &(Context->Ctdb[CurrDbEntry].RbtLink),
+                                        BPLib_CT_CompareDbEntries, &SeqNum);
 }
 
 BPLib_Status_t BPLib_CT_GetEntryFromCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId, 
