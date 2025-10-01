@@ -188,6 +188,7 @@
 #define BPLIB_PI_STOP_STATE_DBG_EID                     (694u)
 #define BPLIB_PI_STOP_FWP_DBG_EID                       (695u)
 #define BPLIB_PI_REMOVE_QUEUE_FLUSH_DBG_EID             (696u)
+#define BPLIB_PI_ADU_LEN_ERR_EID                        (697u)
 
 /* QM event IDs */
 #define BPLIB_QM_EBP_OUT_ERR_EID                        (700u)

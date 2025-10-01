@@ -462,25 +462,6 @@ void Test_BPLib_PI_ValidateConfigs_RepToEidInv(void)
     UtAssert_INT32_EQ(BPLib_PI_ValidateConfigs(&ChanTbl), BPLIB_INVALID_CONFIG_ERR);
 }
 
-void Test_BPLib_PI_ValidateConfigs_SizeInv(void)
-{
-    BPLib_PI_ChannelTable_t ChanTbl;
-
-    memset(&ChanTbl, 0, sizeof(ChanTbl));
-
-    ChanTbl.Configs[0].HopLimit = 10;
-    ChanTbl.Configs[0].RegState = BPLIB_PI_PASSIVE_ABANDON;
-    ChanTbl.Configs[0].CrcType = BPLib_CRC_Type_CRC32C;
-    ChanTbl.Configs[0].DestEID.Scheme = BPLIB_EID_SCHEME_IPN;
-
-    /* Invalid payload size */
-    ChanTbl.Configs[0].MaxBundlePayloadSize = BPLIB_MAX_PAYLOAD_SIZE + 1;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsValid), true);
-
-    UtAssert_INT32_EQ(BPLib_PI_ValidateConfigs(&ChanTbl), BPLIB_INVALID_CONFIG_ERR);
-}
-
 void Test_BPLib_PI_ValidateConfigs_LifetimeInv(void)
 {
     BPLib_PI_ChannelTable_t ChanTbl;
@@ -709,6 +690,7 @@ void Test_BPLib_PI_Ingress_Null(void)
     uint32_t ChanId = 0;
     uint8_t AduPtr[10];
     size_t AduSize = 0;
+    BPLib_PI_ChannelTable_t ChanTbl;
 
     /* Null BPLib instance */
     UtAssert_INT32_EQ(BPLib_PI_Ingress(NULL, ChanId, AduPtr, AduSize), BPLIB_NULL_PTR_ERROR);
@@ -720,7 +702,9 @@ void Test_BPLib_PI_Ingress_Null(void)
     BPLib_NC_ConfigPtrs.ChanConfigPtr = NULL;
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_NULL_PTR_ERROR);
 
-    /* The block allocation function returns null by default */
+    /* Null MIB configuration */
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = &ChanTbl;
+    BPLib_NC_ConfigPtrs.MibPnConfigPtr = NULL;
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_NULL_PTR_ERROR);
 }
 
@@ -732,6 +716,18 @@ void Test_BPLib_PI_Ingress_BadChanId(void)
     size_t AduSize = 0;
 
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_INVALID_CHAN_ID_ERR);
+}
+
+/* Test ingress function length check */
+void Test_BPLib_PI_Ingress_InvLen(void)
+{
+    uint32_t ChanId = 0;
+    uint8_t AduPtr[10];
+    size_t AduSize = BPLIB_MAX_PAYLOAD_SIZE + 1;
+
+    BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH] = BPLIB_MAX_PAYLOAD_SIZE;
+
+    UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_BUF_LEN_ERROR);
 }
 
 /* Test ingress function null memory allocation */
@@ -872,7 +868,6 @@ void TestBplibPi_Register(void)
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_DtnDestEid);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_DestEidInv);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_RepToEidInv);
-    ADD_TEST(Test_BPLib_PI_ValidateConfigs_SizeInv);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_LifetimeInv);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_NoPayload);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_BadPayloadBlockNum);
@@ -887,6 +882,7 @@ void TestBplibPi_Register(void)
     ADD_TEST(Test_BPLib_PI_Ingress_Null);
     ADD_TEST(Test_BPLib_PI_Ingress_BadChanId);
     ADD_TEST(Test_BPLib_PI_Ingress_NullMem);
+    ADD_TEST(Test_BPLib_PI_Ingress_InvLen);
 
     ADD_TEST(Test_BPLib_PI_Egress_Nominal);
     ADD_TEST(Test_BPLib_PI_Egress_Null);

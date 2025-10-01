@@ -141,6 +141,7 @@ BPLib_Status_t BPLib_BI_ValidateBundle(BPLib_Bundle_t *CandidateBundle)
     bool     AgeBlockPresent = false;
     bool     HopCountPresent = false;
     uint64_t EffectiveLifetime;
+    uint32_t MaxPayloadLen;
 
     if (CandidateBundle == NULL)
     {
@@ -155,6 +156,15 @@ BPLib_Status_t BPLib_BI_ValidateBundle(BPLib_Bundle_t *CandidateBundle)
 
     /* Verify a payload is present */
     if (CandidateBundle->blocks.PayloadHeader.BlockType != BPLib_BlockType_Payload)
+    {
+        return BPLIB_BI_INVALID_BUNDLE_ERR;
+    }
+
+    BPLib_NC_ReaderLock();
+    MaxPayloadLen = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH];
+    BPLib_NC_ReaderUnlock();
+
+    if (CandidateBundle->blocks.PayloadHeader.DataSize > MaxPayloadLen)
     {
         return BPLIB_BI_INVALID_BUNDLE_ERR;
     }
