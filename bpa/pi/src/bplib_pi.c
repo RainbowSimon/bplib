@@ -365,12 +365,6 @@ BPLib_Status_t BPLib_PI_ValidateConfigs(void *TblData)
             return BPLIB_INVALID_CONFIG_ERR;
         }
 
-        /* Validate that the maximum bundle payload size doesn't exceed the system limit */
-        if (TblDataPtr->Configs[ChanId].MaxBundlePayloadSize > BPLIB_MAX_PAYLOAD_SIZE)
-        {
-            return BPLIB_INVALID_CONFIG_ERR;
-        }
-
         /* Validate that the bundle lifetime doesn't exceed the system limit */
         if (TblDataPtr->Configs[ChanId].Lifetime > BPLIB_MAX_LIFETIME_ALLOWED)
         {
@@ -415,7 +409,8 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
 
     BPLib_NC_ReaderLock();
 
-    if ((Inst == NULL) || (AduPtr == NULL) || (BPLib_NC_ConfigPtrs.ChanConfigPtr == NULL))
+    if ((Inst == NULL) || (AduPtr == NULL) || (BPLib_NC_ConfigPtrs.ChanConfigPtr == NULL) ||
+        (BPLib_NC_ConfigPtrs.MibPnConfigPtr == NULL))
     {
         BPLib_NC_ReaderUnlock();
         return BPLIB_NULL_PTR_ERROR;
@@ -423,6 +418,18 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
 
     /* Indicate ADU reception */
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, ADU_COUNT_RECEIVED, 1);
+
+    if (AduSize > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH])
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_REJECTED, 1);
+        BPLib_EM_SendEvent(BPLIB_PI_ADU_LEN_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "[ADU In #%d]: Received an ADU too big to ingest, Size=%ld, PARAM_SET_MAX_PAYLOAD_LENGTH=%d",
+                    ChanId, AduSize, 
+                    BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH]);
+        BPLib_NC_ReaderUnlock();
+
+        return BPLIB_BUF_LEN_ERROR;
+    }
 
     /* Allocate Bundle based on AduSize */
     NewBundle = BPLib_MEM_BundleAlloc(&Inst->pool, (const void*)AduPtr, AduSize);
