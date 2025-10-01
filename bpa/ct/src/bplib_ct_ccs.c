@@ -24,10 +24,13 @@
 
 #include "bplib_ct.h"
 #include "bplib_ct_ccs.h"
+#include "bplib_ct_db.h"
 #include "bplib_bblocks.h"
 #include "bplib_eid.h"
 #include "bplib_mem.h"
 #include "bplib_pdb.h"
+#include "bplib_as.h"
+#include "bplib_em.h"
 
 /*
 ** Function Definitions
@@ -167,4 +170,70 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     BPLib_CT_ResetOpenCcs(OpenCcs);
 
     return;
+}
+
+BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_CT_Context_t *Context, 
+                                        BPLib_CT_BundleSeqCollection_t *SeqCollection)
+{
+    size_t SeqRangeIdx;
+    size_t CurrSeqNum;
+    size_t NextSeqNum;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_CT_DbEntry_t *DbEntry = NULL;
+
+    CurrSeqNum =  SeqCollection->FirstSeqNum;
+
+    for (SeqRangeIdx = 0; SeqRangeIdx < SeqCollection->SeqRangeLen; SeqRangeIdx++)
+    {
+        for (NextSeqNum = CurrSeqNum; NextSeqNum < CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]; NextSeqNum++)
+        {
+            Status = BPLib_CT_GetEntryFromCtdb(Context, SeqCollection->SeqId, 
+                                                            NextSeqNum, &DbEntry);
+
+            if (Status != BPLIB_SUCCESS || DbEntry == NULL)
+            {
+                BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "Error, bundle sequence number %ld with sequence ID %ld does not exist in CTDB.",
+                    SeqCollection->SeqId, NextSeqNum);
+            }
+
+            /* Even sequence range numbers indicate sequences that are *included* */
+            else if (SeqRangeIdx % 2 == 0)
+            {
+                Status = BPLib_CT_RemoveFromCtdb(Context, DbEntry);   
+                             
+                /* Request bundle deletion from storage TODO */
+
+                if (Status != BPLIB_SUCCESS)
+                {
+                    BPLib_EM_SendEvent(BPLIB_CT_BUNDLE_DLT_ERR_EID, BPLib_EM_EventType_ERROR,
+                        "Error deleting custodial bundle sequence number %ld with sequence ID %ld.",
+                        SeqCollection->SeqId, NextSeqNum);
+                }
+
+                /* Positive disposition code indicates custody was accepted */
+                if (SeqCollection->DispositionCode > 0)
+                {
+                    BPLib_AS_Decrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, 1);
+                    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
+                }
+                /* Negative disposition code indicates custody was rejected */
+                else
+                {
+                    BPLib_AS_Decrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, 1);
+                    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REJECTED, 1);
+                }
+            }
+            /* Odd sequence range numbers indicate sequences that are *excluded* */
+            else
+            {
+                /* Request bundle retransmission from storage TODO */
+                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
+            }
+        }
+
+        CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];
+    }
+
+    return Status;
 }

@@ -30,7 +30,6 @@
 #include "bplib_qm.h"
 #include "bplib_pdb.h"
 
-
 /*
 ** Function Definitions
 */
@@ -100,7 +99,7 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId,
 }
 
 BPLib_Status_t BPLib_CT_GetEntryFromCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId, 
-                                            uint64_t SeqNum, BPLib_CT_DbEntry_t *DbEntry)
+                                            uint64_t SeqNum, BPLib_CT_DbEntry_t **DbEntry)
 {
     BPLib_Status_t Status = BPLIB_NOT_FOUND_ERR;
     BPLib_RBT_Link_t *RbtLink;
@@ -110,7 +109,7 @@ BPLib_Status_t BPLib_CT_GetEntryFromCtdb(BPLib_CT_Context_t *Context, uint64_t S
 
     if (RbtLink != NULL)
     {
-        DbEntry = BPLib_CT_GetDbEntryFromRbt(RbtLink);
+        *DbEntry = BPLib_CT_GetDbEntryFromRbt(RbtLink);
         Status = BPLIB_SUCCESS; 
     }
 

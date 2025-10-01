@@ -77,7 +77,7 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId,
                                                     uint64_t SeqNum, uint32_t BundleId);
 
 BPLib_Status_t BPLib_CT_GetEntryFromCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId, 
-                                            uint64_t SeqNum, BPLib_CT_DbEntry_t *DbEntry);
+                                            uint64_t SeqNum, BPLib_CT_DbEntry_t **DbEntry);
 
 BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_CT_Context_t *Context, BPLib_CT_DbEntry_t *DbEntry);
 

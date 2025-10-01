@@ -63,6 +63,7 @@ target_link_libraries(coverage-bplib_ct-testrunner PUBLIC
     bplib_mem_stubs
     bplib_pdb_stubs
     bplib_rbt_stubs
+    bplib_as_stubs
 )
 
 add_test(coverage-bplib_ct-testrunner coverage-bplib_ct-testrunner)

@@ -30,6 +30,7 @@
 #include "bplib_mem.h"
 #include "bplib_pdb.h"
 #include "bplib_qm.h"
+#include "bplib_as.h"
 
 
 /*
@@ -107,6 +108,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* A CTEB was detected, do custody operations */
     if (ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS)
     {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REQUEST, 1);
         Bundle->Meta.IsCustodial = true;
         
         CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
@@ -123,10 +125,13 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
             if (Status != BPLIB_SUCCESS)
             {
                 DeleteBundle = true;
+                BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
+                        "Open CCS data failed sanity checks, check for memory corruption.");
+
             }
             else
             {
-                /* indicates sanity checks failed TODO */
+                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, 1);
             }
         }
         else
@@ -143,7 +148,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     if (DeleteBundle)
     {
         BPLib_MEM_BundleFree(&(Inst->pool), Bundle);
-        // TODO counters
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
     }
 
     return Status;
@@ -188,68 +193,14 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         }
         else
         {
-            /* TODO uhhh */
+            BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "Bundle has an invalid egress ID %d, check for memory corruption.", Bundle->Meta.EgressID);
         }
     }
 
     /* Do nothing for non-custodial bundles */
 
     return Status;    
-}
-
-BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst, 
-                                        BPLib_CT_BundleSeqCollection_t *SeqCollection)
-{
-    size_t SeqRangeIdx;
-    size_t CurrSeqNum;
-    size_t NextSeqNum;
-    BPLib_Status_t Status = BPLIB_SUCCESS;
-    BPLib_CT_DbEntry_t *DbEntry = NULL;
-
-    CurrSeqNum =  SeqCollection->FirstSeqNum;
-
-    for (SeqRangeIdx = 0; SeqRangeIdx < SeqCollection->SeqRangeLen; SeqRangeIdx++)
-    {
-        for (NextSeqNum = CurrSeqNum; NextSeqNum < CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]; NextSeqNum++)
-        {
-            Status = BPLib_CT_GetEntryFromCtdb(&(Inst->Ct), SeqCollection->SeqId, 
-                                                            NextSeqNum, DbEntry);
-
-            if (Status != BPLIB_SUCCESS || DbEntry != NULL)
-            {
-                /* error? sequence number doesn't exist TODO */
-            }
-
-            /* Even sequence range numbers indicate sequences that are *included* */
-            else if (SeqRangeIdx % 2 == 0)
-            {
-                /* Request bundle deletion from storage TODO */
-                Status = BPLib_CT_RemoveFromCtdb(&(Inst->Ct), DbEntry);                
-
-                /* Status checks TODO */
-
-                /* Positive disposition code indicates custody was accepted */
-                if (SeqCollection->DispositionCode > 0)
-                {
-                    /* Increment relevant counters TODO */
-                }
-                /* Negative disposition code indicates custody was rejected */
-                else
-                {
-                    /* Increment relevant counters TODO */
-                }
-            }
-            /* Odd sequence range numbers indicate sequences that are *excluded* */
-            else
-            {
-                /* Request bundle retransmission from storage TODO */
-            }
-        }
-
-        CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];
-    }
-
-    return Status;
 }
 
 BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_DeserializedCcs_t *Ccs)
@@ -262,11 +213,22 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
         return BPLIB_NULL_PTR_ERROR;
     }
 
+    if (Ccs->NumBundleSeqCollections >= BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS)
+    {
+        return BPLIB_BUF_LEN_ERROR;
+    }
+
     /* Validate CCS here? TODO */
 
     for (SeqCollectIdx = 0; SeqCollectIdx < Ccs->NumBundleSeqCollections; SeqCollectIdx++)
     {
-        Status = BPLib_CT_ProcessBundleSeqCollection(Inst, &(Ccs->BundleSeqCollections[SeqCollectIdx]));
+        if (Ccs->BundleSeqCollections[SeqCollectIdx].SeqRangeLen >= BPLIB_CT_MAX_SEQ_RANGE_LEN)
+        {
+            Status = BPLIB_BUF_LEN_ERROR;
+            break;
+        }
+
+        Status = BPLib_CT_ProcessBundleSeqCollection(&(Inst->Ct), &(Ccs->BundleSeqCollections[SeqCollectIdx]));
 
         if (Status != BPLIB_SUCCESS)
         {

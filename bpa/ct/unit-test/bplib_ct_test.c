@@ -181,6 +181,59 @@ void Test_BPLib_CT_AssignSeqCounter_Nominal(void)
     UtAssert_EQ(uint64_t, BplibInst.Ct.CurrActiveSeqIds[0], BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS);
 }
 
+void Test_BPLib_CT_ProcessCcs_Nominal(void)
+{
+    BPLib_CT_DeserializedCcs_t Ccs;
+    size_t ExpCtdbSize;
+
+    memset(&Ccs, 0, sizeof(BPLib_CT_DeserializedCcs_t));
+
+    Ccs.NumBundleSeqCollections = 2;
+
+    /*
+    ** Bundle sequence collection #0, accepted sequences for sequence ID 10:
+    **  - Sequence 20-21 received
+    **  - Sequence 22 not received
+    **  - Sequence 23-25 received
+    **  - Sequence 26-27 not received
+    **  - Sequence 28-31 received
+    */
+
+    Ccs.BundleSeqCollections[0].DispositionCode = BPLib_CT_CustodyAccepted;
+    Ccs.BundleSeqCollections[0].FirstSeqNum = 20;
+    Ccs.BundleSeqCollections[0].SeqId = 10;
+    Ccs.BundleSeqCollections[0].SeqRangeLen = 5;
+    Ccs.BundleSeqCollections[0].SeqRange[0] = 2;
+    Ccs.BundleSeqCollections[0].SeqRange[1] = 1;
+    Ccs.BundleSeqCollections[0].SeqRange[2] = 3;
+    Ccs.BundleSeqCollections[0].SeqRange[3] = 2;
+    Ccs.BundleSeqCollections[0].SeqRange[4] = 4;
+
+    /*
+    ** Bundle sequence collection #1, refused sequences for sequence ID 10:
+    **  - Sequence 32-33 received
+    **  - Sequence 34 not received
+    **  - Sequence 34-36 received
+    */    
+
+    Ccs.BundleSeqCollections[1].DispositionCode = BPLib_CT_CustodyRefused;
+    Ccs.BundleSeqCollections[1].FirstSeqNum = 32;
+    Ccs.BundleSeqCollections[1].SeqId = 10;
+    Ccs.BundleSeqCollections[1].SeqRangeLen = 3;
+    Ccs.BundleSeqCollections[1].SeqRange[0] = 2;
+    Ccs.BundleSeqCollections[1].SeqRange[1] = 1;
+    Ccs.BundleSeqCollections[1].SeqRange[2] = 3;
+
+    BplibInst.Ct.CurrDbSize = BPLIB_CT_DB_MAX_ENTRIES;
+    ExpCtdbSize = BPLIB_CT_DB_MAX_ENTRIES - 14; /* CCS should remove 14 entries from CTDB */
+
+    /* Set RBT to always return same link (for simplicity) */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].RbtLink));
+
+    UtAssert_INT32_EQ(BPLib_CT_ProcessCcs(&BplibInst, &Ccs), BPLIB_SUCCESS);
+    UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, ExpCtdbSize);
+}
+
 void TestBplibCt_Register(void)
 {
     ADD_TEST(Test_BPLib_CT_Init_Nominal);
@@ -194,4 +247,6 @@ void TestBplibCt_Register(void)
     ADD_TEST(Test_BPLib_CT_UpdateBundle_Custodial);
 
     ADD_TEST(Test_BPLib_CT_AssignSeqCounter_Nominal);
+
+    ADD_TEST(Test_BPLib_CT_ProcessCcs_Nominal);
 }
