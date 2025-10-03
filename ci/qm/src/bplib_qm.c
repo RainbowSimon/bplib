@@ -249,6 +249,18 @@ bool BPLib_QM_IsSystemIdle(BPLib_Instance_t* Inst)
     return BPLib_QM_WaitQueueIsEmpty(&(Inst->GenericWorkerJobs));
 }
 
+
+bool BPLib_QM_IsIngressIdle(BPLib_Instance_t* Inst)
+{
+    if (Inst == NULL)
+    {
+        return true;
+    }
+
+    return BPLib_QM_WaitQueueIsEmpty(&(Inst->GenericWorkerJobs));
+}
+
+
 bool BPLib_QM_IsDuctActive(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery)
 {
     BPLib_QM_WaitQueue_t* DuctQueue;

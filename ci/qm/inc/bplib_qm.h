@@ -128,6 +128,18 @@ BPLib_Status_t BPLib_QM_WorkerRunJob(BPLib_Instance_t* inst, int32_t WorkerID, i
 bool BPLib_QM_IsSystemIdle(BPLib_Instance_t* Inst);
 
 /**
+ * @brief Check if ingress is idle
+ * 
+ * This function checks if the jobs queue (effectively the ingress queue) is empty and if
+ * so, returns true
+ * 
+ * @param[in] Inst The bplib instance
+ * 
+ * @return Whether ingress is idle or not
+ */
+bool BPLib_QM_IsIngressIdle(BPLib_Instance_t* Inst);
+
+/**
  * @brief Check if a duct is active
  * 
  * This function checks if a given egress duct is set to a channel_started/contact_started

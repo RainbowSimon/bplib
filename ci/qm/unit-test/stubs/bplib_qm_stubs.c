@@ -89,6 +89,22 @@ bool BPLib_QM_IsDuctActive(BPLib_Instance_t *Inst, uint32_t EgressID, bool Local
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_QM_IsIngressIdle()
+ * ----------------------------------------------------
+ */
+bool BPLib_QM_IsIngressIdle(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_QM_IsIngressIdle, bool);
+
+    UT_GenStub_AddParam(BPLib_QM_IsIngressIdle, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_QM_IsIngressIdle, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_QM_IsIngressIdle, bool);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_QM_IsSystemIdle()
  * ----------------------------------------------------
  */
