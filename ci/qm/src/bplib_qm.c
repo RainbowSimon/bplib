@@ -218,20 +218,43 @@ BPLib_Status_t BPLib_QM_WorkerRunJob(BPLib_Instance_t* inst, int32_t WorkerID, i
     return Status;
 }
 
-bool BPLib_QM_IsIngressIdle(BPLib_Instance_t* Inst)
+bool BPLib_QM_IsSystemIdle(BPLib_Instance_t* Inst)
 {
+    uint32_t EgressId;
+
     if (Inst == NULL)
     {
         return true;
     }
 
+    /* Check if any of the contact egress queues are active */
+    for (EgressId = 0; EgressId < BPLIB_MAX_NUM_CONTACTS; EgressId++)
+    {
+        if (BPLib_QM_IsDuctActive(Inst, EgressId, false) == true)
+        {
+            return false;
+        }
+    }
+
+    /* Check if any of the channel egress queues are active */
+    for (EgressId = 0; EgressId < BPLIB_MAX_NUM_CHANNELS; EgressId++)
+    {
+        if (BPLib_QM_IsDuctActive(Inst, EgressId, true) == true)
+        {
+            return false;
+        }
+    }    
+
+    /* If the job queue is empty, then system is idle */
     return BPLib_QM_WaitQueueIsEmpty(&(Inst->GenericWorkerJobs));
 }
 
-bool BPLib_QM_IsDuctEmpty(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery)
+bool BPLib_QM_IsDuctActive(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery)
 {
     BPLib_QM_WaitQueue_t* DuctQueue;
-
+    bool DuctActive = false;
+    BPLib_CLA_ContactRunState_t ContactState;
+    
     if (Inst == NULL)
     {
         /* NULL PTR ERROR will be caught in DuctPull */
@@ -239,24 +262,27 @@ bool BPLib_QM_IsDuctEmpty(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalD
     }
     if (LocalDelivery && EgressID >= BPLIB_MAX_NUM_CHANNELS)
     {
-        return BPLIB_STOR_PARAM_ERR;
+        return false;
     }
     if (!LocalDelivery && EgressID >= BPLIB_MAX_NUM_CONTACTS)
     {
-        return BPLIB_STOR_PARAM_ERR;
+        return false;
     }
 
     /* Determine which queue to pull from */
     if (LocalDelivery == true)
     {
+        DuctActive = (BPLib_NC_GetAppState(EgressID) == BPLIB_NC_APP_STATE_STARTED);
         DuctQueue = &(Inst->ChannelEgressJobs[EgressID]);
     }
     else
     {
+        (void) BPLib_CLA_GetContactRunState(EgressID, &ContactState);
+        DuctActive = (ContactState == BPLIB_CLA_STARTED);
         DuctQueue = &(Inst->ContactEgressJobs[EgressID]);
     }
 
-    return BPLib_QM_WaitQueueIsEmpty(DuctQueue);
+    return DuctActive && !BPLib_QM_WaitQueueIsEmpty(DuctQueue);
 }
 
 BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery,
@@ -266,8 +292,6 @@ BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool
     BPLib_QM_JobState_t CurrState;
     BPLib_QM_JobFunc_t JobFunc;
     BPLib_QM_WaitQueue_t* DuctQueue;
-    BPLib_CLA_ContactRunState_t ContactState;
-    bool DuctActive = false;
     BPLib_Status_t Status = BPLIB_SUCCESS;
     size_t NumStoredEgressed = 0;
 
@@ -290,18 +314,15 @@ BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool
     {
         CurrState = CHANNEL_OUT_STOR_TO_CT;
         DuctQueue = &(Inst->ChannelEgressJobs[EgressID]);
-        DuctActive = (BPLib_NC_GetAppState(EgressID) == BPLIB_NC_APP_STATE_STARTED);
     }
     else
     {
         CurrState = CONTACT_OUT_STOR_TO_CT;
         DuctQueue = &(Inst->ContactEgressJobs[EgressID]);
-        (void) BPLib_CLA_GetContactRunState(EgressID, &ContactState);
-        DuctActive = (ContactState == BPLIB_CLA_STARTED);
     }
 
-    /* If the duct is empty, try to load more from storage */
-    if (DuctActive && (BPLib_QM_IsDuctEmpty(Inst, EgressID, LocalDelivery) == true))
+    /* If the duct is idle, try to load more from storage */
+    if (BPLib_QM_IsDuctActive(Inst, EgressID, LocalDelivery) == false)
     {
         Status = BPLib_STOR_EgressForID(Inst, EgressID, LocalDelivery, &NumStoredEgressed);
         if (Status == BPLIB_SUCCESS)

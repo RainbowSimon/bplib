@@ -115,11 +115,33 @@ BPLib_Status_t BPLib_QM_RegisterWorker(BPLib_Instance_t* inst, int32_t* WorkerID
  */
 BPLib_Status_t BPLib_QM_WorkerRunJob(BPLib_Instance_t* inst, int32_t WorkerID, int TimeoutMs);
 
+/**
+ * @brief Check if system is idle
+ * 
+ * This function checks if any of the ingress or egress queues are active and only returns
+ * true if they are all inactive.
+ * 
+ * @param[in] Inst The bplib instance
+ * 
+ * @return Whether the system is idle or not
+ */
+bool BPLib_QM_IsSystemIdle(BPLib_Instance_t* Inst);
 
-bool BPLib_QM_IsIngressIdle(BPLib_Instance_t* Inst);
-
-
-bool BPLib_QM_IsDuctEmpty(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery);
+/**
+ * @brief Check if a duct is active
+ * 
+ * This function checks if a given egress duct is set to a channel_started/contact_started
+ * state and if so, if the duct contains anything. If both cases are true, the duct is
+ * active
+ * 
+ * @param[in] Inst The bplib instance
+ * @param[in] EgressID Corresponds to either a contact or channel ID for an egress duct
+ * @param[in] LocalDelivery Identifies the duct as either a channel duct (local) or a 
+ *                          contact duct (remote)
+ * 
+ * @return Whether the duct is active or not
+ */
+bool BPLib_QM_IsDuctActive(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery);
 
 
 BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery,

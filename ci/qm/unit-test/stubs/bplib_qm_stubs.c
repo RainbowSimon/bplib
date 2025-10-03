@@ -71,36 +71,36 @@ BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t *Inst, uint32_t EgressID, bool
 
 /*
  * ----------------------------------------------------
- * Generated stub function for BPLib_QM_IsDuctEmpty()
+ * Generated stub function for BPLib_QM_IsDuctActive()
  * ----------------------------------------------------
  */
-bool BPLib_QM_IsDuctEmpty(BPLib_Instance_t *Inst, uint32_t EgressID, bool LocalDelivery)
+bool BPLib_QM_IsDuctActive(BPLib_Instance_t *Inst, uint32_t EgressID, bool LocalDelivery)
 {
-    UT_GenStub_SetupReturnBuffer(BPLib_QM_IsDuctEmpty, bool);
+    UT_GenStub_SetupReturnBuffer(BPLib_QM_IsDuctActive, bool);
 
-    UT_GenStub_AddParam(BPLib_QM_IsDuctEmpty, BPLib_Instance_t *, Inst);
-    UT_GenStub_AddParam(BPLib_QM_IsDuctEmpty, uint32_t, EgressID);
-    UT_GenStub_AddParam(BPLib_QM_IsDuctEmpty, bool, LocalDelivery);
+    UT_GenStub_AddParam(BPLib_QM_IsDuctActive, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_QM_IsDuctActive, uint32_t, EgressID);
+    UT_GenStub_AddParam(BPLib_QM_IsDuctActive, bool, LocalDelivery);
 
-    UT_GenStub_Execute(BPLib_QM_IsDuctEmpty, Basic, NULL);
+    UT_GenStub_Execute(BPLib_QM_IsDuctActive, Basic, NULL);
 
-    return UT_GenStub_GetReturnValue(BPLib_QM_IsDuctEmpty, bool);
+    return UT_GenStub_GetReturnValue(BPLib_QM_IsDuctActive, bool);
 }
 
 /*
  * ----------------------------------------------------
- * Generated stub function for BPLib_QM_IsIngressIdle()
+ * Generated stub function for BPLib_QM_IsSystemIdle()
  * ----------------------------------------------------
  */
-bool BPLib_QM_IsIngressIdle(BPLib_Instance_t *Inst)
+bool BPLib_QM_IsSystemIdle(BPLib_Instance_t *Inst)
 {
-    UT_GenStub_SetupReturnBuffer(BPLib_QM_IsIngressIdle, bool);
+    UT_GenStub_SetupReturnBuffer(BPLib_QM_IsSystemIdle, bool);
 
-    UT_GenStub_AddParam(BPLib_QM_IsIngressIdle, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_QM_IsSystemIdle, BPLib_Instance_t *, Inst);
 
-    UT_GenStub_Execute(BPLib_QM_IsIngressIdle, Basic, NULL);
+    UT_GenStub_Execute(BPLib_QM_IsSystemIdle, Basic, NULL);
 
-    return UT_GenStub_GetReturnValue(BPLib_QM_IsIngressIdle, bool);
+    return UT_GenStub_GetReturnValue(BPLib_QM_IsSystemIdle, bool);
 }
 
 /*
