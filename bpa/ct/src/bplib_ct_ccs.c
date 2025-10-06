@@ -94,7 +94,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
         /* If a gap in sequence numbers is detected, record missing sequence length */
         else
         {
-            Collection->SeqRange[Collection->SeqRangeLen] = SequenceNum - Collection->LastSeqNumAdded - 1;
+            Collection->SeqRange[Collection->SeqRangeLen] = SequenceNum - (Collection->LastSeqNumAdded + 1);
             Collection->SeqRange[Collection->SeqRangeLen + 1] = 1;
             Collection->SeqRangeLen += 2;
 
