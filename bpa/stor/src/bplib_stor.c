@@ -479,6 +479,11 @@ BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst)
 {
     BPLib_Status_t Status;
 
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
     BPLib_EM_SendEvent(BPLIB_STOR_CLEANUP_INF_EID, BPLib_EM_EventType_INFORMATION,
             "Beginning storage cleanup. This may take a while and may interrupt any pending storage operations.");
 

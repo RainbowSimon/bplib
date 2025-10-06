@@ -193,7 +193,7 @@ extern "C" {
  *         bundle uniqueness is determined by a bundle's sequence number, source EID,
  *         and creation time.
  */
-#define BPLIB_ALLOW_DUPLICATE_BUNDLES            false
+#define BPLIB_ALLOW_DUPLICATE_BUNDLES            true
 
 #ifdef __cplusplus
 } // extern "C"
