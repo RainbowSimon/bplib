@@ -27,6 +27,7 @@
 #include "bplib_mem.h"
 #include "bplib_cfg.h"
 #include "bplib_stor.h"
+#include "bplib_ct.h"
 
 #define QM_NO_WAIT          0L  /**< Constant representing no wait */
 #define QM_WAIT_FOREVER    -1L /**< Constant representing an indefinite wait */
@@ -65,6 +66,9 @@ struct BPLib_Instance
 
     /* Bundle Storage */
     BPLib_BundleCache_t BundleStorage;
+
+    /* Custody transfer context */
+    BPLib_CT_Context_t Ct;
 };
 
 /**

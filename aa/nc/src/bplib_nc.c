@@ -27,6 +27,7 @@
 #include "bplib_crc.h"
 #include "bplib_nc_rwlock.h"
 #include "bplib_nc_internal.h"
+#include "bplib_ct.h"
 
 /* ======= */
 /* Globals */
@@ -208,6 +209,9 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
             (void) BPLib_CLA_SetContactRunState(ContId, BPLIB_CLA_TORNDOWN);
         }
     }
+
+    /* Always returns BPLIB_SUCCESS */
+    (void) BPLib_CT_Init(Instance);
 
     return Status;
 }

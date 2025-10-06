@@ -191,7 +191,7 @@ BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId);
  * \retval    BPLIB_INVALID_CONT_ID_ERR: Provided contact ID is invalid
  * \retval    BPLIB_CLA_IO_ERROR: A UDP conntection couldn't be set to running
  */
-BPLib_Status_t BPLib_CLA_ContactStart(uint32_t ContactId);
+BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId);
 
 /**
  * \brief     Pass Contact ID to stop, on to CLA proxy

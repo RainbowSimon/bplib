@@ -18,38 +18,32 @@
  *
  */
 
+#ifndef BPLIB_CT_CCS_H
+#define BPLIB_CT_CCS_H
+
 /*
 ** Include
 */
 
-#include "bplib_ct_test_utils.h"
+#include "bplib_ct.h"
 
 
 /*
-** Global Data
+** Exported Functions
 */
 
-BPLib_Instance_t BplibInst;
+void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs);
 
+BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t SequenceNum, 
+                          uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode);
 
-/*
-** Function Definitions
-*/
+size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID, uint64_t SequenceId);
 
-void BPLib_CT_Test_Setup(void)
-{
-    /* Initialize test environment to default state for every test */
-    UT_ResetState(0);
+size_t BPLib_CT_GetOpenCcsSize(BPLib_CT_OpenCcs_t *OpenCcs);
 
-    memset(&BplibInst, 0, sizeof(BPLib_Instance_t));
-}
+void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs);
 
-void BPLib_CT_Test_Teardown(void)
-{
-    /* Clean up test environment */
-}
-
-void UtTest_Setup(void)
-{
-    TestBplibCt_Register();
-}
+BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_CT_Context_t *Context, 
+                                        BPLib_CT_BundleSeqCollection_t *SeqCollection);
+                                        
+#endif /* BPLIB_CT_CCS_H */

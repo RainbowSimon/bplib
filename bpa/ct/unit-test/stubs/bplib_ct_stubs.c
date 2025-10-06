@@ -29,6 +29,73 @@
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_AssignSeqCounter()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t ContactId)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_AssignSeqCounter, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CT_AssignSeqCounter, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_CT_AssignSeqCounter, uint32_t, ContactId);
+
+    UT_GenStub_Execute(BPLib_CT_AssignSeqCounter, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_AssignSeqCounter, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_Init()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_Init, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CT_Init, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_CT_Init, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_Init, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_ProcessCcs()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_DeserializedCcs_t *Ccs)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_ProcessCcs, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CT_ProcessCcs, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_CT_ProcessCcs, BPLib_CT_DeserializedCcs_t *, Ccs);
+
+    UT_GenStub_Execute(BPLib_CT_ProcessCcs, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_ProcessCcs, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_ProcessNewBundle()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_ProcessNewBundle, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CT_ProcessNewBundle, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_CT_ProcessNewBundle, BPLib_Bundle_t *, Bundle);
+
+    UT_GenStub_Execute(BPLib_CT_ProcessNewBundle, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_ProcessNewBundle, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_CT_SetBundleId()
  * ----------------------------------------------------
  */
@@ -41,4 +108,21 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
     UT_GenStub_Execute(BPLib_CT_SetBundleId, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_CT_SetBundleId, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_UpdateBundle()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_UpdateBundle, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CT_UpdateBundle, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_CT_UpdateBundle, BPLib_Bundle_t *, Bundle);
+
+    UT_GenStub_Execute(BPLib_CT_UpdateBundle, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_UpdateBundle, BPLib_Status_t);
 }

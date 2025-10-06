@@ -201,4 +201,10 @@
 
 #define BPLIB_NC_INIT_ERR_EID                           (701u)
 
+/* CT event IDs */
+#define BPLIB_CT_INV_SEQ_NUM_ERR_EID                    (752u)
+#define BPLIB_CT_BUNDLE_DLT_ERR_EID                     (753u)
+#define BPLIB_CT_CCS_CRRPTD_ERR_EID                     (754u)
+#define BPLIB_CT_INV_EGRESS_ID_ERR_EID                  (755u)
+
 #endif /* BPLIB_EVENTIDS_H */
