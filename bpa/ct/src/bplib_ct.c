@@ -131,6 +131,11 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
             }
             else
             {
+                /* 
+                ** TODO this is temporary, when custodial bundles are stored, 
+                ** that's when this actually gets incremented. Until then, custody is
+                ** technically "pending".
+                */
                 BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, 1);
             }
         }

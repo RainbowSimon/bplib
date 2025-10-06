@@ -111,12 +111,12 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
 size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID, uint64_t SequenceId)
 {
     size_t OpenCcsIdx;
-    size_t FirstUnusedCcs = BPLIB_CT_MAX_RAW_CCS;
+    size_t FirstUnusedCcs = BPLIB_CT_MAX_OPEN_CCS;
     size_t MaxCcsSize = 0;
-    size_t LargestCcsIdx = BPLIB_CT_MAX_RAW_CCS;
+    size_t LargestCcsIdx = BPLIB_CT_MAX_OPEN_CCS;
     size_t RetCcsIdx;
 
-    for (OpenCcsIdx = 0; OpenCcsIdx < BPLIB_CT_MAX_RAW_CCS; OpenCcsIdx++)
+    for (OpenCcsIdx = 0; OpenCcsIdx < BPLIB_CT_MAX_OPEN_CCS; OpenCcsIdx++)
     {
         /* See if there's already an in progress CCS with the right EID */
         if (Context->OpenCcss[OpenCcsIdx].InProgress == true &&
@@ -126,7 +126,7 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAd
             break;
         }
         /* Find the first unused CCS */
-        else if (FirstUnusedCcs == BPLIB_CT_MAX_RAW_CCS && 
+        else if (FirstUnusedCcs == BPLIB_CT_MAX_OPEN_CCS && 
                  Context->OpenCcss[OpenCcsIdx].InProgress == false) 
         {
             FirstUnusedCcs = OpenCcsIdx;
@@ -140,12 +140,12 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAd
     }
     
     /* Found an in progress raw CCS with a matching EID */
-    if (OpenCcsIdx < BPLIB_CT_MAX_RAW_CCS)
+    if (OpenCcsIdx < BPLIB_CT_MAX_OPEN_CCS)
     {
         RetCcsIdx = OpenCcsIdx; 
     }
     /* Found an unused CCS */
-    else if (FirstUnusedCcs != BPLIB_CT_MAX_RAW_CCS)
+    else if (FirstUnusedCcs != BPLIB_CT_MAX_OPEN_CCS)
     {
         Context->OpenCcss[FirstUnusedCcs].InProgress = true;
         BPLib_EID_CopyEids(SourceAdminEID, Context->OpenCcss[FirstUnusedCcs].SourceAdminEid);
