@@ -34,9 +34,25 @@
 #include "bplib_bblocks.h"
 #include "bplib_eid.h"
 #include "bplib_mem.h"
+#include "bplib_ct_db.h"
+#include "bplib_ct_ccs.h"
+#include "bplib_pdb.h"
+#include "bplib_qm.h"
+
+
+/*
+** Macro Definitions 
+*/
 
 /* Macro to add test case */
 #define ADD_TEST(test) UtTest_Add(test, BPLib_CT_Test_Setup, BPLib_CT_Test_Teardown, #test)
+
+
+/*
+** Global Data
+*/
+
+extern BPLib_Instance_t BplibInst;
 
 
 /*

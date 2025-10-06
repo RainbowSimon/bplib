@@ -146,9 +146,10 @@ typedef enum
 #define BPLIB_INVALID_CONT_ID_ERR                      ((BPLib_Status_t) -14) /* Invalid Contact ID */
 #define BPLIB_INVALID_CONFIG_ERR                       ((BPLib_Status_t) -15) /* Invalid configuration */
 #define BPLIB_APP_STATE_ERR                            ((BPLib_Status_t) -16) /* Invalid application state */
+#define BPLIB_NOT_FOUND_ERR                            ((BPLib_Status_t) -17) /* Search item not found */
+
 /*
 
-#define BPLIB_GENERIC_ERROR_17              ((BPLib_Status_t) -17) // Error description
 #define BPLIB_GENERIC_ERROR_18              ((BPLib_Status_t) -18) // Error description
 #define BPLIB_GENERIC_ERROR_19              ((BPLib_Status_t) -19) // Error description
 #define BPLIB_GENERIC_ERROR_20              ((BPLib_Status_t) -20) // Error description
@@ -346,6 +347,10 @@ typedef enum
 #define BPLIB_NC_AS_INIT_ERR                           ((BPLib_Status_t) -247)
 #define BPLIB_NC_QM_INIT_ERR                           ((BPLib_Status_t) -248)
 #define BPLIB_NC_MEM_INIT_ERR                          ((BPLib_Status_t) -249)
+
+/* Custody Transfer Errors */
+#define BPLIB_CT_CUSTODY_REFUSED_ERR                  ((BPLib_Status_t) -260)
+#define BPLIB_CT_FULL_DB_ERR                          ((BPLib_Status_t) -261)
 
 /** @} */
 

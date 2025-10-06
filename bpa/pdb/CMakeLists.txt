@@ -13,6 +13,7 @@ add_library(bplib_pdb OBJECT
 target_include_directories(bplib_pdb PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
     $<TARGET_PROPERTY:bplib,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:bplib_eid,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 # Add unit tests
