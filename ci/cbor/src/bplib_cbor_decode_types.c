@@ -44,7 +44,7 @@ BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, size_t* A
         return BPLIB_CBOR_DEC_TYPES_ENTER_DEF_ARRAY_QCBOR_ERR;
     }
 
-    /* Ensure the length isn't indicating this is an indefinite array 
+    /* Ensure the length isn't indicating this is an indefinite array
     ** Note: According QCBOR docs, UINT16_MAX is used to indicate indefinte length
     */
     if (Arr.val.uCount > QCBOR_MAX_ITEMS_IN_ARRAY)
@@ -72,6 +72,58 @@ BPLib_Status_t BPLib_QCBOR_ExitDefiniteArray(QCBORDecodeContext* ctx)
     if (QStatus != QCBOR_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_EXIT_DEF_ARRAY_QCBOR_ERR;
+    }
+
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_QCBOR_EnterMap(QCBORDecodeContext* Context, size_t* MapLen)
+{
+    QCBORError QStatus;
+    QCBORItem  Map;
+
+    if (Context == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    /* Make sure the next item is a map */
+    QCBORDecode_EnterMap(Context, &Map);
+
+    QStatus = QCBORDecode_GetError(Context);
+    if (QStatus != QCBOR_SUCCESS)
+    {
+        /* TODO: return error */
+    }
+
+    /* Ensure that this is a definite map */
+    if (Map.val.uCount > QCBOR_MAX_ITEMS_IN_ARRAY)
+    {
+        *MapLen = 0;
+        /* TODO: return error */
+    }
+
+    /* Now it is safe to conclude this is a definite map */
+    *MapLen = Map.val.uCount;
+
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_QCBOR_ExitMap(QCBORDecodeContext* Context)
+{
+    QCBORError QStatus;
+
+    if (Context == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    QCBORDecode_ExitMap(Context);
+
+    QStatus = QCBORDecode_GetError(Context);
+    if (QStatus != QCBOR_SUCCESS)
+    {
+        /* TODO: return error */
     }
 
     return BPLIB_SUCCESS;
@@ -331,13 +383,13 @@ BPLib_Status_t BPLib_QCBOR_CRCParserImpl(QCBORDecodeContext* ctx, uint64_t* pars
             return BPLIB_CBOR_DEC_TYPES_CRC_16_LEN_ERR;
         }
         else
-        {            
+        {
             /* unpack the network-byte-ordered 16-bit value, storing into the 64-bit destination */
             *parsed  = (uint64_t) ((uint8_t*)TemporaryByteStringBuffer.ptr)[0] <<  8u;
             *parsed |= (uint64_t) ((uint8_t*)TemporaryByteStringBuffer.ptr)[1];
             return BPLIB_SUCCESS;
         }
-        
+
     }
     else if (crc_type == BPLib_CRC_Type_CRC32C)
     {
