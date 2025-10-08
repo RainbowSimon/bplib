@@ -25,6 +25,7 @@
 #include "bplib_as_internal.h"
 #include "bplib_as.h"
 #include "bplib_version.h"
+#include "bplib_inst.h"
 
 /* ================= */
 /* Telemetry Packets */
@@ -150,14 +151,14 @@ void BPLib_AS_UnlockCounters(void)
 }
 
 /* Initialize the static MIB reports telemetry values */
-void BPLib_AS_InitializeReportsHkTlm(void)
+void BPLib_AS_InitializeReportsHkTlm(BPLib_Instance_t *Inst)
 {
-    InitTime.Time = BPLib_TIME_GetMonotonicTime();
-    InitTime.BootEra = BPLib_TIME_GetBootEra();
+    Inst->As.InitTime = BPLib_TIME_GetMonotonicTime();
+    Inst->As.LastTlmReqTime = Inst->As.InitTime;
 
     memset(&BPLib_AS_NodeReportsPayload, 0, sizeof(BPLib_AS_NodeReportsPayload));
 
-    BPLib_AS_NodeReportsPayload.NodeStartupCounter = InitTime.BootEra;
+    BPLib_AS_NodeReportsPayload.NodeStartupCounter = BPLib_TIME_GetBootEra();
 
     BPLib_AS_NodeReportsPayload.BundleAgentAvailableStorage = BPLIB_MAX_STORED_BUNDLE_BYTES / 1000;
 
@@ -180,7 +181,21 @@ void BPLib_AS_InitializeReportsHkTlm(void)
 
 void BPLib_AS_UpdateReportsHkTlm(BPLib_Instance_t *Inst)
 {
-    BPLib_AS_NodeReportsPayload.SystemNodeUpTime = BPLib_TIME_GetMonotonicTime() - InitTime.Time;
+    uint8_t i;
+    uint64_t CurrTime;
+    uint64_t SecsElapsed;
+
+    CurrTime = BPLib_TIME_GetMonotonicTime();
+    SecsElapsed = (CurrTime - Inst->As.LastTlmReqTime) / 1000;
+
+    for (i = 0; i < BPLIB_AS_NUM_RATES_TO_REPORT; i++)
+    {
+        BPLib_AS_NodeReportsPayload.Rates[i] = Inst->As.CurrRates[i] / SecsElapsed;
+    }
+
+    Inst->As.LastTlmReqTime = CurrTime;
+
+    BPLib_AS_NodeReportsPayload.SystemNodeUpTime = CurrTime - InitTime.Time;
     BPLib_AS_NodeReportsPayload.BundleCountStored = Inst->BundleStorage.BundleCountStored;
     BPLib_AS_NodeReportsPayload.KbytesCountStorageAvailable = (BPLIB_MAX_STORED_BUNDLE_BYTES - Inst->BundleStorage.BytesStorageInUse) / 1000;
 }

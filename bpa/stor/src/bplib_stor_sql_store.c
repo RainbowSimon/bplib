@@ -27,6 +27,7 @@
 #include "bplib_as.h"
 #include "bplib_nc.h"
 #include "bplib_stor_sql_store.h"
+#include "bplib_inst.h"
 
 #include <stdio.h>
 

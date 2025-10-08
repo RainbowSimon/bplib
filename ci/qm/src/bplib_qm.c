@@ -24,6 +24,7 @@
 #include "bplib_stor.h"
 #include "bplib_cla.h"
 #include "bplib_nc.h"
+#include "bplib_inst.h"
 
 #include <stdio.h>
 

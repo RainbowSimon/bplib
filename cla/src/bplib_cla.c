@@ -29,6 +29,7 @@
 #include "bplib_nc.h"
 #include "bplib_stor.h"
 #include "bplib_ct.h"
+#include "bplib_inst.h"
 
 /* =========== */
 /* Global Data */
