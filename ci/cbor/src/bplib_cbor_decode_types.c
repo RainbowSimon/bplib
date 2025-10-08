@@ -412,3 +412,62 @@ BPLib_Status_t BPLib_QCBOR_CRCParserImpl(QCBORDecodeContext* ctx, uint64_t* pars
         return BPLIB_CBOR_DEC_TYPES_CRC_UNSUPPORTED_TYPE_ERR;
     }
 }
+
+BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_ARP_AdminRecord_t* parsed)
+{
+    BPLib_Status_t                 Status;
+    size_t                         ArrLen;
+    BPLib_CT_BundleSeqCollection_t BundleSeqCollection;
+
+    if ((ctx == NULL) || (parsed == NULL))
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    /* Enter admin record array */
+    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrLen);
+    if (Status != BPLIB_SUCCESS)
+    {
+        return BPLIB_CBOR_DEC_TYPES_EID_ENTER_OUTER_ARRAY_ERR;
+    }
+
+    /* Parse the admin record type code */
+    Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &parsed->AdminRecordType);
+    if (Status != BPLIB_SUCCESS)
+    {
+        return Status;
+    }
+
+    switch (parsed->AdminRecordType)
+    {
+        case BPLib_CT_BsrRecordTypeCode:
+            /* TODO: Parse BSR admin record contents */
+            break;
+
+        case BPLib_CT_CrsRecordTypeCode:
+            /* TODO: Parse CRS admin record contents */
+            break;
+
+        case BPLib_CT_CcsRecordTypeCode:
+            /* The bundle sequence collection of the CCS admin record shall never contain a Block Source Administrative Endpoint ID */
+
+            Status = BPLib_QCBOR_BundleSeqCollectionParserImpl(ctx, parsed->BundleSeqCollections);
+            if (Status != BPLIB_SUCCESS)
+            {
+                /* TODO: return error */
+            }
+
+            /* TODO: verify bundle sequence collection */
+
+            break;
+    }
+
+    /* Exit admin record array */
+    Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    if (Status != BPLIB_SUCCESS)
+    {
+        /* TODO: return error */
+    }
+
+    return BPLIB_SUCCESS;
+}
