@@ -78,14 +78,9 @@ typedef struct
     /* Administrative record content map */
     
     /**
-     * \brief The key to the disposition key, bundle sequence collection value
-     *        CBOR map that represents a CCS
-     */
-    BPLib_CT_DispositionCode_t DispositionCodes[BPLIB_CT_MAX_SEQ_COLLECTIONS];
-
-    /**
      * \brief The value to the disposition key, bundle sequence collection value
-     *        CBOR map that represents a CCS
+     *        CBOR map that represents a CCS. The actual key (disposition code) is
+     *        inside the BPLib_CT_BundleSeqCollection_t struct
      */
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
 } BPLib_ARP_AdminRecord_t;
