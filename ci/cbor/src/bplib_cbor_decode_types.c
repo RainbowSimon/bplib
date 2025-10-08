@@ -432,7 +432,7 @@ BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_
     }
 
     /* Parse the admin record type code */
-    Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &parsed->AdminRecordType);
+    Status = BPLib_QCBOR_UInt64ParserImpl(ctx, (uint64_t*) &(parsed->AdminRecordType));
     if (Status != BPLIB_SUCCESS)
     {
         return Status;
@@ -457,13 +457,84 @@ BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_
                 /* TODO: return error */
             }
 
-            /* TODO: verify bundle sequence collection */
-
             break;
     }
 
     /* Exit admin record array */
     Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    if (Status != BPLIB_SUCCESS)
+    {
+        /* TODO: return error */
+    }
+
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* parsed)
+{
+    BPLib_Status_t Status;
+    size_t         ItemLen;
+    uint64_t       SeqRangeIdx;
+
+    if ((ctx == NULL) || (parsed == NULL))
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    /* Enter disposition codes, bundle sequence collections map */
+    Status = BPLib_QCBOR_EnterMap(ctx, &ItemLen);
+    if (Status != BPLIB_SUCCESS)
+    {
+        /* TODO: return error */
+    }
+
+    /* Verify that only supported disposition codes are present */
+    if (ItemLen > BPLIB_CT_MAX_SEQ_COLLECTIONS)
+    {
+        /* TODO: return error */
+    }
+
+    /* Get SeqId */
+    Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(parsed->SeqId));
+    if (Status != BPLIB_SUCCESS)
+    {
+        /* TODO: return error */
+    }
+
+    /* Get FirstSeqNum */
+    Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(parsed->FirstSeqNum));
+    if (Status != BPLIB_SUCCESS)
+    {
+        /* TODO: return error */
+    }
+
+    /* Get SeqRange[BPLIB_CT_MAX_SEQ_RANGE_LEN] */
+    BPLib_QCBOR_EnterDefiniteArray(ctx, &(parsed->SeqRangeLen));
+
+    /* Check that the length of the bundle sequence range is within bounds */
+    if (parsed->SeqRangeLen > BPLIB_CT_MAX_SEQ_RANGE_LEN)
+    {
+        /* TODO: return error */
+    }
+
+    for (SeqRangeIdx = 0; SeqRangeIdx < parsed->SeqRangeLen; SeqRangeIdx++)
+    {
+        Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(parsed->SeqRange[SeqRangeIdx]));
+        if (Status != BPLIB_SUCCESS)
+        {
+            /* TODO: return error */
+        }
+    }
+
+    BPLib_QCBOR_ExitDefiniteArray(ctx);
+
+    /* Jam LastSeqNumAdded to a dummy value */
+    parsed->LastSeqNumAdded = 0;
+
+    /* Get DispositionCode */
+
+    /* Exit the admin record map */
+    Status = BPLib_QCBOR_ExitMap(ctx);
     if (Status != BPLIB_SUCCESS)
     {
         /* TODO: return error */
