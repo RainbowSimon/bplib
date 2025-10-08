@@ -28,10 +28,15 @@
 #include "bplib_api_types.h"
 #include "bplib_cfg.h"
 #include "bplib_eid.h"
+#include "bplib_ct.h"
 
-/*
-** CRS Table
-*/
+/* ======== */
+/* Typedefs */
+/* ======== */
+
+/**
+ * \brief CRS configuration member
+ */
 typedef struct
 {
     BPLib_EID_t DestEID;
@@ -39,14 +44,55 @@ typedef struct
     uint32_t    SizeTrigger;
 } BPLib_ARP_CRSSet_t;
 
+/**
+ * \brief CRS configuration
+ */
 typedef struct
 {
     BPLib_ARP_CRSSet_t CRS_Set[BPLIB_MAX_NUM_CRS];
 } BPLib_ARP_CRSTable_t;
 
-/*
-** Exported Functions
-*/
+/**
+ * \brief Identifiers for standard administrative record ADUs that are used in
+ *        providing some of the features of the Bundle Protocol
+ */
+typedef enum
+{
+    BPLib_CT_BsrRecordTypeCode = 1,
+    /* BPLib_CT_???RecordTypeCode = 2, */
+    BPLib_CT_CrsRecordTypeCode = 3,
+    BPLib_CT_CcsRecordTypeCode = 4,
+
+    /* Others here when applicable */
+} BPLib_ARP_AdminRecordTypeCode_t;
+
+/**
+ * \brief Standard and typically small ADUs that are used in providing some of the
+ *        features of the Bundle Protocol as a response to bundle transmission
+ *        requests presented by nodes' application agents.
+ */
+typedef struct
+{
+    BPLib_ARP_AdminRecordTypeCode_t AdminRecordType; /** \brief Administrative record type */
+    
+    /* Administrative record content map */
+    
+    /**
+     * \brief The key to the disposition key, bundle sequence collection value
+     *        CBOR map that represents a CCS
+     */
+    BPLib_CT_DispositionCode_t DispositionCodes[BPLIB_CT_MAX_SEQ_COLLECTIONS];
+
+    /**
+     * \brief The value to the disposition key, bundle sequence collection value
+     *        CBOR map that represents a CCS
+     */
+    BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
+} BPLib_ARP_AdminRecord_t;
+
+/* =================== */
+/* Function Prototypes */
+/* =================== */
 
 /**
  * \brief Admin Records Processor initialization
