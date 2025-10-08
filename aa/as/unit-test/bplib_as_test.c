@@ -23,6 +23,7 @@
 /* ======== */
 
 #include "bplib_as_test_utils.h"
+#include "bplib_inst.h"
 
 /*
 ** Test function for
@@ -30,7 +31,9 @@
 */
 void Test_BPLib_AS_Init_Nominal(void)
 {
-    UtAssert_INT32_EQ(BPLib_AS_Init(), BPLIB_SUCCESS);
+    BPLib_Instance_t Inst;
+    
+    UtAssert_INT32_EQ(BPLib_AS_Init(&Inst), BPLIB_SUCCESS);
 }
 
 void Test_BPLib_AS_Init_Error(void)
@@ -532,6 +535,8 @@ void Test_BPLib_AS_SendNodeMibReportsHk_Nominal(void)
 {
     BPLib_Status_t Status;
     BPLib_Instance_t Inst;
+
+    memset(&Inst, 0, sizeof(BPLib_Instance_t));
 
     Status = BPLib_AS_SendNodeMibReportsHk(&Inst);
 

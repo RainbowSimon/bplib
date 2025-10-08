@@ -183,14 +183,23 @@ void BPLib_AS_UpdateReportsHkTlm(BPLib_Instance_t *Inst)
 {
     uint8_t i;
     uint64_t CurrTime;
-    uint64_t SecsElapsed;
+    float SecsElapsed;
 
     CurrTime = BPLib_TIME_GetMonotonicTime();
-    SecsElapsed = (CurrTime - Inst->As.LastTlmReqTime) / 1000;
+
+    SecsElapsed = (float)(CurrTime - Inst->As.LastTlmReqTime);
+
+    /* Prevents dividing by zero (this should never happen) */
+    if (SecsElapsed == 0)
+    {
+        SecsElapsed = 1;
+    }
+
+    SecsElapsed = SecsElapsed / 1000.0;
 
     for (i = 0; i < BPLIB_AS_NUM_RATES_TO_REPORT; i++)
     {
-        BPLib_AS_NodeReportsPayload.Rates[i] = Inst->As.CurrRates[i] / SecsElapsed;
+        BPLib_AS_NodeReportsPayload.Rates[i] = (uint64_t) (Inst->As.CurrRates[i] / SecsElapsed);
         Inst->As.CurrRates[i] = 0;
     }
 

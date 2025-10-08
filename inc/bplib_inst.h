@@ -38,8 +38,9 @@
  * @struct BPLib_Instance
  * @brief Represents an instance of bplib
  * 
- * This structure holds the necessary data for queue management, job states, 
- * and memory allocations within BPLib.
+ * This structure holds the necessary data that bplib needs to know its current state.
+ * There's still work to go to make multiple instances of bplib possible but eventually
+ * all state information will be held in here.
  */
 struct BPLib_Instance
 {

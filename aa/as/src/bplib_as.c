@@ -131,20 +131,22 @@ void BPLib_AS_IncrementRate(BPLib_Instance_t *Inst, BPLib_EID_t *EID, BPLib_AS_R
     }
     else if (BPLib_EID_IsMatch(EID, &BPLIB_EID_INSTANCE))
     {
-        /* Prevent modification of counters from other tasks while modifying them */
         BPLib_AS_LockCounters();
 
+        /* 
+        ** Base value of bits/bundles ingressed is tracked here and then when a reports
+        ** HK packet is requested, this value is divided by seconds elapsed to get actual
+        ** rate
+        */
         Inst->As.CurrRates[Rate] += Amount;
 
-        /* Allow counters to be modified by other tasks after operation has finished */
         BPLib_AS_UnlockCounters();
     }
+    /* Potential future extension of per-source reports packet */
     // else
-    // { /* Increment a source counter */
-    //     /* Prevent modification of counters from other tasks while modifying them */
+    // { 
     //     BPLib_AS_LockCounters();
 
-    //     /* Allow counters to be modified by other tasks after operation has finished */
     //     BPLib_AS_UnlockCounters();
     // }
 

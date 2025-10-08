@@ -199,9 +199,10 @@ typedef struct
     int64_t  CorrelationFactor;             /** \brief Time Correlation Factor */
 } BPLib_SourceMibCountersHkTlm_Payload_t;
 
-/*
-** Node MIB Reports Payload
-*/
+/**
+  * \brief  Packet for all MIBs reported values tracked at the per-node level 
+  * \anchor BPLib_NodeMibReportsHkTlm_Payload_t
+  */
 typedef struct
 {
     char     SystemNodeName[BPLIB_MAX_STR_LENGTH];              /** \brief Human readable name given to entity */
@@ -220,7 +221,7 @@ typedef struct
     uint32_t KbytesCountStorageAvailable;                       /** \brief Kilobytes free space left to store additional Bundles */
     uint32_t BundleCountStored;                                 /** \brief Number of bundles currently in storage */
 
-    uint64_t Rates[BPLIB_AS_NUM_RATES_TO_REPORT];
+    uint64_t Rates[BPLIB_AS_NUM_RATES_TO_REPORT];               /** \brief Array of different rates to track */
 
     uint32_t Spare;
     uint32_t NodeStartupCounter;                                /** \brief Node startup counter */
@@ -229,6 +230,10 @@ typedef struct
 
 } BPLib_NodeMibReportsHkTlm_Payload_t;
 
+/**
+  * \brief  Context information for an instance of AS
+  * \anchor BLib_AS_Context_t
+  */
 typedef struct 
 {
     uint64_t CurrRates[BPLIB_AS_NUM_RATES_TO_REPORT];
@@ -246,7 +251,7 @@ typedef struct
  * \brief     Instantiate a mutex to guard access to counters and initialize counter payloads
  * \details   Admin Statistics initialization
  * \note      Only returns BPLIB_SUCCESS for now
- * \param[in] void No arguments accepted
+ * \param[in] Inst Pointer to the bplib instance
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Initialization was successful
  */
@@ -412,6 +417,15 @@ BPLib_Status_t BPLib_AS_SendNodeMibReportsHk(BPLib_Instance_t *Inst);
  */
 BPLib_Status_t BPLib_AS_AddMibArrayKey(const BPLib_EID_Pattern_t* EID_Patterns);
 
+/**
+  * \brief     Increment a provided rate calculation
+  * \details   Rates are tracked locally and cumulatively and then averaged when a Node MIB
+  *            Reports packet is requested
+ * \param[in]  Inst Pointer to bplib instance data
+ * \param[in]  EID Pointer to EID associated with this rate
+ * \param[in]  Rate Enumeration identifying the specific rate to increment
+ * \param[in]  Amount Amount to add to a rate's base value
+  */
 void BPLib_AS_IncrementRate(BPLib_Instance_t *Inst, BPLib_EID_t *EID, BPLib_AS_RateReport_t Rate, uint64_t Amount);
 
 #endif /* BPLIB_AS_H */
