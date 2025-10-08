@@ -40,6 +40,7 @@
 #define BPLIB_AS_NUM_NODE_CNTRS      (69u)                    /** \brief Number of node counters (also total number of counters) */
 #define BPLIB_AS_NUM_SOURCE_CNTRS    (51u)                    /** \brief Number of source counters */
 #define BPLIB_AS_NODE_CNTR_INDICATOR (BPLIB_MAX_NUM_MIB_SETS) /** \brief Indicates that only the node counter passed in should be modified, not the source counter */
+#define BPLIB_AS_NUM_RATES_TO_REPORT (10u)                    /** \brief Number of rate calculations to report */
 
 /* ======= */
 /* Typdefs */
@@ -125,6 +126,10 @@ typedef enum
     BUNDLE_COUNT_RECEIVED_CRS              = 68, /** \brief Number of Compressed Reporting Signals (CRSs) received since last counter reset. */
 } BPLib_AS_Counter_t;
 
+/**
+ * \brief  Rate calculations to report
+ * \anchor BPLib_AS_RateReport_t
+ */
 typedef enum
 {
     BUNDLE_INGRESS_RATE_BITS_PER_SEC = 0,             /** \brief Rate of bundles received from CLAs in bits per second */
@@ -133,14 +138,12 @@ typedef enum
     BUNDLE_EGRESS_RATE_BUNDLES_PER_SEC = 3,           /** \brief Rate of bundles forwarded from CLAs in bundles per second */
     ADU_RECV_RATE_BITS_PER_SEC = 4,                   /** \brief Rate of ADUs ingested locally in bits per second */
     ADU_RECV_RATE_BUNDLES_PER_SEC = 5,                /** \brief Rate of ADUs ingested locally in bundles per second */
-    ADU_DELIVERY_RATE_BITS_PER_SEC = 6,               /** \brief Rate of ADUs delivered locally in bits per second */
-    ADU_DELIVERY_RATE_BUNDLES_PER_SEC = 7,            /** \brief Rate of ADUs delivered locally in bundles per second */
+    ADU_DLVR_RATE_BITS_PER_SEC = 6,                   /** \brief Rate of ADUs delivered locally in bits per second */
+    ADU_DLVR_RATE_BUNDLES_PER_SEC = 7,                /** \brief Rate of ADUs delivered locally in bundles per second */
     BUNDLE_INGRESS_REJECT_RATE_BITS_PER_SEC = 8,      /** \brief Rate of bundles received from CLAs in bits per second and then rejected */
-    BUNDLE_INGRESS_REJECT_RATE_BUNDEES_PER_SEC = 9,   /** \brief Rate of bundles received from CLAs in bundles per second and then rejected */
+    BUNDLE_INGRESS_REJECT_RATE_BUNDLES_PER_SEC = 9,   /** \brief Rate of bundles received from CLAs in bundles per second and then rejected */
 
 } BPLib_AS_RateReport_t;
-
-#define BPLIB_AS_NUM_RATES_TO_REPORT                  10
 
 /**
  * \brief  Node MIB counters housekeeping payload

@@ -191,6 +191,7 @@ void BPLib_AS_UpdateReportsHkTlm(BPLib_Instance_t *Inst)
     for (i = 0; i < BPLIB_AS_NUM_RATES_TO_REPORT; i++)
     {
         BPLib_AS_NodeReportsPayload.Rates[i] = Inst->As.CurrRates[i] / SecsElapsed;
+        Inst->As.CurrRates[i] = 0;
     }
 
     Inst->As.LastTlmReqTime = CurrTime;
