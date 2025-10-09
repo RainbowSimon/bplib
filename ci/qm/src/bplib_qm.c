@@ -272,11 +272,11 @@ bool BPLib_QM_IsDuctActive(BPLib_Instance_t* Inst, uint32_t EgressID, bool Local
         /* NULL PTR ERROR will be caught in DuctPull */
         return true;
     }
-    if (LocalDelivery && EgressID >= BPLIB_MAX_NUM_CHANNELS)
+    if (LocalDelivery && (EgressID >= BPLIB_MAX_NUM_CHANNELS))
     {
         return false;
     }
-    if (!LocalDelivery && EgressID >= BPLIB_MAX_NUM_CONTACTS)
+    if (!LocalDelivery && (EgressID >= BPLIB_MAX_NUM_CONTACTS))
     {
         return false;
     }
@@ -294,7 +294,7 @@ bool BPLib_QM_IsDuctActive(BPLib_Instance_t* Inst, uint32_t EgressID, bool Local
         DuctQueue = &(Inst->ContactEgressJobs[EgressID]);
     }
 
-    return DuctActive && !BPLib_QM_WaitQueueIsEmpty(DuctQueue);
+    return (DuctActive && !BPLib_QM_WaitQueueIsEmpty(DuctQueue));
 }
 
 BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery,
@@ -312,11 +312,11 @@ BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool
         return BPLIB_NULL_PTR_ERROR;
     }
     *RetBundle = NULL;
-    if (LocalDelivery && EgressID >= BPLIB_MAX_NUM_CHANNELS)
+    if (LocalDelivery && (EgressID >= BPLIB_MAX_NUM_CHANNELS))
     {
         return BPLIB_STOR_PARAM_ERR;
     }
-    if (!LocalDelivery && EgressID >= BPLIB_MAX_NUM_CONTACTS)
+    if (!LocalDelivery && (EgressID >= BPLIB_MAX_NUM_CONTACTS))
     {
         return BPLIB_STOR_PARAM_ERR;
     }
