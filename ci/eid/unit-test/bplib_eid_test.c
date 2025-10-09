@@ -28,6 +28,11 @@
 /* Function Definitions */
 /* ==================== */
 
+void Test_BPLib_EID_IsValid_Null(void)
+{
+    UtAssert_BOOL_FALSE(BPLib_EID_IsValid(NULL));
+}
+
 void Test_BPLib_EID_IsValid_DTN_Nominal(void)
 {
     EID_Actual.Scheme       = BPLIB_EID_SCHEME_DTN;
@@ -152,6 +157,12 @@ void Test_BPLib_EID_IsValid_Format_Error(void)
     EID_Actual.IpnSspFormat = 5;
 
     UtAssert_BOOL_FALSE(BPLib_EID_IsValid(&EID_Actual));
+}
+
+void Test_BPLib_EID_PatternIsMatch_Null(void)
+{
+    UtAssert_BOOL_FALSE(BPLib_EID_PatternIsMatch(NULL, &EID_Pattern));
+    UtAssert_BOOL_FALSE(BPLib_EID_PatternIsMatch(&EID_Actual, NULL));
 }
 
 void Test_BPLib_EID_Pattern_IsMatch_Nominal(void)
@@ -350,6 +361,12 @@ void Test_BPLib_EID_Pattern_IsMatch_InvalidRanges_Error(void)
     UtAssert_BOOL_FALSE(BPLib_EID_PatternIsMatch(&EID_Actual, &EID_Pattern));
 }
 
+void Test_BPLib_EID_IsMatch_Null(void)
+{
+    UtAssert_BOOL_FALSE(BPLib_EID_IsMatch(NULL, &EID_Reference));
+    UtAssert_BOOL_FALSE(BPLib_EID_IsMatch(&EID_Actual, NULL));
+}
+
 void Test_BPLib_EID_IsMatch_Nominal(void)
 {
     EID_Actual.Scheme       = BPLIB_EID_SCHEME_DTN;
@@ -429,6 +446,14 @@ void Test_BPLib_EID_IsMatch_MismatchService_Error(void)
     EID_Reference.Service      = 4;
 
     UtAssert_BOOL_FALSE(BPLib_EID_IsMatch(&EID_Actual, &EID_Reference));
+}
+
+void Test_BPLib_EID_NodeIsMatch_Null(void)
+{
+    BPLib_EID_t EID;
+
+    UtAssert_BOOL_FALSE(BPLib_EID_NodeIsMatch(NULL, &EID));
+    UtAssert_BOOL_FALSE(BPLib_EID_NodeIsMatch(&EID, NULL));
 }
 
 void Test_BPLib_EID_NodeIsMatch_Nominal(void)
@@ -576,6 +601,11 @@ void Test_BPLib_EID_CopyEidPatterns_Nominal(void)
     UtAssert_EQ(uint64_t, Actual.MinService, Ref.MinService);
 }
 
+void Test_BPLib_EID_PatternIsValid_Null(void)
+{
+    UtAssert_BOOL_FALSE(BPLib_EID_PatternIsValid(NULL));
+}
+
 void Test_BPLib_EID_PatternIsValid_Nominal(void)
 {
     BPLib_EID_Pattern_t Pattern;
@@ -686,6 +716,14 @@ void Test_BPLib_EID_PatternIsValid_InvFormat(void)
     Pattern.MinService = 9;
 
     UtAssert_BOOL_FALSE(BPLib_EID_PatternIsValid(&Pattern));
+}
+
+void Test_BPLib_EID_PatternsAreMatch_Null(void)
+{
+    BPLib_EID_Pattern_t EID;
+
+    UtAssert_BOOL_FALSE(BPLib_EID_PatternsAreMatch(NULL, &EID));
+    UtAssert_BOOL_FALSE(BPLib_EID_PatternsAreMatch(&EID, NULL));
 }
 
 void Test_BPLib_EID_PatternsAreMatch_Nominal(void)
@@ -1073,6 +1111,7 @@ void Test_BPLib_EID_GetString_InvScheme(void)
 
 void TestBplibEid_Register(void)
 {
+    ADD_TEST(Test_BPLib_EID_IsValid_Null);
     ADD_TEST(Test_BPLib_EID_IsValid_DTN_Nominal);
     ADD_TEST(Test_BPLib_EID_IsValid_IPN2D_None_Nominal);
     ADD_TEST(Test_BPLib_EID_IsValid_IPN2D_Nominal);
@@ -1086,6 +1125,7 @@ void TestBplibEid_Register(void)
     ADD_TEST(Test_BPLib_EID_IsValid_IPN2dService_Error);
     ADD_TEST(Test_BPLib_EID_IsValid_Format_Error);
 
+    ADD_TEST(Test_BPLib_EID_PatternIsMatch_Null);
     ADD_TEST(Test_BPLib_EID_Pattern_IsMatch_Nominal);
     ADD_TEST(Test_BPLib_EID_Pattern_IsMatch_AllocatorWildcard_Nominal);
     ADD_TEST(Test_BPLib_EID_Pattern_IsMatch_NodeWildcard_Nominal);
@@ -1097,6 +1137,7 @@ void TestBplibEid_Register(void)
     ADD_TEST(Test_BPLib_EID_Pattern_IsMatch_ServiceMismatch_Error);
     ADD_TEST(Test_BPLib_EID_Pattern_IsMatch_InvalidRanges_Error);
 
+    ADD_TEST(Test_BPLib_EID_IsMatch_Null);
     ADD_TEST(Test_BPLib_EID_IsMatch_Nominal);
     ADD_TEST(Test_BPLib_EID_IsMatch_MismatchScheme_Error);
     ADD_TEST(Test_BPLib_EID_IsMatch_MismatchIpnSspFormat_Error);
@@ -1104,6 +1145,7 @@ void TestBplibEid_Register(void)
     ADD_TEST(Test_BPLib_EID_IsMatch_MismatchNode_Error);
     ADD_TEST(Test_BPLib_EID_IsMatch_MismatchService_Error);
 
+    ADD_TEST(Test_BPLib_EID_NodeIsMatch_Null);
     ADD_TEST(Test_BPLib_EID_NodeIsMatch_Nominal);
     ADD_TEST(Test_BPLib_EID_NodeIsMatch_DiffAlloc);
     ADD_TEST(Test_BPLib_EID_NodeIsMatch_DiffFormat);
@@ -1116,6 +1158,7 @@ void TestBplibEid_Register(void)
     ADD_TEST(Test_BPLib_EID_CopyEidPatterns_Null);
     ADD_TEST(Test_BPLib_EID_CopyEidPatterns_Nominal);
 
+    ADD_TEST(Test_BPLib_EID_PatternIsValid_Null);
     ADD_TEST(Test_BPLib_EID_PatternIsValid_Nominal);
     ADD_TEST(Test_BPLib_EID_PatternIsValid_IpnThree);
     ADD_TEST(Test_BPLib_EID_PatternIsValid_InvAlloc);
@@ -1124,6 +1167,7 @@ void TestBplibEid_Register(void)
     ADD_TEST(Test_BPLib_EID_PatternIsValid_InvScheme);
     ADD_TEST(Test_BPLib_EID_PatternIsValid_InvFormat);
 
+    ADD_TEST(Test_BPLib_EID_PatternsAreMatch_Null);
     ADD_TEST(Test_BPLib_EID_PatternsAreMatch_Nominal);
     ADD_TEST(Test_BPLib_EID_PatternsAreMatch_DiffScheme);
     ADD_TEST(Test_BPLib_EID_PatternsAreMatch_DiffFormat);
