@@ -431,6 +431,13 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         return BPLIB_BUF_LEN_ERROR;
     }
 
+    if (Inst->BundleStorage.BytesStorageInUse >= BPLIB_MAX_STORED_BUNDLE_BYTES)
+    {
+        BPLib_EM_SendEvent(BPLIB_PI_INGRESS_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "[ADU In #%d]: Cannot ingress ADU, no storage left", ChanId);
+        return BPLIB_NO_STOR_ERR;
+    }
+
     /* Allocate Bundle based on AduSize */
     NewBundle = BPLib_MEM_BundleAlloc(&Inst->pool, (const void*)AduPtr, AduSize);
     if (NewBundle == NULL)
