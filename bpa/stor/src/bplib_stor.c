@@ -310,11 +310,12 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
         return BPLIB_NULL_PTR_ERROR;
     }
 
-    if (BPLib_QM_IsIngressIdle(Inst) == false)
+    if (BPLib_QM_IsSystemIdle(Inst) == false)
     {
-        /* Avoid searching the DB if the unsorted jobs queue (which is the ingress queue) isn't empty
+        /* 
+        ** Avoid searching the DB if any of the ingress/egress queues are not empty.
         ** Note: this is a pretty critical performance optimization that allows bplib
-        ** to use all of its CPU resources for ingress.
+        ** to use all of its CPU resources for ingress and egress.
         */
         return BPLIB_SUCCESS;
     }
@@ -477,6 +478,11 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst)
 {
     BPLib_Status_t Status;
+
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
 
     BPLib_EM_SendEvent(BPLIB_STOR_CLEANUP_INF_EID, BPLib_EM_EventType_INFORMATION,
             "Beginning storage cleanup. This may take a while and may interrupt any pending storage operations.");

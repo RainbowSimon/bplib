@@ -99,6 +99,7 @@ void BPLib_STOR_Test_Setup(void)
     BPLib_NC_ConfigPtrs.ChanConfigPtr = &TestChanTbl;
     BPLib_NC_ConfigPtrs.ContactsConfigPtr = &TestContTbl;
     BPLib_FWP_ProxyCallbacks.BPA_TIMEP_GetHostTime = BPA_TIMEP_GetHostTime;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_IsSystemIdle), (UT_IntReturn_t) true);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_IsIngressIdle), (UT_IntReturn_t) true);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_WaitQueueTryPush), (UT_IntReturn_t) true);
 
