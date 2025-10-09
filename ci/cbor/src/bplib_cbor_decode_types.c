@@ -77,7 +77,7 @@ BPLib_Status_t BPLib_QCBOR_ExitDefiniteArray(QCBORDecodeContext* ctx)
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_QCBOR_EnterMap(QCBORDecodeContext* Context, size_t* MapLen)
+BPLib_Status_t BPLib_QCBOR_EnterMap(QCBORDecodeContext* Context, QCBORItem* MapItem)
 {
     QCBORError QStatus;
     QCBORItem  Map;
@@ -99,12 +99,9 @@ BPLib_Status_t BPLib_QCBOR_EnterMap(QCBORDecodeContext* Context, size_t* MapLen)
     /* Ensure that this is a definite map */
     if (Map.val.uCount > QCBOR_MAX_ITEMS_IN_ARRAY)
     {
-        *MapLen = 0;
+        Map.val.uCount = 0;
         /* TODO: return error */
     }
-
-    /* Now it is safe to conclude this is a definite map */
-    *MapLen = Map.val.uCount;
 
     return BPLIB_SUCCESS;
 }
@@ -470,68 +467,79 @@ BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* parsed)
+BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* Parsed)
 {
-    BPLib_Status_t Status;
-    size_t         ItemLen;
-    uint64_t       SeqRangeIdx;
+    BPLib_Status_t                 Status;
+    QCBORItem                      Map;
+    uint64_t                       SeqRangeIdx;
+    uint64_t                       DecodingCollectionIdx;
+    BPLib_CT_BundleSeqCollection_t PlaceholderCollection;
+    uint8_t                        DispositionIdx;
 
-    if ((ctx == NULL) || (parsed == NULL))
+    if ((ctx == NULL) || (Parsed == NULL))
     {
         return BPLIB_NULL_PTR_ERROR;
     }
 
     /* Enter disposition codes, bundle sequence collections map */
-    Status = BPLib_QCBOR_EnterMap(ctx, &ItemLen);
+    Status = BPLib_QCBOR_EnterMap(ctx, &Map);
     if (Status != BPLIB_SUCCESS)
     {
         /* TODO: return error */
     }
 
     /* Verify that only supported disposition codes are present */
-    if (ItemLen > BPLIB_CT_MAX_SEQ_COLLECTIONS)
+    if (Map.val.uCount > BPLIB_CT_MAX_SEQ_COLLECTIONS)
     {
         /* TODO: return error */
     }
 
-    /* Get SeqId */
-    Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(parsed->SeqId));
-    if (Status != BPLIB_SUCCESS)
+    for (DecodingCollectionIdx = 0; DecodingCollectionIdx < Map.val.uCount; DecodingCollectionIdx++)
     {
-        /* TODO: return error */
-    }
-
-    /* Get FirstSeqNum */
-    Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(parsed->FirstSeqNum));
-    if (Status != BPLIB_SUCCESS)
-    {
-        /* TODO: return error */
-    }
-
-    /* Get SeqRange[BPLIB_CT_MAX_SEQ_RANGE_LEN] */
-    BPLib_QCBOR_EnterDefiniteArray(ctx, &(parsed->SeqRangeLen));
-
-    /* Check that the length of the bundle sequence range is within bounds */
-    if (parsed->SeqRangeLen > BPLIB_CT_MAX_SEQ_RANGE_LEN)
-    {
-        /* TODO: return error */
-    }
-
-    for (SeqRangeIdx = 0; SeqRangeIdx < parsed->SeqRangeLen; SeqRangeIdx++)
-    {
-        Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(parsed->SeqRange[SeqRangeIdx]));
+        /* === Find SeqId === */
+        Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(PlaceholderCollection.SeqId));
         if (Status != BPLIB_SUCCESS)
         {
             /* TODO: return error */
         }
+
+        /* === Assign FirstSeqNum === */
+        Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(PlaceholderCollection.FirstSeqNum));
+        if (Status != BPLIB_SUCCESS)
+        {
+            /* TODO: return error */
+        }
+
+        /* === Populate SeqRange === */
+        BPLib_QCBOR_EnterDefiniteArray(ctx, &(PlaceholderCollection.SeqRangeLen));
+
+        /* Check that the length of the bundle sequence range is within bounds */
+        if (PlaceholderCollection.SeqRangeLen > BPLIB_CT_MAX_SEQ_RANGE_LEN)
+        {
+            /* TODO: return error */
+        }
+
+        for (SeqRangeIdx = 0; SeqRangeIdx < PlaceholderCollection.SeqRangeLen; SeqRangeIdx++)
+        {
+            Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(PlaceholderCollection.SeqRange[SeqRangeIdx]));
+            if (Status != BPLIB_SUCCESS)
+            {
+                /* TODO: return error */
+            }
+        }
+
+        BPLib_QCBOR_ExitDefiniteArray(ctx);
+
+        /* === Jam LastSeqNumAdded to an innocuous initial value === */
+        PlaceholderCollection.LastSeqNumAdded = 0;
+
+        /* === Set DispositionCode === */
+        PlaceholderCollection.DispositionCode = Map.label.int64;
+
+        /* Copy the parsed bundle sequence collection into the provided bundle sequence collection array */
+        DispositionIdx = BPLib_ARP_GetDispCodeIdx(PlaceholderCollection.DispositionCode);
+        memcpy((void*) &Parsed[DispositionIdx], (void*) &PlaceholderCollection, sizeof(BPLib_CT_BundleSeqCollection_t));
     }
-
-    BPLib_QCBOR_ExitDefiniteArray(ctx);
-
-    /* Jam LastSeqNumAdded to a dummy value */
-    parsed->LastSeqNumAdded = 0;
-
-    /* Get DispositionCode */
 
     /* Exit the admin record map */
     Status = BPLib_QCBOR_ExitMap(ctx);
