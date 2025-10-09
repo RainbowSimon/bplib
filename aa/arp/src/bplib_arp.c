@@ -48,3 +48,9 @@ BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData)
 
     return ReturnCode;
 }
+
+BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t DispositionCode)
+{
+    /* true == 1 and false == 0 */
+    return (DispositionCode - (uint8_t)(DispositionCode > 0)) - BPLib_CT_LastRefuseDispCode;
+}

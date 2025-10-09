@@ -85,8 +85,10 @@
  */
 typedef enum
 {
-    BPLib_CT_CustodyAccepted = 1,
-    BPLib_CT_CustodyRefused = -1
+    BPLib_CT_CustodyAccepted     = 1,
+    BPLib_CT_CustodyRefused      = -1,
+    BPLib_CT_FirstAcceptDispCode = BPLib_CT_CustodyAccepted,
+    BPLib_CT_LastRefuseDispCode  = BPLib_CT_CustodyRefused,
 } BPLib_CT_DispositionCode_t;
 
 /**

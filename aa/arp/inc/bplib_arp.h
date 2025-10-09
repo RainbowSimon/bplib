@@ -74,9 +74,9 @@ typedef enum
 typedef struct
 {
     BPLib_ARP_AdminRecordTypeCode_t AdminRecordType; /** \brief Administrative record type */
-    
+
     /* Administrative record content map */
-    
+
     /**
      * \brief The value to the disposition key, bundle sequence collection value
      *        CBOR map that represents a CCS. The actual key (disposition code) is
@@ -110,7 +110,7 @@ int BPLib_ARP_Init(void);
  *       Validate configuration table parameters
  *
  *  \par Assumptions, External Events, and Notes:
- *       - This function is called by whatever external task handles table management. 
+ *       - This function is called by whatever external task handles table management.
  *         Every time a new CRS table is loaded, this function should be called to
  *         validate its parameters.
  *
@@ -121,5 +121,20 @@ int BPLib_ARP_Init(void);
  * \retval    BPLIB_TABLE_OUT_OF_RANGE_ERR_CODE: table parameters are out of range
  */
 BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData);
+
+/**
+ * \brief     Convert the disposition code into an index into a bundle sequence collection array
+ * \note      This only works if disposition codes are contiguous
+ * \details   In order to turn a semi-contiguous list of disposition codes into an
+ *            index we just need to make the most negative number into 0. This
+ *            doesn't take into account the fact that 0 is skipped though, so we
+ *            must check if the number is positive and, if so, shift the value back
+ *            by 1 to make the index contiguous.
+ * \param[in] DispositionCode The dispoisition code of a custody signal
+ * \return    Index into a Bundle Sequence Collection array that maps the
+ *            disposition code value to the Bundle Sequence Collection associated
+ *            with that disposition code
+ */
+BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t DispositionCode);
 
 #endif /* BPLIB_ARP_H */
