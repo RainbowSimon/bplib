@@ -18,16 +18,16 @@
  *
  */
 
-/*
-** Include
-*/
+/* ======== */
+/* Includes */
+/* ======== */
 
 #include "bplib_arp.h"
+#include "bplib_as.h"
 
-
-/*
-** Function Definitions
-*/
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
 
 int BPLib_ARP_Init(void) {
     return BPLIB_SUCCESS;
@@ -53,4 +53,32 @@ BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t 
 {
     /* true == 1 and false == 0 */
     return (DispositionCode - (uint8_t)(DispositionCode > 0)) - BPLib_CT_LastRefuseDispCode;
+}
+
+BPLib_Status_t BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord)
+{
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
+
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord)
+{
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
+
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord)
+{
+    BPLib_Status_t Status;
+    uint8_t GenWorkerIdx;
+
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
+
+    /* Fire up generic worker to decode admin record, passing in admin record struct */
+    StartGenWorker()
+
+    /**/
 }

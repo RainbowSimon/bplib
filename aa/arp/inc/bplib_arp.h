@@ -137,4 +137,29 @@ BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData);
  */
 BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t DispositionCode);
 
+/**
+ * \brief     Counts and discards the Bundle Status Report
+ * \param[in] AdminRecord Decoded Bundle Status Report administrative record
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * TODO: Other return values
+ */
+BPLib_Status_t BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord);
+
+/**
+ * \brief     Counts and discards the Compressed Reporting Signal
+ * \param[in] AdminRecord Decoded Compressed Reporting Signal administrative record
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * TODO: Other return values
+ */
+BPLib_Status_t BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord);
+
+/**
+ * \brief     Passthrough to BPLib_CT_ProcessCcs
+ * \param[in] AdminRecord Decoded Compressed Custody Signal administrative record
+ * \return    Execution status of BPLib_CT_ProcessCcs
+ */
+BPLib_Status_t BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord);
+
 #endif /* BPLIB_ARP_H */
