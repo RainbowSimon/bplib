@@ -64,6 +64,13 @@ struct _CustodyBlockDataParser
     QCBOR_EIDParser    BlockSrcAdminEidParser;
 };
 
+/* Administrative Record Parser */
+struct _AdminRecordParser
+{
+    QCBOR_UInt64Parser             RecordTypeParser;
+    QCBOR_AdminRecordContentParser ContentParser;
+};
+
 static struct _CanonicalBlockBaseParser CanonicalBlockParser = {
     .BlockTypeParser = BPLib_QCBOR_UInt64ParserImpl,
     .BlockNumberParser = BPLib_QCBOR_UInt64ParserImpl,
@@ -92,6 +99,11 @@ static struct _CustodyBlockDataParser CustodyBlockDataParser = {
     .BundleSeqNumParser     = BPLib_QCBOR_UInt64ParserImpl,
     .BundleSeqIdParser      = BPLib_QCBOR_UInt64ParserImpl,
     .BlockSrcAdminEidParser = BPLib_QCBOR_EidDtnNoneParserImpl,
+};
+
+static struct _AdminRecordParser AdminRecordDataParser = {
+    .RecordTypeParser  = BPLib_QCBOR_UInt64ParserImpl,
+    .ContentParser     = BPLib_QCBOR_AdminRecordParserImpl,
 };
 
 /*******************************************************************************
@@ -142,7 +154,45 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     /* Once we know the block type, we can be smarter about decoding data directly into `bundle` */
     if (BlockType == BPLib_BlockType_Payload)
     {
-        CanonicalBlockHdr = &bundle->blocks.PayloadHeader;
+        if (bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
+        {
+            BPLib_ARP_AdminRecord_t AdminRecord;
+            size_t                  ArrLen;
+
+            /* Enter admin record array */
+            Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrLen);
+            if (Status != BPLIB_SUCCESS)
+            {
+                return BPLIB_CBOR_DEC_CANON_ADMIN_REC_ENTER_ARR_ERR;
+            }
+
+            /* Parse admin record type */
+            Status = AdminRecordDataParser.RecordTypeParser(ctx, &(AdminRecord.AdminRecordType));
+            if (Status != BPLIB_SUCCESS)
+            {
+                return BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR;
+            }
+
+            /* Parse admin record content */
+            Status = AdminRecordDataParser.ContentParser(ctx, &AdminRecord);
+            if (Status != BPLIB_SUCCESS)
+            {
+                return BPLIB_CBOR_DEC_CANON_ADMIN_REC_CONT_ERR;
+            }
+
+            /* Exit admin record array */
+            Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+            if (Status != BPLIB_SUCCESS)
+            {
+                return BPLIB_CBOR_DEC_CANON_ADMIN_REC_EXIT_ARR_ERR;
+            }
+
+            return Status;
+        }
+        else
+        {
+            CanonicalBlockHdr = &bundle->blocks.PayloadHeader;
+        }
     }
     else
     {

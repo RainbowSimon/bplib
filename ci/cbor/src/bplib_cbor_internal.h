@@ -137,15 +137,16 @@ typedef BPLib_Status_t (*QCBOR_CRCParser)(QCBORDecodeContext* ctx, uint64_t* par
                                             uint64_t crc_type);
 
 /**
- * \brief     Function pointer for a function that decodes an administrative record
+ * \brief     Function pointer for a function that decodes the type-specific
+ *            format for the contents of the administrative record
  * \param[in] ctx    QCBOR decode context instance pointer
  * \param[in] parsed pointer to the field that needs to be filled with decoded data
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
-typedef BPLib_Status_t (*QCBOR_AdminRecordParser)(QCBORDecodeContext* ctx,
-                                                    BPLib_ARP_AdminRecord_t* parsed);
+typedef BPLib_Status_t (*QCBOR_AdminRecordContentParser)(QCBORDecodeContext* ctx,
+                                                            BPLib_ARP_AdminRecord_t* parsed);
 
 /**
  * \brief     Function pointer for a function that decodes a bundle sequence collection
