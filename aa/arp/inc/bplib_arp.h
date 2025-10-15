@@ -138,28 +138,33 @@ BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData);
 BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t DispositionCode);
 
 /**
- * \brief     Counts and discards the Bundle Status Report
- * \param[in] AdminRecord Decoded Bundle Status Report administrative record
- * \return    Execution status
- * \retval    BPLIB_SUCCESS: Successful execution
- * TODO: Other return values
+ * \brief      Count the Bundle Status Report then overwrite Bundle's user
+ *             data with the administrative record provided
+ * \param[in]  AdminRecord Decoded Bundle Status Report administrative record
+ * \param[out] Bundle      Bundle whose user_data will be overwritten with
+ *                         AdminRecord
+ * \return    void
  */
-BPLib_Status_t BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord);
+void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
 
 /**
- * \brief     Counts and discards the Compressed Reporting Signal
- * \param[in] AdminRecord Decoded Compressed Reporting Signal administrative record
- * \return    Execution status
- * \retval    BPLIB_SUCCESS: Successful execution
- * TODO: Other return values
+ * \brief     Count the Compressed Reporting Signal then overwrite Bundle's user
+ *            data with the administrative record provided
+ * \param[in]  AdminRecord Decoded Compressed Reporting Signal administrative record
+ * \param[out] Bundle      Bundle whose user_data will be overwritten with
+ *                         AdminRecord
+ * \return    void
  */
-BPLib_Status_t BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord);
+void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
 
 /**
- * \brief     Passthrough to BPLib_CT_ProcessCcs
- * \param[in] AdminRecord Decoded Compressed Custody Signal administrative record
- * \return    Execution status of BPLib_CT_ProcessCcs
+ * \brief     Count the Compressed Custody Signal then overwrite Bundle's user
+ *            data with the administrative record provided
+ * \param[in]  AdminRecord Decoded Compressed Custody Signal administrative record
+ * \param[out] Bundle      Bundle whose user_data will be overwritten with
+ *                         AdminRecord
+ * \return    void
  */
-BPLib_Status_t BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord);
+void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
 
 #endif /* BPLIB_ARP_H */

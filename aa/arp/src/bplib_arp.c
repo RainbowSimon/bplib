@@ -36,7 +36,7 @@ int BPLib_ARP_Init(void) {
 /* Validate CRS table data */
 BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData)
 {
-    BPLib_Status_t           ReturnCode = BPLIB_SUCCESS;
+    BPLib_Status_t        ReturnCode = BPLIB_SUCCESS;
     BPLib_ARP_CRSTable_t *TblDataPtr = (BPLib_ARP_CRSTable_t *)TblData;
 
     /* Validate data values are within allowed range */
@@ -55,30 +55,25 @@ BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t 
     return (DispositionCode - (uint8_t)(DispositionCode > 0)) - BPLib_CT_LastRefuseDispCode;
 }
 
-BPLib_Status_t BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord)
+void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
 {
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
 
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord)
+void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
 {
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
 
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord)
+void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
 {
-    BPLib_Status_t Status;
-    uint8_t GenWorkerIdx;
-
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
 
-    /* Fire up generic worker to decode admin record, passing in admin record struct */
-    StartGenWorker()
-
-    /**/
+    /* As of right now, administrative records are 264 bytes; < 512 bytes for user_data */
+    memcpy((void*) &(Bundle->blob->user_data), AdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
 }

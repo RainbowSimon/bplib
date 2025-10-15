@@ -187,7 +187,8 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_EXIT_ARR_ERR;
             }
 
-            Status = BPLib_ARP_ProcessCcs(&AdminRecord);
+            /* Shove the administrative record into the bundle's user data */
+            BPLib_ARP_ProcessCcs(&AdminRecord, bundle);
 
             return Status;
         }
