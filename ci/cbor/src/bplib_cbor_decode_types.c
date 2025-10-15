@@ -427,36 +427,18 @@ BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_
         case BPLib_CT_BsrRecordTypeCode:
             /* TODO: Parse BSR admin record contents */
 
-            Status = BPLib_ARP_ProcessBsr(Parsed);
-            if (Status != BPLIB_SUCCESS)
-            {
-                return Status;
-            }
-
             break;
 
         case BPLib_CT_CrsRecordTypeCode:
             /* TODO: Parse CRS admin record contents */
 
-            Status = BPLib_ARP_ProcessCrs(Parsed);
-            if (Status != BPLIB_SUCCESS)
-            {
-                return Status;
-            }
-
             break;
 
         case BPLib_CT_CcsRecordTypeCode:
-            Status = BPLib_QCBOR_BundleSeqCollectionParserImpl(ctx, Parsed->BundleSeqCollections);
+            Status = BPLib_QCBOR_BundleSeqCollectionParserImpl(ctx, Parsed->BundleSeqCollections, &(Parsed->NumSeqCollections));
             if (Status != BPLIB_SUCCESS)
             {
                 /* Pass on error generated from bundle sequence collection parsing */
-                return Status;
-            }
-
-            Status = BPLib_ARP_ProcessCcs(Parsed);
-            if (Status != BPLIB_SUCCESS)
-            {
                 return Status;
             }
 
@@ -466,7 +448,7 @@ BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* Parsed)
+BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* Parsed, size_t* NumSeqCollections)
 {
     BPLib_Status_t                 Status;
     BPLib_CT_BundleSeqCollection_t PlaceholderCollection;
@@ -487,11 +469,13 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_ENTER_MAP_ERR;
     }
 
-    /* Verify that only supported disposition codes are present */
-    if (Map.val.uCount > BPLIB_CT_MAX_SEQ_COLLECTIONS)
+    /* Verify that more bundle sequence collections than are allowed were received */
+    if (Map.val.uCount > BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS)
     {
         return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_SIZE_ERR;
     }
+
+    *NumSeqCollections = Map.val.uCount;
 
     for (DecodingCollectionIdx = 0; DecodingCollectionIdx < Map.val.uCount; DecodingCollectionIdx++)
     {

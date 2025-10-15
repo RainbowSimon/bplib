@@ -248,14 +248,17 @@ BPLib_Status_t BPLib_QCBOR_CRCParserImpl(QCBORDecodeContext* ctx, uint64_t* pars
 BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_ARP_AdminRecord_t* parsed);
 
 /**
- * \brief     Decodes a bundle sequence collection
- * \param[in] ctx    QCBOR decode context instance pointer
- * \param[in] parsed Pointer to the field that needs to be filled with decoded data
- * \return    Execution status
- * \retval    BPLIB_SUCCESS: Successful execution
- * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
+ * \brief      Decodes a bundle sequence collection
+ * \param[in]  ctx               QCBOR decode context instance pointer
+ * \param[in]  parsed            Pointer to the field that needs to be filled with
+ *                               decoded data
+ * \param[out] NumSeqCollections Number of bundle sequence collections in the
+ *                               disposition code, bundle sequence collection map
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Successful execution
+ * \retval     BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
-BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* parsed);
+BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* parsed, size_t* NumSeqCollections);
 
 /**
  * \brief Encodes the primary block data into the output buffer

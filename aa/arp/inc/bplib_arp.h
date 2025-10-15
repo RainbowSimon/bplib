@@ -83,6 +83,7 @@ typedef struct
      *        inside the BPLib_CT_BundleSeqCollection_t struct
      */
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
+    size_t                         NumSeqCollections;
 } BPLib_ARP_AdminRecord_t;
 
 /* =================== */
