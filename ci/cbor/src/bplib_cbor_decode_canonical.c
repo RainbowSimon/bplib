@@ -187,6 +187,8 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_EXIT_ARR_ERR;
             }
 
+            Status = BPLib_ARP_ProcessCcs(&AdminRecord);
+
             return Status;
         }
         else
@@ -533,7 +535,6 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     }
     printf("\t CRC Value: 0x%lX\n", CanonicalBlockHdr->CrcVal);
     #endif
-
 
     return BPLIB_SUCCESS;
 }
