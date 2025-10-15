@@ -167,7 +167,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
             }
 
             /* Parse admin record type */
-            Status = AdminRecordDataParser.RecordTypeParser(ctx, &(AdminRecord.AdminRecordType));
+            Status = AdminRecordDataParser.RecordTypeParser(ctx, (uint64_t*) &(AdminRecord.AdminRecordType));
             if (Status != BPLIB_SUCCESS)
             {
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR;
