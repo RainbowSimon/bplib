@@ -469,7 +469,7 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_ENTER_MAP_ERR;
     }
 
-    /* Verify that more bundle sequence collections than are allowed were received */
+    /* Verify that more bundle sequence collections than are allowed weren't received */
     if (Map.val.uCount > BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS)
     {
         return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_SIZE_ERR;
