@@ -147,8 +147,8 @@ typedef enum
 #define BPLIB_INVALID_CONFIG_ERR                       ((BPLib_Status_t) -15) /* Invalid configuration */
 #define BPLIB_APP_STATE_ERR                            ((BPLib_Status_t) -16) /* Invalid application state */
 #define BPLIB_NOT_FOUND_ERR                            ((BPLib_Status_t) -17) /* Search item not found */
+#define BPLIB_NO_STOR_ERR                              ((BPLib_Status_t) -18) /* No storage remaining */
 /*
-#define BPLIB_GENERIC_ERROR_18                         ((BPLib_Status_t) -18) // Error description
 #define BPLIB_GENERIC_ERROR_19                         ((BPLib_Status_t) -19) // Error description
 #define BPLIB_GENERIC_ERROR_20                         ((BPLib_Status_t) -20) // Error description
 #define BPLIB_GENERIC_ERROR_21                         ((BPLib_Status_t) -21) // Error description
