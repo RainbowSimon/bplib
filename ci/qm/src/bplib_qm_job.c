@@ -52,7 +52,6 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
 
         /* Recover the admin record from the bundle */
         memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.raw_bytes), sizeof(BPLib_ARP_AdminRecord_t));
-        // BundleAdminRecord->AdminRecordType = (BPLib_ARP_AdminRecord_t*) (Bundle->blob->user_data.raw_bytes)->AdminRecordType;
 
         /* Populate the deserialized CCS */
         memcpy((void*) DeserializedCcs.BundleSeqCollections, (void*) (BundleAdminRecord.BundleSeqCollections), sizeof(BPLib_CT_BundleSeqCollection_t));
