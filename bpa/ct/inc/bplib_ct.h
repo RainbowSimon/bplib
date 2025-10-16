@@ -123,7 +123,6 @@ typedef struct
 {
     bool                           InProgress;
     size_t                         Size;
-    BPLib_EID_t                    SourceAdminEid;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
 } BPLib_CT_OpenCcs_t;
 
@@ -132,7 +131,6 @@ typedef struct
  */
 typedef struct
 {
-    BPLib_EID_t                    SourceAdminEid;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS];
     size_t                         NumBundleSeqCollections;
 } BPLib_CT_DeserializedCcs_t;

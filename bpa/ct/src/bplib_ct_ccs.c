@@ -120,8 +120,7 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAd
     {
         /* See if there's already an in progress CCS with the right EID */
         if (Context->OpenCcss[OpenCcsIdx].InProgress == true &&
-            Context->OpenCcss[OpenCcsIdx].BundleSeqCollections->SeqId == SequenceId &&
-            BPLib_EID_IsMatch(&(Context->OpenCcss[OpenCcsIdx].SourceAdminEid), SourceAdminEID))
+            Context->OpenCcss[OpenCcsIdx].BundleSeqCollections->SeqId == SequenceId)
         {
             break;
         }
@@ -148,8 +147,6 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAd
     else if (FirstUnusedCcs != BPLIB_CT_MAX_OPEN_CCS)
     {
         Context->OpenCcss[FirstUnusedCcs].InProgress = true;
-        BPLib_EID_CopyEids(SourceAdminEID, Context->OpenCcss[FirstUnusedCcs].SourceAdminEid);
-        
         RetCcsIdx = FirstUnusedCcs;
     }
     /* No CCSs were available, send the largest one and wipe it to use */
