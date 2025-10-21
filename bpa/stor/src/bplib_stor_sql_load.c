@@ -59,9 +59,13 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     size_t         i;
     sqlite3*       db;
     size_t         MaxWhereLen;
+    size_t         CurrWhereLen;
     char           WhereClause[BPLIB_SQL_MAX_STRLEN] = {0};
-    const char*    FindForEgressIdSQL_RangeClause =
-                    "((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))";
+    const char*    FindForDestNodeSql_RangeClause = "((dest_node BETWEEN ? AND ?) AND";
+    const char*    FindForDestNodeSql_EqualityClause = "((dest_node = ?) AND";
+    const char*    FindForDestServSql_RangeClause = " (dest_service BETWEEN ? AND ?))";
+    const char*    FindForDestServSql_EqalityClause = " (dest_service = ?))";
+    const char**   FindClausePtr;
 
     Status      = BPLIB_SUCCESS;
     db          = Inst->BundleStorage.db;
@@ -86,32 +90,67 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     **  for each DestEID in the EgressID array.
     */
 
-    /*
-    ** There's no risk of overflow here since the size of
-    ** FindForEgressIdSQL_RangeClause is known and much less than the buffer size
-    */
-    strncat(WhereClause, FindForEgressIdSQL_RangeClause, MaxWhereLen);
+    CurrWhereLen = 0;
 
-    for (i = 1; i < NumEIDs; i++)
+    for (i = 0; i < NumEIDs; i++)
     {
-        if ((strlen(WhereClause) + strlen(" OR ")) < MaxWhereLen)
+        /* If maxNode == minNode, do an exact query, otherwise do a range query */
+        if (DestEIDs[i].MaxNode == DestEIDs[i].MinNode)
         {
-            strncat(WhereClause, " OR ", MaxWhereLen - strlen(WhereClause));
+            CurrWhereLen += strlen(FindForDestNodeSql_EqualityClause);
+            FindClausePtr = &FindForDestNodeSql_EqualityClause;
         }
         else
         {
-            fprintf(stderr, "Programming Error: WHERE clause too long\n");
-            return BPLIB_STOR_SQL_OVERFLOW_ERR;
+            CurrWhereLen += strlen(FindForDestNodeSql_RangeClause);
+            FindClausePtr = &FindForDestNodeSql_RangeClause;
         }
 
-        if ((strlen(WhereClause) + strlen(FindForEgressIdSQL_RangeClause)) < MaxWhereLen)
+        if (CurrWhereLen >= MaxWhereLen)
         {
-            strncat(WhereClause, FindForEgressIdSQL_RangeClause, MaxWhereLen - strlen(WhereClause));
+            fprintf(stderr, "Programming Error: Node WHERE clause too long\n");
+            return BPLIB_STOR_SQL_OVERFLOW_ERR;       
         }
         else
         {
-            fprintf(stderr, "Programming Error: WHERE clause too long\n");
+            strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
+        }
+
+        /* If MaxService == MinService, do an exact query, otherwise do a range query */
+        if (DestEIDs[i].MaxService == DestEIDs[i].MinService)
+        {
+            CurrWhereLen += strlen(FindForDestServSql_EqalityClause);
+            FindClausePtr = &FindForDestServSql_EqalityClause;
+        }
+        else
+        {
+            CurrWhereLen += strlen(FindForDestServSql_RangeClause);
+            FindClausePtr = &FindForDestServSql_RangeClause;
+        }
+
+        if (CurrWhereLen >= MaxWhereLen)
+        {
+            fprintf(stderr, "Programming Error: Node WHERE clause too long\n");
             return BPLIB_STOR_SQL_OVERFLOW_ERR;
+        }
+        else
+        {
+            strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
+        }
+
+        if (i != (NumEIDs - 1))
+        {
+            
+            if (CurrWhereLen + strlen(" OR ") >= MaxWhereLen)
+            {
+                fprintf(stderr, "Programming Error: OR WHERE clause too long\n");
+                return BPLIB_STOR_SQL_OVERFLOW_ERR;
+            }
+            else
+            {
+                strncat(WhereClause, " OR ", MaxWhereLen - CurrWhereLen);
+                CurrWhereLen += strlen(" OR ");
+            }
         }
     }
 
@@ -119,7 +158,7 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
 
     /* Build the final query */
     snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN,
-            "SELECT id FROM bundle_data WHERE (%s) AND egress_attempted = 0 ORDER BY action_timestamp ASC LIMIT ?;",
+            "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND egress_attempted = 0 ORDER BY action_timestamp ASC LIMIT ?;",
             WhereClause);
 
     FindForEgressIdSQL[strlen(FindForEgressIdSQL)] = '\0';
@@ -174,11 +213,14 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
             return SQLStatus;
         }
 
-        SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MaxNode);
-        if (SQLStatus != SQLITE_OK)
+        if (DestEIDs[i].MinNode != DestEIDs[i].MaxNode)
         {
-            fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
-            return SQLStatus;
+            SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MaxNode);
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;
+            }
         }
 
         SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MinService);
@@ -188,12 +230,16 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
             return SQLStatus;
         }
 
-        SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MaxService);
-        if (SQLStatus != SQLITE_OK)
+        if (DestEIDs[i].MinService != DestEIDs[i].MaxService)
         {
-            fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
-            return SQLStatus;
+            SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MaxService);
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;
+            }
         }
+
     }
 
     SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, MaxBundles);
