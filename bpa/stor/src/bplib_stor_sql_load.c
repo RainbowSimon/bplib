@@ -20,7 +20,6 @@
 
 #include "bplib_stor_sql.h"
 #include "bplib_stor_sql_load.h"
-#include "bplib_qm.h"
 #include "bplib_stor.h"
 #include "bplib_inst.h"
 

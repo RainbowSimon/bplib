@@ -27,7 +27,6 @@
 #include "bplib_bblocks.h"
 #include "bplib_eid.h"
 #include "bplib_mem.h"
-#include "bplib_qm.h"
 #include "bplib_pdb.h"
 
 /*

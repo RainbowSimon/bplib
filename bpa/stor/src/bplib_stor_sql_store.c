@@ -23,7 +23,6 @@
 /* ======== */
 
 #include "bplib_stor_sql.h"
-#include "bplib_qm.h"
 #include "bplib_as.h"
 #include "bplib_nc.h"
 #include "bplib_stor_sql_store.h"
