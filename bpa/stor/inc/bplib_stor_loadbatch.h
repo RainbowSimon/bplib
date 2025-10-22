@@ -56,6 +56,4 @@ BPLib_Status_t BPLib_STOR_LoadBatch_PeekNextID(BPLib_STOR_LoadBatch_t* Batch, in
 
 BPLib_Status_t BPLib_STOR_LoadBatch_AdvanceReader(BPLib_STOR_LoadBatch_t* Batch);
 
-bool BPLib_STOR_LoadBatch_InProgressEgress(BPLib_Instance_t *Inst);
-
 #endif /* BPLIB_STOR_LOADBATCH_H */

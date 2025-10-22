@@ -18,7 +18,6 @@
  *
  */
 #include "bplib_stor_loadbatch.h"
-#include "bplib_qm.h"
 
 BPLib_Status_t BPLib_STOR_LoadBatch_Init(BPLib_STOR_LoadBatch_t* Batch)
 {
@@ -117,27 +116,4 @@ BPLib_Status_t BPLib_STOR_LoadBatch_AdvanceReader(BPLib_STOR_LoadBatch_t* Batch)
 
     Batch->ReadIndex++;
     return BPLIB_SUCCESS;
-}
-
-bool BPLib_STOR_LoadBatch_InProgressEgress(BPLib_Instance_t *Inst)
-{
-    uint32_t i;
-    
-    for (i = 0; i < BPLIB_MAX_NUM_CONTACTS; i++)
-    {
-        if (Inst->BundleStorage.ContactLoadBatches[i].EgressOpInProgress)
-        {
-            return true;
-        }
-    }
-
-    for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
-    {
-        if (Inst->BundleStorage.ChannelLoadBatches[i].EgressOpInProgress)
-        {
-            return true;
-        }
-    }
-
-    return false;
 }

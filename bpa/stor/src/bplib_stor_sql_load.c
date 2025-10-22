@@ -605,3 +605,26 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
     /* Expecting SQLITE_OK */
     return SQLStatus;
 }
+
+bool BPLib_SQL_InProgressEgress(BPLib_Instance_t *Inst)
+{
+    uint32_t i;
+    
+    for (i = 0; i < BPLIB_MAX_NUM_CONTACTS; i++)
+    {
+        if (Inst->BundleStorage.ContactLoadBatches[i].EgressOpInProgress)
+        {
+            return true;
+        }
+    }
+
+    for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
+    {
+        if (Inst->BundleStorage.ChannelLoadBatches[i].EgressOpInProgress)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}

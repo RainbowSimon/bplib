@@ -309,7 +309,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
     {
         Status = BPLIB_NULL_PTR_ERROR;
     }
-    else if (BPLib_STOR_LoadBatch_InProgressEgress(Inst) == false && BPLib_QM_IsSystemIdle(Inst) == true)
+    else if (BPLib_SQL_InProgressEgress(Inst) == false && BPLib_QM_IsSystemIdle(Inst) == true)
     {
         /* 
         ** Avoid searching the DB if any of the ingress/egress queues are not empty or

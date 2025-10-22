@@ -17,7 +17,6 @@
  * limitations under the License.
  *
  */
-#define BPLIB_STOR_LOADBATCH_H
 
 /**
  * @file
