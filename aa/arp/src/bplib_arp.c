@@ -29,7 +29,8 @@
 /* Function Definitions */
 /* ==================== */
 
-int BPLib_ARP_Init(void) {
+BPLib_Status_t BPLib_ARP_Init(void)
+{
     return BPLIB_SUCCESS;
 }
 
@@ -51,8 +52,11 @@ BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData)
 
 BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t DispositionCode)
 {
-    /* true == 1 and false == 0 */
-    return (DispositionCode - (uint8_t)(DispositionCode > 0)) - BPLib_CT_LastRefuseDispCode;
+    DispositionCode *= -1; /* Make negative/refusal codes go towards the end of the collection */
+    DispositionCode -= (DispositionCode > 0); /* Shift refusal codes down to make codes contiguous */
+    DispositionCode -= BPLib_CT_LastRefuseDispCode; /* Make 0 smallest index */
+
+    return (BPLib_CT_SeqCollectionIdx_t) DispositionCode;
 }
 
 void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
