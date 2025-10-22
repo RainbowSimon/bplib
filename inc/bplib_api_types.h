@@ -304,9 +304,9 @@ typedef enum
 #define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_RNGE_ERR         ((BPLib_Status_t) -197) /* CBOR decode types error: bundle sequence collection sequence range decode */
 #define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_RNGE_EXIT_ERR    ((BPLib_Status_t) -198) /* CBOR decode types error: bundle sequence collection exit sequence range array */
 #define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_EXIT_MAP_ERR     ((BPLib_Status_t) -199) /* CBOR decode types error: bundle sequence collection exit map */
+#define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_ENTR_ARR_ERR ((BPLib_Status_t) -200) /* CBOR decode types error: bundle sequence collection enter entries array error */
+#define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_EXIT_ARR_ERR ((BPLib_Status_t) -201) /* CBOR decode types error: bundle sequence collection exit entries array error */
 /*
-#define BPLIB_CBOR_DEC_GENERIC_ERR_200                 ((BPLib_Status_t) -200) // CBOR decode error
-#define BPLIB_CBOR_DEC_GENERIC_ERR_201                 ((BPLib_Status_t) -201) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_202                 ((BPLib_Status_t) -202) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_203                 ((BPLib_Status_t) -203) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_204                 ((BPLib_Status_t) -204) // CBOR decode error

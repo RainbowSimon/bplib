@@ -480,7 +480,7 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &MapItem);
         if (Status != BPLIB_SUCCESS)
         {
-            /* TODO: return enter array error */
+            return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_ENTR_ARR_ERR;
         }
 
         /* === Find SeqId === */
@@ -540,7 +540,7 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
         if (Status != BPLIB_SUCCESS)
         {
-            /* TODO: return exit array error */
+           return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_EXIT_ARR_ERR;
         }
     }
 
