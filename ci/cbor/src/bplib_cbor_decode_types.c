@@ -80,7 +80,6 @@ BPLib_Status_t BPLib_QCBOR_ExitDefiniteArray(QCBORDecodeContext* ctx)
 BPLib_Status_t BPLib_QCBOR_EnterMap(QCBORDecodeContext* Context, QCBORItem* MapItem)
 {
     QCBORError QStatus;
-    QCBORItem  Map;
 
     if (Context == NULL)
     {
@@ -88,7 +87,7 @@ BPLib_Status_t BPLib_QCBOR_EnterMap(QCBORDecodeContext* Context, QCBORItem* MapI
     }
 
     /* Make sure the next item is a map */
-    QCBORDecode_EnterMap(Context, &Map);
+    QCBORDecode_EnterMap(Context, MapItem);
 
     QStatus = QCBORDecode_GetError(Context);
     if (QStatus != QCBOR_SUCCESS)
@@ -97,10 +96,9 @@ BPLib_Status_t BPLib_QCBOR_EnterMap(QCBORDecodeContext* Context, QCBORItem* MapI
     }
 
     /* Ensure that this is a definite map */
-    if (Map.val.uCount > QCBOR_MAX_ITEMS_IN_ARRAY)
+    if (MapItem->val.uCount > QCBOR_MAX_ITEMS_IN_ARRAY)
     {
-        Map.val.uCount = 0;
-
+        MapItem->val.uCount = 0;
         return BPLIB_CBOR_DEC_TYPES_ENTER_MAP_COUNT_ERR;
     }
 
@@ -453,8 +451,8 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
     BPLib_Status_t                 Status;
     BPLib_CT_BundleSeqCollection_t PlaceholderCollection;
     QCBORItem                      Map;
+    uint64_t                       CollectionIdx;
     uint64_t                       SeqRangeIdx;
-    uint64_t                       DecodingCollectionIdx;
     uint8_t                        DispositionIdx;
 
     if ((ctx == NULL) || (Parsed == NULL))
@@ -477,8 +475,16 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
 
     *NumSeqCollections = Map.val.uCount;
 
-    for (DecodingCollectionIdx = 0; DecodingCollectionIdx < Map.val.uCount; DecodingCollectionIdx++)
+    for (CollectionIdx = 0; CollectionIdx < *NumSeqCollections; CollectionIdx++)
     {
+        memset((void*) &PlaceholderCollection, 0, sizeof(BPLib_CT_BundleSeqCollection_t));
+
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &Map);
+        if (Status != BPLIB_SUCCESS)
+        {
+            /* TODO: return enter array error */
+        }
+
         /* === Find SeqId === */
         Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(PlaceholderCollection.SeqId));
         if (Status != BPLIB_SUCCESS)
@@ -530,6 +536,12 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         /* Copy the parsed bundle sequence collection into the provided bundle sequence collection array */
         DispositionIdx = BPLib_ARP_GetDispCodeIdx(PlaceholderCollection.DispositionCode);
         memcpy((void*) &Parsed[DispositionIdx], (void*) &PlaceholderCollection, sizeof(BPLib_CT_BundleSeqCollection_t));
+
+        Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+        if (Status != BPLIB_SUCCESS)
+        {
+            /* TODO: return exit array error */
+        }
     }
 
     /* Exit the admin record map */
