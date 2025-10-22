@@ -18,6 +18,7 @@
  *
  */
 #include "bplib_stor_loadbatch.h"
+#include "bplib_qm.h"
 
 BPLib_Status_t BPLib_STOR_LoadBatch_Init(BPLib_STOR_LoadBatch_t* Batch)
 {

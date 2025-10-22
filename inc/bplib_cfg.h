@@ -185,7 +185,7 @@ extern "C" {
 /**
  *  \brief Maximum number of bundle bytes allowed in storage at any given time
  */
-#define BPLIB_MAX_STORED_BUNDLE_BYTES            4000000000     /* 4 gigabytes */
+#define BPLIB_MAX_STORED_BUNDLE_BYTES            ((size_t) 8000000000)     /* 4 gigabytes */
 
 /**
  *  \brief Whether to allow duplicate bundles in storage. This flag is recommended
@@ -193,7 +193,7 @@ extern "C" {
  *         bundle uniqueness is determined by a bundle's sequence number, source EID,
  *         and creation time.
  */
-#define BPLIB_ALLOW_DUPLICATE_BUNDLES            true
+#define BPLIB_ALLOW_DUPLICATE_BUNDLES            false
 
 #ifdef __cplusplus
 } // extern "C"
