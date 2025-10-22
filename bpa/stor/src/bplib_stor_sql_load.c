@@ -85,9 +85,17 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     ** the DestEID patterns.
     **
     ** NOTE:
-    ** This bit is tricky to understand from inspection. It is just taking the
-    ** "((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))" and appending it once
-    **  for each DestEID in the EgressID array.
+    ** This bit is tricky to understand from inspection. Basically, for each destination
+    ** eid pattern node number or service number it checks if the pattern is a true pattern
+    ** depicting a range, or if the minimum value equals the maximum value. In the former 
+    ** case, it checks if either dest_node or dest_service is "BETWEEN ? AND ?". In the
+    ** latter case it does an exact value check, so whether dest_node or dest_service "= ?".
+    ** This is a minor optimization since exact queries are a bit faster in sqlite than 
+    ** range queries. The final output should look something like 
+    ** "((dest_node BETWEEN ? AND ?)) AND (dest_service = ?)) OR 
+    **  ((dest_node = ?) AND (dest_service BETWEEN ? AND ?)) OR
+    **  ((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))",
+    ** or any additional combinations of the sort, depending on the DestEIDs.
     */
 
     CurrWhereLen = 0;
@@ -113,6 +121,7 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
         }
         else
         {
+            /* Add the node query to the where clause */
             strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
         }
 
@@ -135,12 +144,13 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
         }
         else
         {
+            /* Add the service query to the where clause */
             strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
         }
 
+        /* Link multiple EID queries with an OR, unless this is the last EID */
         if (i != (NumEIDs - 1))
         {
-            
             if (CurrWhereLen + strlen(" OR ") >= MaxWhereLen)
             {
                 fprintf(stderr, "Programming Error: OR WHERE clause too long\n");
@@ -156,7 +166,11 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
 
     WhereClause[strlen(WhereClause)] = '\0';
 
-    /* Build the final query */
+    /* 
+    ** Build the final query. Note that "INDEXED BY idx_egress_id" is necessary to force
+    ** sqlite to use the right index, otherwise it will try to use the much slower
+    ** egress_attempted index by default, which will result in worse performance.
+    */
     snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN,
             "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND egress_attempted = 0 ORDER BY action_timestamp ASC LIMIT ?;",
             WhereClause);
@@ -249,10 +263,21 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
         return SQLStatus;
     }
 
-    /* For every bundle found, place it's ID in the load batch for the EgressID */
+    /* For every bundle found, place its ID in the load batch for the EgressID */
     SQLStatus = sqlite3_step(FindForEgressIDStmt);
+
+    if (SQLStatus != SQLITE_ROW)
+    {
+        /* 
+        ** If bundles were previously being egressed by this egress ID, this flag is set
+        ** and is only turned off if no more bundles are found in storage.
+        */
+        Batch->EgressOpInProgress = false;
+    }
     while (SQLStatus == SQLITE_ROW)
     {
+        Batch->EgressOpInProgress = true;
+
         /* Load a single bundle from storage that matches the query */
         CurrBundleRowID = sqlite3_column_int64(FindForEgressIDStmt, 0);
         if (BPLib_STOR_LoadBatch_AddID(Batch, CurrBundleRowID) != BPLIB_SUCCESS)

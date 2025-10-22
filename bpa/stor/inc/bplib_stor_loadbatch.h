@@ -39,6 +39,7 @@ typedef struct BPLib_STOR_LoadBatch
     int64_t BundleRowIDs[BPLIB_STOR_LOADBATCHSIZE];
     size_t Size;
     size_t ReadIndex;
+    bool   EgressOpInProgress;
 } BPLib_STOR_LoadBatch_t;
 
 BPLib_Status_t BPLib_STOR_LoadBatch_Init(BPLib_STOR_LoadBatch_t* Batch);
@@ -54,5 +55,7 @@ BPLib_Status_t BPLib_STOR_LoadBatch_AddID(BPLib_STOR_LoadBatch_t* Batch, int64_t
 BPLib_Status_t BPLib_STOR_LoadBatch_PeekNextID(BPLib_STOR_LoadBatch_t* Batch, int64_t *BundleRowID);
 
 BPLib_Status_t BPLib_STOR_LoadBatch_AdvanceReader(BPLib_STOR_LoadBatch_t* Batch);
+
+bool BPLib_STOR_LoadBatch_InProgressEgress(BPLib_Instance_t *Inst);
 
 #endif /* BPLIB_STOR_LOADBATCH_H */
