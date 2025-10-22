@@ -26,18 +26,17 @@
 * Exported Parsing Helpers
 */
 
-BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, size_t* ArrayLen)
+BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, QCBORItem* ArrayItem)
 {
     QCBORError QStatus;
-    QCBORItem Arr;
 
-    if ((ctx == NULL) || (ArrayLen == NULL))
+    if ((ctx == NULL) || (ArrayItem == NULL))
     {
         return BPLIB_NULL_PTR_ERROR;
     }
 
     /* Ensure ctx is pointing to an array. */
-    QCBORDecode_EnterArray(ctx, &Arr);
+    QCBORDecode_EnterArray(ctx, ArrayItem);
     QStatus = QCBORDecode_GetError(ctx);
     if (QStatus != QCBOR_SUCCESS)
     {
@@ -47,14 +46,13 @@ BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, size_t* A
     /* Ensure the length isn't indicating this is an indefinite array
     ** Note: According QCBOR docs, UINT16_MAX is used to indicate indefinte length
     */
-    if (Arr.val.uCount > QCBOR_MAX_ITEMS_IN_ARRAY)
+    if (ArrayItem->val.uCount > QCBOR_MAX_ITEMS_IN_ARRAY)
     {
-        *ArrayLen = 0;
+        ArrayItem->val.uCount = 0;
         return BPLIB_CBOR_DEC_TYPES_ENTER_DEF_ARRAY_COUNT_ERR;
     }
 
     /* Now it is safe to conclude this is a definite array */
-    *ArrayLen = Arr.val.uCount;
     return BPLIB_SUCCESS;
 }
 
@@ -150,7 +148,7 @@ BPLib_Status_t BPLib_QCBOR_UInt64ParserImpl(QCBORDecodeContext* ctx, uint64_t* p
 BPLib_Status_t BPLib_QCBOR_EidDtnNoneParserImpl(QCBORDecodeContext* ctx, BPLib_EID_t* parsed)
 {
     BPLib_Status_t Status;
-    size_t CurrArrLen;
+    QCBORItem      ArrayItem;
 
     if ((ctx == NULL) || (parsed == NULL))
     {
@@ -158,7 +156,7 @@ BPLib_Status_t BPLib_QCBOR_EidDtnNoneParserImpl(QCBORDecodeContext* ctx, BPLib_E
     }
 
     /* Enter EID Array */
-    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CurrArrLen);
+    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_EID_ENTER_OUTER_ARRAY_ERR;
@@ -179,7 +177,7 @@ BPLib_Status_t BPLib_QCBOR_EidDtnNoneParserImpl(QCBORDecodeContext* ctx, BPLib_E
     parsed->Allocator = 0;
 
     /* Enter SSP Array */
-    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CurrArrLen);
+    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_EID_SCHEME_NOT_IMPL_ERR;
@@ -220,7 +218,7 @@ BPLib_Status_t BPLib_QCBOR_EidDtnNoneParserImpl(QCBORDecodeContext* ctx, BPLib_E
 BPLib_Status_t BPLib_QCBOR_ReportToEidParserImpl(QCBORDecodeContext* ctx, BPLib_EID_t* parsed)
 {
     BPLib_Status_t Status;
-    size_t CurrArrLen;
+    QCBORItem      ArrayItem;
 
     if ((ctx == NULL) || (parsed == NULL))
     {
@@ -228,7 +226,7 @@ BPLib_Status_t BPLib_QCBOR_ReportToEidParserImpl(QCBORDecodeContext* ctx, BPLib_
     }
 
     /* Enter EID Array */
-    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CurrArrLen);
+    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_EID_ENTER_OUTER_ARRAY_ERR;
@@ -247,7 +245,7 @@ BPLib_Status_t BPLib_QCBOR_ReportToEidParserImpl(QCBORDecodeContext* ctx, BPLib_
         parsed->Allocator = 0;
 
         /* Enter SSP Array */
-        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CurrArrLen);
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_TYPES_EID_SCHEME_NOT_IMPL_ERR;
@@ -309,7 +307,7 @@ BPLib_Status_t BPLib_QCBOR_ReportToEidParserImpl(QCBORDecodeContext* ctx, BPLib_
 BPLib_Status_t BPLib_QCBOR_TimestampParserImpl(QCBORDecodeContext* ctx, BPLib_CreationTimeStamp_t* parsed)
 {
     BPLib_Status_t Status;
-    size_t CurrArrLen;
+    QCBORItem      ArrayItem;
 
     if ((ctx == NULL) || (parsed == NULL))
     {
@@ -317,7 +315,7 @@ BPLib_Status_t BPLib_QCBOR_TimestampParserImpl(QCBORDecodeContext* ctx, BPLib_Cr
     }
 
     /* Enter Timestamp Array */
-    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CurrArrLen);
+    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_TIMESTAMP_ENTER_ARRAY_ERR;
@@ -450,7 +448,7 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
 {
     BPLib_Status_t                 Status;
     BPLib_CT_BundleSeqCollection_t PlaceholderCollection;
-    QCBORItem                      Map;
+    QCBORItem                      MapItem;
     uint64_t                       CollectionIdx;
     uint64_t                       SeqRangeIdx;
     uint8_t                        DispositionIdx;
@@ -461,25 +459,25 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
     }
 
     /* Enter disposition codes, bundle sequence collections map */
-    Status = BPLib_QCBOR_EnterMap(ctx, &Map);
+    Status = BPLib_QCBOR_EnterMap(ctx, &MapItem);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_ENTER_MAP_ERR;
     }
 
     /* Verify allowable number of bundle sequence collections were received */
-    if (Map.val.uCount > BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS)
+    if (MapItem.val.uCount > BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS)
     {
         return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_SIZE_ERR;
     }
 
-    *NumSeqCollections = Map.val.uCount;
+    *NumSeqCollections = MapItem.val.uCount;
 
     for (CollectionIdx = 0; CollectionIdx < *NumSeqCollections; CollectionIdx++)
     {
         memset((void*) &PlaceholderCollection, 0, sizeof(BPLib_CT_BundleSeqCollection_t));
 
-        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &Map);
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &MapItem);
         if (Status != BPLIB_SUCCESS)
         {
             /* TODO: return enter array error */
@@ -500,11 +498,13 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         }
 
         /* === Populate SeqRange === */
-        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &(PlaceholderCollection.SeqRangeLen));
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &MapItem);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_RNGE_ENTER_ERR;
         }
+
+        PlaceholderCollection.SeqRangeLen = MapItem.val.uCount;
 
         /* Check that the length of the bundle sequence range is within bounds */
         if (PlaceholderCollection.SeqRangeLen > BPLIB_CT_MAX_SEQ_RANGE_LEN)
@@ -531,7 +531,7 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         PlaceholderCollection.LastSeqNumAdded = 0;
 
         /* === Set DispositionCode === */
-        PlaceholderCollection.DispositionCode = Map.label.int64;
+        PlaceholderCollection.DispositionCode = MapItem.label.int64;
 
         /* Copy the parsed bundle sequence collection into the provided bundle sequence collection array */
         DispositionIdx = BPLib_ARP_GetDispCodeIdx(PlaceholderCollection.DispositionCode);

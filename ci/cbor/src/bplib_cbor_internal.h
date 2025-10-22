@@ -166,12 +166,12 @@ typedef BPLib_Status_t (*QCBOR_BundleSeqCollectionParser)(QCBORDecodeContext* ct
 /**
  * \brief     Enters a CBOR definite array (always to be used with BPLib_QCBOR_ExitDefiniteArray)
  * \param[in] ctx (QCBORDecodeContext*) QCBOR decode context instance pointer
- * \param[in] parsed (uint64_t*) pointer to the field that needs to be filled with decoded data
+ * \param[in] ArrayItem Decoded data provided by QCBOR
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
-BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, size_t* ArrayLen);
+BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, QCBORItem* ArrayItem);
 
 /**
  * \brief     Exits a CBOR definite array (always to be used with BPLib_QCBOR_EnterDefiniteArray)

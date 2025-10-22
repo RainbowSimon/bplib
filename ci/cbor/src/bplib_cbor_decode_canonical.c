@@ -115,9 +115,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     BPLib_Status_t          Status;
     BPLib_CanBlockHeader_t* CanonicalBlockHdr;
     BPLib_CanBlockHeader_t  SpareCanonicalBlockHdr;
-    size_t                  ArrayLen;
-    size_t                  HopCountBlockDataArrayLen;
-    size_t                  CustodyTransferBlockDataArrayLen;
+    QCBORItem               ArrayItem;
     QCBORError              QStatus;
     uint64_t                BlockType;
     uint32_t                HeaderStartOffset;
@@ -138,7 +136,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     HeaderStartOffset = QCBORDecode_Tell(ctx);
 
     /* Enter the canonical block array */
-    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayLen);
+    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_CANON_ENTER_ARRAY_ERR;
@@ -260,7 +258,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     else if (CanonicalBlockHdr->BlockType == BPLib_BlockType_HopCount)
     {
         /* Enter the hop count block data array */
-        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &HopCountBlockDataArrayLen);
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_HOP_BLOCK_ENTER_ARRAY_ERR;
@@ -304,7 +302,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     else if (CanonicalBlockHdr->BlockType == BPLib_BlockType_CTEB)
     {
         /* Enter the custody transfer block data array */
-        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CustodyTransferBlockDataArrayLen);
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_CUSTODY_BLOCK_ENTER_ARRAY_ERR;
@@ -356,10 +354,9 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         { /* Payload block is an administrative record */
             BPLib_ARP_AdminRecord_t AdminRecord;
             uint64_t                TempAdminRecordType;
-            size_t                  ArrLen;
 
             /* Enter admin record array */
-            Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrLen);
+            Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
             if (Status != BPLIB_SUCCESS)
             {
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_ENTER_ARR_ERR;
