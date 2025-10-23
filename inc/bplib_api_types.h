@@ -104,6 +104,8 @@ typedef enum
 
 #define BPLIB_BUNDLE_PROTOCOL_VERSION                   (7u)     /** @brief Version of Bundle Protocol being implemented */
 
+#define BPLIB_BITS_IN_BYTE                              (8u)     /** \brief Number of bits in a byte */
+
 /**
  * @defgroup Block Processing Control Flags
  * @{

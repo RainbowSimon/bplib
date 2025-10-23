@@ -73,12 +73,12 @@ BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t* Inst, uint32_t ContId, const 
         if (Status == BPLIB_SUCCESS)
         {
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED, 1);
-            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_RATE_BITS_PER_SEC, Size * 8);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_RATE_BITS_PER_SEC, Size * BPLIB_BITS_IN_BYTE);
             BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_RATE_BUNDLES_PER_SEC, 1);
         }
         else
         {
-            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_REJECT_RATE_BITS_PER_SEC, Size * 8);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_REJECT_RATE_BITS_PER_SEC, Size * BPLIB_BITS_IN_BYTE);
             BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_REJECT_RATE_BUNDLES_PER_SEC, 1);
         }
     }
@@ -114,7 +114,7 @@ BPLib_Status_t BPLib_CLA_Egress(BPLib_Instance_t* Inst, uint32_t ContId, void *B
         if (Status == BPLIB_SUCCESS)
         {
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_FORWARDED, 1);
-            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_EGRESS_RATE_BITS_PER_SEC, *Size * 8);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_EGRESS_RATE_BITS_PER_SEC, *Size * BPLIB_BITS_IN_BYTE);
             BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_EGRESS_RATE_BUNDLES_PER_SEC, 1);
         }
 

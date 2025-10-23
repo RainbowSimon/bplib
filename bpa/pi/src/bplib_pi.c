@@ -491,7 +491,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
     if (Status == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_ACCEPTED, 1);
-        BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_RECV_RATE_BITS_PER_SEC, AduSize * 8);
+        BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_RECV_RATE_BITS_PER_SEC, AduSize * BPLIB_BITS_IN_BYTE);
         BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_RECV_RATE_BUNDLES_PER_SEC, 1);
     }
     else 
@@ -540,7 +540,7 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, ADU_COUNT_DELIVERED, 1);
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELIVERED, 1);
             BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_DLVR_RATE_BITS_PER_SEC, 
-                                            Bundle->blocks.PayloadHeader.DataSize * 8);
+                                            Bundle->blocks.PayloadHeader.DataSize * BPLIB_BITS_IN_BYTE);
             BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_DLVR_RATE_BUNDLES_PER_SEC, 1);
 
             *AduSize = Bundle->blocks.PayloadHeader.DataSize;
