@@ -527,17 +527,50 @@ BPLib_Status_t BPLib_STOR_MarkCustodialBundleForDeletion(BPLib_Instance_t *Inst,
     return Status;
 }
 
+BPLib_Status_t BPLib_STOR_TurnOffRetransmission(BPLib_Instance_t *Inst, uint32_t BundleId)
+{
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_STOR_TriggerRetransmission(BPLib_Instance_t *Inst, uint32_t BundleId)
+{
+    return BPLIB_SUCCESS;
+}
 /*
 
-retransmit_time = 10 sec (or whatever)
-retransmit_trigger = 0xfffffff
+New columns:
+    retransmit_trigger = 10 sec (or whatever)
+    retransmit_timestamp = 0xfffffff (index on meee)
+    is_custodial
 
-when a contact starts, update stored bundles
+Bundle storage:
+    Existing insert query with additional values (see above)
 
-WITH to_update AS (
-    SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (<EID check>) 
-    AND is_custodial = 1 AND egressed_attempted = 0;
-)
-UPDATE bundle_data SET retransmit_time = ? AND retransmit_trigger = ? WHERE id IN (SELECT id FROM to_update);
+Bundle egress:
+    - Only forward custodial bundle if retransmit_timestamp has been triggered
+    - SELECT id FROM bundle_data WHERE retransmit_timestamp > NOW AND retransmit_timestamp != GARBAGE;
+    - Put into load batch
+    - SELECT retransmit_trigger FROM bundle_data WHERE id = ?;
+    - UPDATE bundle_data SET retransmit_timestamp = NOW + retransmit_trigger WHERE id = ?;
+    - Do NOT mark bundle for deletion
+
+On contact-start, update stored custodial bundles with new retransmit_trigger/timestamps:
+    WITH to_update AS (
+        SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (<EID check>) 
+        AND is_custodial = 1 AND egressed_attempted = 0;
+    )
+    UPDATE bundle_data SET retransmit_trigger = ? AND retransmit_timestamp = ? 
+    WHERE id IN (SELECT id FROM to_update);
+
+Trigger retransmission based on CCS request (bundle will actually be egressed with the next
+bundle egress pass):
+    UPDATE bundle_data SET retransmit_timestamp = NOW WHERE bundle_id = ?;
+    - Question: what if this has to wait for a new contact?
+
+Turn off retransmission based on CCS request:
+    UPDATE bundle_data SET retransmit_timestamp = GARBAGE WHERE bundle_id = ?;
+
+Delete custodial bundle based on successful CCS:
+    - Already in progress? Get bundle_id and add to load_batch for bulk deletion
 
 */

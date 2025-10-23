@@ -171,4 +171,9 @@ BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst);
 
 BPLib_Status_t BPLib_STOR_MarkCustodialBundleForDeletion(BPLib_Instance_t *Inst, uint32_t BundleId);
 
+BPLib_Status_t BPLib_STOR_TurnOffRetransmission(BPLib_Instance_t *Inst, uint32_t BundleId);
+
+BPLib_Status_t BPLib_STOR_TriggerRetransmission(BPLib_Instance_t *Inst, uint32_t BundleId);
+
+
 #endif /* BPLIB_STOR_H */
