@@ -47,7 +47,7 @@ const char* InsertBlobSQL =
 
 /* Insert Bundle Metadata (duplicate bundle_id entries are ignored) */
 const char* InsertMetadataSQL =
-"INSERT INTO bundle_data (bundle_id, action_timestamp, dest_node, dest_service, bundle_bytes) VALUES (?, ?, ?, ?, ?);";
+"INSERT INTO bundle_data (bundle_id, action_timestamp, retransmit_timestamp, dest_node, dest_service, is_custodial, bundle_bytes) VALUES (?, ?, ?, ?, ?, ?);";
 
 /* ================ */
 /* Helper Functions */
@@ -143,8 +143,19 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     }
     else
     {
-        /* Add the destination node into the InsertMetadataStmt variable */
+        /* Add the retransmission timestamp into the InsertMetadataStmt variable */
         SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 3, 
+                                (int64_t)BPLib_TIME_GetMonotonicTime() + Bundle->Meta.RetransmitTime);
+    }
+    
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind retransmit_timestamp in store_meta\n");
+    }
+    else
+    {
+        /* Add the destination node into the InsertMetadataStmt variable */
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 4, 
                                 (int64_t)Bundle->blocks.PrimaryBlock.DestEID.Node);
     }
 
@@ -155,7 +166,7 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     else
     {
         /* Add the destination service into the InsertMetadataStmt variable */
-        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 4, 
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 5, 
                                 (int64_t)Bundle->blocks.PrimaryBlock.DestEID.Service);
     }
 
@@ -165,9 +176,19 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     }
     else
     {
-        /* Add the bundle size in bytes into the InsertMetadataStmt variable */
-        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 5, (int64_t)Bundle->Meta.TotalBytes);
+        /* Add whether the bundle is custodial or not into the InsertMetadataStmt variable */
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 6, (int64_t)Bundle->Meta.IsCustodial);
     }
+
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind is_custodial in store_meta\n");
+    }
+    else
+    {
+        /* Add the bundle size in bytes into the InsertMetadataStmt variable */
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 7, (int64_t)Bundle->Meta.TotalBytes);
+    }    
 
     if (SQLStatus != SQLITE_OK)
     {
@@ -242,7 +263,7 @@ SQL_Status_t BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_Bu
 }
 
 SQL_Status_t BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
-                                size_t *DuplicateBundlesIgnored)
+                                size_t *DuplicateBundlesIgnored, size_t *CustodialBundles)
 {
     SQL_Status_t SQLStatus;
     size_t       i;
@@ -274,6 +295,11 @@ SQL_Status_t BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStore
         if (SQLStatus == SQLITE_DONE)
         {
             *TotalBytesStored += NewBundleBytes;
+
+            if (Inst->BundleStorage.InsertBatch[i]->Meta.IsCustodial)
+            {
+                (*CustodialBundles)++;
+            }
         }
         else
         {
@@ -325,7 +351,7 @@ SQL_Status_t BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStore
 }
 
 BPLib_Status_t BPLib_SQL_Store(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
-                                size_t *DuplicateBundlesIgnored)
+                                size_t *DuplicateBundlesIgnored, size_t *CustodialBundles)
 {
     BPLib_Status_t Status;
     SQL_Status_t   SQLStatus;
@@ -350,7 +376,7 @@ BPLib_Status_t BPLib_SQL_Store(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
     if (Status == BPLIB_SUCCESS)
     {
         /* Run the batch storage logic */
-        SQLStatus = BPLib_SQL_StoreImpl(Inst, TotalBytesStored, DuplicateBundlesIgnored);
+        SQLStatus = BPLib_SQL_StoreImpl(Inst, TotalBytesStored, DuplicateBundlesIgnored, CustodialBundles);
         if (SQLStatus == SQLITE_FULL)
         {
             Status = BPLIB_STOR_DB_FULL_ERR;

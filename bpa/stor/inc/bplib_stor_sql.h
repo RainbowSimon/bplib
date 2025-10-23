@@ -199,4 +199,6 @@ SQL_Status_t BPLib_SQL_DiscardEgressedImpl(sqlite3* db, size_t* NumDiscarded, BP
 
 BPLib_Status_t BPLib_SQL_Cleanup(BPLib_Instance_t* Inst);
 
+BPLib_Status_t BPLib_SQL_GetBundleRowId(sqlite3 *db, uint32_t BundleId, int64_t *BundleRowId);
+
 #endif /* BPLIB_STOR_SQL_H */

@@ -43,6 +43,7 @@ sqlite3_stmt* DiscardExpiredStmt;
 sqlite3_stmt* ExpiredBytesStmt;
 sqlite3_stmt* DiscardEgressedStmt;
 sqlite3_stmt* EgressedBytesStmt;
+sqlite3_stmt* FindBundleRowIdStmt;
 
 /* SQL query strings */
 
@@ -91,6 +92,11 @@ const char* EgressedBytesSQL =
 "AS bytes_deleted\n"
 "FROM bundle_data\n"
 "WHERE id IN (SELECT id FROM egressed_bytes);\n";
+
+const char* FindBundleRowIdSQL =
+"SELECT id\n"
+"FROM bundle_data\n"
+"WHERE bundle_id = ?;";
 
 /* ==================== */
 /* Function Definitions */
@@ -207,9 +213,11 @@ SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst)
     "    bundle_id INTEGER,\n"
     #endif
     "    action_timestamp INTEGER,\n"
+    "    retransmit_timestamp INTEGER,\n"
     "    egress_attempted INTEGER DEFAULT 0,\n"
     "    dest_node INTEGER,\n"
     "    dest_service INTEGER,\n"
+    "    is_custodial INTEGER,\n"
     "    bundle_bytes INTEGER\n"
     ");\n"
     "\n"
@@ -678,6 +686,45 @@ BPLib_Status_t BPLib_SQL_Cleanup(BPLib_Instance_t* Inst)
         fprintf(stderr, "Failed to vacuum: %s\n", sqlite3_errmsg(Inst->BundleStorage.db));
         Status = BPLIB_STOR_CLEANUP_ERR;
     }    
+
+    return Status;
+}
+
+// TODO fix returns I'm tired
+BPLib_Status_t BPLib_SQL_GetBundleRowId(sqlite3 *db, uint32_t BundleId, int64_t *BundleRowId)
+{
+    BPLib_Status_t Status ;
+    SQL_Status_t SQLStatus;
+
+    SQLStatus = sqlite3_prepare_v2(db, FindBundleRowIdSQL, -1, &FindBundleRowIdStmt, NULL);
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+        return SQLStatus;
+    }
+
+    SQLStatus = sqlite3_bind_int(FindBundleRowIdStmt, 1, BundleId);
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "bind failed: %s\n", sqlite3_errmsg(db));
+        return SQLStatus;
+    }
+
+    SQLStatus = sqlite3_step(FindBundleRowIdStmt);
+    if (SQLStatus != SQLITE_ROW)
+    {
+        fprintf(stderr, "step failed: %s\n", sqlite3_errmsg(db));
+        return SQLStatus;
+    }
+
+    *BundleRowId = sqlite3_column_int64(FindBundleRowIdStmt, 0);
+
+    sqlite3_finalize(FindBundleRowIdStmt);
+
+    if (SQLStatus == SQLITE_DONE)
+    {
+        Status = BPLIB_SUCCESS;
+    }
 
     return Status;
 }

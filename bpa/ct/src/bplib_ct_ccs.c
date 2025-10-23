@@ -172,8 +172,8 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     return;
 }
 
-BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_CT_Context_t *Context, 
-                                        BPLib_CT_BundleSeqCollection_t *SeqCollection)
+BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst, 
+            BPLib_CT_Context_t *Context, BPLib_CT_BundleSeqCollection_t *SeqCollection)
 {
     size_t SeqRangeIdx;
     size_t CurrSeqNum;
@@ -200,22 +200,26 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_CT_Context_t *Context,
             /* Even sequence range numbers indicate sequences that are *included* */
             else if (SeqRangeIdx % 2 == 0)
             {
-                Status = BPLib_CT_RemoveFromCtdb(Context, DbEntry);   
-                             
-                /* Request bundle deletion from storage TODO */
-
-                if (Status != BPLIB_SUCCESS)
-                {
-                    BPLib_EM_SendEvent(BPLIB_CT_BUNDLE_DLT_ERR_EID, BPLib_EM_EventType_ERROR,
-                        "Error deleting custodial bundle sequence number %ld with sequence ID %ld.",
-                        SeqCollection->SeqId, NextSeqNum);
-                }
-
                 /* Positive disposition code indicates custody was accepted */
                 if (SeqCollection->DispositionCode > 0)
                 {
                     BPLib_AS_Decrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, 1);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
+
+                    Status = BPLib_CT_RemoveFromCtdb(Context, DbEntry);   
+
+                    if (Status == BPLIB_SUCCESS)
+                    {
+                        /* Request bundle deletion from storage */
+                        Status = BPLib_STOR_MarkCustodialBundleForDeletion(Inst, DbEntry->BundleId);
+                    }
+                                
+                    if (Status != BPLIB_SUCCESS)
+                    {
+                        BPLib_EM_SendEvent(BPLIB_CT_BUNDLE_DLT_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "Error deleting custodial bundle sequence number %ld with sequence ID %ld. Status = %d.",
+                            SeqCollection->SeqId, NextSeqNum, Status);
+                    }
                 }
                 /* Negative disposition code indicates custody was rejected */
                 else

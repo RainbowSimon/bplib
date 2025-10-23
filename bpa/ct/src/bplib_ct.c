@@ -119,7 +119,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         /* Check if we can accept custody of this bundle */
         if (BPLib_PDB_AcceptCustody(Bundle) == BPLIB_SUCCESS)
         {            
-            /* Add to custody accepted raw CCS */
+            /* Add to custody accepted open CCS */
             Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum, 
                                 CtebPtr->BundleSeqId, BPLib_CT_CustodyAccepted);
             if (Status != BPLIB_SUCCESS)
@@ -129,19 +129,10 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
                         "Open CCS data failed sanity checks, check for memory corruption.");
 
             }
-            else
-            {
-                /* 
-                ** TODO this is temporary, when custodial bundles are stored, 
-                ** that's when this actually gets incremented. Until then, custody is
-                ** technically "pending".
-                */
-                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, 1);
-            }
         }
         else
         {
-            /* Add to custody rejected raw CCS and mark bundle for deletion */
+            /* Add to custody rejected open CCS and mark bundle for deletion */
             DeleteBundle = true;
             Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum, 
                                 CtebPtr->BundleSeqId, BPLib_CT_CustodyRefused);            
@@ -233,7 +224,8 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
             break;
         }
 
-        Status = BPLib_CT_ProcessBundleSeqCollection(&(Inst->Ct), &(Ccs->BundleSeqCollections[SeqCollectIdx]));
+        Status = BPLib_CT_ProcessBundleSeqCollection(Inst, &(Inst->Ct), 
+                                            &(Ccs->BundleSeqCollections[SeqCollectIdx]));
 
         if (Status != BPLIB_SUCCESS)
         {

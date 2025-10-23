@@ -155,7 +155,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
             }
         }
     }
-    else
+    else if (Bundle->Meta.IsCustodial == false)
     {
         /* Iterate through the contacts: this is very slow. */
         for (i = 0; i < BPLIB_MAX_NUM_CONTACTS; i++)
@@ -172,7 +172,12 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                         Bundle->Meta.EgressID = i;
                         BPLib_NC_ReaderUnlock();
                         BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
-                        return NO_NEXT_STATE;
+                        
+                        /* Custodial bundles still need to be stored, even during a loopback */
+                        if (Bundle->Meta.IsCustodial == false)
+                        {
+                            return NO_NEXT_STATE;
+                        }                        
                     }
                 }
             }

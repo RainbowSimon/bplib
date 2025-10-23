@@ -43,9 +43,14 @@ const char* FindBlobSQL =
 "WHERE bundle_row = ?;";
 
 char FindForEgressIdSQL[BPLIB_SQL_MAX_STRLEN] = {0};
+char FindForEgressIdRetransmitSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 
 const char* MarkEgressedSQL =
-"UPDATE bundle_data SET egress_attempted = 1 WHERE id = ?;";
+"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ? AND is_custodial = 0);";
+
+const char* MarkEgressedCustodialSQL =
+"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ?);";
+
 
 /* ==================== */
 /* Function Definitions */
@@ -69,7 +74,7 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
 
     Status      = BPLIB_SUCCESS;
     db          = Inst->BundleStorage.db;
-    MaxWhereLen = BPLIB_SQL_MAX_STRLEN - 102; /* size of final query minus the non-where clause stuff */
+    MaxWhereLen = BPLIB_SQL_MAX_STRLEN - 180; /* size of final query minus the non-where clause stuff */
 
     if ((Inst == NULL) || (Batch == NULL) || (DestEIDs == NULL))
     {
@@ -172,7 +177,9 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     ** egress_attempted index by default, which will result in worse performance.
     */
     snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN,
-            "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND egress_attempted = 0 ORDER BY action_timestamp ASC LIMIT ?;",
+            "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND "
+            "(retransmit_timestamp > ? OR (is_custodial = 0 AND egress_attempted = 0)) "
+            "ORDER BY action_timestamp ASC LIMIT ?;",
             WhereClause);
 
     FindForEgressIdSQL[strlen(FindForEgressIdSQL)] = '\0';
@@ -254,6 +261,13 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
             }
         }
 
+    }
+
+    SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, BPLib_TIME_GetMonotonicTime());
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind retransmit_time: %s\n", sqlite3_errmsg(db));
+        return SQLStatus;
     }
 
     SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, MaxBundles);

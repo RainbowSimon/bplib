@@ -415,15 +415,19 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     size_t               i;
     size_t               TotalBytesStored;
     size_t               DuplicateBundlesIgnored;
+    size_t               CustodialBundlesStored;
 
     CacheInst               = &Inst->BundleStorage;
     TotalBytesStored        = 0;
     DuplicateBundlesIgnored = 0;
+    CustodialBundlesStored  = 0;
 
-    Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored);
+    Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored, &CustodialBundlesStored);
 
     if (Status == BPLIB_SUCCESS)
     {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, CustodialBundlesStored);
+
         CacheInst->BytesStorageInUse += TotalBytesStored;
         CacheInst->BundleCountStored += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
 
@@ -494,3 +498,46 @@ BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst)
     
     return Status;
 }
+
+BPLib_Status_t BPLib_STOR_MarkCustodialBundleForDeletion(BPLib_Instance_t *Inst, uint32_t BundleId)
+{
+    BPLib_Status_t Status;
+    int64_t BundleRowId;
+
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    pthread_mutex_lock(&(Inst->BundleStorage.lock));
+
+    Status = BPLib_SQL_GetBundleRowId(Inst->BundleStorage.db, BundleId, &BundleRowId);
+
+    /*
+    if loadbatch is full:
+        Status = BPLib_SQL_MarkBatchEgressed(Inst, &Inst->BundleStorage.CustodialDeleteBatch);
+        (void) BPLib_STOR_LoadBatch_Reset(LoadBatch);
+    
+    Add BundleRowId to loadbatch
+    
+    */
+
+    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
+
+    return Status;
+}
+
+/*
+
+retransmit_time = 10 sec (or whatever)
+retransmit_trigger = 0xfffffff
+
+when a contact starts, update stored bundles
+
+WITH to_update AS (
+    SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (<EID check>) 
+    AND is_custodial = 1 AND egressed_attempted = 0;
+)
+UPDATE bundle_data SET retransmit_time = ? AND retransmit_trigger = ? WHERE id IN (SELECT id FROM to_update);
+
+*/

@@ -63,6 +63,7 @@ struct BPLib_BundleCache
     size_t                 InsertBatchSize;
     BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
     BPLib_STOR_LoadBatch_t ContactLoadBatches[BPLIB_MAX_NUM_CONTACTS];
+    BPLib_STOR_LoadBatch_t CustodialDeleteBatch;
 
     /* Storage-related MIB reports */
     uint32_t BundleCountStored;
@@ -167,5 +168,7 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst);
 BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst);
 
 BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst);
+
+BPLib_Status_t BPLib_STOR_MarkCustodialBundleForDeletion(BPLib_Instance_t *Inst, uint32_t BundleId);
 
 #endif /* BPLIB_STOR_H */
