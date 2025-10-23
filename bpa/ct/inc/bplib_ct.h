@@ -59,7 +59,7 @@
  * \brief Maximum number of bundle sequence collections allowed in a CCS received from
  *        another node.
  */
-#define BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS          (10u)
+#define BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS          (5u)
 
 /**
  * \brief Maximum number of independent sequence counters. Should be greater than or 
