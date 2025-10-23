@@ -31,6 +31,7 @@ extern "C" {
 
 #include "bplib_api_types.h"
 #include "bplib_cfg.h"
+#include "bplib_inst.h"
 
 #include "bplib_time.h"
 #include "bplib_em.h"

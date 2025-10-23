@@ -26,12 +26,13 @@
 #include "bplib_as_internal.h"
 #include "bplib_fwp.h"
 #include "bplib_time.h"
+#include "bplib_inst.h"
 
 /* ==================== */
 /* Function Definitions */
 /* ==================== */
 
-BPLib_Status_t BPLib_AS_Init(void)
+BPLib_Status_t BPLib_AS_Init(BPLib_Instance_t *Inst)
 {
     BPLib_Status_t Status;
 
@@ -39,7 +40,7 @@ BPLib_Status_t BPLib_AS_Init(void)
 
     /* Instantiate all payloads under the stewardship of AS */
     BPLib_AS_ResetAllCounters();
-    BPLib_AS_InitializeReportsHkTlm();
+    BPLib_AS_InitializeReportsHkTlm(Inst);
 
     return Status;
 }
@@ -120,6 +121,35 @@ void BPLib_AS_Decrement(BPLib_EID_t EID, BPLib_AS_Counter_t Counter, uint32_t Am
     //     /* Allow counters to be modified by other tasks after operation has finished */
     //     BPLib_AS_UnlockCounters();
     // }
+}
+
+void BPLib_AS_IncrementRate(BPLib_Instance_t *Inst, BPLib_EID_t *EID, BPLib_AS_RateReport_t Rate, uint64_t Amount)
+{
+    if (Inst == NULL || EID == NULL || Rate >= BPLIB_AS_NUM_RATES_TO_REPORT)
+    {
+        return;
+    }
+    else if (BPLib_EID_IsMatch(EID, &BPLIB_EID_INSTANCE))
+    {
+        BPLib_AS_LockCounters();
+
+        /* 
+        ** Base value of bits/bundles ingressed is tracked here and then when a reports
+        ** HK packet is requested, this value is divided by seconds elapsed to get actual
+        ** rate
+        */
+        Inst->As.CurrRates[Rate] += Amount;
+
+        BPLib_AS_UnlockCounters();
+    }
+    /* Potential future extension of per-source reports packet */
+    // else
+    // { 
+    //     BPLib_AS_LockCounters();
+
+    //     BPLib_AS_UnlockCounters();
+    // }
+
 }
 
 BPLib_Status_t BPLib_AS_ResetCounter(uint16_t MibArrayIndex, BPLib_AS_Counter_t Counter)

@@ -40,6 +40,7 @@
 #define BPLIB_AS_NUM_NODE_CNTRS      (69u)                    /** \brief Number of node counters (also total number of counters) */
 #define BPLIB_AS_NUM_SOURCE_CNTRS    (51u)                    /** \brief Number of source counters */
 #define BPLIB_AS_NODE_CNTR_INDICATOR (BPLIB_MAX_NUM_MIB_SETS) /** \brief Indicates that only the node counter passed in should be modified, not the source counter */
+#define BPLIB_AS_NUM_RATES_TO_REPORT (10u)                    /** \brief Number of rate calculations to report */
 
 /* ======= */
 /* Typdefs */
@@ -126,6 +127,25 @@ typedef enum
 } BPLib_AS_Counter_t;
 
 /**
+ * \brief  Rate calculations to report
+ * \anchor BPLib_AS_RateReport_t
+ */
+typedef enum
+{
+    BUNDLE_INGRESS_RATE_BITS_PER_SEC = 0,             /** \brief Rate of bundles received from CLAs in bits per second */
+    BUNDLE_INGRESS_RATE_BUNDLES_PER_SEC = 1,          /** \brief Rate of bundles received from CLAs in bundles per second */
+    BUNDLE_EGRESS_RATE_BITS_PER_SEC = 2,              /** \brief Rate of bundles forwarded from CLAs in bits per second */
+    BUNDLE_EGRESS_RATE_BUNDLES_PER_SEC = 3,           /** \brief Rate of bundles forwarded from CLAs in bundles per second */
+    ADU_RECV_RATE_BITS_PER_SEC = 4,                   /** \brief Rate of ADUs ingested locally in bits per second */
+    ADU_RECV_RATE_BUNDLES_PER_SEC = 5,                /** \brief Rate of ADUs ingested locally in bundles per second */
+    ADU_DLVR_RATE_BITS_PER_SEC = 6,                   /** \brief Rate of ADUs delivered locally in bits per second */
+    ADU_DLVR_RATE_BUNDLES_PER_SEC = 7,                /** \brief Rate of ADUs delivered locally in bundles per second */
+    BUNDLE_INGRESS_REJECT_RATE_BITS_PER_SEC = 8,      /** \brief Rate of bundles received from CLAs in bits per second and then rejected */
+    BUNDLE_INGRESS_REJECT_RATE_BUNDLES_PER_SEC = 9,   /** \brief Rate of bundles received from CLAs in bundles per second and then rejected */
+
+} BPLib_AS_RateReport_t;
+
+/**
  * \brief  Node MIB counters housekeeping payload
  * \anchor BPLib_NodeMibCountersHkTlm_Payload_t
  */
@@ -179,9 +199,10 @@ typedef struct
     int64_t  CorrelationFactor;             /** \brief Time Correlation Factor */
 } BPLib_SourceMibCountersHkTlm_Payload_t;
 
-/*
-** Node MIB Reports Payload
-*/
+/**
+  * \brief  Packet for all MIBs reported values tracked at the per-node level 
+  * \anchor BPLib_NodeMibReportsHkTlm_Payload_t
+  */
 typedef struct
 {
     char     SystemNodeName[BPLIB_MAX_STR_LENGTH];              /** \brief Human readable name given to entity */
@@ -200,16 +221,7 @@ typedef struct
     uint32_t KbytesCountStorageAvailable;                       /** \brief Kilobytes free space left to store additional Bundles */
     uint32_t BundleCountStored;                                 /** \brief Number of bundles currently in storage */
 
-    uint32_t BundleIngressRateBytesPerSec;                      /** \brief Rate of bundles received from CLAs in bytes per second */
-    uint32_t BundleIngressRateBundlesPerSec;                    /** \brief Rate of bundles received from CLAs in bundles per second */
-    uint32_t BundleEgressRateBytesPerSec;                       /** \brief Rate of bundles forwarded from CLAs in bytes per second */
-    uint32_t BundleEgressRateBundlesPerSec;                     /** \brief Rate of bundle forwarded from CLAs in bundles per second */
-    uint32_t BundleIngestedRateBundlesPerSec;                   /** \brief Rate of bundles ingested locally in bundles per second */
-    uint32_t BundleIngestedRateBytesPerSec;                     /** \brief Rate of bundles ingested locally in bytes per second */
-    uint32_t BundleDeliveryRateBundlesPerSec;                   /** \brief Rate of bundles delivered locally in bundles per second */
-    uint32_t BundleDeliveryRateBytesPerSec;                     /** \brief Rate of bundles delivered locally in bytes per second */
-    uint32_t BundleIngressRejectedRateBytesPerSec;              /** \brief Rate of bundles received from CLAs in bytes per second and then rejected */
-    uint32_t BundleIngressRejectedRateBundlesPerSec;            /** \brief Rate of bundles received from CLAs in bundles per second and then rejected */
+    uint64_t Rates[BPLIB_AS_NUM_RATES_TO_REPORT];               /** \brief Array of different rates to track */
 
     uint32_t Spare;
     uint32_t NodeStartupCounter;                                /** \brief Node startup counter */
@@ -217,6 +229,19 @@ typedef struct
     int64_t  CorrelationFactor;                                 /** \brief Time Correlation Factor */
 
 } BPLib_NodeMibReportsHkTlm_Payload_t;
+
+/**
+  * \brief  Context information for an instance of AS
+  * \anchor BLib_AS_Context_t
+  */
+typedef struct 
+{
+    uint64_t CurrRates[BPLIB_AS_NUM_RATES_TO_REPORT];
+    uint64_t LastTlmReqTime;
+    uint64_t InitTime;
+
+} BLib_AS_Context_t;
+
 
 /* =================== */
 /* Function Prototypes */
@@ -226,11 +251,11 @@ typedef struct
  * \brief     Instantiate a mutex to guard access to counters and initialize counter payloads
  * \details   Admin Statistics initialization
  * \note      Only returns BPLIB_SUCCESS for now
- * \param[in] void No arguments accepted
+ * \param[in] Inst Pointer to the bplib instance
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Initialization was successful
  */
-BPLib_Status_t BPLib_AS_Init(void);
+BPLib_Status_t BPLib_AS_Init(BPLib_Instance_t *Inst);
 
 /**
  * \brief     Returns counter value for the provided EID
@@ -391,5 +416,16 @@ BPLib_Status_t BPLib_AS_SendNodeMibReportsHk(BPLib_Instance_t *Inst);
  * \note The terms key(s) and pattern(s) are used interchangeably since the MIB array keys are patterns of EIDs associated with the counters for that entry
  */
 BPLib_Status_t BPLib_AS_AddMibArrayKey(const BPLib_EID_Pattern_t* EID_Patterns);
+
+/**
+  * \brief     Increment a provided rate calculation
+  * \details   Rates are tracked locally and cumulatively and then averaged when a Node MIB
+  *            Reports packet is requested
+ * \param[in]  Inst Pointer to bplib instance data
+ * \param[in]  EID Pointer to EID associated with this rate
+ * \param[in]  Rate Enumeration identifying the specific rate to increment
+ * \param[in]  Amount Amount to add to a rate's base value
+  */
+void BPLib_AS_IncrementRate(BPLib_Instance_t *Inst, BPLib_EID_t *EID, BPLib_AS_RateReport_t Rate, uint64_t Amount);
 
 #endif /* BPLIB_AS_H */

@@ -28,6 +28,8 @@
 #include "bplib_nc_rwlock.h"
 #include "bplib_nc_internal.h"
 #include "bplib_ct.h"
+#include "bplib_inst.h"
+
 
 /* ======= */
 /* Globals */
@@ -123,6 +125,8 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
     uint32_t ChanId;
     uint32_t ContId;
 
+    memset(Instance, 0, sizeof(BPLib_Instance_t));
+
     /* Initialize FWP */
     Status = BPLib_FWP_Init((BPLib_FWP_ProxyCallbacks_t*) Callbacks);
     if (Status != BPLIB_SUCCESS)
@@ -168,7 +172,7 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
     BPLib_CRC_Init();
 
     /* Initialize AS */
-    Status = BPLib_AS_Init();
+    Status = BPLib_AS_Init(Instance);
     if (Status != BPLIB_SUCCESS)
     { /* Failed initialization of AS */
         return BPLIB_NC_AS_INIT_ERR;

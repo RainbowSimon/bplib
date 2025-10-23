@@ -26,6 +26,7 @@
 #include "bplib_nc_directives.h"
 #include "bplib_nc_test_utils.h"
 #include "bplib_eventids.h"
+#include "bplib_inst.h"
 
 /* ==================== */
 /* Function Definitions */

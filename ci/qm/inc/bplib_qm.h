@@ -24,10 +24,6 @@
 #include "bplib_api_types.h"
 #include "bplib_qm_waitqueue.h"
 #include "bplib_qm_job.h"
-#include "bplib_mem.h"
-#include "bplib_cfg.h"
-#include "bplib_stor.h"
-#include "bplib_ct.h"
 
 #define QM_NO_WAIT          0L  /**< Constant representing no wait */
 #define QM_WAIT_FOREVER    -1L /**< Constant representing an indefinite wait */
@@ -41,35 +37,6 @@ typedef struct BPLib_QM_WorkerState
 {
     BPLib_QM_Job_t CurrJob;
 } BPLib_QM_WorkerState_t;
-
-/**
- * @struct BPLib_Instance
- * @brief Represents a QM instance with its associated job memory and wait queues.
- * 
- * This structure holds the necessary data for queue management, job states, 
- * and memory allocations within BPLib.
- */
-struct BPLib_Instance
-{
-    BPLib_MEM_Pool_t pool; /**< Memory pool for this BPLib Instance */
-
-    /* Worker Management */
-    pthread_mutex_t RegisteredWorkersLock; // Move to bplib_os
-    BPLib_QM_WorkerState_t RegisteredWorkers[QM_MAX_GEN_WORKERS];
-    size_t NumWorkers;
-
-    /* Queues */
-    BPLib_QM_WaitQueue_t GenericWorkerJobs; /**< Queue of jobs */
-    BPLib_QM_WaitQueue_t BundleCacheList; /**< Queue of bundles in cache */
-    BPLib_QM_WaitQueue_t ContactEgressJobs[BPLIB_MAX_NUM_CONTACTS]; /**< Queue of contact egress jobs */
-    BPLib_QM_WaitQueue_t ChannelEgressJobs[BPLIB_MAX_NUM_CHANNELS]; /**< Queue of channel egress jobs */
-
-    /* Bundle Storage */
-    BPLib_BundleCache_t BundleStorage;
-
-    /* Custody transfer context */
-    BPLib_CT_Context_t Ct;
-};
 
 /**
  * @brief Initializes the Queue Table for a specific instance.
