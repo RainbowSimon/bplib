@@ -663,11 +663,16 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS(void)
     UBufC.len = sizeof(CCS_Blk);
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
+    /* Force FUT to take the admin record branch */
     Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
+
+    /* Pass the CRC test */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_CRC_Calculate), 0x580A);
 
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CCS_Blk), BPLIB_SUCCESS);
 
-    UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 0);
+    UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 1);
     UtAssert_STUB_COUNT(BPLib_ARP_ProcessCcs, 1);
 }
 
@@ -681,7 +686,7 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS_RecordTypeErr(void)
             0x01, /* CRC Type */
             0x53, /* Byte string, 19 bytes follow */
                 0x82, /* Array, 2 bytes follow */
-                    0x24, /* INVALID: Compressed Custody Signal Record Type */
+                    0xA4, /* INVALID: Compressed Custody Signal Record Type */
 
                     /* === CCS Data === */
 
@@ -718,7 +723,9 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS_RecordTypeErr(void)
     UBufC.len = sizeof(CCS_Blk);
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
+    /* Force FUT to take the admin record branch */
     Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
 
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR);
 
@@ -773,7 +780,9 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS_ContentErr(void)
     UBufC.len = sizeof(CCS_Blk);
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
+    /* Force FUT to take the admin record branch */
     Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
 
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_CONT_ERR);
 
