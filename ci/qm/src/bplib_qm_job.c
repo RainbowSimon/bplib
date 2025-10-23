@@ -58,13 +58,10 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
         DeserializedCcs.NumBundleSeqCollections = BundleAdminRecord.NumSeqCollections;
 
         /* Send the deserialized CCS off to CT */
-        Status = BPLib_CT_ProcessCcs(Inst, &DeserializedCcs);
-
-        if (Status != BPLIB_SUCCESS)
-        {
-            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
-            return NO_NEXT_STATE;
-        }
+        (void) BPLib_CT_ProcessCcs(Inst, &DeserializedCcs);
+        
+        BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+        return NO_NEXT_STATE;
     }
     else
     {
