@@ -103,7 +103,7 @@ static struct _CustodyBlockDataParser CustodyBlockDataParser = {
 
 static struct _AdminRecordParser AdminRecordDataParser = {
     .RecordTypeParser  = BPLib_QCBOR_UInt64ParserImpl,
-    .ContentParser     = BPLib_QCBOR_AdminRecordParserImpl,
+    .ContentParser     = BPLib_QCBOR_AdminRecordContentParserImpl,
 };
 
 /*******************************************************************************

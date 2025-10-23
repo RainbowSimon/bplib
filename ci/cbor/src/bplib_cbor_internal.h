@@ -251,14 +251,14 @@ BPLib_Status_t BPLib_QCBOR_TimestampParserImpl(QCBORDecodeContext* ctx, BPLib_Cr
 BPLib_Status_t BPLib_QCBOR_CRCParserImpl(QCBORDecodeContext* ctx, uint64_t* parsed, uint64_t crc_type);
 
 /**
- * \brief     Decodes an administrative record
+ * \brief     Decodes an administrative record's content
  * \param[in] ctx    QCBOR decode context instance pointer
  * \param[in] parsed Pointer to the field that needs to be filled with decoded data
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
-BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_ARP_AdminRecord_t* parsed);
+BPLib_Status_t BPLib_QCBOR_AdminRecordContentParserImpl(QCBORDecodeContext* ctx, BPLib_ARP_AdminRecord_t* parsed);
 
 /**
  * \brief      Decodes a bundle sequence collection

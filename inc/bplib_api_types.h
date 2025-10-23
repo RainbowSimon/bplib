@@ -306,9 +306,11 @@ typedef enum
 #define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_EXIT_MAP_ERR     ((BPLib_Status_t) -199) /* CBOR decode types error: bundle sequence collection exit map */
 #define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_ENTR_ARR_ERR ((BPLib_Status_t) -200) /* CBOR decode types error: bundle sequence collection enter entries array error */
 #define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_EXIT_ARR_ERR ((BPLib_Status_t) -201) /* CBOR decode types error: bundle sequence collection exit entries array error */
+
 #define BPLIB_CBOR_DEC_TYPES_ENTER_INDEF_ARRAY_ERR     ((BPLib_Status_t) -202) /* CBOR decode types error: enter indef array error */
+
+#define BPLIB_CBOR_DEC_TYPES_ADMIN_REC_INV_REC_TYPE    ((BPLib_Status_t) -203) /* CBOR decode types error: admin record invalid record type */
 /*
-#define BPLIB_CBOR_DEC_GENERIC_ERR_203                 ((BPLib_Status_t) -203) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_204                 ((BPLib_Status_t) -204) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_205                 ((BPLib_Status_t) -205) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_206                 ((BPLib_Status_t) -206) // CBOR decode error

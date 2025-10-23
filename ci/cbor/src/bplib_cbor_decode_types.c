@@ -420,41 +420,40 @@ BPLib_Status_t BPLib_QCBOR_CRCParserImpl(QCBORDecodeContext* ctx, uint64_t* pars
     }
 }
 
-BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_ARP_AdminRecord_t* Parsed)
+BPLib_Status_t BPLib_QCBOR_AdminRecordContentParserImpl(QCBORDecodeContext* ctx, BPLib_ARP_AdminRecord_t* Parsed)
 {
-    BPLib_Status_t Status;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
 
     /* NOTE: The admin record array entering and exiting is handled in BPLib_CBOR_DecodeCanonical() */
 
     if ((ctx == NULL) || (Parsed == NULL))
     {
-        return BPLIB_NULL_PTR_ERROR;
+        Status = BPLIB_NULL_PTR_ERROR;
     }
 
-    switch (Parsed->AdminRecordType)
+    if (Status == BPLIB_SUCCESS)
     {
-        case BPLib_CT_BsrRecordTypeCode:
-            /* TODO: Parse BSR admin record contents */
+        switch (Parsed->AdminRecordType)
+        {
+            case BPLib_CT_BsrRecordTypeCode:
+                /* TODO: Parse BSR admin record contents */
+                break;
 
-            break;
+            case BPLib_CT_CrsRecordTypeCode:
+                /* TODO: Parse CRS admin record contents */
+                break;
 
-        case BPLib_CT_CrsRecordTypeCode:
-            /* TODO: Parse CRS admin record contents */
+            case BPLib_CT_CcsRecordTypeCode:
+                Status = BPLib_QCBOR_BundleSeqCollectionParserImpl(ctx, Parsed->BundleSeqCollections, &(Parsed->NumSeqCollections));
+                break;
 
-            break;
-
-        case BPLib_CT_CcsRecordTypeCode:
-            Status = BPLib_QCBOR_BundleSeqCollectionParserImpl(ctx, Parsed->BundleSeqCollections, &(Parsed->NumSeqCollections));
-            if (Status != BPLIB_SUCCESS)
-            {
-                /* Pass on error generated from bundle sequence collection parsing */
-                return Status;
-            }
-
-            break;
+            default:
+                Status = BPLIB_CBOR_DEC_TYPES_ADMIN_REC_INV_REC_TYPE;
+                break;
+        }
     }
 
-    return BPLIB_SUCCESS;
+    return Status;
 }
 
 BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* Parsed, size_t* NumSeqCollections)
