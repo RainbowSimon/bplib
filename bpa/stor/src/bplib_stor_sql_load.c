@@ -59,9 +59,13 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     size_t         i;
     sqlite3*       db;
     size_t         MaxWhereLen;
+    size_t         CurrWhereLen;
     char           WhereClause[BPLIB_SQL_MAX_STRLEN] = {0};
-    const char*    FindForEgressIdSQL_RangeClause =
-                    "((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))";
+    const char*    FindForDestNodeSql_RangeClause = "((dest_node BETWEEN ? AND ?) AND";
+    const char*    FindForDestNodeSql_EqualityClause = "((dest_node = ?) AND";
+    const char*    FindForDestServSql_RangeClause = " (dest_service BETWEEN ? AND ?))";
+    const char*    FindForDestServSql_EqalityClause = " (dest_service = ?))";
+    const char**   FindClausePtr;
 
     Status      = BPLIB_SUCCESS;
     db          = Inst->BundleStorage.db;
@@ -81,45 +85,94 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     ** the DestEID patterns.
     **
     ** NOTE:
-    ** This bit is tricky to understand from inspection. It is just taking the
-    ** "((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))" and appending it once
-    **  for each DestEID in the EgressID array.
+    ** This bit is tricky to understand from inspection. Basically, for each destination
+    ** eid pattern node number or service number it checks if the pattern is a true pattern
+    ** depicting a range, or if the minimum value equals the maximum value. In the former 
+    ** case, it checks if either dest_node or dest_service is "BETWEEN ? AND ?". In the
+    ** latter case it does an exact value check, so whether dest_node or dest_service "= ?".
+    ** This is a minor optimization since exact queries are a bit faster in sqlite than 
+    ** range queries. The final output should look something like 
+    ** "((dest_node BETWEEN ? AND ?)) AND (dest_service = ?)) OR 
+    **  ((dest_node = ?) AND (dest_service BETWEEN ? AND ?)) OR
+    **  ((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))",
+    ** or any additional combinations of the sort, depending on the DestEIDs.
     */
 
-    /*
-    ** There's no risk of overflow here since the size of
-    ** FindForEgressIdSQL_RangeClause is known and much less than the buffer size
-    */
-    strncat(WhereClause, FindForEgressIdSQL_RangeClause, MaxWhereLen);
+    CurrWhereLen = 0;
 
-    for (i = 1; i < NumEIDs; i++)
+    for (i = 0; i < NumEIDs; i++)
     {
-        if ((strlen(WhereClause) + strlen(" OR ")) < MaxWhereLen)
+        /* If maxNode == minNode, do an exact query, otherwise do a range query */
+        if (DestEIDs[i].MaxNode == DestEIDs[i].MinNode)
         {
-            strncat(WhereClause, " OR ", MaxWhereLen - strlen(WhereClause));
+            CurrWhereLen += strlen(FindForDestNodeSql_EqualityClause);
+            FindClausePtr = &FindForDestNodeSql_EqualityClause;
         }
         else
         {
-            fprintf(stderr, "Programming Error: WHERE clause too long\n");
-            return BPLIB_STOR_SQL_OVERFLOW_ERR;
+            CurrWhereLen += strlen(FindForDestNodeSql_RangeClause);
+            FindClausePtr = &FindForDestNodeSql_RangeClause;
         }
 
-        if ((strlen(WhereClause) + strlen(FindForEgressIdSQL_RangeClause)) < MaxWhereLen)
+        if (CurrWhereLen >= MaxWhereLen)
         {
-            strncat(WhereClause, FindForEgressIdSQL_RangeClause, MaxWhereLen - strlen(WhereClause));
+            fprintf(stderr, "Programming Error: Node WHERE clause too long\n");
+            return BPLIB_STOR_SQL_OVERFLOW_ERR;       
         }
         else
         {
-            fprintf(stderr, "Programming Error: WHERE clause too long\n");
+            /* Add the node query to the where clause */
+            strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
+        }
+
+        /* If MaxService == MinService, do an exact query, otherwise do a range query */
+        if (DestEIDs[i].MaxService == DestEIDs[i].MinService)
+        {
+            CurrWhereLen += strlen(FindForDestServSql_EqalityClause);
+            FindClausePtr = &FindForDestServSql_EqalityClause;
+        }
+        else
+        {
+            CurrWhereLen += strlen(FindForDestServSql_RangeClause);
+            FindClausePtr = &FindForDestServSql_RangeClause;
+        }
+
+        if (CurrWhereLen >= MaxWhereLen)
+        {
+            fprintf(stderr, "Programming Error: Node WHERE clause too long\n");
             return BPLIB_STOR_SQL_OVERFLOW_ERR;
+        }
+        else
+        {
+            /* Add the service query to the where clause */
+            strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
+        }
+
+        /* Link multiple EID queries with an OR, unless this is the last EID */
+        if (i != (NumEIDs - 1))
+        {
+            if (CurrWhereLen + strlen(" OR ") >= MaxWhereLen)
+            {
+                fprintf(stderr, "Programming Error: OR WHERE clause too long\n");
+                return BPLIB_STOR_SQL_OVERFLOW_ERR;
+            }
+            else
+            {
+                strncat(WhereClause, " OR ", MaxWhereLen - CurrWhereLen);
+                CurrWhereLen += strlen(" OR ");
+            }
         }
     }
 
     WhereClause[strlen(WhereClause)] = '\0';
 
-    /* Build the final query */
+    /* 
+    ** Build the final query. Note that "INDEXED BY idx_egress_id" is necessary to force
+    ** sqlite to use the right index, otherwise it will try to use the much slower
+    ** egress_attempted index by default, which will result in worse performance.
+    */
     snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN,
-            "SELECT id FROM bundle_data WHERE (%s) AND egress_attempted = 0 ORDER BY action_timestamp ASC LIMIT ?;",
+            "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND egress_attempted = 0 ORDER BY action_timestamp ASC LIMIT ?;",
             WhereClause);
 
     FindForEgressIdSQL[strlen(FindForEgressIdSQL)] = '\0';
@@ -174,11 +227,14 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
             return SQLStatus;
         }
 
-        SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MaxNode);
-        if (SQLStatus != SQLITE_OK)
+        if (DestEIDs[i].MinNode != DestEIDs[i].MaxNode)
         {
-            fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
-            return SQLStatus;
+            SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MaxNode);
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;
+            }
         }
 
         SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MinService);
@@ -188,12 +244,16 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
             return SQLStatus;
         }
 
-        SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MaxService);
-        if (SQLStatus != SQLITE_OK)
+        if (DestEIDs[i].MinService != DestEIDs[i].MaxService)
         {
-            fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
-            return SQLStatus;
+            SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MaxService);
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;
+            }
         }
+
     }
 
     SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, MaxBundles);
@@ -203,10 +263,21 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
         return SQLStatus;
     }
 
-    /* For every bundle found, place it's ID in the load batch for the EgressID */
+    /* For every bundle found, place its ID in the load batch for the EgressID */
     SQLStatus = sqlite3_step(FindForEgressIDStmt);
+
+    if (SQLStatus != SQLITE_ROW)
+    {
+        /* 
+        ** If bundles were previously being egressed by this egress ID, this flag is set
+        ** and is only turned off if no more bundles are found in storage.
+        */
+        Batch->EgressOpInProgress = false;
+    }
     while (SQLStatus == SQLITE_ROW)
     {
+        Batch->EgressOpInProgress = true;
+
         /* Load a single bundle from storage that matches the query */
         CurrBundleRowID = sqlite3_column_int64(FindForEgressIDStmt, 0);
         if (BPLib_STOR_LoadBatch_AddID(Batch, CurrBundleRowID) != BPLIB_SUCCESS)
@@ -533,4 +604,27 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
 
     /* Expecting SQLITE_OK */
     return SQLStatus;
+}
+
+bool BPLib_SQL_InProgressEgress(BPLib_Instance_t *Inst)
+{
+    uint32_t i;
+    
+    for (i = 0; i < BPLIB_MAX_NUM_CONTACTS; i++)
+    {
+        if (Inst->BundleStorage.ContactLoadBatches[i].EgressOpInProgress)
+        {
+            return true;
+        }
+    }
+
+    for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
+    {
+        if (Inst->BundleStorage.ChannelLoadBatches[i].EgressOpInProgress)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }

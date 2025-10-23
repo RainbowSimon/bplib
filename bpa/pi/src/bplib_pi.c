@@ -284,6 +284,9 @@ BPLib_Status_t BPLib_PI_RemoveApplication(BPLib_Instance_t *Inst, uint32_t ChanI
         }
     }
 
+    /* Clear relevant load batch. Ignore return code since we've already done a null check */
+    (void) BPLib_STOR_LoadBatch_Reset(&Inst->BundleStorage.ChannelLoadBatches[ChanId]);
+
     /* Reset sequence number */
     BPLib_PI_SequenceNums[ChanId] = 0;
     
@@ -431,10 +434,12 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         return BPLIB_BUF_LEN_ERROR;
     }
 
-    if (Inst->BundleStorage.BytesStorageInUse >= BPLIB_MAX_STORED_BUNDLE_BYTES)
+    if ((Inst->BundleStorage.BytesStorageInUse + AduSize) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_REJECTED, 1);
         BPLib_EM_SendEvent(BPLIB_PI_INGRESS_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
                             "[ADU In #%d]: Cannot ingress ADU, no storage left", ChanId);
+        BPLib_NC_ReaderUnlock();
         return BPLIB_NO_STOR_ERR;
     }
 

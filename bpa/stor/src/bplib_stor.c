@@ -300,7 +300,7 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
 
 BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
 {
-    BPLib_Status_t       Status;
+    BPLib_Status_t       Status = BPLIB_SUCCESS;
     BPLib_BundleCache_t* CacheInst;
     size_t               NumDiscarded;
 
@@ -308,67 +308,66 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
 
     if (Inst == NULL)
     {
-        return BPLIB_NULL_PTR_ERROR;
+        Status = BPLIB_NULL_PTR_ERROR;
     }
-
-    if (BPLib_QM_IsSystemIdle(Inst) == false)
+    else if (BPLib_SQL_InProgressEgress(Inst) == false && BPLib_QM_IsSystemIdle(Inst) == true)
     {
         /* 
-        ** Avoid searching the DB if any of the ingress/egress queues are not empty.
+        ** Avoid searching the DB if any of the ingress/egress queues are not empty or
+        ** storage operations are ongoing.
         ** Note: this is a pretty critical performance optimization that allows bplib
         ** to use all of its CPU resources for ingress and egress.
         */
-        return BPLIB_SUCCESS;
+
+        CacheInst = &Inst->BundleStorage;
+
+        pthread_mutex_lock(&CacheInst->lock);
+
+        Status = BPLib_SQL_DiscardExpired(Inst, &NumDiscarded);
+        if (Status != BPLIB_SUCCESS)
+        {
+            BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID,
+                                BPLib_EM_EventType_ERROR,
+                                "BPLib_SQL_DiscardExpired failed. RC=%d",
+                                Status);
+        }
+        else if (NumDiscarded > 0)
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_EXPIRED, NumDiscarded);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
+
+            CacheInst->BundleCountStored -= NumDiscarded;
+
+            BPLib_EM_SendEvent(BPLIB_STOR_EXPIRE_DBG_EID,
+                                BPLib_EM_EventType_DEBUG,
+                                "Discarded %d expired bundles from storage",
+                                NumDiscarded);
+        }
+
+        Status = BPLib_SQL_DiscardEgressed(Inst, &NumDiscarded);
+        if (Status != BPLIB_SUCCESS)
+        {
+            BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID,
+                                BPLib_EM_EventType_ERROR,
+                                "BPLib_SQL_DiscardEgressed failed. RC=%d",
+                                Status);
+        }
+        else if (NumDiscarded > 0)
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
+
+            CacheInst->BundleCountStored -= NumDiscarded;
+
+            BPLib_EM_SendEvent(BPLIB_STOR_DELETE_DBG_EID,
+                                BPLib_EM_EventType_DEBUG,
+                                "Discarded %d egressed bundles from storage",
+                                NumDiscarded);
+        }
+
+        pthread_mutex_unlock(&CacheInst->lock);
     }
-
-    CacheInst = &Inst->BundleStorage;
-
-    pthread_mutex_lock(&CacheInst->lock);
-
-    Status = BPLib_SQL_DiscardExpired(Inst, &NumDiscarded);
-    if (Status != BPLIB_SUCCESS)
-    {
-        BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID,
-                            BPLib_EM_EventType_ERROR,
-                            "BPLib_SQL_DiscardExpired failed. RC=%d",
-                            Status);
-    }
-    else if (NumDiscarded > 0)
-    {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_EXPIRED, NumDiscarded);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
-
-        CacheInst->BundleCountStored -= NumDiscarded;
-
-        BPLib_EM_SendEvent(BPLIB_STOR_EXPIRE_DBG_EID,
-                            BPLib_EM_EventType_DEBUG,
-                            "Discarded %d expired bundles from storage",
-                            NumDiscarded);
-    }
-
-    Status = BPLib_SQL_DiscardEgressed(Inst, &NumDiscarded);
-    if (Status != BPLIB_SUCCESS)
-    {
-        BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID,
-                            BPLib_EM_EventType_ERROR,
-                            "BPLib_SQL_DiscardEgressed failed. RC=%d",
-                            Status);
-    }
-    else if (NumDiscarded > 0)
-    {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
-
-        CacheInst->BundleCountStored -= NumDiscarded;
-
-        BPLib_EM_SendEvent(BPLIB_STOR_DELETE_DBG_EID,
-                            BPLib_EM_EventType_DEBUG,
-                            "Discarded %d egressed bundles from storage",
-                            NumDiscarded);
-    }
-
-    pthread_mutex_unlock(&CacheInst->lock);
 
     return Status;
 }

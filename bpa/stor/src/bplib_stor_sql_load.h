@@ -63,4 +63,6 @@ BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleRowID,
 SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowID,
                                         BPLib_Bundle_t** Bundle);
 
+bool BPLib_SQL_InProgressEgress(BPLib_Instance_t *Inst);
+
 #endif

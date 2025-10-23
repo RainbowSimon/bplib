@@ -403,6 +403,9 @@ BPLib_Status_t BPLib_CLA_ContactTeardown(BPLib_Instance_t *Inst, uint32_t Contac
         }
     }
 
+    /* Clear relevant load batch. Ignore return code since we've already done a null check */
+    (void) BPLib_STOR_LoadBatch_Reset(&Inst->BundleStorage.ContactLoadBatches[ContactId]);
+
     /* Do any framework-specific operations */
     BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactTeardown(ContactId);
     
