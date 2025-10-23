@@ -459,12 +459,11 @@ BPLib_Status_t BPLib_QCBOR_AdminRecordParserImpl(QCBORDecodeContext* ctx, BPLib_
 
 BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* Parsed, size_t* NumSeqCollections)
 {
-    BPLib_Status_t                 Status;
-    BPLib_CT_BundleSeqCollection_t PlaceholderCollection;
-    QCBORItem                      MapItem;
-    uint64_t                       CollectionIdx;
-    uint64_t                       SeqRangeIdx;
-    uint8_t                        DispositionIdx;
+    BPLib_Status_t Status;
+    QCBORItem      MapItem;
+    uint64_t       CollectionIdx;
+    uint64_t       SeqRangeIdx;
+    uint8_t        DispositionIdx;
 
     if ((ctx == NULL) || (Parsed == NULL))
     {
@@ -488,23 +487,31 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
 
     for (CollectionIdx = 0; CollectionIdx < *NumSeqCollections; CollectionIdx++)
     {
-        memset((void*) &PlaceholderCollection, 0, sizeof(BPLib_CT_BundleSeqCollection_t));
-
         Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &MapItem);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_ENTR_ARR_ERR;
         }
 
+        /* Find the entry in the bundle sequence collection */
+        DispositionIdx = BPLib_ARP_GetDispCodeIdx((BPLib_CT_DispositionCode_t) MapItem.label.int64);
+        memset((void*) &Parsed[DispositionIdx], 0, sizeof(BPLib_CT_BundleSeqCollection_t));
+
+        /* === Set DispositionCode === */
+        Parsed[DispositionIdx].DispositionCode = (BPLib_CT_DispositionCode_t) MapItem.label.int64;
+
+        /* === Jam LastSeqNumAdded to an innocuous initial value === */
+        Parsed[DispositionIdx].LastSeqNumAdded = 0;
+
         /* === Find SeqId === */
-        Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(PlaceholderCollection.SeqId));
+        Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(Parsed[DispositionIdx].SeqId));
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_ID_ERR;
         }
 
         /* === Assign FirstSeqNum === */
-        Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(PlaceholderCollection.FirstSeqNum));
+        Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(Parsed[DispositionIdx].FirstSeqNum));
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_NUM_ERR;
@@ -517,17 +524,17 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
             return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_RNGE_ENTER_ERR;
         }
 
-        PlaceholderCollection.SeqRangeLen = MapItem.val.uCount;
+        Parsed[DispositionIdx].SeqRangeLen = MapItem.val.uCount;
 
         /* Check that the length of the bundle sequence range is within bounds */
-        if (PlaceholderCollection.SeqRangeLen > BPLIB_CT_MAX_SEQ_RANGE_LEN)
+        if (Parsed[DispositionIdx].SeqRangeLen > BPLIB_CT_MAX_SEQ_RANGE_LEN)
         {
             return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_RNGE_SIZE_ERR;
         }
 
-        for (SeqRangeIdx = 0; SeqRangeIdx < PlaceholderCollection.SeqRangeLen; SeqRangeIdx++)
+        for (SeqRangeIdx = 0; SeqRangeIdx < Parsed[DispositionIdx].SeqRangeLen; SeqRangeIdx++)
         {
-            Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(PlaceholderCollection.SeqRange[SeqRangeIdx]));
+            Status = BPLib_QCBOR_UInt64ParserImpl(ctx, &(Parsed[DispositionIdx].SeqRange[SeqRangeIdx]));
             if (Status != BPLIB_SUCCESS)
             {
                 return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_RNGE_ERR;
@@ -539,16 +546,6 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         {
             return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_RNGE_EXIT_ERR;
         }
-
-        /* === Jam LastSeqNumAdded to an innocuous initial value === */
-        PlaceholderCollection.LastSeqNumAdded = 0;
-
-        /* === Set DispositionCode === */
-        PlaceholderCollection.DispositionCode = MapItem.label.int64;
-
-        /* Copy the parsed bundle sequence collection into the provided bundle sequence collection array */
-        DispositionIdx = BPLib_ARP_GetDispCodeIdx(PlaceholderCollection.DispositionCode);
-        memcpy((void*) &Parsed[DispositionIdx], (void*) &PlaceholderCollection, sizeof(BPLib_CT_BundleSeqCollection_t));
 
         Status = BPLib_QCBOR_ExitArray(ctx);
         if (Status != BPLIB_SUCCESS)
