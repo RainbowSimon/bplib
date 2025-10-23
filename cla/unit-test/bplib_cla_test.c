@@ -29,6 +29,7 @@
 #include "bplib_bi.h"
 #include "bplib_qm_waitqueue.h"
 #include "bplib_mem.h"
+#include "bplib_inst.h"
 
 void Test_BPLib_CLA_Ingress_NullInstPtrError(void)
 {

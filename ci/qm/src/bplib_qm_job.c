@@ -26,6 +26,7 @@
 #include "bplib_nc.h"
 #include "bplib_ebp.h"
 #include "bplib_ct.h"
+#include "bplib_inst.h"
 
 #include <stdio.h>
 #include <stdlib.h>
