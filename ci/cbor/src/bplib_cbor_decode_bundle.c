@@ -25,10 +25,6 @@
 
 #include <stdio.h>
 
-#define CBOR_INDEF_ARR_START          ((uint8_t)0x9F)
-#define CBOR_INDEF_ARR_END            ((uint8_t)0xFF)
-
-
 /*******************************************************************************
 * Exported Functions
 */
@@ -37,10 +33,8 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundle
 {
     BPLib_Status_t Status;
     QCBORDecodeContext ctx;
-    QCBORError QStatus;
     QCBORError NextElementType;
-    QCBORItem OuterArr;
-    QCBORItem PeekItem;
+    QCBORItem Item;
     UsefulBufC UBufC;
     uint32_t CanonicalBlockIndex = 0;
 
@@ -84,9 +78,8 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundle
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
     /* Enter Array */
-    QCBORDecode_EnterArray(&ctx, &OuterArr);
-    QStatus = QCBORDecode_GetError(&ctx);
-    if (QStatus != QCBOR_SUCCESS)
+    Status = BPLib_QCBOR_EnterIndefiniteArray(&ctx, &Item);
+    if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_BUNDLE_ENTER_ARRAY_ERR;
     }
@@ -105,7 +98,7 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundle
     for (CanonicalBlockIndex = 0; CanonicalBlockIndex < BPLIB_MAX_NUM_CANONICAL_BLOCKS; CanonicalBlockIndex++)
     {
         /* If we're out of elements, break */
-        NextElementType = QCBORDecode_PeekNext(&ctx, &PeekItem);
+        NextElementType = QCBORDecode_PeekNext(&ctx, &Item);
         if (NextElementType == QCBOR_ERR_NO_MORE_ITEMS)
         {
             break;
@@ -122,15 +115,14 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundle
     if (Status == BPLIB_SUCCESS)
     {
         /* Sanity check that we didn't have extra data left after decoding the canonical blocks */
-        NextElementType = QCBORDecode_PeekNext(&ctx, &PeekItem);
+        NextElementType = QCBORDecode_PeekNext(&ctx, &Item);
         if (NextElementType != QCBOR_ERR_NO_MORE_ITEMS)
         {
             return BPLIB_CBOR_DEC_BUNDLE_MAX_BLOCKS_ERR;
         }
 
-        QCBORDecode_ExitArray(&ctx);
-        QStatus = QCBORDecode_GetError(&ctx);
-        if (QStatus != QCBOR_SUCCESS)
+        Status = BPLib_QCBOR_ExitArray(&ctx);
+        if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_BUNDLE_EXIT_ARRAY_ERR;
         }

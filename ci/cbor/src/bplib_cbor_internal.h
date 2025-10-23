@@ -164,8 +164,20 @@ typedef BPLib_Status_t (*QCBOR_BundleSeqCollectionParser)(QCBORDecodeContext* ct
 */
 
 /**
- * \brief     Enters a CBOR definite array (always to be used with BPLib_QCBOR_ExitDefiniteArray)
- * \param[in] ctx (QCBORDecodeContext*) QCBOR decode context instance pointer
+ * \brief     Enters a CBOR indefinite array, which means it doesn't check that
+ *            the number of elements in the array are bounded (always to be used
+ *            with BPLib_QCBOR_ExitArray)
+ * \param[in] ctx       QCBOR decode context instance pointer
+ * \param[in] ArrayItem Decoded data provided by QCBOR
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
+ */
+BPLib_Status_t BPLib_QCBOR_EnterIndefiniteArray(QCBORDecodeContext* ctx, QCBORItem* ArrayItem);
+
+/**
+ * \brief     Enters a CBOR definite array (always to be used with BPLib_QCBOR_ExitArray)
+ * \param[in] ctx       QCBOR decode context instance pointer
  * \param[in] ArrayItem Decoded data provided by QCBOR
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
@@ -174,13 +186,14 @@ typedef BPLib_Status_t (*QCBOR_BundleSeqCollectionParser)(QCBORDecodeContext* ct
 BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, QCBORItem* ArrayItem);
 
 /**
- * \brief     Exits a CBOR definite array (always to be used with BPLib_QCBOR_EnterDefiniteArray)
- * \param[in] ctx (QCBORDecodeContext*) QCBOR decode context instance pointer
+ * \brief     Exits a CBOR array (always to be used with
+ *            BPLib_QCBOR_EnterDefiniteArray/BPLib_QCBOR_EnterIndefiniteArray)
+ * \param[in] ctx QCBOR decode context instance pointer
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
-BPLib_Status_t BPLib_QCBOR_ExitDefiniteArray(QCBORDecodeContext* ctx);
+BPLib_Status_t BPLib_QCBOR_ExitArray(QCBORDecodeContext* ctx);
 
 /*******************************************************************************
 * RFC-9171 Type Parsers (Implementation Prototypes)

@@ -26,7 +26,7 @@
 * Exported Parsing Helpers
 */
 
-BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, QCBORItem* ArrayItem)
+BPLib_Status_t BPLib_QCBOR_EnterIndefiniteArray(QCBORDecodeContext* ctx, QCBORItem* ArrayItem)
 {
     QCBORError QStatus;
 
@@ -40,7 +40,20 @@ BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, QCBORItem
     QStatus = QCBORDecode_GetError(ctx);
     if (QStatus != QCBOR_SUCCESS)
     {
-        return BPLIB_CBOR_DEC_TYPES_ENTER_DEF_ARRAY_QCBOR_ERR;
+        return BPLIB_CBOR_DEC_TYPES_ENTER_INDEF_ARRAY_ERR;
+    }
+
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, QCBORItem* ArrayItem)
+{
+    BPLib_Status_t Status;
+
+    Status = BPLib_QCBOR_EnterIndefiniteArray(ctx, ArrayItem);
+    if (Status != BPLIB_SUCCESS)
+    {
+        return Status;
     }
 
     /* Ensure the length isn't indicating this is an indefinite array
@@ -56,7 +69,7 @@ BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, QCBORItem
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_QCBOR_ExitDefiniteArray(QCBORDecodeContext* ctx)
+BPLib_Status_t BPLib_QCBOR_ExitArray(QCBORDecodeContext* ctx)
 {
     QCBORError QStatus;
 
@@ -198,14 +211,14 @@ BPLib_Status_t BPLib_QCBOR_EidDtnNoneParserImpl(QCBORDecodeContext* ctx, BPLib_E
     }
 
     /* Exit SSP Array */
-    Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    Status = BPLib_QCBOR_ExitArray(ctx);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_EID_EXIT_SSP_ARRAY_ERR;
     }
 
     /* Exit EID Array */
-    Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    Status = BPLib_QCBOR_ExitArray(ctx);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_EID_EXIT_OUTER_ARRAY_ERR;
@@ -266,7 +279,7 @@ BPLib_Status_t BPLib_QCBOR_ReportToEidParserImpl(QCBORDecodeContext* ctx, BPLib_
         }
 
         /* Exit SSP Array */
-        Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+        Status = BPLib_QCBOR_ExitArray(ctx);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_TYPES_EID_EXIT_SSP_ARRAY_ERR;
@@ -295,7 +308,7 @@ BPLib_Status_t BPLib_QCBOR_ReportToEidParserImpl(QCBORDecodeContext* ctx, BPLib_
     }
 
     /* Exit EID Array */
-    Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    Status = BPLib_QCBOR_ExitArray(ctx);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_EID_EXIT_OUTER_ARRAY_ERR;
@@ -336,7 +349,7 @@ BPLib_Status_t BPLib_QCBOR_TimestampParserImpl(QCBORDecodeContext* ctx, BPLib_Cr
     }
 
     /* Exit timestamp Array */
-    Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    Status = BPLib_QCBOR_ExitArray(ctx);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_TYPES_TIMESTAMP_EXIT_ARRAY_ERR;
@@ -521,7 +534,7 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
             }
         }
 
-        Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+        Status = BPLib_QCBOR_ExitArray(ctx);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_RNGE_EXIT_ERR;
@@ -537,7 +550,7 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         DispositionIdx = BPLib_ARP_GetDispCodeIdx(PlaceholderCollection.DispositionCode);
         memcpy((void*) &Parsed[DispositionIdx], (void*) &PlaceholderCollection, sizeof(BPLib_CT_BundleSeqCollection_t));
 
-        Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+        Status = BPLib_QCBOR_ExitArray(ctx);
         if (Status != BPLIB_SUCCESS)
         {
            return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_EXIT_ARR_ERR;

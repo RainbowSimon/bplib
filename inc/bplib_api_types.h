@@ -271,7 +271,7 @@ typedef enum
 
 #define BPLIB_CBOR_DEC_TYPES_ENTER_DEF_ARRAY_QCBOR_ERR ((BPLib_Status_t) -168) /* CBOR decode types error: enter def array */
 #define BPLIB_CBOR_DEC_TYPES_ENTER_DEF_ARRAY_COUNT_ERR ((BPLib_Status_t) -169) /* CBOR decode types error: def array size */
-#define BPLIB_CBOR_DEC_TYPES_EXIT_DEF_ARRAY_QCBOR_ERR  ((BPLib_Status_t) -170) /* CBOR decode types error: exit def array */
+#define BPLIB_CBOR_DEC_TYPES_EXIT_DEF_ARRAY_QCBOR_ERR  ((BPLib_Status_t) -170) /* CBOR decode types error: exit array */
 #define BPLIB_CBOR_DEC_TYPES_GET_UINT64_QCBOR_ERR      ((BPLib_Status_t) -171) /* CBOR decode types error: get uint64 */
 #define BPLIB_CBOR_DEC_TYPES_EID_ENTER_OUTER_ARRAY_ERR ((BPLib_Status_t) -172) /* CBOR decode types error: EID enter outer array */
 #define BPLIB_CBOR_DEC_TYPES_EID_SCHEME_NOT_IMPL_ERR   ((BPLib_Status_t) -173) /* CBOR decode types error: EID scheme not implemented */
@@ -306,8 +306,8 @@ typedef enum
 #define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_EXIT_MAP_ERR     ((BPLib_Status_t) -199) /* CBOR decode types error: bundle sequence collection exit map */
 #define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_ENTR_ARR_ERR ((BPLib_Status_t) -200) /* CBOR decode types error: bundle sequence collection enter entries array error */
 #define BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_EXIT_ARR_ERR ((BPLib_Status_t) -201) /* CBOR decode types error: bundle sequence collection exit entries array error */
+#define BPLIB_CBOR_DEC_TYPES_ENTER_INDEF_ARRAY_ERR     ((BPLib_Status_t) -202) /* CBOR decode types error: enter indef array error */
 /*
-#define BPLIB_CBOR_DEC_GENERIC_ERR_202                 ((BPLib_Status_t) -202) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_203                 ((BPLib_Status_t) -203) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_204                 ((BPLib_Status_t) -204) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_205                 ((BPLib_Status_t) -205) // CBOR decode error

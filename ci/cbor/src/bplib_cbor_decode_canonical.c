@@ -293,7 +293,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         }
 
         /* Exit the hop count block data array */
-        Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+        Status = BPLib_QCBOR_ExitArray(ctx);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_HOP_BLOCK_EXIT_ARRAY_ERR;
@@ -339,7 +339,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         /* TODO: Validate block source administrative endpoint ID, if applicable */
 
         /* Exit the custody transfer block data array */
-        Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+        Status = BPLib_QCBOR_ExitArray(ctx);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_CUSTODY_BLOCK_EXIT_ARRAY_ERR;
@@ -350,7 +350,8 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         /* Payload blocks shouldn't need to be re-encoded */
         CanonicalBlockHdr->RequiresEncode = false;
 
-        if (bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
+        if (bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG &&
+            BPLib_EID_IsMatch(&(bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
         { /* Payload block is an administrative record */
             BPLib_ARP_AdminRecord_t AdminRecord;
             uint64_t                TempAdminRecordType;
@@ -379,7 +380,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
             }
 
             /* Exit admin record array */
-            Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+            Status = BPLib_QCBOR_ExitArray(ctx);
             if (Status != BPLIB_SUCCESS)
             {
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_EXIT_ARR_ERR;
@@ -387,8 +388,6 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
 
             /* Shove the administrative record into the bundle's user data */
             BPLib_ARP_ProcessCcs(&AdminRecord, bundle);
-
-            return Status;
         }
     }
     else
@@ -427,7 +426,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     }
 
     /* Exit the canonical block array */
-    Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    Status = BPLib_QCBOR_ExitArray(ctx);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_CANON_EXIT_ARRAY_ERR;

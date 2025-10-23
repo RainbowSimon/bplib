@@ -187,7 +187,7 @@ BPLib_Status_t BPLib_CBOR_DecodePrimary(QCBORDecodeContext* ctx, BPLib_Bundle_t*
     }
 
     /* Exit the primary block array */
-    Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    Status = BPLib_QCBOR_ExitArray(ctx);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_PRIM_EXIT_ARRAY_ERR;
