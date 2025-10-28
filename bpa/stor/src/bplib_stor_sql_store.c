@@ -47,7 +47,9 @@ const char* InsertBlobSQL =
 
 /* Insert Bundle Metadata (duplicate bundle_id entries are ignored) */
 const char* InsertMetadataSQL =
-"INSERT INTO bundle_data (bundle_id, action_timestamp, retransmit_timestamp, dest_node, dest_service, is_custodial, bundle_bytes) VALUES (?, ?, ?, ?, ?, ?);";
+"INSERT INTO bundle_data (bundle_id, action_timestamp, retransmit_timestamp, \n"
+"retransmit_trigger, dest_node, dest_service, is_custodial, bundle_bytes) \n"
+"VALUES (?, ?, ?, ?, ?, ?);";
 
 /* ================ */
 /* Helper Functions */
@@ -147,15 +149,24 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
         SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 3, 
                                 (int64_t)BPLib_TIME_GetMonotonicTime() + Bundle->Meta.RetransmitTime);
     }
-    
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "Failed to bind retransmit_timestamp in store_meta\n");
     }
     else
     {
+        /* Add the retransmission time into the InsertMetadataStmt variable */
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 4, Bundle->Meta.RetransmitTime);
+    }
+    
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind retransmit_trigger in store_meta\n");
+    }
+    else
+    {
         /* Add the destination node into the InsertMetadataStmt variable */
-        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 4, 
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 5, 
                                 (int64_t)Bundle->blocks.PrimaryBlock.DestEID.Node);
     }
 
@@ -166,7 +177,7 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     else
     {
         /* Add the destination service into the InsertMetadataStmt variable */
-        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 5, 
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 6, 
                                 (int64_t)Bundle->blocks.PrimaryBlock.DestEID.Service);
     }
 
@@ -177,7 +188,7 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     else
     {
         /* Add whether the bundle is custodial or not into the InsertMetadataStmt variable */
-        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 6, (int64_t)Bundle->Meta.IsCustodial);
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 7, (int64_t)Bundle->Meta.IsCustodial);
     }
 
     if (SQLStatus != SQLITE_OK)
@@ -187,7 +198,7 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     else
     {
         /* Add the bundle size in bytes into the InsertMetadataStmt variable */
-        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 7, (int64_t)Bundle->Meta.TotalBytes);
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 8, (int64_t)Bundle->Meta.TotalBytes);
     }    
 
     if (SQLStatus != SQLITE_OK)

@@ -550,7 +550,6 @@ Bundle egress:
     - Only forward custodial bundle if retransmit_timestamp has been triggered
     - SELECT id FROM bundle_data WHERE retransmit_timestamp > NOW AND retransmit_timestamp != GARBAGE;
     - Put into load batch
-    - SELECT retransmit_trigger FROM bundle_data WHERE id = ?;
     - UPDATE bundle_data SET retransmit_timestamp = NOW + retransmit_trigger WHERE id = ?;
     - Do NOT mark bundle for deletion
 

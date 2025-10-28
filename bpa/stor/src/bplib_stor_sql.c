@@ -210,10 +210,11 @@ SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst)
     #endif
     "    action_timestamp INTEGER,\n"
     "    retransmit_timestamp INTEGER,\n"
+    "    retransmit_trigger INTEGER,\n"
     "    egress_attempted INTEGER DEFAULT 0,\n"
     "    dest_node INTEGER,\n"
     "    dest_service INTEGER,\n"
-    "    is_custodial INTEGER,\n"
+    "    is_custodial INTEGER\n"
     "    bundle_bytes INTEGER\n"
     ");\n"
     "\n"
