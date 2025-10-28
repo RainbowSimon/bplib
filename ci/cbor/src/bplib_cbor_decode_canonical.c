@@ -493,7 +493,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         case BPLib_BlockType_HopCount:
             printf("\t Hop Count Block Data: \n");
             printf("\t\t Hop Count MetaData Length: %lu\n", sizeof(BPLib_HopCountData_t));
-            printf("\t\t Hop Count Definite Array Length: %lu\n", HopCountBlockDataArrayLen);
+//            printf("\t\t Hop Count Definite Array Length: %lu\n", HopCountBlockDataArrayLen);
             printf("\t\t Hop Limit: %lu\n",
                 bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.HopCountData.HopLimit);
             printf("\t\t Hop Count: %lu\n",
@@ -502,7 +502,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         case BPLib_BlockType_CTEB:
             printf("\t Custody Transfer Block Data:\n");
             printf("\t\t Custody Transfer Block MetaData Length: %lu\n", sizeof(BPLib_CustodyBlockData_t));
-            printf("\t\t Custody Transfer Block Definite Array Length: %lu\n", CustodyTransferBlockDataArrayLen);
+//            printf("\t\t Custody Transfer Block Definite Array Length: %lu\n", CustodyTransferBlockDataArrayLen);
             printf("\t\t Bundle Sequence Number: %lu\n",
                 bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.CustodyBlockData.BundleSeqNum);
             printf("\t\t Bundle Sequence ID: %lu\n",

@@ -146,7 +146,7 @@ typedef struct
     uint64_t SeqId;
     uint64_t SeqNum;
     uint32_t BundleId;
-    bool     Free;
+    bool     Used;
 } BPLib_CT_DbEntry_t;
 
 /**

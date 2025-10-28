@@ -28,6 +28,7 @@
 #include "bplib_eid.h"
 #include "bplib_mem.h"
 #include "bplib_pdb.h"
+#include <stdio.h>
 
 /*
 ** Function Definitions
@@ -77,7 +78,7 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId,
     {
         CurrDbEntry = (CurrDbEntry + 1) % BPLIB_CT_DB_MAX_ENTRIES;
 
-        if (Context->Ctdb[CurrDbEntry].Free)
+        if (Context->Ctdb[CurrDbEntry].Used == false)
         {
             break;
         }
@@ -87,10 +88,12 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId,
     Context->Ctdb[CurrDbEntry].BundleId = BundleId;
     Context->Ctdb[CurrDbEntry].SeqId = SeqId;
     Context->Ctdb[CurrDbEntry].SeqNum = SeqNum;
-    Context->Ctdb[CurrDbEntry].Free = false;
+    Context->Ctdb[CurrDbEntry].Used = false;
 
     Context->CurrDbSize++;
     Context->LastDbEntry = CurrDbEntry;
+
+    printf("currdbentry = %ld\n", CurrDbEntry);
     
     return BPLib_RBT_InsertValueGeneric(SeqId, &(Context->CtdbRoot), 
                                         &(Context->Ctdb[CurrDbEntry].RbtLink),
@@ -122,7 +125,7 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_CT_Context_t *Context, BPLib_CT_DbE
     Status = BPLib_RBT_ExtractNode(&Context->CtdbRoot, &DbEntry->RbtLink);
     if (Status == BPLIB_SUCCESS)
     {
-        DbEntry->Free = true;
+        DbEntry->Used = true;
 
         Context->CurrDbSize--;
     }

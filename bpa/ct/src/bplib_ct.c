@@ -202,6 +202,8 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         }
     }
 
+    printf("status = %d\n", Status);
+
     /* Do nothing for non-custodial bundles */
 
     return Status;
