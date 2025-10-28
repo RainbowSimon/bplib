@@ -188,11 +188,7 @@ SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst)
     **    - Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter
     **      based on the timestamp of the bundle: This is used for expiring bundles
     **
-    ** 3. idx_find_bundle (Composite Index):
-    **    - Composite index on the columns 'dest_node', 'dest_service', 'egress_attempted', 'action_timestamp', and 'id'.
-    **    - This index optimizes queries that filter by node and service ranges, filter by egress_attempted (0),
-    **      and sort by action_timestamp. It can also enable an index-only scan to quickly retrieve 'id'.
-    **    - This composite index is designed for loading egress bundles by batch for a particular EgressID (A channel or contact)
+    ** 3. idx_egress_id (Composite Index):
     **
     ** 4. idx_egress_attempted:
     **    - Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up
