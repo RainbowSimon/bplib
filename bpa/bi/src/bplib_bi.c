@@ -52,7 +52,7 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
         return BPLIB_INVALID_CONT_ID_ERR;
     }
 
-    if (Inst->BundleStorage.BytesStorageInUse >= BPLIB_MAX_STORED_BUNDLE_BYTES)
+    if ((Inst->BundleStorage.BytesStorageInUse + Size) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
         BPLib_EM_SendEvent(BPLIB_BI_INGRESS_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
                             "[CLA In #%d]: Cannot ingress bundle, no storage left", ContId);
@@ -122,10 +122,6 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
 
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
-    }
-    else
-    {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED, 1);
     }
 
     return Status;

@@ -10,6 +10,8 @@
 # Create stubs (for external use)
 add_library(bplib_stor_stubs STATIC
     stubs/bplib_stor_stubs.c
+    stubs/bplib_stor_loadbatch_stubs.c
+    stubs/bplib_stor_sql_stubs.c
 )
 
 target_include_directories(bplib_stor_stubs PUBLIC

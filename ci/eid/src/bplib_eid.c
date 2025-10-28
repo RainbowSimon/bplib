@@ -61,7 +61,11 @@ bool BPLib_EID_IsValid(BPLib_EID_t* EID)
 {
     bool IsValid;
 
-    if (EID->Scheme == BPLIB_EID_SCHEME_DTN)
+    if (EID == NULL)
+    {
+        IsValid = false;
+    }
+    else if (EID->Scheme == BPLIB_EID_SCHEME_DTN)
     {
         /* Only dtn:none is accepted in the DTN scheme right now */
         IsValid = BPLib_EID_IsMatch(EID, &BPLIB_EID_DTN_NONE);
@@ -164,6 +168,10 @@ bool BPLib_EID_IsValid(BPLib_EID_t* EID)
 
 bool BPLib_EID_PatternIsValid(BPLib_EID_Pattern_t* EID_Pattern)
 {
+    if (EID_Pattern == NULL)
+    {
+        return false;
+    }
     /* Pattern maximums must be greater than or equal to their relative minimums */
     if (EID_Pattern->MaxAllocator  >= EID_Pattern->MinAllocator &&
         EID_Pattern->MaxNode       >= EID_Pattern->MinNode      &&
@@ -200,6 +208,11 @@ bool BPLib_EID_PatternIsValid(BPLib_EID_Pattern_t* EID_Pattern)
 
 bool BPLib_EID_IsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID_Reference)
 {
+    if (EID_Actual == NULL || EID_Reference == NULL)
+    {
+        return false;
+    }
+
     return (EID_Actual->Scheme       == EID_Reference->Scheme       &&
             EID_Actual->IpnSspFormat == EID_Reference->IpnSspFormat &&
             EID_Actual->Allocator    == EID_Reference->Allocator    &&
@@ -209,6 +222,11 @@ bool BPLib_EID_IsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID_Ref
 
 bool BPLib_EID_NodeIsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID_Reference)
 {
+    if (EID_Actual == NULL || EID_Reference == NULL)
+    {
+        return false;
+    }
+
     return (EID_Actual->Scheme       == EID_Reference->Scheme       &&
             EID_Actual->IpnSspFormat == EID_Reference->IpnSspFormat &&
             EID_Actual->Allocator    == EID_Reference->Allocator    &&
@@ -253,7 +271,11 @@ bool BPLib_EID_PatternIsMatch(BPLib_EID_t* EID_Actual, BPLib_EID_Pattern_t* EID_
     IsMatch = true;
 
     /* Input verification */
-    if (BPLib_EID_PatternIsValid(EID_Pattern))
+    if (EID_Actual == NULL || EID_Pattern == NULL)
+    {
+        IsMatch = false;
+    }
+    else if (BPLib_EID_PatternIsValid(EID_Pattern))
     { /* The pattern is considered valid */
         if (EID_Actual->Scheme == EID_Pattern->Scheme)
         { /* The EID schemes are compatible for comparison */
@@ -294,6 +316,11 @@ bool BPLib_EID_PatternIsMatch(BPLib_EID_t* EID_Actual, BPLib_EID_Pattern_t* EID_
 
 bool BPLib_EID_PatternsAreMatch(BPLib_EID_Pattern_t* PatternActual, BPLib_EID_Pattern_t* PatternReference)
 {
+    if (PatternActual == NULL || PatternReference == NULL)
+    {
+        return false;
+    }
+
     return (PatternActual->Scheme       == PatternReference->Scheme &&
             PatternActual->IpnSspFormat == PatternReference->IpnSspFormat &&
             PatternActual->MaxAllocator == PatternReference->MaxAllocator &&

@@ -284,6 +284,9 @@ BPLib_Status_t BPLib_PI_RemoveApplication(BPLib_Instance_t *Inst, uint32_t ChanI
         }
     }
 
+    /* Clear relevant load batch. Ignore return code since we've already done a null check */
+    (void) BPLib_STOR_LoadBatch_Reset(&Inst->BundleStorage.ChannelLoadBatches[ChanId]);
+
     /* Reset sequence number */
     BPLib_PI_SequenceNums[ChanId] = 0;
     
@@ -431,10 +434,12 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         return BPLIB_BUF_LEN_ERROR;
     }
 
-    if (Inst->BundleStorage.BytesStorageInUse >= BPLIB_MAX_STORED_BUNDLE_BYTES)
+    if ((Inst->BundleStorage.BytesStorageInUse + AduSize) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_REJECTED, 1);
         BPLib_EM_SendEvent(BPLIB_PI_INGRESS_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
                             "[ADU In #%d]: Cannot ingress ADU, no storage left", ChanId);
+        BPLib_NC_ReaderUnlock();
         return BPLIB_NO_STOR_ERR;
     }
 
@@ -498,6 +503,8 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
     if (Status == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_ACCEPTED, 1);
+        BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_RECV_RATE_BITS_PER_SEC, AduSize * BPLIB_BITS_IN_BYTE);
+        BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_RECV_RATE_BUNDLES_PER_SEC, 1);
     }
     else 
     {
@@ -544,6 +551,9 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
         {
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, ADU_COUNT_DELIVERED, 1);
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELIVERED, 1);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_DLVR_RATE_BITS_PER_SEC, 
+                                            Bundle->blocks.PayloadHeader.DataSize * BPLIB_BITS_IN_BYTE);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_DLVR_RATE_BUNDLES_PER_SEC, 1);
 
             *AduSize = Bundle->blocks.PayloadHeader.DataSize;
         }

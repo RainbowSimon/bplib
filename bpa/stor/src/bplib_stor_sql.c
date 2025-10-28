@@ -23,9 +23,9 @@
 /* ======== */
 
 #include "bplib_stor_sql.h"
-#include "bplib_qm.h"
 #include "bplib_time.h"
 #include "bplib_fwp.h"
+#include "bplib_inst.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -222,7 +222,11 @@ SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst)
     "\n"
     "CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_row);\n"
     "CREATE INDEX IF NOT EXISTS idx_action_timestamp ON bundle_data (action_timestamp);\n"
+    #if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
+    #else
     "CREATE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
+    #endif
     "\n"
     "CREATE INDEX IF NOT EXISTS idx_egress_id\n"
     "ON bundle_data (\n"
