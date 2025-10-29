@@ -565,11 +565,11 @@ On contact-start, update stored custodial bundles with new retransmit_trigger/ti
 Trigger retransmission based on CCS request (bundle will actually be egressed with the next
 bundle egress pass):
     UPDATE bundle_data SET retransmit_timestamp = NOW WHERE bundle_id = ?;
-    - Question: what if this has to wait for a new contact?
+    - Bulk?
 
 Turn off retransmission based on CCS request:
     UPDATE bundle_data SET retransmit_timestamp = GARBAGE WHERE bundle_id = ?;
-
+    
 Delete custodial bundle based on successful CCS:
     - Already in progress? Get bundle_id and add to load_batch for bulk deletion
 

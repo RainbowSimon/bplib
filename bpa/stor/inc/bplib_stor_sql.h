@@ -201,4 +201,7 @@ BPLib_Status_t BPLib_SQL_Cleanup(BPLib_Instance_t* Inst);
 
 BPLib_Status_t BPLib_SQL_GetBundleRowId(sqlite3 *db, uint32_t BundleId, int64_t *BundleRowId);
 
+BPLib_Status_t BPLib_SQL_GetDestEidWhereClause(BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, 
+                                                                        char *WhereClause);
+
 #endif /* BPLIB_STOR_SQL_H */

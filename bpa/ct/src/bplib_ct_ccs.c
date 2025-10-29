@@ -211,7 +211,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                     if (Status == BPLIB_SUCCESS)
                     {
                         /* Request bundle deletion from storage */
-                        Status = BPLib_STOR_MarkCustodialBundleForDeletion(Inst, DbEntry->BundleId);
+                        //Status = BPLib_STOR_MarkCustodialBundleForDeletion(Inst, DbEntry->BundleId);
                     }
                                 
                     if (Status != BPLIB_SUCCESS)
