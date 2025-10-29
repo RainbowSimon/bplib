@@ -29,6 +29,7 @@
 #include "bplib_nc.h"
 #include "bplib_stor.h"
 #include "bplib_ct.h"
+#include "bplib_inst.h"
 
 /* =========== */
 /* Global Data */
@@ -43,6 +44,7 @@ volatile BPLib_CLA_ContactRunState_t BPLib_CLA_ContactRunStates[BPLIB_MAX_NUM_CO
 /* BPLib_CLA_Ingress - Received candidate bundles from CL */
 BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t* Inst, uint32_t ContId, const void *Bundle, size_t Size, uint32_t Timeout)
 {
+    BPLib_Status_t Status;
 
     if ((Inst == NULL) || (Bundle == NULL))
     {
@@ -58,8 +60,7 @@ BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t* Inst, uint32_t ContId, const 
     if (BPLib_CLA_IsAControlMsg((const uint8_t*)Bundle, Size))
     {
         /* Processes the control message and pass to BI*/
-        BPLib_CLA_ProcessControlMessage((BPLib_CLA_CtrlMsg_t*)Bundle);
-        return BPLIB_SUCCESS;
+        Status = BPLib_CLA_ProcessControlMessage((BPLib_CLA_CtrlMsg_t*)Bundle);
     }
     else
     {        
@@ -67,8 +68,22 @@ BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t* Inst, uint32_t ContId, const 
         /* Note: An argument can be made to simply implement RecvFullBundleIn here
         * and do away with BI_RecvFullBundleIn()
         */
-        return BPLib_BI_RecvFullBundleIn(Inst, Bundle, Size, ContId);
+        Status = BPLib_BI_RecvFullBundleIn(Inst, Bundle, Size, ContId);
+
+        if (Status == BPLIB_SUCCESS)
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED, 1);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_RATE_BITS_PER_SEC, Size * BPLIB_BITS_IN_BYTE);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_RATE_BUNDLES_PER_SEC, 1);
+        }
+        else
+        {
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_REJECT_RATE_BITS_PER_SEC, Size * BPLIB_BITS_IN_BYTE);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_REJECT_RATE_BUNDLES_PER_SEC, 1);
+        }
     }
+
+    return Status;
 }
 
 /* BPLib_CLA_Egress - Receive bundles from BI and send bundles out to CL */
@@ -99,6 +114,8 @@ BPLib_Status_t BPLib_CLA_Egress(BPLib_Instance_t* Inst, uint32_t ContId, void *B
         if (Status == BPLIB_SUCCESS)
         {
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_FORWARDED, 1);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_EGRESS_RATE_BITS_PER_SEC, *Size * BPLIB_BITS_IN_BYTE);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_EGRESS_RATE_BUNDLES_PER_SEC, 1);
         }
 
         /* Free the bundle blocks */

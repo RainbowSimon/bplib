@@ -106,6 +106,8 @@ typedef enum
 
 #define BPLIB_NO_RETRANSMIT_TRIGGER          0xFFFFFFFFFFFFFFFF  /** @brief Garbage retransmit time trigger */
 
+#define BPLIB_BITS_IN_BYTE                              (8u)     /** \brief Number of bits in a byte */
+
 /**
  * @defgroup Block Processing Control Flags
  * @{
