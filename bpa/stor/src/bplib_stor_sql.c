@@ -43,9 +43,84 @@ sqlite3_stmt* DiscardExpiredStmt;
 sqlite3_stmt* ExpiredBytesStmt;
 sqlite3_stmt* DiscardEgressedStmt;
 sqlite3_stmt* EgressedBytesStmt;
-sqlite3_stmt* FindBundleRowIdStmt;
 
 /* SQL query strings */
+
+/*
+** Table and Index Creation for bundle_data and bundle_blobs
+**
+** This schema is designed to support efficient queries and operations on bundle metadata and associated blob data.
+** The following indexes are created:
+**
+** 1. idx_bundle_blobs_bundle_row:
+**    - Index on the 'bundle_row' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
+**      by its associated bundle_row in the 'bundle_data' table.
+**
+** 2. idx_action_timestamp:
+**    - Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter
+**      based on the timestamp of the bundle: This is used for expiring bundles
+**
+** 3. idx_egress_id (Composite Index):
+**    - Composite index on the columns 'dest_node', 'dest_service', 'egress_attempted', 'action_timestamp', and 'id'.
+**    - This index optimizes queries that filter by node and service ranges, filter by egress_attempted (0),
+**      and sort by action_timestamp. It can also enable an index-only scan to quickly retrieve 'id'.
+**    - This composite index is designed for loading egress bundles by batch for a particular EgressID (A channel or contact)
+**
+** 4. idx_egress_attempted:
+**    - Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up
+**      DELETE queries and other queries filtering by 'egress_attempted'.
+**
+** 5. idx_bundle_id
+**    - Index on the bplib-assigned unique 'bundle_id' in the 'bundle_data' table. This is used to detect duplicate bundles
+**      in storage and by Custody Transfer to request the deletion or retransmission of custodial bundles. Whether or not
+**      to allow duplicate bundles in storage is toggled by the BPLIB_ALLOW_DUPLICATE_BUNDLES flag.
+**/
+
+const char* CreateTableSQL =
+"CREATE TABLE IF NOT EXISTS bundle_data (\n"
+"    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+"    bundle_id INTEGER UNIQUE,\n"
+#else
+"    bundle_id INTEGER,\n"
+#endif
+"    action_timestamp INTEGER,\n"
+"    retransmit_timestamp INTEGER,\n"
+"    retransmit_trigger INTEGER,\n"
+"    egress_attempted INTEGER DEFAULT 0,\n"
+"    dest_node INTEGER,\n"
+"    dest_service INTEGER,\n"
+"    is_custodial INTEGER,\n"
+"    bundle_bytes INTEGER\n"
+");\n"
+"\n"
+"CREATE TABLE IF NOT EXISTS bundle_blobs (\n"
+"    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+"    bundle_row INTEGER,\n"
+"    blob_data BLOB,\n"
+"    FOREIGN KEY (bundle_row) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
+");\n"
+"\n"
+"CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_row);\n"
+"CREATE INDEX IF NOT EXISTS idx_action_timestamp ON bundle_data (action_timestamp);\n"
+#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+"CREATE UNIQUE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
+#else
+"CREATE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
+#endif
+"\n"
+"CREATE INDEX IF NOT EXISTS idx_egress_id\n"
+"ON bundle_data (\n"
+"    dest_node,\n"
+"    dest_service,\n"
+"    egress_attempted,\n"
+"    action_timestamp,\n"
+"    id\n"
+");\n"
+"\n"
+"CREATE INDEX IF NOT EXISTS idx_egress_attempted\n"
+"ON bundle_data (egress_attempted);\n";
+
 
 const char* GetNumBundlesSQL =
 "SELECT COUNT(*) FROM bundle_data;";
@@ -93,10 +168,6 @@ const char* EgressedBytesSQL =
 "FROM bundle_data\n"
 "WHERE id IN (SELECT id FROM egressed_bytes);\n";
 
-const char* FindBundleRowIdSQL =
-"SELECT id\n"
-"FROM bundle_data\n"
-"WHERE bundle_id = ?;";
 
 /* ==================== */
 /* Function Definitions */
@@ -174,77 +245,6 @@ SQL_Status_t BPLib_SQL_InitDb(const char* DbName, sqlite3** ActiveDbPtr)
 
 SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst)
 {
-    /*
-    ** Table and Index Creation for bundle_data and bundle_blobs
-    **
-    ** This schema is designed to support efficient queries and operations on bundle metadata and associated blob data.
-    ** The following indexes are created:
-    **
-    ** 1. idx_bundle_blobs_bundle_row:
-    **    - Index on the 'bundle_row' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
-    **      by its associated bundle_row in the 'bundle_data' table.
-    **
-    ** 2. idx_action_timestamp:
-    **    - Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter
-    **      based on the timestamp of the bundle: This is used for expiring bundles
-    **
-    ** 3. idx_egress_id (Composite Index):
-    **
-    ** 4. idx_egress_attempted:
-    **    - Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up
-    **      DELETE queries and other queries filtering by 'egress_attempted'.
-    **
-    ** 5. idx_bundle_id
-    **    - Index on the bplib-assigned unique 'bundle_id' in the 'bundle_data' table. This is used to detect duplicate bundles
-    **      in storage and by Custody Transfer to request the deletion or retransmission of custodial bundles. Whether or not
-    **      to allow duplicate bundles in storage is toggled by the BPLIB_ALLOW_DUPLICATE_BUNDLES flag.
-    **/
-
-    const char* CreateTableSQL =
-    "CREATE TABLE IF NOT EXISTS bundle_data (\n"
-    "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-    #if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
-    "    bundle_id INTEGER UNIQUE,\n"
-    #else
-    "    bundle_id INTEGER,\n"
-    #endif
-    "    action_timestamp INTEGER,\n"
-    "    retransmit_timestamp INTEGER,\n"
-    "    retransmit_trigger INTEGER,\n"
-    "    egress_attempted INTEGER DEFAULT 0,\n"
-    "    dest_node INTEGER,\n"
-    "    dest_service INTEGER,\n"
-    "    is_custodial INTEGER\n"
-    "    bundle_bytes INTEGER\n"
-    ");\n"
-    "\n"
-    "CREATE TABLE IF NOT EXISTS bundle_blobs (\n"
-    "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-    "    bundle_row INTEGER,\n"
-    "    blob_data BLOB,\n"
-    "    FOREIGN KEY (bundle_row) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
-    ");\n"
-    "\n"
-    "CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_row);\n"
-    "CREATE INDEX IF NOT EXISTS idx_action_timestamp ON bundle_data (action_timestamp);\n"
-    #if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
-    "CREATE UNIQUE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
-    #else
-    "CREATE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
-    #endif
-    "\n"
-    "CREATE INDEX IF NOT EXISTS idx_egress_id\n"
-    "ON bundle_data (\n"
-    "    dest_node,\n"
-    "    dest_service,\n"
-    "    egress_attempted,\n"
-    "    action_timestamp,\n"
-    "    id\n"
-    ");\n"
-    "\n"
-    "CREATE INDEX IF NOT EXISTS idx_egress_attempted\n"
-    "ON bundle_data (egress_attempted);\n";
-    
     SQL_Status_t SQLStatus;
     uint32_t     NumStoredBundles;
     uint64_t     TotalBundleBytes;
@@ -683,45 +683,6 @@ BPLib_Status_t BPLib_SQL_Cleanup(BPLib_Instance_t* Inst)
         fprintf(stderr, "Failed to vacuum: %s\n", sqlite3_errmsg(Inst->BundleStorage.db));
         Status = BPLIB_STOR_CLEANUP_ERR;
     }    
-
-    return Status;
-}
-
-// TODO fix returns I'm tired
-BPLib_Status_t BPLib_SQL_GetBundleRowId(sqlite3 *db, uint32_t BundleId, int64_t *BundleRowId)
-{
-    BPLib_Status_t Status ;
-    SQL_Status_t SQLStatus;
-
-    SQLStatus = sqlite3_prepare_v2(db, FindBundleRowIdSQL, -1, &FindBundleRowIdStmt, NULL);
-    if (SQLStatus != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
-        return SQLStatus;
-    }
-
-    SQLStatus = sqlite3_bind_int(FindBundleRowIdStmt, 1, BundleId);
-    if (SQLStatus != SQLITE_OK)
-    {
-        fprintf(stderr, "bind failed: %s\n", sqlite3_errmsg(db));
-        return SQLStatus;
-    }
-
-    SQLStatus = sqlite3_step(FindBundleRowIdStmt);
-    if (SQLStatus != SQLITE_ROW)
-    {
-        fprintf(stderr, "step failed: %s\n", sqlite3_errmsg(db));
-        return SQLStatus;
-    }
-
-    *BundleRowId = sqlite3_column_int64(FindBundleRowIdStmt, 0);
-
-    sqlite3_finalize(FindBundleRowIdStmt);
-
-    if (SQLStatus == SQLITE_DONE)
-    {
-        Status = BPLIB_SUCCESS;
-    }
 
     return Status;
 }

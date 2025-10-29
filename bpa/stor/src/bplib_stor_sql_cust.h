@@ -28,7 +28,7 @@
 #include "bplib_stor.h"
 #include "bplib_stor_sql.h"
 
-BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId,
+BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId,
                                 BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, size_t RetransmitTrigger);
 
 SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Pattern_t* DestEIDs, 

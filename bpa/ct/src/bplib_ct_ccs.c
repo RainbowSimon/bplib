@@ -206,8 +206,6 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 /* Positive disposition code indicates custody was accepted */
                 if (SeqCollection->DispositionCode > 0)
                 {
-                    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
-
                     Status = BPLib_CT_RemoveFromCtdb(Context, DbEntry);   
 
                     if (Status == BPLIB_SUCCESS)
@@ -216,6 +214,9 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                         CcsStorBatch.BundleIDs[CcsStorBatch.Size] = DbEntry->BundleId;
                         CcsStorBatch.Ops[CcsStorBatch.Size] = BPLIB_CT_MARK_DELETE;
                         CcsStorBatch.Size++;
+
+                        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
+                        BPLib_AS_Decrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, 1);
                     }                                
                     else
                     {
@@ -243,7 +244,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 CcsStorBatch.Ops[CcsStorBatch.Size] = BPLIB_CT_START_RETRANSMIT;
                 CcsStorBatch.Size++;
 
-                /* Move me to storage */
+                /* Move me to storage TODO */
                 BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
             }
 

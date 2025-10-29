@@ -524,36 +524,30 @@ BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_C
     return Status;
 }
 
-/*
+BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId)
+{
+    BPLib_Status_t Status;
 
-New columns:
-    retransmit_trigger = 10 sec (or whatever)
-    retransmit_timestamp = 0xfffffff (index on meee)
-    is_custodial
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
 
-Bundle storage:
-    Existing insert query with additional values (see above)
+    if (ContactId >= BPLIB_MAX_NUM_CONTACTS)
+    {
+        return BPLIB_INVALID_CONT_ID_ERR;
+    }
 
-Bundle egress:
-    - Only forward custodial bundle if retransmit_timestamp has been triggered
-    - SELECT id FROM bundle_data WHERE retransmit_timestamp > NOW AND retransmit_timestamp != GARBAGE;
-    - Put into load batch
-    - UPDATE bundle_data SET retransmit_timestamp = NOW + retransmit_trigger WHERE id = ?;
-    - Do NOT mark bundle for deletion
+    pthread_mutex_lock(&(Inst->BundleStorage.lock));
 
-On contact-start, update stored custodial bundles with new retransmit_trigger/timestamps:
-    WITH to_update AS (
-        SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (<EID check>) 
-        AND is_custodial = 1 AND egressed_attempted = 0;
-    )
-    UPDATE bundle_data SET retransmit_trigger = ? AND retransmit_timestamp = ? 
-    WHERE id IN (SELECT id FROM to_update);
+    Status = BPLib_SQL_SetNewRetransmitTrigger(Inst, ContactId,
+                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].DestEIDs,
+                BPLIB_MAX_CONTACT_DEST_EIDS, 
+                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].RetransmitTimeout);
 
-Modify retransmission based on CCS request. Build two batches and update them:
-    - Either NOW or GARBAGE depending on if bundle was rejected or not received
-    UPDATE bundle_data SET retransmit_timestamp = ? WHERE bundle_id = ?;
+    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
+
+    /* Event handled upstream */
     
-Delete custodial bundle based on successful CCS:
-    - Already in progress? Get bundle_id and add to load_batch for bulk deletion
-
-*/
+    return Status;    
+}

@@ -336,7 +336,7 @@ typedef enum
 #define BPLIB_STOR_SQL_MARK_EGRESSED_ERR               ((BPLib_Status_t) -242)
 #define BPLIB_STOR_NO_BUNDLE_FOUND_ERR                 ((BPLib_Status_t) -243)
 #define BPLIB_STOR_CLEANUP_ERR                         ((BPLib_Status_t) -244)
-#define BPLIB_STOR_SET_NEW_RETRANSMIT_ERR              ((BPLib_Status_t) -245)
+#define BPLIB_STOR_SQL_NEW_RETRANSMIT_ERR              ((BPLib_Status_t) -245)
 #define BPLIB_SQL_CUSTODY_UPDATE_ERR                   ((BPLib_Status_t) -246)
 
 /* Bundle Interface Errors */

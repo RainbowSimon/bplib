@@ -172,4 +172,6 @@ BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst);
 
 BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_CT_CcsUpdateBatch_t *Batch);
 
+BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId);
+
 #endif /* BPLIB_STOR_H */

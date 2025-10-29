@@ -169,6 +169,7 @@
 #define BPLIB_CLA_INVALID_CONTACT_ID_DBG_EID            (662u)
 #define BPLIB_CLA_REMOVE_QUEUE_FLUSH_DGB_EID            (663u)
 #define BPLIB_CLA_DUPLICATE_EIDS_WRN_EID                (664u)
+#define BPLIB_CLA_RESET_TRIGGERS_DBG_EID                (665u)
 
 /* ============ */
 /* PI event IDs */

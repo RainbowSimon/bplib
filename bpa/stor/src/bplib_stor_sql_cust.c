@@ -32,7 +32,7 @@ char SetNewRetransmitTriggerSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 const char* SetNewRetransmitTriggerBaseSQL =
 "WITH to_update AS (\n"
     "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) \n"
-    "AND is_custodial = 1 AND egressed_attempted = 0;\n"
+    "AND is_custodial = 1 AND egress_attempted = 0\n"
 ")\n"
 "UPDATE bundle_data SET retransmit_trigger = ? AND retransmit_timestamp = ? \n"
 "WHERE id IN (SELECT id FROM to_update);";
@@ -48,7 +48,7 @@ const char* MarkForDeletionSQL =
 
 
 
-BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId,
+BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId,
                                 BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, size_t RetransmitTrigger)
 {
     BPLib_Status_t Status;
@@ -80,7 +80,7 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "Programming Error: SetNewRetransmitTriggerSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
-        Status = BPLIB_STOR_SET_NEW_RETRANSMIT_ERR;
+        Status = BPLIB_STOR_SQL_NEW_RETRANSMIT_ERR;
     }
 
     if (Status == BPLIB_SUCCESS)
@@ -91,7 +91,7 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
 
         if (SQLStatus != SQLITE_OK)
         {
-            Status = BPLIB_STOR_SET_NEW_RETRANSMIT_ERR;
+            Status = BPLIB_STOR_SQL_NEW_RETRANSMIT_ERR;
         }
     }
 

@@ -174,7 +174,6 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     {
                         /* We have a contact we can deliver to: forward without storing */
                         Bundle->Meta.EgressID = i;
-                        BPLib_NC_ReaderUnlock();
                         BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
                         
                         /* Custodial bundles still need to be stored, even during a loopback */
@@ -183,6 +182,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                             Bundle->Meta.RetransmitTime = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[i].RetransmitTimeout;
                         }
                         {
+                            BPLib_NC_ReaderUnlock();
                             return NO_NEXT_STATE;
                         }
                         
