@@ -73,10 +73,25 @@
  */
 #define BPLIB_CT_DB_MAX_ENTRIES                     (100u)
 
+#define BPLIB_CT_BATCH_SIZE                         (100u)
 
 /*
 ** Type Definitions
 */
+
+typedef enum
+{
+    BPLIB_CT_STOP_RETRANSMIT,
+    BPLIB_CT_MARK_DELETE,
+    BPLIB_CT_START_RETRANSMIT
+} BPLib_CT_StorOp_t;
+
+typedef struct 
+{
+    uint32_t BundleIDs[BPLIB_CT_BATCH_SIZE];
+    BPLib_CT_StorOp_t Ops[BPLIB_CT_BATCH_SIZE];
+    size_t   Size;
+} BPLib_CT_CcsUpdateBatch_t;
 
 /**
  * \brief Disposition codes relating custody information of a bundle sequence collection

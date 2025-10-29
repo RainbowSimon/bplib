@@ -131,6 +131,9 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
     BPLib_EID_t* DestEID;
     BPLib_CLA_ContactRunState_t ContactState;
 
+    /* Default retransmit time trigger is garbage */
+    Bundle->Meta.RetransmitTime = BPLIB_NO_RETRANSMIT_TRIGGER;
+
     /* For build 7.0 our ingress route strategy is as follows:
     ** - If the bundle is local, forward to the channel immediatley
     ** - If the bundle is for an available contact, deliver without storing
@@ -156,7 +159,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
             }
         }
     }
-    else if (Bundle->Meta.IsCustodial == false)
+    else
     {
         /* Iterate through the contacts: this is very slow. */
         for (i = 0; i < BPLIB_MAX_NUM_CONTACTS; i++)
@@ -175,15 +178,20 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                         BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
                         
                         /* Custodial bundles still need to be stored, even during a loopback */
-                        if (Bundle->Meta.IsCustodial == false)
+                        if (Bundle->Meta.IsCustodial)
+                        {
+                            Bundle->Meta.RetransmitTime = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[i].RetransmitTimeout;
+                        }
                         {
                             return NO_NEXT_STATE;
-                        }                        
+                        }
+                        
                     }
                 }
             }
         }
     }
+
     BPLib_NC_ReaderUnlock();
 
     /* We never found an active channel or contact: store this bundle */

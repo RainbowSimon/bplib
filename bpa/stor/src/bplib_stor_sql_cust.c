@@ -19,9 +19,13 @@
  */
 
 #include "bplib_stor_sql_cust.h"
+#include "bplib_inst.h"
 #include <stdio.h>
 
-sqlite3_stmt* SetRetransmitStmt;
+sqlite3_stmt* SetRetransmitAllStmt;
+sqlite3_stmt* TriggerRetransmitStmt;
+sqlite3_stmt* MarkForDeletionStmt;
+sqlite3_stmt* StopRetransmitStmt;
 
 char SetNewRetransmitTriggerSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 
@@ -32,6 +36,16 @@ const char* SetNewRetransmitTriggerBaseSQL =
 ")\n"
 "UPDATE bundle_data SET retransmit_trigger = ? AND retransmit_timestamp = ? \n"
 "WHERE id IN (SELECT id FROM to_update);";
+
+const char* TriggerRetransmitSQL =
+"UPDATE bundle_data SET retransmit_timestamp = ? WHERE bundle_id = ?;";
+
+const char* StopRetransmitSQL =
+"UPDATE bundle_data SET retransmit_trigger = ? WHERE bundle_id = ?;";
+
+const char* MarkForDeletionSQL =
+"UPDATE bundle_data SET egress_attempted = 1 WHERE bundle_id = ?;";
+
 
 
 BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId,
@@ -62,7 +76,7 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
     SetNewRetransmitTriggerSQL[strlen(SetNewRetransmitTriggerSQL)] = '\0';
 
     /* Prepare Search Statements needed for this batch query */
-    SQLStatus = sqlite3_prepare_v2(db, SetNewRetransmitTriggerSQL, -1, &SetRetransmitStmt, 0);
+    SQLStatus = sqlite3_prepare_v2(db, SetNewRetransmitTriggerSQL, -1, &SetRetransmitAllStmt, 0);
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "Programming Error: SetNewRetransmitTriggerSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
@@ -82,7 +96,7 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
     }
 
     /* Cleanup/Finalize */
-    sqlite3_finalize(SetRetransmitStmt);
+    sqlite3_finalize(SetRetransmitAllStmt);
     
     return Status;
 }
@@ -95,13 +109,13 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
     uint64_t      BindIndex;
 
     /* Bind parameters for query */
-    sqlite3_reset(SetRetransmitStmt);
+    sqlite3_reset(SetRetransmitAllStmt);
 
     BindIndex = 1;
     /* Bind destination EID query */
     for (i = 0; i < NumEIDs; i++)
     {
-        SQLStatus = sqlite3_bind_int64(SetRetransmitStmt, BindIndex++, DestEIDs[i].MinNode);
+        SQLStatus = sqlite3_bind_int64(SetRetransmitAllStmt, BindIndex++, DestEIDs[i].MinNode);
         if (SQLStatus != SQLITE_OK)
         {
             fprintf(stderr, "Failed to bind dest_node min: %s\n", sqlite3_errmsg(db));
@@ -110,7 +124,7 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
 
         if (DestEIDs[i].MinNode != DestEIDs[i].MaxNode)
         {
-            SQLStatus = sqlite3_bind_int64(SetRetransmitStmt, BindIndex++, DestEIDs[i].MaxNode);
+            SQLStatus = sqlite3_bind_int64(SetRetransmitAllStmt, BindIndex++, DestEIDs[i].MaxNode);
             if (SQLStatus != SQLITE_OK)
             {
                 fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
@@ -118,7 +132,7 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
             }
         }
 
-        SQLStatus = sqlite3_bind_int64(SetRetransmitStmt, BindIndex++, DestEIDs[i].MinService);
+        SQLStatus = sqlite3_bind_int64(SetRetransmitAllStmt, BindIndex++, DestEIDs[i].MinService);
         if (SQLStatus != SQLITE_OK)
         {
             fprintf(stderr, "Failed to bind dest_node min: %s\n", sqlite3_errmsg(db));
@@ -127,7 +141,7 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
 
         if (DestEIDs[i].MinService != DestEIDs[i].MaxService)
         {
-            SQLStatus = sqlite3_bind_int64(SetRetransmitStmt, BindIndex++, DestEIDs[i].MaxService);
+            SQLStatus = sqlite3_bind_int64(SetRetransmitAllStmt, BindIndex++, DestEIDs[i].MaxService);
             if (SQLStatus != SQLITE_OK)
             {
                 fprintf(stderr, "Failed to bind dest_node max: %s\n", sqlite3_errmsg(db));
@@ -138,7 +152,7 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
     }
 
     /* Bind retransmit_trigger to garbage value */
-    SQLStatus = sqlite3_bind_int64(SetRetransmitStmt, BindIndex++, RetransmitTrigger);
+    SQLStatus = sqlite3_bind_int64(SetRetransmitAllStmt, BindIndex++, RetransmitTrigger);
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "Failed to bind retransmit_trigger: %s\n", sqlite3_errmsg(db));
@@ -146,7 +160,7 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
     }
 
     /* Bind retransmit_time to current time plus retransmit trigger */
-    SQLStatus = sqlite3_bind_int64(SetRetransmitStmt, BindIndex++, 
+    SQLStatus = sqlite3_bind_int64(SetRetransmitAllStmt, BindIndex++, 
                                     BPLib_TIME_GetMonotonicTime() + RetransmitTrigger);
     if (SQLStatus != SQLITE_OK)
     {
@@ -154,7 +168,7 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
         return SQLStatus;
     }
 
-    SQLStatus = sqlite3_step(SetRetransmitStmt);
+    SQLStatus = sqlite3_step(SetRetransmitAllStmt);
 
     if (SQLStatus == SQLITE_DONE)
     {
@@ -164,4 +178,166 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
 
     /* Expecting SQLITE_OK */
     return SQLStatus;    
+}
+
+BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT_CcsUpdateBatch_t *Batch)
+{
+    SQL_Status_t   SQLStatus;
+    sqlite3*       db;
+
+    db     = Inst->BundleStorage.db;
+
+    SQLStatus = sqlite3_prepare_v2(db, TriggerRetransmitSQL, -1, &TriggerRetransmitStmt, 0);
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Programming Error: TriggerRetransmitSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
+        return BPLIB_SQL_CUSTODY_UPDATE_ERR;
+    }
+
+    SQLStatus = sqlite3_prepare_v2(db, StopRetransmitSQL, -1, &StopRetransmitStmt, 0);
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Programming Error: StopRetransmitSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
+        return BPLIB_SQL_CUSTODY_UPDATE_ERR;
+    }
+
+    SQLStatus = sqlite3_prepare_v2(db, MarkForDeletionSQL, -1, &MarkForDeletionStmt, 0);    
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Programming Error: MarkForDeletionSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
+        return BPLIB_SQL_CUSTODY_UPDATE_ERR;
+    }
+
+    SQLStatus = BPLib_SQL_UpdateCustodialBundlesImpl(db, Batch);
+
+    sqlite3_finalize(MarkForDeletionStmt);
+    sqlite3_finalize(TriggerRetransmitStmt);
+
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Programming Error: MarkEgressedSQL finalize failed, error=%s\n", sqlite3_errmsg(db));
+        return BPLIB_SQL_CUSTODY_UPDATE_ERR;
+    }
+
+    return BPLIB_SUCCESS;
+}
+
+SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdateBatch_t *Batch)
+{
+    SQL_Status_t SQLStatus;
+    size_t       i;
+
+    /* Create a batch query */
+    SQLStatus = sqlite3_exec(db, "BEGIN;", 0, 0, 0);
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to start transaction\n");
+        return SQLStatus;
+    }
+
+    /* Go through the load batch and add each ID as egressed */
+    for (i = 0; i < Batch->Size; i++)
+    {
+        /* Start retransmission by setting the retransmission timestamp to now */
+        if (Batch->Ops[i] == BPLIB_CT_START_RETRANSMIT)
+        {
+            sqlite3_reset(TriggerRetransmitStmt);
+
+            SQLStatus = sqlite3_bind_int64(TriggerRetransmitStmt, 1, BPLib_TIME_GetMonotonicTime());
+            
+            /* Set the retransmit_timestamp to the current time to trigger an egress on the next egress option */
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind retransmit_timestamp: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;
+            }
+
+            /* Set bundle_id to current bundle ID in the batch */
+            SQLStatus = sqlite3_bind_int64(TriggerRetransmitStmt, 1, Batch->BundleIDs[i]);
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;                
+            }
+            
+            SQLStatus = sqlite3_step(TriggerRetransmitStmt);
+            if (SQLStatus != SQLITE_DONE)
+            {
+                fprintf(stderr, "Start Retransmit Failed: %s\n", sqlite3_errstr(SQLStatus));
+                break;
+            }
+        }
+        /* Turn off retransmission by setting the retransmission time to garbage */
+        else if (Batch->Ops[i] == BPLIB_CT_STOP_RETRANSMIT)
+        {
+            sqlite3_reset(StopRetransmitStmt);
+
+            SQLStatus = sqlite3_bind_int64(StopRetransmitStmt, 1, BPLIB_NO_RETRANSMIT_TRIGGER);
+            
+            /* Set the retransmit_trigger to a garbage value to turn it off */
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind retransmit_trigger: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;
+            }
+
+            /* Set bundle_id to current bundle ID in the batch */
+            SQLStatus = sqlite3_bind_int64(StopRetransmitStmt, 1, Batch->BundleIDs[i]);
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;                
+            }
+            
+            SQLStatus = sqlite3_step(StopRetransmitStmt);
+            if (SQLStatus != SQLITE_DONE)
+            {
+                fprintf(stderr, "Stop Retransmit Failed: %s\n", sqlite3_errstr(SQLStatus));
+                break;
+            }
+        }
+        /* Mark bundle for deletion */
+        else /* (Batch->Ops[i] == BPLIB_CT_MARK_DELETE) */
+        {
+            sqlite3_reset(MarkForDeletionStmt);
+
+            /* Set bundle_id to current bundle ID in the batch */
+            SQLStatus = sqlite3_bind_int64(MarkForDeletionStmt, 1, Batch->BundleIDs[i]);
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;                
+            }
+            
+            SQLStatus = sqlite3_step(MarkForDeletionStmt);
+            if (SQLStatus != SQLITE_DONE)
+            {
+                fprintf(stderr, "Mark for Deletion Failed: %s\n", sqlite3_errstr(SQLStatus));
+                break;
+            }
+        }
+    }
+
+    /* If there have been no errors so far, batch-write the data to persistent storage */
+    if (SQLStatus == SQLITE_DONE)
+    {
+        SQLStatus = sqlite3_exec(db, "COMMIT;", 0, 0, 0);
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to commit transaction\n");
+        }
+    }
+
+    /* The batch commit was not successful, ROLLBACK to prevent DB corruption */
+    if (SQLStatus != SQLITE_OK)
+    {
+        SQLStatus = sqlite3_exec(db, "ROLLBACK;", 0, 0, 0);
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to rollback transaction, RC=%d\n", SQLStatus);
+        }
+    }
+
+    /* Expecting SQLITE_OK */
+    return SQLStatus;
 }

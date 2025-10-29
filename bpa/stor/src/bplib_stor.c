@@ -33,6 +33,7 @@
 #include "bplib_stor_sql.h"
 #include "bplib_stor_sql_store.h"
 #include "bplib_stor_sql_load.h"
+#include "bplib_stor_sql_cust.h"
 #include "bplib_inst.h"
 
 #include <stdio.h>
@@ -500,43 +501,29 @@ BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst)
     return Status;
 }
 
-BPLib_Status_t BPLib_STOR_MarkCustodialBundleForDeletion(BPLib_Instance_t *Inst, uint32_t BundleId)
+BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_CT_CcsUpdateBatch_t *Batch)
 {
     BPLib_Status_t Status;
-    int64_t BundleRowId;
 
-    if (Inst == NULL)
+    if (Inst == NULL || Batch == NULL || Batch->Size >= BPLIB_CT_BATCH_SIZE)
     {
         return BPLIB_NULL_PTR_ERROR;
     }
 
     pthread_mutex_lock(&(Inst->BundleStorage.lock));
 
-    Status = BPLib_SQL_GetBundleRowId(Inst->BundleStorage.db, BundleId, &BundleRowId);
-
-    /*
-    if loadbatch is full:
-        Status = BPLib_SQL_MarkBatchEgressed(Inst, &Inst->BundleStorage.CustodialDeleteBatch);
-        (void) BPLib_STOR_LoadBatch_Reset(LoadBatch);
-    
-    Add BundleRowId to loadbatch
-    
-    */
+    Status = BPLib_SQL_UpdateCustodialBundles(Inst, Batch);
 
     pthread_mutex_unlock(&(Inst->BundleStorage.lock));
 
+    if (Status != BPLIB_SUCCESS)
+    {
+        // TODO event
+    }
+    
     return Status;
 }
 
-BPLib_Status_t BPLib_STOR_TurnOffRetransmission(BPLib_Instance_t *Inst, uint32_t BundleId)
-{
-    return BPLIB_SUCCESS;
-}
-
-BPLib_Status_t BPLib_STOR_TriggerRetransmission(BPLib_Instance_t *Inst, uint32_t BundleId)
-{
-    return BPLIB_SUCCESS;
-}
 /*
 
 New columns:
@@ -562,13 +549,9 @@ On contact-start, update stored custodial bundles with new retransmit_trigger/ti
     UPDATE bundle_data SET retransmit_trigger = ? AND retransmit_timestamp = ? 
     WHERE id IN (SELECT id FROM to_update);
 
-Trigger retransmission based on CCS request (bundle will actually be egressed with the next
-bundle egress pass):
-    UPDATE bundle_data SET retransmit_timestamp = NOW WHERE bundle_id = ?;
-    - Bulk?
-
-Turn off retransmission based on CCS request:
-    UPDATE bundle_data SET retransmit_timestamp = GARBAGE WHERE bundle_id = ?;
+Modify retransmission based on CCS request. Build two batches and update them:
+    - Either NOW or GARBAGE depending on if bundle was rejected or not received
+    UPDATE bundle_data SET retransmit_timestamp = ? WHERE bundle_id = ?;
     
 Delete custodial bundle based on successful CCS:
     - Already in progress? Get bundle_id and add to load_batch for bulk deletion

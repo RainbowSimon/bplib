@@ -104,7 +104,7 @@ typedef enum
 
 #define BPLIB_BUNDLE_PROTOCOL_VERSION                   (7u)     /** @brief Version of Bundle Protocol being implemented */
 
-#define BPLIB_NO_RETRANSMIT_TRIGGER          0xFFFFFFFFFFFFFFFF  /** @brief Garbage retransmit time trigger */
+#define BPLIB_NO_RETRANSMIT_TRIGGER                     (0u)  /** @brief Garbage retransmit time trigger */
 
 #define BPLIB_BITS_IN_BYTE                              (8u)     /** \brief Number of bits in a byte */
 
@@ -337,6 +337,7 @@ typedef enum
 #define BPLIB_STOR_NO_BUNDLE_FOUND_ERR                 ((BPLib_Status_t) -243)
 #define BPLIB_STOR_CLEANUP_ERR                         ((BPLib_Status_t) -244)
 #define BPLIB_STOR_SET_NEW_RETRANSMIT_ERR              ((BPLib_Status_t) -245)
+#define BPLIB_SQL_CUSTODY_UPDATE_ERR                   ((BPLib_Status_t) -246)
 
 /* Bundle Interface Errors */
 #define BPLIB_BI_INVALID_BUNDLE_ERR                    ((BPLib_Status_t) -250)

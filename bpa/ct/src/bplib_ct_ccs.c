@@ -31,6 +31,7 @@
 #include "bplib_pdb.h"
 #include "bplib_as.h"
 #include "bplib_em.h"
+#include "bplib_stor.h"
 
 /*
 ** Function Definitions
@@ -180,7 +181,9 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     size_t NextSeqNum;
     BPLib_Status_t Status = BPLIB_SUCCESS;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
+    BPLib_CT_CcsUpdateBatch_t CcsStorBatch;
 
+    CcsStorBatch.Size = 0;
     CurrSeqNum =  SeqCollection->FirstSeqNum;
 
     for (SeqRangeIdx = 0; SeqRangeIdx < SeqCollection->SeqRangeLen; SeqRangeIdx++)
@@ -203,7 +206,6 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 /* Positive disposition code indicates custody was accepted */
                 if (SeqCollection->DispositionCode > 0)
                 {
-                    BPLib_AS_Decrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, 1);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
 
                     Status = BPLib_CT_RemoveFromCtdb(Context, DbEntry);   
@@ -211,10 +213,11 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                     if (Status == BPLIB_SUCCESS)
                     {
                         /* Request bundle deletion from storage */
-                        //Status = BPLib_STOR_MarkCustodialBundleForDeletion(Inst, DbEntry->BundleId);
-                    }
-                                
-                    if (Status != BPLIB_SUCCESS)
+                        CcsStorBatch.BundleIDs[CcsStorBatch.Size] = DbEntry->BundleId;
+                        CcsStorBatch.Ops[CcsStorBatch.Size] = BPLIB_CT_MARK_DELETE;
+                        CcsStorBatch.Size++;
+                    }                                
+                    else
                     {
                         BPLib_EM_SendEvent(BPLIB_CT_BUNDLE_DLT_ERR_EID, BPLib_EM_EventType_ERROR,
                             "Error deleting custodial bundle sequence number %ld with sequence ID %ld. Status = %d.",
@@ -224,22 +227,42 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 /* Negative disposition code indicates custody was rejected */
                 else
                 {
-                    /* TODO request storage turn retransmit timer off */
+                    /* Request storage turn retransmit timer off */
+                    CcsStorBatch.BundleIDs[CcsStorBatch.Size] = DbEntry->BundleId;
+                    CcsStorBatch.Ops[CcsStorBatch.Size] = BPLIB_CT_STOP_RETRANSMIT;
+                    CcsStorBatch.Size++;
 
-                    BPLib_AS_Decrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, 1);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REJECTED, 1);
                 }
             }
             /* Odd sequence range numbers indicate sequences that are *excluded* */
             else
             {
-                /* Request bundle retransmission from storage TODO */
+                /* Request bundle retransmission from storage */
+                CcsStorBatch.BundleIDs[CcsStorBatch.Size] = DbEntry->BundleId;
+                CcsStorBatch.Ops[CcsStorBatch.Size] = BPLIB_CT_START_RETRANSMIT;
+                CcsStorBatch.Size++;
+
+                /* Move me to storage */
                 BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
+            }
+
+            /* If a batch of bundle IDs is reached, do storage operation */
+            if (CcsStorBatch.Size >= BPLIB_CT_BATCH_SIZE)
+            {
+                Status = BPLib_STOR_UpdateCustodialBundles(Inst, &CcsStorBatch);
+
+                /* Ignore return code, event message handled internally */
+
+                CcsStorBatch.Size = 0;
             }
         }
 
         CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];
     }
+
+    /* Do remaining storage operations */
+    Status = BPLib_STOR_UpdateCustodialBundles(Inst, &CcsStorBatch);
 
     return Status;
 }

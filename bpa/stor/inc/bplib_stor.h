@@ -31,6 +31,7 @@
 #include "bplib_mem.h"
 #include "bplib_stor_loadbatch.h"
 #include "bplib_stor_sql.h"
+#include "bplib_ct.h"
 
 /* ====== */
 /* Macros */
@@ -169,11 +170,6 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst);
 
 BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst);
 
-BPLib_Status_t BPLib_STOR_MarkCustodialBundleForDeletion(BPLib_Instance_t *Inst, uint32_t BundleId);
-
-BPLib_Status_t BPLib_STOR_TurnOffRetransmission(BPLib_Instance_t *Inst, uint32_t BundleId);
-
-BPLib_Status_t BPLib_STOR_TriggerRetransmission(BPLib_Instance_t *Inst, uint32_t BundleId);
-
+BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_CT_CcsUpdateBatch_t *Batch);
 
 #endif /* BPLIB_STOR_H */
