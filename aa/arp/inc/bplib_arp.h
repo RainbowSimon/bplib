@@ -66,6 +66,17 @@ typedef enum
     /* Others here when applicable */
 } BPLib_ARP_AdminRecordTypeCode_t;
 
+typedef union
+{
+    /**
+     * \brief The value to the disposition key, bundle sequence collection value
+     *        CBOR map that represents a CCS. The actual key (disposition code) is
+     *        inside the BPLib_CT_BundleSeqCollection_t struct
+     */
+    BPLib_CT_DeserializedCcs_t CCS;
+    /* Others */
+} BPLib_ARP_AdminRecordBody_t;
+
 /**
  * \brief Standard and typically small ADUs that are used in providing some of the
  *        features of the Bundle Protocol as a response to bundle transmission
@@ -74,16 +85,7 @@ typedef enum
 typedef struct
 {
     BPLib_ARP_AdminRecordTypeCode_t AdminRecordType; /** \brief Administrative record type */
-
-    /* Administrative record content map */
-
-    /**
-     * \brief The value to the disposition key, bundle sequence collection value
-     *        CBOR map that represents a CCS. The actual key (disposition code) is
-     *        inside the BPLib_CT_BundleSeqCollection_t struct
-     */
-    BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS];
-    size_t                         NumSeqCollections;
+    BPLib_ARP_AdminRecordBody_t     AdminRecordBody;
 } BPLib_ARP_AdminRecord_t;
 
 /* =================== */

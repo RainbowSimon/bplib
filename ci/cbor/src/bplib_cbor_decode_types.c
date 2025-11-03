@@ -444,7 +444,7 @@ BPLib_Status_t BPLib_QCBOR_AdminRecordContentParserImpl(QCBORDecodeContext* ctx,
                 break;
 
             case BPLib_CT_CcsRecordTypeCode:
-                Status = BPLib_QCBOR_BundleSeqCollectionParserImpl(ctx, Parsed->BundleSeqCollections, &(Parsed->NumSeqCollections));
+                Status = BPLib_QCBOR_BundleSeqCollectionParserImpl(ctx, Parsed->AdminRecordBody.CCS.BundleSeqCollections, &(Parsed->AdminRecordBody.CCS.NumBundleSeqCollections));
                 break;
 
             default:

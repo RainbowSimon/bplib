@@ -48,18 +48,13 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
     if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&
         BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
     {
-        BPLib_CT_DeserializedCcs_t DeserializedCcs;
-        BPLib_ARP_AdminRecord_t    BundleAdminRecord;
+        BPLib_ARP_AdminRecord_t BundleAdminRecord;
 
         /* Recover the admin record from the bundle */
         memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.raw_bytes), sizeof(BPLib_ARP_AdminRecord_t));
 
-        /* Populate the deserialized CCS */
-        memcpy((void*) DeserializedCcs.BundleSeqCollections, (void*) (BundleAdminRecord.BundleSeqCollections), sizeof(BPLib_CT_BundleSeqCollection_t));
-        DeserializedCcs.NumBundleSeqCollections = BundleAdminRecord.NumSeqCollections;
-
         /* Send the deserialized CCS off to CT */
-        (void) BPLib_CT_ProcessCcs(Inst, &DeserializedCcs);
+        (void) BPLib_CT_ProcessCcs(Inst, &BundleAdminRecord.AdminRecordBody.CCS);
         
         BPLib_MEM_BundleFree(&Inst->pool, Bundle);
         return NO_NEXT_STATE;
