@@ -88,7 +88,7 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId,
     Context->Ctdb[CurrDbEntry].BundleId = BundleId;
     Context->Ctdb[CurrDbEntry].SeqId = SeqId;
     Context->Ctdb[CurrDbEntry].SeqNum = SeqNum;
-    Context->Ctdb[CurrDbEntry].Used = false;
+    Context->Ctdb[CurrDbEntry].Used = true;
 
     Context->CurrDbSize++;
     Context->LastDbEntry = CurrDbEntry;
@@ -123,7 +123,7 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_CT_Context_t *Context, BPLib_CT_DbE
     Status = BPLib_RBT_ExtractNode(&Context->CtdbRoot, &DbEntry->RbtLink);
     if (Status == BPLIB_SUCCESS)
     {
-        DbEntry->Used = true;
+        DbEntry->Used = false;
 
         Context->CurrDbSize--;
     }
