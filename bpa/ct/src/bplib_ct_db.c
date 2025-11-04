@@ -92,8 +92,6 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId,
 
     Context->CurrDbSize++;
     Context->LastDbEntry = CurrDbEntry;
-
-    printf("currdbentry = %ld\n", CurrDbEntry);
     
     return BPLib_RBT_InsertValueGeneric(SeqId, &(Context->CtdbRoot), 
                                         &(Context->Ctdb[CurrDbEntry].RbtLink),
