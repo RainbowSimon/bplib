@@ -116,6 +116,9 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     BPLib_CanBlockHeader_t* CanonicalBlockHdr;
     BPLib_CanBlockHeader_t  SpareCanonicalBlockHdr;
     QCBORItem               ArrayItem;
+    QCBORItem               HopCountItem;
+    QCBORItem               CustodyTransferItem;
+    QCBORItem               AdminRecordItem;
     QCBORError              QStatus;
     uint64_t                BlockType;
     uint32_t                HeaderStartOffset;
@@ -258,7 +261,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     else if (CanonicalBlockHdr->BlockType == BPLib_BlockType_HopCount)
     {
         /* Enter the hop count block data array */
-        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &HopCountItem);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_HOP_BLOCK_ENTER_ARRAY_ERR;
@@ -302,7 +305,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     else if (CanonicalBlockHdr->BlockType == BPLib_BlockType_CTEB)
     {
         /* Enter the custody transfer block data array */
-        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CustodyTransferItem);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_CUSTODY_BLOCK_ENTER_ARRAY_ERR;
@@ -357,7 +360,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
             uint64_t                TempAdminRecordType;
 
             /* Enter admin record array */
-            Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
+            Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &AdminRecordItem);
             if (Status != BPLIB_SUCCESS)
             {
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_ENTER_ARR_ERR;
@@ -493,7 +496,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         case BPLib_BlockType_HopCount:
             printf("\t Hop Count Block Data: \n");
             printf("\t\t Hop Count MetaData Length: %lu\n", sizeof(BPLib_HopCountData_t));
-//            printf("\t\t Hop Count Definite Array Length: %lu\n", HopCountBlockDataArrayLen);
+           printf("\t\t Hop Count Definite Array Length: %d\n", HopCountItem.val.uCount);
             printf("\t\t Hop Limit: %lu\n",
                 bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.HopCountData.HopLimit);
             printf("\t\t Hop Count: %lu\n",
@@ -502,7 +505,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         case BPLib_BlockType_CTEB:
             printf("\t Custody Transfer Block Data:\n");
             printf("\t\t Custody Transfer Block MetaData Length: %lu\n", sizeof(BPLib_CustodyBlockData_t));
-//            printf("\t\t Custody Transfer Block Definite Array Length: %lu\n", CustodyTransferBlockDataArrayLen);
+            printf("\t\t Custody Transfer Block Definite Array Length: %d\n", CustodyTransferItem.val.uCount);
             printf("\t\t Bundle Sequence Number: %lu\n",
                 bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.CustodyBlockData.BundleSeqNum);
             printf("\t\t Bundle Sequence ID: %lu\n",
@@ -523,8 +526,18 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
             printf("\t CREB Block Data Parsing Skipped!\n");
             break;
         case BPLib_BlockType_Payload:
-            printf("\t Payload Data Length: %lu bytes\n",
+            if (bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG &&
+                BPLib_EID_IsMatch(&(bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
+            {
+                printf("Compressed Custody Signal Data:\n");
+                printf("\tMetadata Length: %lu\n", sizeof(BPLib_ARP_AdminRecord_t));
+                printf("\tDefinite Array Length: %d\n", AdminRecordItem.val.uCount);
+            }
+            else
+            {
+                printf("\t Payload Data Length: %lu bytes\n",
                 CanonicalBlockHdr->DataSize);
+            }
             break;
         default:
             printf("\t Unrecognized Block (%lu) Data Parsing Skipped!\n", CanonicalBlockHdr->BlockType);
