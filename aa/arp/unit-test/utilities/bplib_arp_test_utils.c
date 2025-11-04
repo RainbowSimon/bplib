@@ -62,23 +62,23 @@ void BPLib_ARP_Test_Setup(void)
 
     AdminRecord.AdminRecordType = BPLib_CT_CcsRecordTypeCode;
 
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqId           = 1;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].FirstSeqNum     = 12;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[0]     = 2;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[1]     = 3;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[2]     = 4;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[3]     = 5;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen     = 4;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].LastSeqNumAdded = 5;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].DispositionCode = BPLib_CT_CustodyAccepted;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqId           = 1;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].FirstSeqNum     = 12;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[0]     = 2;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[1]     = 3;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[2]     = 4;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[3]     = 5;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen     = 4;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].LastSeqNumAdded = 5;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].DispositionCode = BPLib_CT_CustodyAccepted;
 
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqId           = 1;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].FirstSeqNum     = 12;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRange[0]     = 2;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRange[1]     = 3;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRangeLen     = 2;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].LastSeqNumAdded = 3;
-    AdminRecord.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].DispositionCode = BPLib_CT_CustodyRefused;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqId           = 1;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].FirstSeqNum     = 12;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRange[0]     = 2;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRange[1]     = 3;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRangeLen     = 2;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].LastSeqNumAdded = 3;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].DispositionCode = BPLib_CT_CustodyRefused;
 
     UT_SetHandlerFunction(UT_KEY(BPLib_AS_Increment), UT_Handler_BPLib_AS_Increment, NULL);
 }

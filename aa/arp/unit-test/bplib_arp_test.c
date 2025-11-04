@@ -119,36 +119,36 @@ void Test_BPLib_ARP_ProcessCcs(void)
     for (BundleSeqIdx = 0; BundleSeqIdx < BPLIB_CT_MAX_SEQ_COLLECTIONS; BundleSeqIdx++)
     {
         UtAssert_EQ(uint64_t,
-                    BlobAsAdminRecord.BundleSeqCollections[BundleSeqIdx].SeqId,
-                    AdminRecord.BundleSeqCollections[BundleSeqIdx].SeqId);
+                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqId,
+                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqId);
 
         UtAssert_EQ(uint64_t,
-                    BlobAsAdminRecord.BundleSeqCollections[BundleSeqIdx].FirstSeqNum,
-                    AdminRecord.BundleSeqCollections[BundleSeqIdx].FirstSeqNum);
+                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].FirstSeqNum,
+                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].FirstSeqNum);
 
         for (SeqRangeIdx = 0; SeqRangeIdx < BPLIB_CT_MAX_SEQ_RANGE_LEN; SeqRangeIdx++)
         {
             UtAssert_EQ(uint64_t,
-                        BlobAsAdminRecord.BundleSeqCollections[BundleSeqIdx].SeqRange[SeqRangeIdx],
-                        AdminRecord.BundleSeqCollections[BundleSeqIdx].SeqRange[SeqRangeIdx]);
+                        BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqRange[SeqRangeIdx],
+                        AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqRange[SeqRangeIdx]);
         }
 
         UtAssert_EQ(size_t,
-                    BlobAsAdminRecord.BundleSeqCollections[BundleSeqIdx].SeqRangeLen,
-                    AdminRecord.BundleSeqCollections[BundleSeqIdx].SeqRangeLen);
+                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqRangeLen,
+                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqRangeLen);
 
         UtAssert_EQ(size_t,
-                    BlobAsAdminRecord.BundleSeqCollections[BundleSeqIdx].LastSeqNumAdded,
-                    AdminRecord.BundleSeqCollections[BundleSeqIdx].LastSeqNumAdded);
+                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].LastSeqNumAdded,
+                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].LastSeqNumAdded);
 
         UtAssert_EQ(BPLib_CT_DispositionCode_t,
-                    BlobAsAdminRecord.BundleSeqCollections[BundleSeqIdx].DispositionCode,
-                    AdminRecord.BundleSeqCollections[BundleSeqIdx].DispositionCode);
+                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].DispositionCode,
+                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].DispositionCode);
     }
 
     UtAssert_EQ(size_t,
-                BlobAsAdminRecord.NumSeqCollections,
-                AdminRecord.NumSeqCollections);
+                BlobAsAdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections,
+                AdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections);
 }
 
 void TestBplibArp_Register(void)
