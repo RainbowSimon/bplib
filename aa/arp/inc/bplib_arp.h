@@ -66,6 +66,9 @@ typedef enum
     /* Others here when applicable */
 } BPLib_ARP_AdminRecordTypeCode_t;
 
+/**
+ * \brief The various forms the contents of the Administrative Record can take
+ */
 typedef union
 {
     /**
@@ -74,7 +77,11 @@ typedef union
      *        inside the BPLib_CT_BundleSeqCollection_t struct
      */
     BPLib_CT_DeserializedCcs_t CCS;
-    /* Others */
+
+    /* BPLib_ARP_BundleStatusReport_t        BSR; */
+    /* BPLib_ARP_CompressedReportingSignal_t CRS; */
+
+    /* Other when applicable */
 } BPLib_ARP_AdminRecordBody_t;
 
 /**
@@ -85,7 +92,7 @@ typedef union
 typedef struct
 {
     BPLib_ARP_AdminRecordTypeCode_t AdminRecordType; /** \brief Administrative record type */
-    BPLib_ARP_AdminRecordBody_t     AdminRecordBody;
+    BPLib_ARP_AdminRecordBody_t     AdminRecordBody; /** \brief Contents of the admin record, dependent on type of admin record */
 } BPLib_ARP_AdminRecord_t;
 
 /* =================== */
