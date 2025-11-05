@@ -67,14 +67,14 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
     UniqueIdArr[5] = Bundle->blocks.PrimaryBlock.SrcEID.Node;
     UniqueIdArr[6] = Bundle->blocks.PrimaryBlock.SrcEID.Service;
 
-    /* 
-    ** Add any additional unique identifiers for a bundle here 
-    ** (and increase the array length accordingly) 
+    /*
+    ** Add any additional unique identifiers for a bundle here
+    ** (and increase the array length accordingly)
     */
 
     /* Use a CRC-32C as a quick hash function to get a unique ID for this bundle */
-    Bundle->blocks.PrimaryBlock.BundleId = BPLib_CRC_Calculate((void *) ((uintptr_t) UniqueIdArr), 
-                                BPLIB_CT_BUNDLE_IDENTIFIER_ARRAY_LEN * sizeof(uint64_t), 
+    Bundle->blocks.PrimaryBlock.BundleId = BPLib_CRC_Calculate((void *) ((uintptr_t) UniqueIdArr),
+                                BPLIB_CT_BUNDLE_IDENTIFIER_ARRAY_LEN * sizeof(uint64_t),
                                 BPLib_CRC_Type_CRC32C);
 
     return BPLIB_SUCCESS;
@@ -109,17 +109,17 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REQUEST, 1);
         Bundle->Meta.IsCustodial = true;
-        
+
         CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 
-        OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID), 
+        OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID),
                                                 CtebPtr->BundleSeqId);
 
         /* Check if we can accept custody of this bundle */
         if (BPLib_PDB_AcceptCustody(Bundle) == BPLIB_SUCCESS)
-        {            
+        {
             /* Add to custody accepted raw CCS */
-            Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum, 
+            Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum,
                                 CtebPtr->BundleSeqId, BPLib_CT_CustodyAccepted);
             if (Status != BPLIB_SUCCESS)
             {
@@ -130,8 +130,8 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
             }
             else
             {
-                /* 
-                ** TODO this is temporary, when custodial bundles are stored, 
+                /*
+                ** TODO this is temporary, when custodial bundles are stored,
                 ** that's when this actually gets incremented. Until then, custody is
                 ** technically "pending".
                 */
@@ -142,8 +142,8 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         {
             /* Add to custody rejected raw CCS and mark bundle for deletion */
             DeleteBundle = true;
-            Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum, 
-                                CtebPtr->BundleSeqId, BPLib_CT_CustodyRefused);            
+            Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum,
+                                CtebPtr->BundleSeqId, BPLib_CT_CustodyRefused);
         }
     }
 
@@ -192,7 +192,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
             Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
 
-            Status = BPLib_CT_AddToCtdb(&(Inst->Ct), CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum, 
+            Status = BPLib_CT_AddToCtdb(&(Inst->Ct), CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
                                         Bundle->blocks.PrimaryBlock.BundleId);
         }
         else
@@ -204,7 +204,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
 
     /* Do nothing for non-custodial bundles */
 
-    return Status;    
+    return Status;
 }
 
 BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_DeserializedCcs_t *Ccs)

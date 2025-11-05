@@ -44,12 +44,30 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_CT_ProcessNewBundle(Inst, Bundle);
-
-    if (Status != BPLIB_SUCCESS)
+    /* Check whether the bundle is an administrative record destined for this node */
+    if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&
+        BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
     {
+        BPLib_ARP_AdminRecord_t BundleAdminRecord;
+
+        /* Recover the admin record from the bundle */
+        memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.raw_bytes), sizeof(BPLib_ARP_AdminRecord_t));
+
+        /* Send the deserialized CCS off to CT */
+        (void) BPLib_CT_ProcessCcs(Inst, &BundleAdminRecord.AdminRecordBody.CCS);
+        
         BPLib_MEM_BundleFree(&Inst->pool, Bundle);
         return NO_NEXT_STATE;
+    }
+    else
+    {
+        Status = BPLib_CT_ProcessNewBundle(Inst, Bundle);
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+            return NO_NEXT_STATE;
+        }
     }
     
     return CONTACT_IN_CT_TO_STOR;

@@ -18,25 +18,26 @@
  *
  */
 
-/*
-** Include
-*/
+/* ======== */
+/* Includes */
+/* ======== */
 
 #include "bplib_arp.h"
+#include "bplib_as.h"
 
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
 
-/*
-** Function Definitions
-*/
-
-int BPLib_ARP_Init(void) {
+BPLib_Status_t BPLib_ARP_Init(void)
+{
     return BPLIB_SUCCESS;
 }
 
 /* Validate CRS table data */
 BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData)
 {
-    BPLib_Status_t           ReturnCode = BPLIB_SUCCESS;
+    BPLib_Status_t        ReturnCode = BPLIB_SUCCESS;
     BPLib_ARP_CRSTable_t *TblDataPtr = (BPLib_ARP_CRSTable_t *)TblData;
 
     /* Validate data values are within allowed range */
@@ -47,4 +48,32 @@ BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData)
     }
 
     return ReturnCode;
+}
+
+BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t DispositionCode)
+{
+    DispositionCode *= -1; /* Make negative/refusal codes go towards the end of the collection */
+    DispositionCode -= (DispositionCode > 0); /* Shift refusal codes down to make codes contiguous */
+    DispositionCode -= BPLib_CT_LastRefuseDispCode; /* Make 0 smallest index */
+
+    return (BPLib_CT_SeqCollectionIdx_t) DispositionCode;
+}
+
+void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
+{
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
+}
+
+void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
+{
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
+}
+
+void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
+{
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
+
+    /* As of right now, administrative records are 264 bytes; < 512 bytes for user_data */
+    memcpy((void*) &(Bundle->blob->user_data), AdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
 }

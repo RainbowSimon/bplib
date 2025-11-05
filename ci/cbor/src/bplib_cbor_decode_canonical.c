@@ -64,6 +64,13 @@ struct _CustodyBlockDataParser
     QCBOR_EIDParser    BlockSrcAdminEidParser;
 };
 
+/* Administrative Record Parser */
+struct _AdminRecordParser
+{
+    QCBOR_UInt64Parser             RecordTypeParser;
+    QCBOR_AdminRecordContentParser ContentParser;
+};
+
 static struct _CanonicalBlockBaseParser CanonicalBlockParser = {
     .BlockTypeParser = BPLib_QCBOR_UInt64ParserImpl,
     .BlockNumberParser = BPLib_QCBOR_UInt64ParserImpl,
@@ -94,6 +101,11 @@ static struct _CustodyBlockDataParser CustodyBlockDataParser = {
     .BlockSrcAdminEidParser = BPLib_QCBOR_EidDtnNoneParserImpl,
 };
 
+static struct _AdminRecordParser AdminRecordDataParser = {
+    .RecordTypeParser  = BPLib_QCBOR_UInt64ParserImpl,
+    .ContentParser     = BPLib_QCBOR_AdminRecordContentParserImpl,
+};
+
 /*******************************************************************************
 * RFC-9171 Canonical Block Parsers (Implementation)
 */
@@ -103,9 +115,10 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     BPLib_Status_t          Status;
     BPLib_CanBlockHeader_t* CanonicalBlockHdr;
     BPLib_CanBlockHeader_t  SpareCanonicalBlockHdr;
-    size_t                  ArrayLen;
-    size_t                  HopCountBlockDataArrayLen;
-    size_t                  CustodyTransferBlockDataArrayLen;
+    QCBORItem               ArrayItem;
+    QCBORItem               HopCountItem;
+    QCBORItem               CustodyTransferItem;
+    QCBORItem               AdminRecordItem;
     QCBORError              QStatus;
     uint64_t                BlockType;
     uint32_t                HeaderStartOffset;
@@ -126,7 +139,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     HeaderStartOffset = QCBORDecode_Tell(ctx);
 
     /* Enter the canonical block array */
-    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayLen);
+    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &ArrayItem);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_CANON_ENTER_ARRAY_ERR;
@@ -198,12 +211,12 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     }
 
     /* Validate CRC Type */
-    if (CanonicalBlockHdr->CrcType != BPLib_CRC_Type_None && 
-        CanonicalBlockHdr->CrcType != BPLib_CRC_Type_CRC16 && 
+    if (CanonicalBlockHdr->CrcType != BPLib_CRC_Type_None &&
+        CanonicalBlockHdr->CrcType != BPLib_CRC_Type_CRC16 &&
         CanonicalBlockHdr->CrcType != BPLib_CRC_Type_CRC32C)
     {
         return BPLIB_CBOR_DEC_CANON_CRC_TYPE_DEC_ERR;
-    }    
+    }
 
     /*
     ** Next should be the canonical-block-specific data
@@ -248,7 +261,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     else if (CanonicalBlockHdr->BlockType == BPLib_BlockType_HopCount)
     {
         /* Enter the hop count block data array */
-        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &HopCountBlockDataArrayLen);
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &HopCountItem);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_HOP_BLOCK_ENTER_ARRAY_ERR;
@@ -262,7 +275,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         }
 
         /* Validate hop limit is within allowed range */
-        if (bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.HopCountData.HopLimit < 1 || 
+        if (bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.HopCountData.HopLimit < 1 ||
             bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.HopCountData.HopLimit > 255)
         {
             return BPLIB_CBOR_DEC_HOP_BLOCK_INVALID_DEC_ERR;
@@ -276,14 +289,14 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         }
 
         /* Validate hop count has not exceeded hop limit */
-        if (bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.HopCountData.HopCount > 
+        if (bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.HopCountData.HopCount >
             bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.HopCountData.HopLimit)
         {
             return BPLIB_CBOR_DEC_HOP_BLOCK_EXCEEDED_ERR;
         }
 
         /* Exit the hop count block data array */
-        Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+        Status = BPLib_QCBOR_ExitArray(ctx);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_HOP_BLOCK_EXIT_ARRAY_ERR;
@@ -292,7 +305,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     else if (CanonicalBlockHdr->BlockType == BPLib_BlockType_CTEB)
     {
         /* Enter the custody transfer block data array */
-        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CustodyTransferBlockDataArrayLen);
+        Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CustodyTransferItem);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_CUSTODY_BLOCK_ENTER_ARRAY_ERR;
@@ -300,7 +313,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
 
         Status = CustodyBlockDataParser.BundleSeqNumParser(ctx,
             &bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.CustodyBlockData.BundleSeqNum);
-        
+
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_CUSTODY_BLOCK_SEQ_NUM_DEC_ERR;
@@ -329,7 +342,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         /* TODO: Validate block source administrative endpoint ID, if applicable */
 
         /* Exit the custody transfer block data array */
-        Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+        Status = BPLib_QCBOR_ExitArray(ctx);
         if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_CUSTODY_BLOCK_EXIT_ARRAY_ERR;
@@ -339,7 +352,46 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     {
         /* Payload blocks shouldn't need to be re-encoded */
         CanonicalBlockHdr->RequiresEncode = false;
-        /* TODO: Should we do anything with this data? */
+
+        if (bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG &&
+            BPLib_EID_IsMatch(&(bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
+        { /* Payload block is an administrative record */
+            BPLib_ARP_AdminRecord_t AdminRecord;
+            uint64_t                TempAdminRecordType;
+
+            /* Enter admin record array */
+            Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &AdminRecordItem);
+            if (Status != BPLIB_SUCCESS)
+            {
+                return BPLIB_CBOR_DEC_CANON_ADMIN_REC_ENTER_ARR_ERR;
+            }
+
+            /* Parse admin record type */
+            Status = AdminRecordDataParser.RecordTypeParser(ctx, &TempAdminRecordType);
+            if (Status != BPLIB_SUCCESS)
+            {
+                return BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR;
+            }
+
+            AdminRecord.AdminRecordType = (BPLib_ARP_AdminRecordTypeCode_t) TempAdminRecordType;
+
+            /* Parse admin record content */
+            Status = AdminRecordDataParser.ContentParser(ctx, &AdminRecord);
+            if (Status != BPLIB_SUCCESS)
+            {
+                return BPLIB_CBOR_DEC_CANON_ADMIN_REC_CONT_ERR;
+            }
+
+            /* Exit admin record array */
+            Status = BPLib_QCBOR_ExitArray(ctx);
+            if (Status != BPLIB_SUCCESS)
+            {
+                return BPLIB_CBOR_DEC_CANON_ADMIN_REC_EXIT_ARR_ERR;
+            }
+
+            /* Shove the administrative record into the bundle's user data */
+            BPLib_ARP_ProcessCcs(&AdminRecord, bundle);
+        }
     }
     else
     {
@@ -369,7 +421,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     }
 
     /* CRC Value */
-    Status = CanonicalBlockParser.CRCParser(ctx, &CanonicalBlockHdr->CrcVal, 
+    Status = CanonicalBlockParser.CRCParser(ctx, &CanonicalBlockHdr->CrcVal,
                                 CanonicalBlockHdr->CrcType);
     if (Status != BPLIB_SUCCESS)
     {
@@ -377,7 +429,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     }
 
     /* Exit the canonical block array */
-    Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    Status = BPLib_QCBOR_ExitArray(ctx);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_CANON_EXIT_ARRAY_ERR;
@@ -404,10 +456,10 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     }
 
     /* Validate the block's CRC */
-    Status = BPLib_CBOR_ValidateBlockCrc(CandBundle, 
+    Status = BPLib_CBOR_ValidateBlockCrc(CandBundle,
                     CanonicalBlockHdr->CrcType, CanonicalBlockHdr->CrcVal,
-                    CanonicalBlockHdr->BlockOffsetStart, 
-                    CanonicalBlockHdr->BlockOffsetEnd - 
+                    CanonicalBlockHdr->BlockOffsetStart,
+                    CanonicalBlockHdr->BlockOffsetEnd -
                     CanonicalBlockHdr->BlockOffsetStart + 1);
     if (Status != BPLIB_SUCCESS)
     {
@@ -431,7 +483,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
             printf("\t Prev Node Block Data: \n");
             printf("\t\t Prev Node Block MetaData Length: %lu\n", sizeof(BPLib_PrevNodeBlockData_t));
             printf("\t\t EID Forwarded (scheme.node.service): %lu.%lu.%lu\n",
-                bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.PrevNodeBlockData.PrevNodeId.Scheme, 
+                bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.PrevNodeBlockData.PrevNodeId.Scheme,
                 bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.PrevNodeBlockData.PrevNodeId.Node,
                 bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.PrevNodeBlockData.PrevNodeId.Service);
             break;
@@ -444,7 +496,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         case BPLib_BlockType_HopCount:
             printf("\t Hop Count Block Data: \n");
             printf("\t\t Hop Count MetaData Length: %lu\n", sizeof(BPLib_HopCountData_t));
-            printf("\t\t Hop Count Definite Array Length: %lu\n", HopCountBlockDataArrayLen);
+           printf("\t\t Hop Count Definite Array Length: %d\n", HopCountItem.val.uCount);
             printf("\t\t Hop Limit: %lu\n",
                 bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.HopCountData.HopLimit);
             printf("\t\t Hop Count: %lu\n",
@@ -453,7 +505,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
         case BPLib_BlockType_CTEB:
             printf("\t Custody Transfer Block Data:\n");
             printf("\t\t Custody Transfer Block MetaData Length: %lu\n", sizeof(BPLib_CustodyBlockData_t));
-            printf("\t\t Custody Transfer Block Definite Array Length: %lu\n", CustodyTransferBlockDataArrayLen);
+            printf("\t\t Custody Transfer Block Definite Array Length: %d\n", CustodyTransferItem.val.uCount);
             printf("\t\t Bundle Sequence Number: %lu\n",
                 bundle->blocks.ExtBlocks[CanonicalBlockIndex].BlockData.CustodyBlockData.BundleSeqNum);
             printf("\t\t Bundle Sequence ID: %lu\n",
@@ -474,8 +526,18 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
             printf("\t CREB Block Data Parsing Skipped!\n");
             break;
         case BPLib_BlockType_Payload:
-            printf("\t Payload Data Length: %lu bytes\n",
+            if (bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG &&
+                BPLib_EID_IsMatch(&(bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
+            {
+                printf("Compressed Custody Signal Data:\n");
+                printf("\tMetadata Length: %lu\n", sizeof(BPLib_ARP_AdminRecord_t));
+                printf("\tDefinite Array Length: %d\n", AdminRecordItem.val.uCount);
+            }
+            else
+            {
+                printf("\t Payload Data Length: %lu bytes\n",
                 CanonicalBlockHdr->DataSize);
+            }
             break;
         default:
             printf("\t Unrecognized Block (%lu) Data Parsing Skipped!\n", CanonicalBlockHdr->BlockType);
@@ -483,7 +545,6 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     }
     printf("\t CRC Value: 0x%lX\n", CanonicalBlockHdr->CrcVal);
     #endif
-
 
     return BPLIB_SUCCESS;
 }

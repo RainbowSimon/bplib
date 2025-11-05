@@ -35,11 +35,11 @@ Primary Block:
          CRC Value: 0xB19
 */
 uint8_t CandPrimary[] = {
-    0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82, 
-    0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 
-    0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 0x01, 0x82, 
-    0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a, 
-    0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42, 
+    0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82,
+    0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64,
+    0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 0x01, 0x82,
+    0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a,
+    0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42,
     0x0b, 0x19, 0xff
 };
 
@@ -59,7 +59,7 @@ uint8_t CandPayload[] = {
 };
 
 /*
-Primary Block: 
+Primary Block:
          CRC Type: 1
          Flags: 4
          Dest EID (scheme.node.service): 2.200.1
@@ -68,7 +68,7 @@ Primary Block:
          Timestamp (created, seq): 755533838904, 0
          Lifetime: 3600000
          CRC Value: 0xB19
-Canonical Block [0]: 
+Canonical Block [0]:
          Block Type: 1
          Block Number: 1
          Flags: 0
@@ -77,14 +77,14 @@ Canonical Block [0]:
          Offset Into Encoded Bundle: 42
 */
 uint8_t CandBundle[] = {
-    0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82, 
-    0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 
-    0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 0x01, 0x82, 
-    0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a, 
-    0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42, 
-    0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54, 
-    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
-    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
+    0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82,
+    0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64,
+    0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 0x01, 0x82,
+    0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a,
+    0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42,
+    0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
     0xaa, 0xaa, 0xaa, 0xaa, 0x42, 0xc6, 0x8f, 0xff,
 };
 
@@ -105,7 +105,7 @@ void Test_BPLib_CBOR_DecodePrimary_InvalidCrc(void)
     /* Set CRC calculation to return different CRC from what's in the primary block */
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xbeef);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodePrimary(&ctx, &Bundle, CandBundle), BPLIB_INVALID_CRC_ERROR);    
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodePrimary(&ctx, &Bundle, CandBundle), BPLIB_INVALID_CRC_ERROR);
 }
 
 /* Test a bundle with no canonical blocks */
@@ -120,9 +120,9 @@ void Test_BPLib_CBOR_DecodePrimary_NoCanonBlks(void)
     UBufC.ptr = (const void *)(CandPrimary);
     UBufC.len = sizeof(CandPrimary);
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
-    QCBORDecode_EnterArray(&ctx, &OuterArr);    
+    QCBORDecode_EnterArray(&ctx, &OuterArr);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodePrimary(&ctx, &Bundle, CandPrimary), BPLIB_CBOR_DEC_NO_PAYLOAD_ERR);    
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodePrimary(&ctx, &Bundle, CandPrimary), BPLIB_CBOR_DEC_NO_PAYLOAD_ERR);
 }
 
 void Test_BPLib_CBOR_DecodePrimary_InvalidFlags(void)
@@ -134,9 +134,9 @@ void Test_BPLib_CBOR_DecodePrimary_InvalidFlags(void)
         0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 0x01, 0x82,
         0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a,
         0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42,
-        0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54, 
-        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
-        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
+        0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54,
+        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
         0xaa, 0xaa, 0xaa, 0xaa, 0x42, 0xc6, 0x8f, 0xff,
     };
 
@@ -271,8 +271,8 @@ void Test_BPLib_CBOR_DecodeCanonical_AgeBlk(void)
          CRC Value: 0x3129
     */
     uint8_t GoodAgeBlk[] = {
-        0x86, 0x07, 0x02, 0x00, 0x01, 0x45, 
-        0x1a, 0x00, 0x01, 0xa5, 0xe0, 0x42, 
+        0x86, 0x07, 0x02, 0x00, 0x01, 0x45,
+        0x1a, 0x00, 0x01, 0xa5, 0xe0, 0x42,
         0x31, 0x29
     };
 
@@ -294,8 +294,8 @@ void Test_BPLib_CBOR_DecodeCanonical_AgeBlk(void)
 /* Test an age block with a bad block number */
 void Test_BPLib_CBOR_DecodeCanonical_InvBlkNum(void)
 {
-    /* 
-      Canonical Block [0]: 
+    /*
+      Canonical Block [0]:
          Block Type: 7
          Block Number: 0
          Flags: 0
@@ -305,14 +305,14 @@ void Test_BPLib_CBOR_DecodeCanonical_InvBlkNum(void)
          Data Size: 5
          Block Offset End: 58
          Block Size: 14
-         Age Block Data: 
+         Age Block Data:
                  Age Block MetaData Length: 8
                  Age (in milliseconds): 108000
-         CRC Value: 0x3129    
+         CRC Value: 0x3129
     */
     uint8_t AgeBlk[] = {
-        0x86, 0x07, 0x00, 0x00, 0x01, 0x45, 
-        0x1a, 0x00, 0x01, 0xa5, 0xe0, 0x42, 
+        0x86, 0x07, 0x00, 0x00, 0x01, 0x45,
+        0x1a, 0x00, 0x01, 0xa5, 0xe0, 0x42,
         0x31, 0x29
     };
 
@@ -325,7 +325,7 @@ void Test_BPLib_CBOR_DecodeCanonical_InvBlkNum(void)
     UBufC.len = sizeof(AgeBlk);
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, AgeBlk), BPLIB_CBOR_DEC_CANON_BLOCK_NUM_DEC_ERR);    
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, AgeBlk), BPLIB_CBOR_DEC_CANON_BLOCK_NUM_DEC_ERR);
 }
 
 /* Test a valid prev node block */
@@ -616,13 +616,187 @@ void Test_BPLib_CBOR_DecodeCanonical_UnknownKeep(void)
     UtAssert_BOOL_FALSE(Bundle.blocks.ExtBlocks[0].Header.RequiresDiscard);
 }
 
+void Test_BPLib_CBOR_DecodeCanonical_CCS(void)
+{
+    uint8_t CCS_Blk[] = {
+        0x86, /* Array, 6 bytes follow */
+            0x01, /* Block type */
+            0x01, /* Block number */
+            0x00, /* Control Flags */
+            0x01, /* CRC Type */
+            0x53, /* Byte string, 19 bytes follow */
+                0x82, /* Array, 2 bytes follow */
+                    0x04, /* Compressed Custody Signal Record Type */
+
+                    /* === CCS Data === */
+
+                    0xA2, /* Map, 2 key value pairs */
+                        0x01, /* Custody Accepted */
+                        0x83, /* Array, 3 bytes follow */
+                            0x01, /* Bundle Sequence ID */
+                            0x0C, /* First Sequence Number */
+                            0x83, /* Array, 3 bytes follow */
+                                0x02, /* Included */
+                                0x04, /* Excluded */
+                                0x05, /* Included */
+
+                        0x20, /* Custody Rejected */
+                        0x83, /* Array, 3 bytes follow */
+                            0x03, /* Bundle Sequence ID */
+                            0x0C, /* First Sequence Number */
+                            0x83, /* Array, 3 bytes follow */
+                                0x02, /* Included */
+                                0x04, /* Excluded */
+                                0x05, /* Included */
+
+            0x42, /* Byte string, 2 bytes follow */
+                0x58, /* CRC MSB */
+                0x0A  /* CRC LSB */
+    };
+
+    BPLib_Bundle_t     Bundle;
+    QCBORDecodeContext ctx;
+    UsefulBufC         UBufC;
+
+    /* Initialize QCBOR context */
+    UBufC.ptr = (const void*)(CCS_Blk);
+    UBufC.len = sizeof(CCS_Blk);
+    QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
+
+    /* Force FUT to take the admin record branch */
+    Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
+
+    /* Pass the CRC test */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_CRC_Calculate), 0x580A);
+
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CCS_Blk), BPLIB_SUCCESS);
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 1);
+    UtAssert_STUB_COUNT(BPLib_ARP_ProcessCcs, 1);
+}
+
+void Test_BPLib_CBOR_DecodeCanonical_CCS_RecordTypeErr(void)
+{
+    uint8_t CCS_Blk[] = {
+        0x86, /* Array, 6 bytes follow */
+            0x01, /* Block type */
+            0x01, /* Block number */
+            0x00, /* Control Flags */
+            0x01, /* CRC Type */
+            0x53, /* Byte string, 19 bytes follow */
+                0x82, /* Array, 2 bytes follow */
+                    0xA4, /* INVALID: Compressed Custody Signal Record Type */
+
+                    /* === CCS Data === */
+
+                    0xA2, /* Map, 2 key value pairs */
+                        0x01, /* Custody Accepted */
+                        0x83, /* Array, 3 bytes follow */
+                            0x01, /* Bundle Sequence ID */
+                            0x0C, /* First Sequence Number */
+                            0x83, /* Array, 3 bytes follow */
+                                0x02, /* Included */
+                                0x04, /* Excluded */
+                                0x05, /* Included */
+
+                        0x20, /* Custody Rejected */
+                        0x83, /* Array, 3 bytes follow */
+                            0x03, /* Bundle Sequence ID */
+                            0x0C, /* First Sequence Number */
+                            0x83, /* Array, 3 bytes follow */
+                                0x02, /* Included */
+                                0x04, /* Excluded */
+                                0x05, /* Included */
+
+            0x42, /* Byte string, 2 bytes follow */
+                0x58, /* CRC MSB */
+                0x0A  /* CRC LSB */
+    };
+
+    BPLib_Bundle_t     Bundle;
+    QCBORDecodeContext ctx;
+    UsefulBufC         UBufC;
+
+    /* Initialize QCBOR context */
+    UBufC.ptr = (const void*)(CCS_Blk);
+    UBufC.len = sizeof(CCS_Blk);
+    QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
+
+    /* Force FUT to take the admin record branch */
+    Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
+
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 0);
+    UtAssert_STUB_COUNT(BPLib_ARP_ProcessCcs, 0);
+}
+
+void Test_BPLib_CBOR_DecodeCanonical_CCS_ContentErr(void)
+{
+    uint8_t CCS_Blk[] = {
+        0x86, /* Array, 6 bytes follow */
+            0x01, /* Block type */
+            0x01, /* Block number */
+            0x00, /* Control Flags */
+            0x01, /* CRC Type */
+            0x53, /* Byte string, 19 bytes follow */
+                0x82, /* Array, 2 bytes follow */
+                    0x04, /* Compressed Custody Signal Record Type */
+
+                    /* === CCS Data === */
+
+                    0xA2, /* Map, 2 key value pairs */
+                        0x01, /* Custody Accepted */
+                        0x83, /* Array, 3 bytes follow */
+                            0x01, /* Bundle Sequence ID */
+                            0x2C, /* INVALID First Sequence Number */
+                            0x83, /* Array, 3 bytes follow */
+                                0x02, /* Included */
+                                0x04, /* Excluded */
+                                0x05, /* Included */
+
+                        0x20, /* Custody Rejected */
+                        0x83, /* Array, 3 bytes follow */
+                            0x03, /* Bundle Sequence ID */
+                            0x0C, /* First Sequence Number */
+                            0x83, /* Array, 3 bytes follow */
+                                0x02, /* Included */
+                                0x04, /* Excluded */
+                                0x05, /* Included */
+
+            0x42, /* Byte string, 2 bytes follow */
+                0x58, /* CRC MSB */
+                0x0A  /* CRC LSB */
+    };
+
+    BPLib_Bundle_t     Bundle;
+    QCBORDecodeContext ctx;
+    UsefulBufC         UBufC;
+
+    /* Initialize QCBOR context */
+    UBufC.ptr = (const void*)(CCS_Blk);
+    UBufC.len = sizeof(CCS_Blk);
+    QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
+
+    /* Force FUT to take the admin record branch */
+    Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
+
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_CONT_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 0);
+    UtAssert_STUB_COUNT(BPLib_ARP_ProcessCcs, 0);
+}
+
 void TestBplibCborDecodeInternal_Register(void)
 {
     ADD_TEST(Test_BPLib_CBOR_DecodePrimary_InvalidCrc);
+    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_NoCanonBlks);
     ADD_TEST(Test_BPLib_CBOR_DecodePrimary_InvalidFlags);
     ADD_TEST(Test_BPLib_CBOR_DecodePrimary_CrcNone);
-    ADD_TEST(Test_BPLib_CBOR_DecodePrimary_NoCanonBlks);
-    
+
     ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_InvalidCrc);
     ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_BadBlockNum);
     ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_BadCrcType);
@@ -636,5 +810,7 @@ void TestBplibCborDecodeInternal_Register(void)
     ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_UnknownDel);
     ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_UnknownDisc);
     ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_UnknownKeep);
-
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_CCS);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_CCS_RecordTypeErr);
+    ADD_TEST(Test_BPLib_CBOR_DecodeCanonical_CCS_ContentErr);
 }

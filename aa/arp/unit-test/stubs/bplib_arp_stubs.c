@@ -29,6 +29,38 @@
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_ARP_CRSTblValidateFunc()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_ARP_CRSTblValidateFunc, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_ARP_CRSTblValidateFunc, void *, TblData);
+
+    UT_GenStub_Execute(BPLib_ARP_CRSTblValidateFunc, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_ARP_CRSTblValidateFunc, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_ARP_GetDispCodeIdx()
+ * ----------------------------------------------------
+ */
+BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t DispositionCode)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_ARP_GetDispCodeIdx, BPLib_CT_SeqCollectionIdx_t);
+
+    UT_GenStub_AddParam(BPLib_ARP_GetDispCodeIdx, BPLib_CT_DispositionCode_t, DispositionCode);
+
+    UT_GenStub_Execute(BPLib_ARP_GetDispCodeIdx, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_ARP_GetDispCodeIdx, BPLib_CT_SeqCollectionIdx_t);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_ARP_Init()
  * ----------------------------------------------------
  */
@@ -43,18 +75,39 @@ int BPLib_ARP_Init(void)
 
 /*
  * ----------------------------------------------------
- * Generated stub function for BPLib_ARP_CRSTblValidateFunc()
+ * Generated stub function for BPLib_ARP_ProcessBsr()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData) 
+void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t *AdminRecord, BPLib_Bundle_t *Bundle)
 {
-  UT_GenStub_SetupReturnBuffer(BPLib_ARP_CRSTblValidateFunc,
-                               BPLib_Status_t);
+    UT_GenStub_AddParam(BPLib_ARP_ProcessBsr, BPLib_ARP_AdminRecord_t *, AdminRecord);
+    UT_GenStub_AddParam(BPLib_ARP_ProcessBsr, BPLib_Bundle_t *, Bundle);
 
-  UT_GenStub_AddParam(BPLib_ARP_CRSTblValidateFunc, void *, TblData);
+    UT_GenStub_Execute(BPLib_ARP_ProcessBsr, Basic, NULL);
+}
 
-  UT_GenStub_Execute(BPLib_ARP_CRSTblValidateFunc, Basic, NULL);
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_ARP_ProcessCcs()
+ * ----------------------------------------------------
+ */
+void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t *AdminRecord, BPLib_Bundle_t *Bundle)
+{
+    UT_GenStub_AddParam(BPLib_ARP_ProcessCcs, BPLib_ARP_AdminRecord_t *, AdminRecord);
+    UT_GenStub_AddParam(BPLib_ARP_ProcessCcs, BPLib_Bundle_t *, Bundle);
 
-  return UT_GenStub_GetReturnValue(BPLib_ARP_CRSTblValidateFunc,
-                                   BPLib_Status_t);
+    UT_GenStub_Execute(BPLib_ARP_ProcessCcs, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_ARP_ProcessCrs()
+ * ----------------------------------------------------
+ */
+void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t *AdminRecord, BPLib_Bundle_t *Bundle)
+{
+    UT_GenStub_AddParam(BPLib_ARP_ProcessCrs, BPLib_ARP_AdminRecord_t *, AdminRecord);
+    UT_GenStub_AddParam(BPLib_ARP_ProcessCrs, BPLib_Bundle_t *, Bundle);
+
+    UT_GenStub_Execute(BPLib_ARP_ProcessCrs, Basic, NULL);
 }
