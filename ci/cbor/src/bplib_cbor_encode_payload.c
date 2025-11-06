@@ -200,25 +200,32 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
             return BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR;
         }
 
-        /*
-        ** Add the ADU data
-        */
-        PayloadDataCopyStatus = BPLib_MEM_CopyOutFromOffset(StoredBundle,
-            StoredBundle->blocks.PayloadHeader.DataOffsetStart,
-            StoredBundle->blocks.PayloadHeader.DataSize,
-            (void*) CurrentOutputBufferAddr,
-            BytesLeftInOutputBuffer);
-
-        if (PayloadDataCopyStatus == BPLIB_SUCCESS)
+        if (StoredBundle->blocks.PayloadHeader.BlockProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
         {
-            CurrentOutputBufferAddr += StoredBundle->blocks.PayloadHeader.DataSize;
-            BytesLeftInOutputBuffer -= StoredBundle->blocks.PayloadHeader.DataSize;
-            TotalBytesCopied += StoredBundle->blocks.PayloadHeader.DataSize;
+            /* Admin record encoding here */
         }
         else
         {
-            *NumBytesCopied = 0;
-            return PayloadDataCopyStatus;
+            /*
+            ** Add the ADU data
+            */
+            PayloadDataCopyStatus = BPLib_MEM_CopyOutFromOffset(StoredBundle,
+                StoredBundle->blocks.PayloadHeader.DataOffsetStart,
+                StoredBundle->blocks.PayloadHeader.DataSize,
+                (void*) CurrentOutputBufferAddr,
+                BytesLeftInOutputBuffer);
+
+            if (PayloadDataCopyStatus == BPLIB_SUCCESS)
+            {
+                CurrentOutputBufferAddr += StoredBundle->blocks.PayloadHeader.DataSize;
+                BytesLeftInOutputBuffer -= StoredBundle->blocks.PayloadHeader.DataSize;
+                TotalBytesCopied += StoredBundle->blocks.PayloadHeader.DataSize;
+            }
+            else
+            {
+                *NumBytesCopied = 0;
+                return PayloadDataCopyStatus;
+            }
         }
 
         /*
