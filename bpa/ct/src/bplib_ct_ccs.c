@@ -55,15 +55,10 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
                           uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode)
 {
     BPLib_CT_BundleSeqCollection_t *Collection;
+    BPLib_CT_SeqCollectionIdx_t     DispCodeIdx;
 
-    if (DispositionCode == BPLib_CT_CustodyAccepted)
-    {
-        Collection = &(OpenCcs->BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx]);
-    }
-    else
-    {
-        Collection = &(OpenCcs->BundleSeqCollections[BPLib_CT_CustodyRefused_Idx]);
-    }
+    DispCodeIdx = BPLib_ARP_GetDispCodeIdx(DispositionCode);
+    Collection  = &(OpenCcs->BundleSeqCollections[DispCodeIdx]);
 
     /* Sanity checks */
     if ((Collection->SeqRangeLen != 0 && Collection->SeqRangeLen % 2 != 1) ||
