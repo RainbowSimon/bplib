@@ -18,8 +18,15 @@
  *
  */
 
+/* ======== */
+/* Includes */
+/* ======== */
+
 #include "bplib_cbor_internal.h"
 
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
 
 BPLib_Status_t BPLib_CBOR_EncodeEID(QCBOREncodeContext* Context, BPLib_EID_t* SourceData)
 {
@@ -111,8 +118,6 @@ BPLib_Status_t BPLib_CBOR_EncodeCreationTimeStamp(QCBOREncodeContext* Context, B
     return ReturnStatus;
 }
 
-
-
 BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t CrcValue, uint64_t CrcType)
 {
     BPLib_Status_t ReturnStatus;
@@ -153,4 +158,32 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t C
     }
 
     return ReturnStatus;
+}
+
+/*
+BPLib_Status_t BPLib_CBOR_EncodeBSR(QCBOREncodeContext* Context, BPLib_ARP_BundleStatusReport_t BSR)
+{
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_CBOR_EncodeCRS(QCBOREncodeContext* Context, BPLib_ARP_CompressedReportingSignal_t CRS)
+{
+    return BPLIB_SUCCESS;
+}
+*/
+
+BPLib_Status_t BPLib_CBOR_EncodeCCS(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t CCS)
+{
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+
+    if (Context != NULL)
+    {
+        /* TODO */
+    }
+    else
+    {
+        Status = BPLIB_NULL_PTR_ERROR;
+    }
+
+    return Status;
 }
