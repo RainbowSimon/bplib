@@ -417,6 +417,38 @@ BPLib_Status_t BPLib_CBOR_EncodeCreationTimeStamp(QCBOREncodeContext* Context, B
 BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t CrcValue, uint64_t CrcType);
 
 /**
+ * \brief Encode a Bundle Status Report
+ * \param[in] Context QCBOR encode context instance pointer
+ * \param[in] BSR     Pointer to the Bundle Status Report to be encoded
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * \retval    BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
+
+BPLib_Status_t BPLIB_CBOR_EncodeBsr(QCBOREncodeContext* Context, BPLib_ARP_BundleStatusReport_t* BSR);
+*/
+
+/**
+ * \brief Encode a Compressed Reporting Signal
+ * \param[in] Context QCBOR encode context instance pointer
+ * \param[in] CRS     Pointer to the Compressed Reporting Signal to be encoded
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * \retval    BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
+
+BPLib_Status_t BPLIB_CBOR_EncodeCrs(QCBOREncodeContext* Context, BPLib_ARP_CompressedReportingSignal_t* CRS);
+*/
+
+/**
+ * \brief Encode a Compressed Custody Signal
+ * \param[in] Context QCBOR encode context instance pointer
+ * \param[in] CCS     Pointer to the Compressed Custody Signal to be encoded
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * \retval    BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
+ */
+BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS);
+
+/**
  * \brief     Validates a block's CRC value
  * \param[in] EncodedBundle (const void *) Pointer to the CBOR-encoded bundle buffer
  * \param[in] CrcType (BPLib_CRC_Type_t) Specifies the expected CRC type (None, CRC16, or CRC32C)

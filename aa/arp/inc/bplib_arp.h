@@ -71,6 +71,9 @@ typedef enum
  */
 typedef union
 {
+    /* BPLib_ARP_BundleStatusReport_t        BSR; */
+    /* BPLib_ARP_CompressedReportingSignal_t CRS; */
+
     /**
      * \brief The value to the disposition key, bundle sequence collection value
      *        CBOR map that represents a CCS. The actual key (disposition code) is
@@ -78,10 +81,7 @@ typedef union
      */
     BPLib_CT_DeserializedCcs_t CCS;
 
-    /* BPLib_ARP_BundleStatusReport_t        BSR; */
-    /* BPLib_ARP_CompressedReportingSignal_t CRS; */
-
-    /* Other when applicable */
+    /* Others when applicable */
 } BPLib_ARP_AdminRecordBody_t;
 
 /**

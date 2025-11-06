@@ -209,15 +209,15 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
             switch(AdminRecord->AdminRecordType)
             {
                 case BPLib_CT_BsrRecordTypeCode:
-                    // ReturnStatus = BPLib_CBOR_EncodeBSR(Context, AdminRecord->AdminRecordBody.BSR);
+                    // ReturnStatus = BPLib_CBOR_EncodeBSR(Context, *(AdminRecord->AdminRecordBody.BSR));
                     break;
 
                 case BPLib_CT_CrsRecordTypeCode:
-                    // ReturnStatus = BPLib_CBOR_EncodeCRS(Context, AdminRecord->AdminRecordBody.CRS);
+                    // ReturnStatus = BPLib_CBOR_EncodeCRS(Context, &(AdminRecord->AdminRecordBody.CRS));
                     break;
 
                 case BPLib_CT_CcsRecordTypeCode:
-                    ReturnStatus = BPLib_CBOR_EncodeCCS(Context, AdminRecord->AdminRecordBody.CCS);
+                    ReturnStatus = BPLib_CBOR_EncodeCCS(Context, &(AdminRecord->AdminRecordBody.CCS));
                     break;
                 default:
                     /* TODO: Handle unsupported admin record type */

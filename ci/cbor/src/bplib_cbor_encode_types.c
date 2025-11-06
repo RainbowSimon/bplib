@@ -161,18 +161,18 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t C
 }
 
 /*
-BPLib_Status_t BPLib_CBOR_EncodeBSR(QCBOREncodeContext* Context, BPLib_ARP_BundleStatusReport_t BSR)
+BPLib_Status_t BPLib_CBOR_EncodeBSR(QCBOREncodeContext* Context, BPLib_ARP_BundleStatusReport_t* BSR)
 {
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_CBOR_EncodeCRS(QCBOREncodeContext* Context, BPLib_ARP_CompressedReportingSignal_t CRS)
+BPLib_Status_t BPLib_CBOR_EncodeCRS(QCBOREncodeContext* Context, BPLib_ARP_CompressedReportingSignal_t* CRS)
 {
     return BPLIB_SUCCESS;
 }
 */
 
-BPLib_Status_t BPLib_CBOR_EncodeCCS(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t CCS)
+BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS)
 {
     BPLib_Status_t Status = BPLIB_SUCCESS;
 
