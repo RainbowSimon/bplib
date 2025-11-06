@@ -517,6 +517,30 @@ typedef enum
 #define BPLIB_CT_GENERIC_ERR_369                       ((BPLib_Status_t) -369) // CT error
 */
 
+/* Administrative Record Processor Errors */
+#define BPLIB_ARP_UNK_REC_TYPE_ERR                     ((BPLib_Status_t) -370)
+/*
+#define BPLIB_ARP_GENERIC_ERR_371                      ((BPLib_Status_t) -371)
+#define BPLIB_ARP_GENERIC_ERR_372                      ((BPLib_Status_t) -372)
+#define BPLIB_ARP_GENERIC_ERR_373                      ((BPLib_Status_t) -373)
+#define BPLIB_ARP_GENERIC_ERR_374                      ((BPLib_Status_t) -374)
+#define BPLIB_ARP_GENERIC_ERR_375                      ((BPLib_Status_t) -375)
+#define BPLIB_ARP_GENERIC_ERR_376                      ((BPLib_Status_t) -376)
+#define BPLIB_ARP_GENERIC_ERR_377                      ((BPLib_Status_t) -377)
+#define BPLIB_ARP_GENERIC_ERR_378                      ((BPLib_Status_t) -378)
+#define BPLIB_ARP_GENERIC_ERR_379                      ((BPLib_Status_t) -379)
+#define BPLIB_ARP_GENERIC_ERR_380                      ((BPLib_Status_t) -380)
+#define BPLIB_ARP_GENERIC_ERR_381                      ((BPLib_Status_t) -381)
+#define BPLIB_ARP_GENERIC_ERR_382                      ((BPLib_Status_t) -382)
+#define BPLIB_ARP_GENERIC_ERR_383                      ((BPLib_Status_t) -383)
+#define BPLIB_ARP_GENERIC_ERR_384                      ((BPLib_Status_t) -384)
+#define BPLIB_ARP_GENERIC_ERR_385                      ((BPLib_Status_t) -385)
+#define BPLIB_ARP_GENERIC_ERR_386                      ((BPLib_Status_t) -386)
+#define BPLIB_ARP_GENERIC_ERR_387                      ((BPLib_Status_t) -387)
+#define BPLIB_ARP_GENERIC_ERR_388                      ((BPLib_Status_t) -388)
+#define BPLIB_ARP_GENERIC_ERR_389                      ((BPLib_Status_t) -389)
+*/
+
 /** @} */
 
 #ifdef __cplusplus

@@ -112,16 +112,17 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                                         size_t OutputBufferSize,
                                         size_t* NumBytesCopied)
 {
-    BPLib_Status_t ReturnStatus;
-    BPLib_Status_t PayloadDataCopyStatus;
-    QCBOREncodeContext Context;
-    UsefulBuf InitStorage;
-    UsefulBufC FinishBuffer;
-    QCBORError QcborStatus;
-    uintptr_t CurrentOutputBufferAddr;
-    size_t TotalBytesCopied;
-    size_t BytesLeftInOutputBuffer;
-    size_t ByteStringCborHeadSize;
+    BPLib_Status_t           ReturnStatus;
+    BPLib_Status_t           PayloadDataCopyStatus;
+    QCBOREncodeContext       Context;
+    UsefulBuf                InitStorage;
+    UsefulBufC               FinishBuffer;
+    QCBORError               QcborStatus;
+    uintptr_t                CurrentOutputBufferAddr;
+    size_t                   TotalBytesCopied;
+    size_t                   BytesLeftInOutputBuffer;
+    size_t                   ByteStringCborHeadSize;
+    BPLib_ARP_AdminRecord_t* AdminRecord;
 
     if ((StoredBundle == NULL) ||
         (OutputBuffer == NULL) ||
@@ -202,7 +203,27 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
 
         if (StoredBundle->blocks.PayloadHeader.BlockProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
         {
-            /* Admin record encoding here */
+            AdminRecord = (BPLib_ARP_AdminRecord_t*) StoredBundle->blob->user_data.raw_bytes;
+
+            /* Determine which encoding is needed by checking the admin record type */
+            switch(AdminRecord->AdminRecordType)
+            {
+                case BPLib_CT_BsrRecordTypeCode:
+                    // ReturnStatus = BPLib_CBOR_EncodeBSR(Context, AdminRecord->AdminRecordBody.BSR);
+                    break;
+
+                case BPLib_CT_CrsRecordTypeCode:
+                    // ReturnStatus = BPLib_CBOR_EncodeCRS(Context, AdminRecord->AdminRecordBody.CRS);
+                    break;
+
+                case BPLib_CT_CcsRecordTypeCode:
+                    ReturnStatus = BPLib_CBOR_EncodeCCS(Context, AdminRecord->AdminRecordBody.CCS);
+                    break;
+                default:
+                    /* TODO: Handle unsupported admin record type */
+                    ReturnStatus = BPLIB_ARP_UNK_REC_TYPE_ERR;
+                    break;
+            }
         }
         else
         {
@@ -240,7 +261,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
         */
         /* Set CRC value to 0, real value will be jammed in after encoding is done */
         (void) BPLib_CBOR_EncodeCrcValue(&Context, 0, StoredBundle->blocks.PayloadHeader.CrcType);
-        
+
         /*
         ** Finish encoding, and check for errors
         */
@@ -257,7 +278,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
             TotalBytesCopied += FinishBuffer.len;
 
             /* Calculate new CRC for encoded block */
-            BPLib_CBOR_GenerateBlockCrc(OutputBuffer, 
+            BPLib_CBOR_GenerateBlockCrc(OutputBuffer,
                                     StoredBundle->blocks.PayloadHeader.CrcType,
                                     0, TotalBytesCopied);
 
@@ -290,7 +311,7 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePayload(BPLib_Bundle_t* StoredBundle,
                                                 NumBytesCopied);
     }
     /* Verify that the block offset values are reasonable */
-    else if (StoredBundle->blocks.PayloadHeader.BlockOffsetStart >= 
+    else if (StoredBundle->blocks.PayloadHeader.BlockOffsetStart >=
              (StoredBundle->blocks.PayloadHeader.BlockOffsetEnd + 1))
     {
         *NumBytesCopied = 0;
