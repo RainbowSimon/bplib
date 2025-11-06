@@ -77,3 +77,24 @@ void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* 
     /* As of right now, administrative records are 264 bytes; < 512 bytes for user_data */
     memcpy((void*) &(Bundle->blob->user_data), AdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
 }
+
+void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t InProgressCcs, BPLib_Bundle_t* Bundle)
+{
+    BPLib_ARP_AdminRecord_t* RawBytes;
+
+    // Bundle->blocks.PrimaryBlock.RequiresEncode = true;
+    Bundle->blocks.PayloadHeader.RequiresEncode = true;
+
+    RawBytes = (BPLib_ARP_AdminRecord_t*) Bundle->blob->user_data.raw_bytes;
+    
+    /* Set the Administrative Record type */
+    RawBytes->AdminRecordType = BPLib_CT_CcsRecordTypeCode;
+
+    /* Assign the source administrative EID */
+    RawBytes->AdminRecordBody.CCS.SourceAdminEid = InProgressCcs.SourceAdminEid;
+    
+    /* Shove the bundle sequence collections into the CCS */
+    memcpy(RawBytes->AdminRecordBody.CCS.BundleSeqCollections, InProgressCcs.BundleSeqCollections, sizeof(BPLib_CT_BundleSeqCollection_t) * BPLIB_CT_MAX_SEQ_COLLECTIONS);
+
+    // RawBytes->AdminRecordBody.CCS.NumBundleSeqCollections
+}
