@@ -44,20 +44,26 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
 {
     BPLib_Status_t Status;
 
-    /* Check whether the bundle is an administrative record destined for this node */
-    if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&
-        BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
+    if (Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
     {
-        BPLib_ARP_AdminRecord_t BundleAdminRecord;
+        /* Check whether the bundle is an administrative record destined for this node */
+        if (BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
+        {
+            BPLib_ARP_AdminRecord_t BundleAdminRecord;
 
-        /* Recover the admin record from the bundle */
-        memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.raw_bytes), sizeof(BPLib_ARP_AdminRecord_t));
+            /* Recover the admin record from the bundle */
+            memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.raw_bytes), sizeof(BPLib_ARP_AdminRecord_t));
 
-        /* Send the deserialized CCS off to CT */
-        (void) BPLib_CT_ProcessCcs(Inst, &BundleAdminRecord.AdminRecordBody.CCS);
-        
-        BPLib_MEM_BundleFree(&Inst->pool, Bundle);
-        return NO_NEXT_STATE;
+            /* Send the deserialized CCS off to CT */
+            (void) BPLib_CT_ProcessCcs(Inst, &BundleAdminRecord.AdminRecordBody.CCS);
+
+            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+            return NO_NEXT_STATE;
+        }
+        else
+        {
+            /* This is an outbound administrative record */
+        }
     }
     else
     {
@@ -69,7 +75,7 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
             return NO_NEXT_STATE;
         }
     }
-    
+
     return CONTACT_IN_CT_TO_STOR;
 }
 
@@ -91,12 +97,12 @@ static BPLib_QM_JobState_t ContactOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 static BPLib_QM_JobState_t ContactOut_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
-    
+
     Status = BPLib_EBP_UpdateExtensionBlocks(Bundle);
 
     if (Status != BPLIB_SUCCESS)
     {
-        BPLib_EM_SendEvent(BPLIB_QM_EBP_OUT_ERR_EID, BPLib_EM_EventType_ERROR, 
+        BPLib_EM_SendEvent(BPLIB_QM_EBP_OUT_ERR_EID, BPLib_EM_EventType_ERROR,
                 "Error updating extension blocks, Status = %d.", Status);
     }
 
@@ -124,7 +130,7 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
         BPLib_MEM_BundleFree(&Inst->pool, Bundle);
         return NO_NEXT_STATE;
     }
-    
+
     return CHANNEL_IN_CT_TO_STOR;
 }
 
