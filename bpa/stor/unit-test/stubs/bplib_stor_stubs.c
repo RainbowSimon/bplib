@@ -95,6 +95,22 @@ BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t *Inst)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_STOR_FlushPendingUnlocked()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_STOR_FlushPendingUnlocked, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_STOR_FlushPendingUnlocked, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_STOR_FlushPendingUnlocked, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_STOR_FlushPendingUnlocked, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_STOR_GarbageCollect()
  * ----------------------------------------------------
  */
@@ -123,6 +139,23 @@ BPLib_Status_t BPLib_STOR_Init(BPLib_Instance_t *Inst)
     UT_GenStub_Execute(BPLib_STOR_Init, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_STOR_Init, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_STOR_SetNewRetransmitTrigger()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_STOR_SetNewRetransmitTrigger, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_STOR_SetNewRetransmitTrigger, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_STOR_SetNewRetransmitTrigger, uint32_t, ContactId);
+
+    UT_GenStub_Execute(BPLib_STOR_SetNewRetransmitTrigger, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_STOR_SetNewRetransmitTrigger, BPLib_Status_t);
 }
 
 /*
@@ -156,6 +189,23 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bu
     UT_GenStub_Execute(BPLib_STOR_StoreBundle, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_STOR_StoreBundle, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_STOR_UpdateCustodialBundles()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT_CcsUpdateBatch_t *Batch)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_STOR_UpdateCustodialBundles, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_STOR_UpdateCustodialBundles, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_STOR_UpdateCustodialBundles, BPLib_CT_CcsUpdateBatch_t *, Batch);
+
+    UT_GenStub_Execute(BPLib_STOR_UpdateCustodialBundles, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_STOR_UpdateCustodialBundles, BPLib_Status_t);
 }
 
 /*

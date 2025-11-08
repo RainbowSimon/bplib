@@ -49,7 +49,7 @@ const char* InsertBlobSQL =
 const char* InsertMetadataSQL =
 "INSERT INTO bundle_data (bundle_id, action_timestamp, retransmit_timestamp, \n"
 "retransmit_trigger, dest_node, dest_service, is_custodial, bundle_bytes) \n"
-"VALUES (?, ?, ?, ?, ?, ?);";
+"VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
 /* ================ */
 /* Helper Functions */

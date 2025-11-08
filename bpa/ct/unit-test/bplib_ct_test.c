@@ -119,7 +119,7 @@ void Test_BPLib_CT_ProcessNewBundle_RejectCustody(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), false);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_PDB_AcceptCustody), BPLIB_ERROR);
 
-    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle), BPLIB_CT_CUSTODY_REFUSED_ERR);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqId, 12);
     UtAssert_EQ(size_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRangeLen, 1);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRange[0], 1);
@@ -225,7 +225,7 @@ void Test_BPLib_CT_ProcessCcs_Nominal(void)
     Ccs.BundleSeqCollections[1].SeqRange[2] = 3;
 
     BplibInst.Ct.CurrDbSize = BPLIB_CT_DB_MAX_ENTRIES;
-    ExpCtdbSize = BPLIB_CT_DB_MAX_ENTRIES - 14; /* CCS should remove 14 entries from CTDB */
+    ExpCtdbSize = BPLIB_CT_DB_MAX_ENTRIES - 9; /* CCS should remove only the 9 custody accepted entries from CTDB */
 
     /* Set RBT to always return same link (for simplicity) */
     UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].RbtLink));

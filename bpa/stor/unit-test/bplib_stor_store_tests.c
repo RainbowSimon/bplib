@@ -264,7 +264,7 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime(void)
 
     /* Show that the correct branch was tested */
     UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 2);
-    UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 1);
+    UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 2);
 
     /* Free memory used for bundle */
     BPLib_STOR_Test_FreeTestBundle(&Bundle);
@@ -297,7 +297,7 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime(void)
 
     /* Show that the correct branch was tested */
     UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 1);
-    UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 0);
+    UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 1);
 
     /* Free memory used for bundle */
     BPLib_STOR_Test_FreeTestBundle(&Bundle);
@@ -326,7 +326,7 @@ void Test_BPLib_SQL_StoreMetadata_InvalidCreateTime(void)
 
     /* Show that the correct branch was tested */
     UtAssert_STUB_COUNT(BPLib_TIME_GetCurrentDtnTime, 0);
-    UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 0);
+    UtAssert_STUB_COUNT(BPLib_TIME_GetMonotonicTime, 1);
 
     /* Free memory used for bundle */
     BPLib_STOR_Test_FreeTestBundle(&Bundle);

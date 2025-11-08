@@ -414,13 +414,6 @@ typedef enum
 #define BPLIB_QM_GENERIC_ERR_287                       ((BPLib_Status_t) -287) // QM error
 #define BPLIB_QM_GENERIC_ERR_288                       ((BPLib_Status_t) -288) // QM error
 #define BPLIB_QM_GENERIC_ERR_289                       ((BPLib_Status_t) -289) // QM error
-#define BPLIB_QM_GENERIC_ERR_290                       ((BPLib_Status_t) -290) // QM error
-#define BPLIB_QM_GENERIC_ERR_291                       ((BPLib_Status_t) -291) // QM error
-#define BPLIB_QM_GENERIC_ERR_292                       ((BPLib_Status_t) -292) // QM error
-#define BPLIB_QM_GENERIC_ERR_293                       ((BPLib_Status_t) -293) // QM error
-#define BPLIB_QM_GENERIC_ERR_294                       ((BPLib_Status_t) -294) // QM error
-#define BPLIB_QM_GENERIC_ERR_295                       ((BPLib_Status_t) -295) // QM error
-#define BPLIB_QM_GENERIC_ERR_296                       ((BPLib_Status_t) -296) // QM error
 */
 
 /* Storage Errors: SQL */

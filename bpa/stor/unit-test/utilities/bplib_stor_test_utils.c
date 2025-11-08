@@ -95,6 +95,7 @@ void BPLib_STOR_Test_Setup(void)
     UT_ResetState(0);
 
     memset(&BplibInst, 0, sizeof(BplibInst));
+    memset(&Context_BPLib_AS_Increment, 0, sizeof(BPLib_AS_IncrementDecrementContext_t));
 
     BPLib_NC_ConfigPtrs.ChanConfigPtr = &TestChanTbl;
     BPLib_NC_ConfigPtrs.ContactsConfigPtr = &TestContTbl;
