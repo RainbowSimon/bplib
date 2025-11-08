@@ -56,7 +56,7 @@ extern BPLib_Instance_t BplibInst;
 /*
 ** Helper Utilities
 */
-void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle);
+void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle, uint32_t BundleId);
 void BPLib_STOR_Test_FreeTestBundle(BPLib_Bundle_t* Bundle);
 
 /*

@@ -46,7 +46,7 @@ void Test_BPLib_STOR_FlushPending_NoBundles(void)
 void Test_BPLib_STOR_FlushPending_Nominal(void)
 {
     BPLib_Bundle_t Bundle;
-    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
 
     /* Place bundle in storage batch */
     BplibInst.BundleStorage.InsertBatch[0] = &Bundle;
@@ -106,7 +106,7 @@ void Test_BPLib_STOR_StoreBundle_NullParams(void)
 void Test_BPLib_STOR_StoreBundle_Nominal(void)
 {
     BPLib_Bundle_t Bundle;
-    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
 
     /* Store a bundle */
     UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
@@ -136,7 +136,7 @@ void Test_BPLib_STOR_StoreBundle_SQLFail(void)
 {
     BPLib_Bundle_t Bundle;
 
-    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
     
     /* Store and flush bundle */
     BplibInst.BundleStorage.db = NULL;
@@ -163,7 +163,7 @@ void Test_BPLib_STOR_StoreBundle_StoreBatch(void)
     /* Store a batch worth of bundles */
     for (i = 0; i < BPLIB_STOR_INSERTBATCHSIZE - 1; i++)
     {
-        BPLib_STOR_Test_CreateTestBundle(&Bundles[i]);
+        BPLib_STOR_Test_CreateTestBundle(&Bundles[i], 0);
         UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundles[i]), BPLIB_SUCCESS);
         Bundles[i].blocks.PrimaryBlock.Timestamp.CreateTime = i;
         Bundles[i].blocks.PrimaryBlock.BundleId = i; /* To prevent duplicates */
@@ -173,7 +173,7 @@ void Test_BPLib_STOR_StoreBundle_StoreBatch(void)
     UtAssert_INT32_EQ(BplibInst.BundleStorage.InsertBatchSize, BPLIB_STOR_INSERTBATCHSIZE - 1);
 
     /* Store the bundle that triggers the batch */
-    BPLib_STOR_Test_CreateTestBundle(&Bundles[BPLIB_STOR_INSERTBATCHSIZE - 1]);
+    BPLib_STOR_Test_CreateTestBundle(&Bundles[BPLIB_STOR_INSERTBATCHSIZE - 1], 0);
     Bundles[i].blocks.PrimaryBlock.Timestamp.CreateTime = BPLIB_STOR_INSERTBATCHSIZE - 1;
     Bundles[i].blocks.PrimaryBlock.BundleId = BPLIB_STOR_INSERTBATCHSIZE - 1; /* To prevent duplicates */
     UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundles[i]), BPLIB_SUCCESS);
@@ -201,7 +201,7 @@ void Test_BPLib_STOR_StoreBundle_Duplicates(void)
     BPLib_Bundle_t Bundle;
     int i;
 
-    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
 
     /* Store a batch worth of bundles */
     for (i = 0; i < BPLIB_STOR_INSERTBATCHSIZE - 1; i++)
@@ -245,7 +245,7 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime(void)
     BPLib_Status_t Status;
 
     /* Initialize values needed for testing */
-    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
     CurrDtnTime                             = Bundle.blocks.PrimaryBlock.Timestamp.CreateTime;
     MonoTime                                = 0;
     BplibInst.BundleStorage.InsertBatchSize = 1;
@@ -282,7 +282,7 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime(void)
     BPLib_Status_t Status;
 
     /* Initialize values needed for testing */
-    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
     BplibInst.BundleStorage.InsertBatchSize = 1;
     BplibInst.BundleStorage.InsertBatch[0]  = &Bundle;
 
@@ -309,7 +309,7 @@ void Test_BPLib_SQL_StoreMetadata_InvalidCreateTime(void)
     BPLib_Status_t Status;
 
     /* Initialize values needed for testing */
-    BPLib_STOR_Test_CreateTestBundle(&Bundle);
+    BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
     Bundle.blocks.PrimaryBlock.Timestamp.CreateTime = 0;
     BplibInst.BundleStorage.InsertBatchSize         = 1;
     BplibInst.BundleStorage.InsertBatch[0]          = &Bundle;

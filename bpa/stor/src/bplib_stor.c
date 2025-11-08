@@ -508,7 +508,7 @@ BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_C
 {
     BPLib_Status_t Status;
 
-    if (Inst == NULL || Batch == NULL || Batch->Size >= BPLIB_CT_BATCH_SIZE)
+    if (Inst == NULL || Batch == NULL || Batch->Size > BPLIB_CT_BATCH_SIZE)
     {
         return BPLIB_NULL_PTR_ERROR;
     }
@@ -521,7 +521,8 @@ BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_C
 
     if (Status != BPLIB_SUCCESS)
     {
-        // TODO event
+        BPLib_EM_SendEvent(BPLIB_STOR_CCS_ERR_EID, BPLib_EM_EventType_ERROR,
+                "Error performing CCS storage operations, Status = %d.", Status);
     }
     
     return Status;
@@ -530,6 +531,7 @@ BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_C
 BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     BPLib_Status_t Status;
+    size_t NumUpdated;
 
     if (Inst == NULL)
     {
@@ -546,11 +548,19 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
     Status = BPLib_SQL_SetNewRetransmitTrigger(Inst, ContactId,
                 BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].DestEIDs,
                 BPLIB_MAX_CONTACT_DEST_EIDS, 
-                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].RetransmitTimeout);
+                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].RetransmitTimeout,
+                &NumUpdated);
 
     pthread_mutex_unlock(&(Inst->BundleStorage.lock));
 
-    /* Event handled upstream */
+    if (Status == BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_STOR_RETRANSMIT_UPDATE_DBG_EID, BPLib_EM_EventType_DEBUG,
+                        "Updated retransmit triggers of %ld bundles for contact %d.",
+                        NumUpdated, ContactId);
+    }
+
+    /* Error event handled upstream */
     
     return Status;    
 }

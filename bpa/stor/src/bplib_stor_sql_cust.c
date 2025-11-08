@@ -49,7 +49,7 @@ const char* MarkForDeletionSQL =
 
 
 BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId,
-                                BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, size_t RetransmitTrigger)
+                BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, size_t RetransmitTrigger, size_t *NumUpdated)
 {
     BPLib_Status_t Status;
     SQL_Status_t   SQLStatus;
@@ -61,7 +61,6 @@ BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_
     Status = BPLib_SQL_GetDestEidWhereClause(DestEIDs, NumEIDs, WhereClause);
     if (Status != BPLIB_SUCCESS)
     {
-        // TODO report?
         return Status;
     }
 
@@ -87,7 +86,7 @@ BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_
     {
         /* Run Batch Load Logic */
         SQLStatus = BPLib_SQL_SetNewRetransmitTriggerImpl(db, DestEIDs, NumEIDs, 
-                                                                    RetransmitTrigger);
+                                                            RetransmitTrigger, NumUpdated);
 
         if (SQLStatus != SQLITE_OK)
         {
@@ -102,7 +101,7 @@ BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_
 }
 
 SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Pattern_t* DestEIDs, 
-                                                size_t NumEIDs, size_t RetransmitTrigger)
+                            size_t NumEIDs, size_t RetransmitTrigger, size_t *NumUpdated)
 {
     SQL_Status_t  SQLStatus;
     size_t        i;
@@ -175,6 +174,8 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
         /* For consistency with other helpers, convert DONE to OK */
         SQLStatus = SQLITE_OK;
     }
+
+    *NumUpdated = sqlite3_changes(db);
 
     /* Expecting SQLITE_OK */
     return SQLStatus;    
@@ -254,7 +255,7 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdat
             }
 
             /* Set bundle_id to current bundle ID in the batch */
-            SQLStatus = sqlite3_bind_int64(TriggerRetransmitStmt, 1, Batch->BundleIDs[i]);
+            SQLStatus = sqlite3_bind_int64(TriggerRetransmitStmt, 2, Batch->BundleIDs[i]);
             if (SQLStatus != SQLITE_OK)
             {
                 fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
@@ -283,7 +284,7 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdat
             }
 
             /* Set bundle_id to current bundle ID in the batch */
-            SQLStatus = sqlite3_bind_int64(StopRetransmitStmt, 1, Batch->BundleIDs[i]);
+            SQLStatus = sqlite3_bind_int64(StopRetransmitStmt, 2, Batch->BundleIDs[i]);
             if (SQLStatus != SQLITE_OK)
             {
                 fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));

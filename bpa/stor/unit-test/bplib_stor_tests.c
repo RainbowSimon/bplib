@@ -154,6 +154,168 @@ void Test_BPLib_STOR_Cleanup_Nominal(void)
     UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_STOR_CLEANUP_INF_EID);
 }
 
+void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
+{
+    BPLib_CT_CcsUpdateBatch_t Batch;
+    size_t BundlesPerOp = BPLIB_CT_BATCH_SIZE / 3;
+    size_t NumBundles = BPLIB_CT_BATCH_SIZE;
+    BPLib_Bundle_t Bundles[BPLIB_CT_BATCH_SIZE];
+    size_t i;
+    size_t NumEgressed;
+    uint64_t RetransmissionTime = 12345;
+
+    /*
+    ** Test setup: Put a bunch of unique bundles into storage
+    */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 797186475264);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), 797186475264);
+
+    for (i = 0; i < NumBundles; i++)
+    {
+        BPLib_STOR_Test_CreateTestBundle(&Bundles[i], i);
+        Bundles[i].Meta.IsCustodial = true;
+        Bundles[i].Meta.RetransmitTime = 100;
+        BPLib_STOR_StoreBundle(&BplibInst, &Bundles[i]);
+
+        Batch.BundleIDs[i] = i;
+        
+        if (i < BundlesPerOp)
+        {
+            Batch.Ops[i] = BPLIB_CT_MARK_DELETE;
+        }
+        else if (i < (BundlesPerOp * 2))
+        {
+            Batch.Ops[i] = BPLIB_CT_START_RETRANSMIT;
+        }
+        else if (i < (BundlesPerOp * 3))
+        {
+            Batch.Ops[i] = BPLIB_CT_STOP_RETRANSMIT;
+        }
+    }
+
+    Batch.Size = NumBundles;
+    BPLib_STOR_FlushPending(&BplibInst);
+
+    /*
+    ** Run test: Perform the following batch operations on the database and then
+    ** test that the expected updates took effect
+    */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), RetransmissionTime);
+    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, &Batch), BPLIB_SUCCESS);
+
+    /* Garbage collect all bundles marked for expiration */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), 0);
+    UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
+    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_IN_CUSTODY, 
+                                                Context_BPLib_AS_Increment[0].Counter);
+    UtAssert_INT32_EQ(NumBundles, Context_BPLib_AS_Increment[0].Amount);
+
+    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DISCARDED, 
+                                                Context_BPLib_AS_Increment[1].Counter);
+    UtAssert_INT32_EQ(BundlesPerOp, Context_BPLib_AS_Increment[1].Amount);
+    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED, 
+                                                Context_BPLib_AS_Increment[2].Counter);
+    UtAssert_INT32_EQ(BundlesPerOp, Context_BPLib_AS_Increment[2].Amount);
+    UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, NumBundles - BundlesPerOp);
+
+    /* Try to egress all bundles marked for retransmission */
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxNode = 100;
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinNode = 100;
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxService = 1;
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinService = 1;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), RetransmissionTime);
+
+    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_EgressForID(&BplibInst, 0, false, &NumEgressed), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BplibInst.BundleStorage.ContactLoadBatches[0].Size, BundlesPerOp);
+    
+    /*
+    ** Test teardown: free memory
+    */    
+   for (i = 0; i < NumBundles; i++)
+   {
+        BPLib_STOR_Test_FreeTestBundle(&Bundles[i]);
+   }
+}
+
+void Test_BPLib_STOR_UpdateCustodialBundles_Null(void)
+{
+    BPLib_CT_CcsUpdateBatch_t Batch;
+
+    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(NULL, &Batch), BPLIB_NULL_PTR_ERROR);
+    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, NULL), BPLIB_NULL_PTR_ERROR);
+
+    Batch.Size = BPLIB_CT_BATCH_SIZE + 1;
+    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, &Batch), BPLIB_NULL_PTR_ERROR);
+}
+
+void Test_BPLib_STOR_UpdateCustodialBundles_Err(void)
+{
+    BPLib_CT_CcsUpdateBatch_t Batch;
+
+    BplibInst.BundleStorage.db = NULL;
+    Batch.Size = 0;
+
+    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, &Batch), BPLIB_SQL_CUSTODY_UPDATE_ERR);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 1);
+}
+
+void Test_BPLib_STOR_SetNewRetransmitTrigger_Nominal(void)
+{
+    size_t NumBundles = BPLIB_CT_BATCH_SIZE;
+    BPLib_Bundle_t Bundles[BPLIB_CT_BATCH_SIZE];
+    size_t i;
+    uint32_t OldTrigger = 100;
+    uint32_t NewTrigger = 500;
+    uint32_t ContId = 0;
+
+    /*
+    ** Test setup: Put a bunch of unique bundles into storage
+    */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 797186475264);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), 797186475264);
+
+    for (i = 0; i < NumBundles; i++)
+    {
+        BPLib_STOR_Test_CreateTestBundle(&Bundles[i], i);
+        Bundles[i].Meta.IsCustodial = true;
+        Bundles[i].Meta.RetransmitTime = OldTrigger;
+        BPLib_STOR_StoreBundle(&BplibInst, &Bundles[i]);
+    }
+
+    BPLib_STOR_FlushPending(&BplibInst);
+
+    /*
+    ** Run test: Perform the following batch operations on the database and then
+    ** test that the expected updates took effect
+    */
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[0].MaxNode = 100;
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[0].MinNode = 100;
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[0].MaxService = 1;
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[0].MinService = 1;
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].RetransmitTimeout = NewTrigger;
+    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_SetNewRetransmitTrigger(&BplibInst, ContId), BPLIB_SUCCESS);
+
+    /*
+    ** Test teardown: free memory
+    */    
+   for (i = 0; i < NumBundles; i++)
+   {
+        BPLib_STOR_Test_FreeTestBundle(&Bundles[i]);
+   }
+}
+
+void Test_BPLib_STOR_SetNewRetransmitTrigger_BadInput(void)
+{
+    UtAssert_INT32_EQ(BPLib_STOR_SetNewRetransmitTrigger(NULL, 0), BPLIB_NULL_PTR_ERROR);
+    UtAssert_INT32_EQ(BPLib_STOR_SetNewRetransmitTrigger(&BplibInst, BPLIB_MAX_NUM_CONTACTS), BPLIB_INVALID_CONT_ID_ERR);
+}
+
+void Test_BPLib_STOR_SetNewRetransmitTrigger_Err(void)
+{
+    BplibInst.BundleStorage.db = NULL;
+
+    UtAssert_INT32_EQ(BPLib_STOR_SetNewRetransmitTrigger(&BplibInst, 0), BPLIB_STOR_SQL_NEW_RETRANSMIT_ERR);
+}
 
 void TestBplib_STOR_Register(void)
 {
@@ -171,4 +333,12 @@ void TestBplib_STOR_Register(void)
    ADD_TEST(Test_BPLib_STOR_UpdateHkPkt_Nominal);
 
    ADD_TEST(Test_BPLib_STOR_Cleanup_Nominal);
+
+   ADD_TEST(Test_BPLib_STOR_UpdateCustodialBundles_Nominal);
+   ADD_TEST(Test_BPLib_STOR_UpdateCustodialBundles_Null);
+   ADD_TEST(Test_BPLib_STOR_UpdateCustodialBundles_Err);
+
+   ADD_TEST(Test_BPLib_STOR_SetNewRetransmitTrigger_Nominal);
+   ADD_TEST(Test_BPLib_STOR_SetNewRetransmitTrigger_BadInput);
+   ADD_TEST(Test_BPLib_STOR_SetNewRetransmitTrigger_Err);
 }
