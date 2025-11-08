@@ -55,6 +55,8 @@ target_include_directories(coverage-bplib_arp-testrunner PRIVATE
 target_link_libraries(coverage-bplib_arp-testrunner PUBLIC
     ut_coverage_link
     ut_assert
+    bplib_as_stubs
+    bplib_eid_stubs
 )
 
 add_test(coverage-bplib_arp-testrunner coverage-bplib_arp-testrunner)

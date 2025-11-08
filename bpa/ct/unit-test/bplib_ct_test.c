@@ -145,8 +145,8 @@ void Test_BPLib_CT_UpdateBundle_Custodial(void)
     BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS] = 69;
 
     /* Set up CTDB context */
-    BplibInst.Ct.Ctdb[0].Free = false;
-    BplibInst.Ct.Ctdb[1].Free = true;
+    BplibInst.Ct.Ctdb[0].Used = true;
+    BplibInst.Ct.Ctdb[1].Used = false;
     BplibInst.Ct.LastDbEntry = 0;
     BplibInst.Ct.CurrDbSize = 10;
 
@@ -155,7 +155,7 @@ void Test_BPLib_CT_UpdateBundle_Custodial(void)
     UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqId, 56);
     UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqNum, 69);
     UtAssert_STUB_COUNT(BPLib_EID_CopyEids, 1);
-    UtAssert_EQ(bool, BplibInst.Ct.Ctdb[1].Free, false);
+    UtAssert_EQ(bool, BplibInst.Ct.Ctdb[1].Used, true);
     UtAssert_EQ(uint32_t, BplibInst.Ct.Ctdb[1].BundleId, 0xdead);
     UtAssert_EQ(uint64_t, BplibInst.Ct.Ctdb[1].SeqId, 56);
     UtAssert_EQ(uint64_t, BplibInst.Ct.Ctdb[1].SeqNum, 69);

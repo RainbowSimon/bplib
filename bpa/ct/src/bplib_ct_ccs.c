@@ -52,7 +52,7 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     return;
 }
 
-BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t SequenceNum, 
+BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t SequenceNum,
                           uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode)
 {
     BPLib_CT_BundleSeqCollection_t *Collection;
@@ -127,8 +127,8 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAd
             break;
         }
         /* Find the first unused CCS */
-        else if (FirstUnusedCcs == BPLIB_CT_MAX_OPEN_CCS && 
-                 Context->OpenCcss[OpenCcsIdx].InProgress == false) 
+        else if (FirstUnusedCcs == BPLIB_CT_MAX_OPEN_CCS &&
+                 Context->OpenCcss[OpenCcsIdx].InProgress == false)
         {
             FirstUnusedCcs = OpenCcsIdx;
         }
@@ -139,25 +139,25 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAd
             LargestCcsIdx = OpenCcsIdx;
         }
     }
-    
+
     /* Found an in progress raw CCS with a matching EID */
     if (OpenCcsIdx < BPLIB_CT_MAX_OPEN_CCS)
     {
-        RetCcsIdx = OpenCcsIdx; 
+        RetCcsIdx = OpenCcsIdx;
     }
     /* Found an unused CCS */
     else if (FirstUnusedCcs != BPLIB_CT_MAX_OPEN_CCS)
     {
         Context->OpenCcss[FirstUnusedCcs].InProgress = true;
         BPLib_EID_CopyEids(SourceAdminEID, Context->OpenCcss[FirstUnusedCcs].SourceAdminEid);
-        
+
         RetCcsIdx = FirstUnusedCcs;
     }
     /* No CCSs were available, send the largest one and wipe it to use */
     else
     {
         BPLib_CT_BuildAndSendOpenCcs(&(Context->OpenCcss[LargestCcsIdx]));
-        
+
         RetCcsIdx = LargestCcsIdx;
     }
 
@@ -190,7 +190,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     {
         for (NextSeqNum = CurrSeqNum; NextSeqNum < CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]; NextSeqNum++)
         {
-            Status = BPLib_CT_GetEntryFromCtdb(Context, SeqCollection->SeqId, 
+            Status = BPLib_CT_GetEntryFromCtdb(Context, SeqCollection->SeqId,
                                                             NextSeqNum, &DbEntry);
 
             if (Status != BPLIB_SUCCESS || DbEntry == NULL)

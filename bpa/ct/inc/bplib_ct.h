@@ -59,7 +59,7 @@
  * \brief Maximum number of bundle sequence collections allowed in a CCS received from
  *        another node.
  */
-#define BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS          (10u)
+#define BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS          (5u)
 
 /**
  * \brief Maximum number of independent sequence counters. Should be greater than or 
@@ -100,8 +100,10 @@ typedef struct
  */
 typedef enum
 {
-    BPLib_CT_CustodyAccepted = 1,
-    BPLib_CT_CustodyRefused = -1
+    BPLib_CT_CustodyAccepted     = 1,
+    BPLib_CT_CustodyRefused      = -1,
+    BPLib_CT_FirstAcceptDispCode = BPLib_CT_CustodyAccepted,
+    BPLib_CT_LastRefuseDispCode  = BPLib_CT_CustodyRefused,
 } BPLib_CT_DispositionCode_t;
 
 /**
@@ -159,7 +161,7 @@ typedef struct
     uint64_t SeqId;
     uint64_t SeqNum;
     uint32_t BundleId;
-    bool     Free;
+    bool     Used;
 } BPLib_CT_DbEntry_t;
 
 /**

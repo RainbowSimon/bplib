@@ -79,7 +79,6 @@ BPLib_Status_t BPLib_CBOR_DecodePrimary(QCBORDecodeContext* ctx, BPLib_Bundle_t*
                                                                 const void *CandBundle)
 {
     BPLib_Status_t Status;
-    size_t CurrArrLen;
     QCBORError NextElementType;
     QCBORItem PeekItem;
     
@@ -99,7 +98,7 @@ BPLib_Status_t BPLib_CBOR_DecodePrimary(QCBORDecodeContext* ctx, BPLib_Bundle_t*
     bundle->blocks.PrimaryBlock.BlockOffsetStart = QCBORDecode_Tell(ctx);
 
     /* First, enter into the primary block array */
-    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &CurrArrLen);
+    Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &PeekItem);
     if (Status != BPLIB_SUCCESS)
     {
         return Status;
@@ -188,7 +187,7 @@ BPLib_Status_t BPLib_CBOR_DecodePrimary(QCBORDecodeContext* ctx, BPLib_Bundle_t*
     }
 
     /* Exit the primary block array */
-    Status = BPLib_QCBOR_ExitDefiniteArray(ctx);
+    Status = BPLib_QCBOR_ExitArray(ctx);
     if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_PRIM_EXIT_ARRAY_ERR;

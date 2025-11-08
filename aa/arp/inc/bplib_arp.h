@@ -28,10 +28,15 @@
 #include "bplib_api_types.h"
 #include "bplib_cfg.h"
 #include "bplib_eid.h"
+#include "bplib_ct.h"
 
-/*
-** CRS Table
-*/
+/* ======== */
+/* Typedefs */
+/* ======== */
+
+/**
+ * \brief CRS configuration member
+ */
 typedef struct
 {
     BPLib_EID_t DestEID;
@@ -39,14 +44,60 @@ typedef struct
     uint32_t    SizeTrigger;
 } BPLib_ARP_CRSSet_t;
 
+/**
+ * \brief CRS configuration
+ */
 typedef struct
 {
     BPLib_ARP_CRSSet_t CRS_Set[BPLIB_MAX_NUM_CRS];
 } BPLib_ARP_CRSTable_t;
 
-/*
-** Exported Functions
-*/
+/**
+ * \brief Identifiers for standard administrative record ADUs that are used in
+ *        providing some of the features of the Bundle Protocol
+ */
+typedef enum
+{
+    BPLib_CT_BsrRecordTypeCode = 1,
+    /* BPLib_CT_???RecordTypeCode = 2, */
+    BPLib_CT_CrsRecordTypeCode = 3,
+    BPLib_CT_CcsRecordTypeCode = 4,
+
+    /* Others here when applicable */
+} BPLib_ARP_AdminRecordTypeCode_t;
+
+/**
+ * \brief The various forms the contents of the Administrative Record can take
+ */
+typedef union
+{
+    /**
+     * \brief The value to the disposition key, bundle sequence collection value
+     *        CBOR map that represents a CCS. The actual key (disposition code) is
+     *        inside the BPLib_CT_BundleSeqCollection_t struct
+     */
+    BPLib_CT_DeserializedCcs_t CCS;
+
+    /* BPLib_ARP_BundleStatusReport_t        BSR; */
+    /* BPLib_ARP_CompressedReportingSignal_t CRS; */
+
+    /* Other when applicable */
+} BPLib_ARP_AdminRecordBody_t;
+
+/**
+ * \brief Standard and typically small ADUs that are used in providing some of the
+ *        features of the Bundle Protocol as a response to bundle transmission
+ *        requests presented by nodes' application agents.
+ */
+typedef struct
+{
+    BPLib_ARP_AdminRecordTypeCode_t AdminRecordType; /** \brief Administrative record type */
+    BPLib_ARP_AdminRecordBody_t     AdminRecordBody; /** \brief Contents of the admin record, dependent on type of admin record */
+} BPLib_ARP_AdminRecord_t;
+
+/* =================== */
+/* Function Prototypes */
+/* =================== */
 
 /**
  * \brief Admin Records Processor initialization
@@ -69,7 +120,7 @@ int BPLib_ARP_Init(void);
  *       Validate configuration table parameters
  *
  *  \par Assumptions, External Events, and Notes:
- *       - This function is called by whatever external task handles table management. 
+ *       - This function is called by whatever external task handles table management.
  *         Every time a new CRS table is loaded, this function should be called to
  *         validate its parameters.
  *
@@ -80,5 +131,50 @@ int BPLib_ARP_Init(void);
  * \retval    BPLIB_TABLE_OUT_OF_RANGE_ERR_CODE: table parameters are out of range
  */
 BPLib_Status_t BPLib_ARP_CRSTblValidateFunc(void *TblData);
+
+/**
+ * \brief     Convert the disposition code into an index into a bundle sequence collection array
+ * \note      This only works if disposition codes are contiguous
+ * \details   In order to turn a semi-contiguous list of disposition codes into an
+ *            index we just need to make the most negative number into 0. This
+ *            doesn't take into account the fact that 0 is skipped though, so we
+ *            must check if the number is positive and, if so, shift the value back
+ *            by 1 to make the index contiguous.
+ * \param[in] DispositionCode The dispoisition code of a custody signal
+ * \return    Index into a Bundle Sequence Collection array that maps the
+ *            disposition code value to the Bundle Sequence Collection associated
+ *            with that disposition code
+ */
+BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t DispositionCode);
+
+/**
+ * \brief      Count the Bundle Status Report then overwrite Bundle's user
+ *             data with the administrative record provided
+ * \param[in]  AdminRecord Decoded Bundle Status Report administrative record
+ * \param[out] Bundle      Bundle whose user_data will be overwritten with
+ *                         AdminRecord
+ * \return    void
+ */
+void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
+
+/**
+ * \brief     Count the Compressed Reporting Signal then overwrite Bundle's user
+ *            data with the administrative record provided
+ * \param[in]  AdminRecord Decoded Compressed Reporting Signal administrative record
+ * \param[out] Bundle      Bundle whose user_data will be overwritten with
+ *                         AdminRecord
+ * \return    void
+ */
+void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
+
+/**
+ * \brief     Count the Compressed Custody Signal then overwrite Bundle's user
+ *            data with the administrative record provided
+ * \param[in]  AdminRecord Decoded Compressed Custody Signal administrative record
+ * \param[out] Bundle      Bundle whose user_data will be overwritten with
+ *                         AdminRecord
+ * \return    void
+ */
+void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
 
 #endif /* BPLIB_ARP_H */

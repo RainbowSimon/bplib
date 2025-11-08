@@ -21,9 +21,9 @@
 #ifndef BPLIB_ARP_TEST_UTILS_H
 #define BPLIB_ARP_TEST_UTILS_H
 
-/*
-** Include
-*/
+/* ======== */
+/* Includes */
+/* ======== */
 
 #include "utassert.h"
 #include "utstubs.h"
@@ -31,11 +31,25 @@
 
 #include "bplib_api_types.h"
 #include "bplib_arp.h"
+#include "bplib_as.h"
 
+/* ====== */
+/* Macros */
+/* ====== */
 
-/*
-** Exported Functions
-*/
+#define ADD_TEST(test) UtTest_Add(test, BPLib_ARP_Test_Setup, BPLib_ARP_Test_Teardown, #test) /* Add a test case */
+
+/* =========== */
+/* Global Data */
+/* =========== */
+
+extern BPLib_ARP_AdminRecord_t AdminRecord;
+
+/* =================== */
+/* Function Prototypes */
+/* =================== */
+
+void BPLib_ARP_Test_VerifyIncrement(BPLib_EID_t EID, BPLib_AS_Counter_t Counter, uint32_t Amount, int16_t CallNum);
 
 void BPLib_ARP_Test_Setup(void);
 void BPLib_ARP_Test_Teardown(void);
