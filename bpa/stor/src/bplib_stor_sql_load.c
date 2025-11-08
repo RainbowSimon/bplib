@@ -293,6 +293,7 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
     SQL_Status_t SQLStatus;
     sqlite3*     db;
     size_t       i;
+    uint64_t     BindIndex;
 
     db = Inst->BundleStorage.db;
 
@@ -304,12 +305,20 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
         return SQLStatus;
     }
 
+    BindIndex = 1;
+
     /* Go through the load batch and add each ID as egressed */
     for (i = 0; i < Batch->Size; i++)
     {
+        /* Mark non-custodial bundles as egressed */
         sqlite3_reset(MarkEgressedStmt);
 
-        sqlite3_bind_int64(MarkEgressedStmt, 1, Batch->BundleRowIDs[i]);
+        SQLStatus = sqlite3_bind_int64(MarkEgressedStmt, BindIndex++, Batch->BundleRowIDs[i]);
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
+            break;
+        }
 
         SQLStatus = sqlite3_step(MarkEgressedStmt);
         if (SQLStatus != SQLITE_DONE)
@@ -317,10 +326,23 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
             fprintf(stderr, "Mark Egressed Failed: %s\n", sqlite3_errstr(SQLStatus));
             break;
         }
+
+        /* Reset retransmission trigger for custodial bundles */
         sqlite3_reset(ResetRetransmitStmt);
 
-        sqlite3_bind_int64(ResetRetransmitStmt, 1, BPLib_TIME_GetMonotonicTime());
-        sqlite3_bind_int64(ResetRetransmitStmt, 1, Batch->BundleRowIDs[i]);
+        SQLStatus = sqlite3_bind_int64(ResetRetransmitStmt, BindIndex++, BPLib_TIME_GetMonotonicTime());
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to bind retransmission_timestamp: %s\n", sqlite3_errmsg(db));
+            break;
+        }
+
+        SQLStatus = sqlite3_bind_int64(ResetRetransmitStmt, BindIndex++, Batch->BundleRowIDs[i]);
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
+            break;
+        }
 
         SQLStatus = sqlite3_step(ResetRetransmitStmt);
         if (SQLStatus != SQLITE_DONE)

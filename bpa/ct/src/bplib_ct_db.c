@@ -116,6 +116,23 @@ BPLib_Status_t BPLib_CT_GetEntryFromCtdb(BPLib_CT_Context_t *Context, uint64_t S
     return Status;
 }
 
+BPLib_Status_t BPLib_CT_GetEntryFromCtdbWithId(BPLib_CT_Context_t *Context, 
+                                        uint32_t BundleId, BPLib_CT_DbEntry_t **DbEntry)
+{
+    BPLib_Status_t Status = BPLIB_NOT_FOUND_ERR;
+    BPLib_RBT_Link_t *RbtLink;
+
+    RbtLink = BPLib_RBT_SearchUnique(BundleId, &Context->CtdbRoot);
+
+    if (RbtLink != NULL)
+    {
+        *DbEntry = BPLib_CT_GetDbEntryFromRbt(RbtLink);
+        Status = BPLIB_SUCCESS; 
+    }
+
+    return Status;
+}
+
 BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_CT_Context_t *Context, BPLib_CT_DbEntry_t *DbEntry)
 {
     BPLib_Status_t Status;

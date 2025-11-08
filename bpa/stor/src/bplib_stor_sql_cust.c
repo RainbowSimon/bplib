@@ -211,6 +211,7 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT
     SQLStatus = BPLib_SQL_UpdateCustodialBundlesImpl(db, Batch);
 
     sqlite3_finalize(MarkForDeletionStmt);
+    sqlite3_finalize(StopRetransmitStmt);
     sqlite3_finalize(TriggerRetransmitStmt);
 
     if (SQLStatus != SQLITE_OK)

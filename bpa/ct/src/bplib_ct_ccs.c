@@ -71,7 +71,9 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
         Collection->SeqRangeLen >= (BPLIB_CT_MAX_SEQ_RANGE_LEN - 1) ||
         SequenceNum < Collection->LastSeqNumAdded)
     {
-        return BPLIB_ERROR;
+        BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
+                "Open CCS data failed sanity checks, check for memory corruption.");
+        return BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 
     /* If OpenCcs is empty, add first sequence number */
@@ -243,9 +245,6 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 CcsStorBatch.BundleIDs[CcsStorBatch.Size] = DbEntry->BundleId;
                 CcsStorBatch.Ops[CcsStorBatch.Size] = BPLIB_CT_START_RETRANSMIT;
                 CcsStorBatch.Size++;
-
-                /* Move me to storage TODO */
-                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
             }
 
             /* If a batch of bundle IDs is reached, do storage operation */
@@ -262,7 +261,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
         CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];
     }
 
-    /* Do remaining storage operations */
+    /* Do remaining batch of storage operations */
     Status = BPLib_STOR_UpdateCustodialBundles(Inst, &CcsStorBatch);
 
     return Status;

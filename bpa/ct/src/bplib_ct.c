@@ -84,9 +84,10 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
 {
     BPLib_Status_t Status = BPLIB_SUCCESS;
     size_t OpenCcsIdx;
-    bool   DeleteBundle = false;
     uint8_t ExtBlockIdx;
     BPLib_CustodyBlockData_t *CtebPtr;
+    BPLib_CT_DbEntry_t *DbEntry = NULL;
+    BPLib_CT_DispositionCode_t DispCode;
 
     if (Bundle == NULL || Inst == NULL)
     {
@@ -96,6 +97,18 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Set bundle ID for both custodial and non-custodial bundles */
     (void) BPLib_CT_SetBundleId(Bundle);
 
+    /* Check if there's storage left */
+    if ((Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
+    {
+        BPLib_EM_SendEvent(BPLIB_BI_INGRESS_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "Cannot accept this bundle, no storage remaining.");
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, 1);
+
+        /* Additional counters handled by QM job */
+
+        Status = BPLIB_NO_STOR_ERR;
+    }
+
     for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
     {
         if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
@@ -104,46 +117,49 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         }
     }
 
-    /* A CTEB was detected, do custody operations */
-    if (ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS)
+    /* No CTEB was found, skip custody operations for this bundle */
+    if (ExtBlockIdx >= BPLIB_MAX_NUM_EXTENSION_BLOCKS)
     {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REQUEST, 1);
-        Bundle->Meta.IsCustodial = true;
-
-        CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
-
-        OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID),
-                                                CtebPtr->BundleSeqId);
-
-        /* Check if we can accept custody of this bundle */
-        if (BPLib_PDB_AcceptCustody(Bundle) == BPLIB_SUCCESS)
-        {            
-            /* Add to custody accepted open CCS */
-            Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum, 
-                                CtebPtr->BundleSeqId, BPLib_CT_CustodyAccepted);
-            if (Status != BPLIB_SUCCESS)
-            {
-                DeleteBundle = true;
-                BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
-                        "Open CCS data failed sanity checks, check for memory corruption.");
-
-            }
-        }
-        else
-        {
-            /* Add to custody rejected open CCS and mark bundle for deletion */
-            DeleteBundle = true;
-            Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum,
-                                CtebPtr->BundleSeqId, BPLib_CT_CustodyRefused);
-        }
+        return Status;
     }
 
-    /* Do nothing for non-custodial bundles */
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REQUEST, 1);
+    Bundle->Meta.IsCustodial = true;
+    CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 
-    if (DeleteBundle)
+    /* Default to refused custody */
+    DispCode = BPLib_CT_CustodyRefused;
+
+    /* Reject custody due to lack of storage */
+    if (Status == BPLIB_NO_STOR_ERR)
     {
-        BPLib_MEM_BundleFree(&(Inst->pool), Bundle);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
+    }
+
+    /* Reject duplicate bundles */
+    else if (BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+                    Bundle->blocks.PrimaryBlock.BundleId, &DbEntry) == BPLIB_SUCCESS)
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REDUNDANT, 1);
+    }
+
+    /* Custody accepted! */
+    else if (BPLib_PDB_AcceptCustody(Bundle) == BPLIB_SUCCESS)
+    {
+        DispCode = BPLib_CT_CustodyAccepted;
+    }
+    /* else PDB rejected custody */
+
+    /* Add to an open CCS to confirm either acceptance or rejection */
+    OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID),
+                                            CtebPtr->BundleSeqId);
+    Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum, 
+                        CtebPtr->BundleSeqId, DispCode);
+
+    if (DispCode == BPLib_CT_CustodyRefused)
+    {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
+        Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 
     return Status;
@@ -155,6 +171,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
     BPLib_CustodyBlockData_t *CtebPtr;
     uint8_t ExtBlockIdx;
     uint64_t SeqId;
+    BPLib_CT_DbEntry_t *DbEntry = NULL;
 
     if (Inst == NULL || Bundle == NULL)
     {
@@ -177,14 +194,30 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         /* Update CTEB fields */
         if (Bundle->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
         {
-            SeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle);
-            CtebPtr->BundleSeqId = SeqId;
-            CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), SeqId);
-            BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
-            Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
+            /* Check if this is a bundle retransmission from storage or a new bundle */
+            Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+                                Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
 
-            Status = BPLib_CT_AddToCtdb(&(Inst->Ct), CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
-                                        Bundle->blocks.PrimaryBlock.BundleId);
+            if (Status == BPLIB_SUCCESS && DbEntry != NULL)
+            {
+                CtebPtr->BundleSeqId = DbEntry->SeqId;
+                CtebPtr->BundleSeqNum = DbEntry->SeqNum;
+                BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
+
+                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
+            }
+            /* If new bundle, update CTEB fields to new values */
+            else
+            {
+                SeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle);
+                CtebPtr->BundleSeqId = SeqId;
+                CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), SeqId);
+                BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
+                Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
+
+                Status = BPLib_CT_AddToCtdb(&(Inst->Ct), CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
+                                            Bundle->blocks.PrimaryBlock.BundleId);
+            }
         }
         else
         {

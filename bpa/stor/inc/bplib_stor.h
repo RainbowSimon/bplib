@@ -64,7 +64,6 @@ struct BPLib_BundleCache
     size_t                 InsertBatchSize;
     BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
     BPLib_STOR_LoadBatch_t ContactLoadBatches[BPLIB_MAX_NUM_CONTACTS];
-    BPLib_STOR_LoadBatch_t CustodialDeleteBatch;
 
     /* Storage-related MIB reports */
     uint32_t BundleCountStored;

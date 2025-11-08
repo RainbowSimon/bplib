@@ -73,19 +73,29 @@
  */
 #define BPLIB_CT_DB_MAX_ENTRIES                     (100u)
 
+/**
+ * \brief Size of a full CCS batch operation
+ */
 #define BPLIB_CT_BATCH_SIZE                         (100u)
 
 /*
 ** Type Definitions
 */
 
+/**
+ * \brief Possible operations to be taken upon receiving and processing a CCS
+ */
 typedef enum
 {
-    BPLIB_CT_STOP_RETRANSMIT,
-    BPLIB_CT_MARK_DELETE,
-    BPLIB_CT_START_RETRANSMIT
+    BPLIB_CT_STOP_RETRANSMIT,           /** \brief Stop storage retransmission timer  */
+    BPLIB_CT_MARK_DELETE,               /** \brief Mark bundle for deletion */
+    BPLIB_CT_START_RETRANSMIT           /** \brief Trigger bundle retransmission */
 } BPLib_CT_StorOp_t;
 
+/**
+ * \brief A batch of storage operations associated with a set of bundle IDs generated
+ *        after receiving and processing a CCS
+ */
 typedef struct 
 {
     uint32_t BundleIDs[BPLIB_CT_BATCH_SIZE];
