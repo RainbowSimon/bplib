@@ -426,8 +426,7 @@ void Test_BPLib_CT_ProcessCcs_BufErr(void)
     Ccs.NumBundleSeqCollections = BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS;
     UtAssert_INT32_EQ(BPLib_CT_ProcessCcs(&BplibInst, &Ccs), BPLIB_BUF_LEN_ERROR);
 
-    memset(&Ccs, 0, sizeof(Ccs));
-
+    Ccs.NumBundleSeqCollections = 1;
     Ccs.BundleSeqCollections[0].SeqRangeLen = BPLIB_CT_MAX_SEQ_RANGE_LEN;
     UtAssert_INT32_EQ(BPLib_CT_ProcessCcs(&BplibInst, &Ccs), BPLIB_BUF_LEN_ERROR);
 }
