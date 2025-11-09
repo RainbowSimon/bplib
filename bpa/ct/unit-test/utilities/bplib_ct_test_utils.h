@@ -38,6 +38,7 @@
 #include "bplib_ct_ccs.h"
 #include "bplib_pdb.h"
 #include "bplib_inst.h"
+#include "bplib_as_handlers.h"
 
 
 /*

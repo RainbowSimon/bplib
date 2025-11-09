@@ -198,7 +198,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
                                 Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
 
-            if (Status == BPLIB_SUCCESS && DbEntry != NULL)
+            if (Status == BPLIB_SUCCESS)
             {
                 CtebPtr->BundleSeqId = DbEntry->SeqId;
                 CtebPtr->BundleSeqNum = DbEntry->SeqNum;
@@ -221,6 +221,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         }
         else
         {
+            Status = BPLIB_INVALID_CONT_ID_ERR;
             BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
                     "Bundle has an invalid egress ID %d, check for memory corruption.", Bundle->Meta.EgressID);
         }
@@ -258,12 +259,6 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
 
         Status = BPLib_CT_ProcessBundleSeqCollection(Inst, &(Inst->Ct), 
                                             &(Ccs->BundleSeqCollections[SeqCollectIdx]));
-
-        if (Status != BPLIB_SUCCESS)
-        {
-            /* TODO do something? */
-            break;
-        }
     }
 
     return Status;
