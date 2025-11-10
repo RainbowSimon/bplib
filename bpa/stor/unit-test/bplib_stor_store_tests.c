@@ -166,6 +166,7 @@ void Test_BPLib_STOR_StoreBundle_StoreBatch(void)
         BPLib_STOR_Test_CreateTestBundle(&Bundles[i], 0);
         UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundles[i]), BPLIB_SUCCESS);
         Bundles[i].blocks.PrimaryBlock.Timestamp.CreateTime = i;
+        Bundles[i].Meta.IsCustodial = false;
         Bundles[i].blocks.PrimaryBlock.BundleId = i; /* To prevent duplicates */
     }
 

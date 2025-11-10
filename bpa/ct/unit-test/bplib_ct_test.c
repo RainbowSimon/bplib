@@ -201,7 +201,7 @@ void Test_BPLib_CT_ProcessNewBundle_Dupl(void)
     Bundle.blocks.ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS - 1].BlockData.CustodyBlockData.BundleSeqNum = 33;
 
     /* Return link with duplicate bundle */
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].RbtLink));
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].IdRbtLink));
 
     /*
     ** CCS data explanation:
@@ -321,7 +321,7 @@ void Test_BPLib_CT_UpdateBundle_Retransmit(void)
     BplibInst.Ct.CurrDbSize = 10;
 
     /* Find bundle in CTDB */
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].RbtLink));
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].IdRbtLink));
 
     UtAssert_INT32_EQ(BPLib_CT_UpdateBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
     
@@ -403,7 +403,7 @@ void Test_BPLib_CT_ProcessCcs_Nominal(void)
     ExpCtdbSize = BPLIB_CT_DB_MAX_ENTRIES - 9; /* CCS should remove only the 9 custody accepted entries from CTDB */
 
     /* Set RBT to always return same link (for simplicity) */
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].RbtLink));
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].SeqRbtLink));
 
     UtAssert_INT32_EQ(BPLib_CT_ProcessCcs(&BplibInst, &Ccs), BPLIB_SUCCESS);
     UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, ExpCtdbSize);
