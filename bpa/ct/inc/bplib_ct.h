@@ -64,15 +64,9 @@
 /**
  * \brief Maximum number of independent sequence counters. Should be greater than or 
  *        equal to the \ref BPLIB_MAX_NUM_CONTACTS, since each open contact will have its
- *        own assigned sequence counter. Must be less than 255 to fit in 1 byte.
+ *        own assigned sequence counter.
  */
 #define BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS           (BPLIB_MAX_NUM_CONTACTS * 3)
-
-/**
- * \brief Sequence numbers cannot exceed 7 bytes of data (8th byte is used to hold
- *        the sequence ID in the RBT)
- */
-#define BPLIB_CT_DB_MAX_SEQUENCE_NUMBER             (0x00FFFFFFFFFF)
 
 /**
  * \brief Maximum number of entries allowed in the Custody Transfer Database (CTDB)
