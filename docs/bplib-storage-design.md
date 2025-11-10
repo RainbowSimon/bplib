@@ -39,7 +39,8 @@ Once received bundles end up at Storage, they are kept in local memory until eit
     - If a bundle contains a valid creation timestamp and then node has valid time when storing this bundle, action_timestamp = lifetime - (current_dtn_time - creation_timestamp) + current_monotonic_time
     - If the bundle contains a valid creation timestamp and the node does not have a valid time when storing this bundle, action_timestamp = bundle_monotonic_reception_time + lifetime
     - If the bundle does not contain a valid creation timestamp, action_timestamp = bundle_monotonic_reception_time + lifetime - bundle_age
-- retransmit_timestamp: TODO
+- retransmit_trigger: Only for custodial bundles, the number of milliseconds between custodial retransmissions. If this is set to 0, retransmission is disabled.
+- retransmit_timestamp: Monotonic time at which the next retransmission will occur. When storing a bundle for the first time, it is set to the current time pus retransmit_trigger.
 - dest_node: Based on the destination EID node number in the primary block
 - dest_service: Based on the destination EID service number in the primary block
 - is_custodial: 1 if a bundle contains a CTEB, otherwise 0
@@ -47,13 +48,13 @@ Once received bundles end up at Storage, they are kept in local memory until eit
 
 ## Bundle Forwarding
 
-When a contact is started, if there are bundles in storage with corresponding destination EIDs, the contact out thread will start to request bundles from storage. Bundles are loaded by searching for the id's in bundle_data using the idx_egress_id index with the following criteria:
-- dest_node and dest_service are either within the range provided by the contact's destination EIDs or match an exact EID value (for all destination EIDs corresponding to a particular contact)
-- egress_attempted is 0
-- if is_custodial is true, the retransmit_timestamp is greater than the current monotonic time
+When a contact/channel is started, if there are bundles in storage with corresponding destination EIDs, the contact out/channel out thread will start to request bundles from storage. Bundles are loaded by searching for the id's in bundle_data using the idx_egress_id index with the following criteria:
+- dest_node and dest_service are either within the range provided by the contact's destination EIDs or match an exact EID value (for all destination EIDs corresponding to a particular contact or channel)
+- egress_attempted is 0 and is_custodial is false
+- if is_custodial is true, the retransmit_timestamp is less than the current monotonic time
 - selections are ordered in ascending order by action_timestamp and limited to no more than `BPLIB_STOR_LOADBATCHSIZE`.
 
-The id's are then loaded into memory in what is called a load batch. These id's allow the contact out thread to then index into the bundle_blobs table for the entries where the bundle_row matches the provided id and load the bundles into memory. Once a load batch of ids has been consumed and all bundles have been loaded into memory, the egress_attempted field of those bundles is set to 1, unless the bundle is custodial.
+The id's are then loaded into memory in what is called a load batch. These id's allow the contact out thread to then index into the bundle_blobs table for the entries where the bundle_row matches the provided id and load the bundles into memory. Once a load batch of ids has been consumed and all bundles have been loaded into memory, the egress_attempted field of those bundles is set to 1, unless the bundle is custodial. Custodial bundles are only marked for deletion when a CCS is received confirming their successful transfer
 
 ## Maintenance Activities
 
@@ -66,3 +67,9 @@ Several activities should be done at a periodic cycle (say 1hz) by some sort of 
 
 Storage keeps track of how many bundles have been inserted or deleted from the database and their sizes in order to track the total number of bundles and bytes in storage.
 
+## Custodial Bundles
+
+Custodial bundles are always stored, even if there is an open contact immediately available for forwarding. They will be retransmitted by an applicable egressing contact whenever the retransmit_timestamp is passed, until a Compressed Custody Signal (CCS) corresponding to them is received. When a node receives a CCS, it builds a batch of various storage operations to perform updates depending on the contents of the CCS:
+- Bundle's custody was accepted by the next node: bundle is marked for deletion by setting egress_attempted to 1
+- Bundle's custody was rejected by the next node: bundle's retransmission is turned off by setting its retransmit_trigger to 0. The next time a contact is started with destination EIDs corresponding to this bundle, the retransmit_trigger will be reset to the new value and retransmission can start occurring again.
+- Bundle was not received by the next node: Set retransmission_timestamp to the current time to trigger a retransmission at the earliest possible next chance.
