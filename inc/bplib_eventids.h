@@ -161,7 +161,6 @@
 /* BI event IDs */
 /* ============ */
 #define BPLIB_BI_INGRESS_CBOR_DECODE_INF_EID            (650u)
-#define BPLIB_BI_INGRESS_NO_STOR_ERR_EID                (651u)
 
 /* ============= */
 /* CLA event IDs */
@@ -209,5 +208,6 @@
 #define BPLIB_CT_BUNDLE_DLT_ERR_EID                     (753u)
 #define BPLIB_CT_CCS_CRRPTD_ERR_EID                     (754u)
 #define BPLIB_CT_INV_EGRESS_ID_ERR_EID                  (755u)
+#define BPLIB_CT_NO_STOR_ERR_EID                        (756u)
 
 #endif /* BPLIB_EVENTIDS_H */

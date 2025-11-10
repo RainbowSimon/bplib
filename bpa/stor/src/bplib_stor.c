@@ -418,6 +418,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     size_t               TotalBytesStored;
     size_t               DuplicateBundlesIgnored;
     size_t               CustodialBundlesStored;
+    BPLib_CLA_ContactRunState_t ConState;
 
     CacheInst               = &Inst->BundleStorage;
     TotalBytesStored        = 0;
@@ -475,7 +476,22 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     */
     for (i = 0; i < CacheInst->InsertBatchSize; i++)
     {
-        BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
+        /* Custodial bundles with an egress path should get sent out instead of freed */
+        if (CacheInst->InsertBatch[i]->Meta.IsCustodial && 
+            CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
+        {
+            (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
+
+            if (ConState == BPLIB_CLA_STARTED)
+            {
+                BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CacheInst->InsertBatch[i]->Meta.EgressID]), 
+                                            &CacheInst->InsertBatch[i], QM_WAIT_FOREVER);
+            }
+        }
+        else
+        {
+            BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
+        }
     }
 
     CacheInst->InsertBatchSize = 0;

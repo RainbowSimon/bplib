@@ -34,11 +34,18 @@
 ** Function Definitions
 */
 
-BPLib_CT_DbEntry_t *BPLib_CT_GetDbEntryFromRbt(const BPLib_RBT_Link_t *Node)
+BPLib_CT_DbEntry_t *BPLib_CT_GetDbEntryFromSeqRbt(const BPLib_RBT_Link_t *Node)
 {
     /* Get a pointer to the DB entry */
-    return (BPLib_CT_DbEntry_t *)(void *)((uint8_t *) Node - offsetof(BPLib_CT_DbEntry_t, RbtLink));
+    return (BPLib_CT_DbEntry_t *)(void *)((uint8_t *) Node - offsetof(BPLib_CT_DbEntry_t, SeqRbtLink));
 }
+
+BPLib_CT_DbEntry_t *BPLib_CT_GetDbEntryFromIdRbt(const BPLib_RBT_Link_t *Node)
+{
+    /* Get a pointer to the DB entry */
+    return (BPLib_CT_DbEntry_t *)(void *)((uint8_t *) Node - offsetof(BPLib_CT_DbEntry_t, IdRbtLink));
+}
+
 
 int BPLib_CT_CompareDbEntries(const BPLib_RBT_Link_t *Node, void *Arg)
 {
@@ -47,7 +54,7 @@ int BPLib_CT_CompareDbEntries(const BPLib_RBT_Link_t *Node, void *Arg)
 
     SeqNum = (uint64_t *) Arg;
 
-    DbEntry = BPLib_CT_GetDbEntryFromRbt(Node);
+    DbEntry = BPLib_CT_GetDbEntryFromSeqRbt(Node);
 
     if (*SeqNum == DbEntry->SeqNum)
     {
@@ -64,6 +71,7 @@ int BPLib_CT_CompareDbEntries(const BPLib_RBT_Link_t *Node, void *Arg)
 BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId, 
                                                     uint64_t SeqNum, uint32_t BundleId)
 {
+    BPLib_Status_t Status;
     size_t CurrDbEntry;
 
     if (Context->CurrDbSize == BPLIB_CT_DB_MAX_ENTRIES)
@@ -93,23 +101,31 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId,
     Context->CurrDbSize++;
     Context->LastDbEntry = CurrDbEntry;
     
-    return BPLib_RBT_InsertValueGeneric(SeqId, &(Context->CtdbRoot), 
-                                        &(Context->Ctdb[CurrDbEntry].RbtLink),
+    Status = BPLib_RBT_InsertValueGeneric(SeqId, &(Context->SeqTreeRoot), 
+                                        &(Context->Ctdb[CurrDbEntry].SeqRbtLink),
                                         BPLib_CT_CompareDbEntries, &SeqNum);
+
+    if (Status == BPLIB_SUCCESS)
+    {
+        Status = BPLib_RBT_InsertValueUnique(BundleId, &(Context->IdTreeRoot), 
+                                            &(Context->Ctdb[CurrDbEntry].IdRbtLink));
+    }
+
+    return Status;
 }
 
-BPLib_Status_t BPLib_CT_GetEntryFromCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId, 
+BPLib_Status_t BPLib_CT_GetEntryFromCtdbWithSeq(BPLib_CT_Context_t *Context, uint64_t SeqId, 
                                             uint64_t SeqNum, BPLib_CT_DbEntry_t **DbEntry)
 {
     BPLib_Status_t Status = BPLIB_NOT_FOUND_ERR;
     BPLib_RBT_Link_t *RbtLink;
 
-    RbtLink = BPLib_RBT_SearchGeneric(SeqId, &Context->CtdbRoot, 
+    RbtLink = BPLib_RBT_SearchGeneric(SeqId, &Context->SeqTreeRoot, 
                                                     BPLib_CT_CompareDbEntries, &SeqNum);
 
     if (RbtLink != NULL)
     {
-        *DbEntry = BPLib_CT_GetDbEntryFromRbt(RbtLink);
+        *DbEntry = BPLib_CT_GetDbEntryFromSeqRbt(RbtLink);
         Status = BPLIB_SUCCESS; 
     }
 
@@ -122,11 +138,11 @@ BPLib_Status_t BPLib_CT_GetEntryFromCtdbWithId(BPLib_CT_Context_t *Context,
     BPLib_Status_t Status = BPLIB_NOT_FOUND_ERR;
     BPLib_RBT_Link_t *RbtLink;
 
-    RbtLink = BPLib_RBT_SearchUnique(BundleId, &Context->CtdbRoot);
+    RbtLink = BPLib_RBT_SearchUnique(BundleId, &Context->IdTreeRoot);
 
     if (RbtLink != NULL)
     {
-        *DbEntry = BPLib_CT_GetDbEntryFromRbt(RbtLink);
+        *DbEntry = BPLib_CT_GetDbEntryFromIdRbt(RbtLink);
         Status = BPLIB_SUCCESS; 
     }
 
@@ -137,12 +153,15 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_CT_Context_t *Context, BPLib_CT_DbE
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_RBT_ExtractNode(&Context->CtdbRoot, &DbEntry->RbtLink);
+    Status = BPLib_RBT_ExtractNode(&Context->SeqTreeRoot, &DbEntry->SeqRbtLink);
     if (Status == BPLIB_SUCCESS)
     {
-        DbEntry->Used = false;
-
-        Context->CurrDbSize--;
+        Status = BPLib_RBT_ExtractNode(&Context->IdTreeRoot, &DbEntry->IdRbtLink);
+        if (Status == BPLIB_SUCCESS)
+        {
+            DbEntry->Used = false;
+            Context->CurrDbSize--;
+        }
     }
 
     return Status;

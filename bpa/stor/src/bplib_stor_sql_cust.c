@@ -34,7 +34,7 @@ const char* SetNewRetransmitTriggerBaseSQL =
     "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) \n"
     "AND is_custodial = 1 AND egress_attempted = 0\n"
 ")\n"
-"UPDATE bundle_data SET retransmit_trigger = ? AND retransmit_timestamp = ? \n"
+"UPDATE bundle_data SET retransmit_trigger = ?, retransmit_timestamp = ? \n"
 "WHERE id IN (SELECT id FROM to_update);";
 
 const char* TriggerRetransmitSQL =
@@ -150,7 +150,7 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
 
     }
 
-    /* Bind retransmit_trigger to garbage value */
+    /* Bind retransmit_trigger to new value */
     SQLStatus = sqlite3_bind_int64(SetRetransmitAllStmt, BindIndex++, RetransmitTrigger);
     if (SQLStatus != SQLITE_OK)
     {

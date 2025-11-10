@@ -45,7 +45,8 @@ BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
 
     memset(&(Inst->Ct), 0, sizeof(BPLib_CT_Context_t));
 
-    BPLib_RBT_InitRoot(&(Inst->Ct.CtdbRoot));
+    BPLib_RBT_InitRoot(&(Inst->Ct.SeqTreeRoot));
+    BPLib_RBT_InitRoot(&(Inst->Ct.IdTreeRoot));
 
     return BPLIB_SUCCESS;
 }
@@ -100,8 +101,9 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Check if there's storage left */
     if ((Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
-        BPLib_EM_SendEvent(BPLIB_BI_INGRESS_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
-                            "Cannot accept this bundle, no storage remaining.");
+        BPLib_EM_SendEvent(BPLIB_CT_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "Cannot accept %ld byte bundle, not enough storage remaining (%ld bytes).",
+                            Bundle->Meta.TotalBytes, Inst->BundleStorage.BytesStorageInUse);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, 1);
 
         /* Additional counters handled by QM job */

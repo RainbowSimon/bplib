@@ -66,7 +66,7 @@ typedef uint8_t BPLib_BlockType_t;
 typedef int32_t BPLib_Status_t;
 
 // Integer typedefs
-typedef uintmax_t BPLib_Val_t;
+typedef uint64_t BPLib_Val_t;
 
 typedef struct BPLib_Instance BPLib_Instance_t;
 
@@ -104,7 +104,7 @@ typedef enum
 
 #define BPLIB_BUNDLE_PROTOCOL_VERSION                   (7u)     /** @brief Version of Bundle Protocol being implemented */
 
-#define BPLIB_NO_RETRANSMIT_TRIGGER                     (0u)  /** @brief Garbage retransmit time trigger */
+#define BPLIB_NO_RETRANSMIT_TRIGGER                     (0u)     /** @brief Garbage retransmit time trigger */
 
 #define BPLIB_BITS_IN_BYTE                              (8u)     /** \brief Number of bits in a byte */
 
