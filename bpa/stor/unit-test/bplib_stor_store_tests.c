@@ -177,6 +177,7 @@ void Test_BPLib_STOR_StoreBundle_StoreBatch(void)
     BPLib_STOR_Test_CreateTestBundle(&Bundles[BPLIB_STOR_INSERTBATCHSIZE - 1], 0);
     Bundles[i].blocks.PrimaryBlock.Timestamp.CreateTime = BPLIB_STOR_INSERTBATCHSIZE - 1;
     Bundles[i].blocks.PrimaryBlock.BundleId = BPLIB_STOR_INSERTBATCHSIZE - 1; /* To prevent duplicates */
+    Bundles[i].Meta.IsCustodial = false;
     UtAssert_INT32_EQ(BPLib_STOR_StoreBundle(&BplibInst, &Bundles[i]), BPLIB_SUCCESS);
     UtAssert_INT32_EQ(BplibInst.BundleStorage.InsertBatchSize, 0);
 
