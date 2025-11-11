@@ -21,8 +21,6 @@
  *
  */
 #include "bplib_mem_impl.h"
-#include "bplib_em.h"
-#include "bplib_eventids.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -85,7 +83,7 @@ BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* pool, void* init_mem
     pool->mem_next = pool->mem_start;
     pool->num_free = pool->num_blocks;
     pool->num_init = 0;
-    printf("MEM: %lu blocks at init\n", pool->num_blocks);
+    printf("MEM BEN_ALLOC: %lu blocks at init\n", pool->num_blocks);
 
     return BPLIB_SUCCESS;
 }
@@ -99,7 +97,7 @@ void BPLib_MEM_PoolImplDestroy(BPLib_MEM_PoolImpl_t* pool)
     memset(pool, 0, sizeof(BPLib_MEM_PoolImpl_t));
 }
 
-void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* pool)
+void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* pool, size_t Size)
 {
     MemIndex_t* p;
     void* ret;
@@ -152,4 +150,14 @@ void BPLib_MEM_PoolImplFree(BPLib_MEM_PoolImpl_t* pool, void* to_free)
         pool->mem_next = (void*)(to_free);
     }
     pool->num_free++;
+}
+
+size_t BPLib_MEM_GetBytesInUseImpl(BPLib_MEM_PoolImpl_t *Pool)
+{
+    return ((Pool->num_blocks - Pool->num_free) * Pool->block_size);
+}
+
+size_t BPLib_MEM_GetBytesFreeImpl(BPLib_MEM_PoolImpl_t *Pool)
+{
+    return (Pool->num_free * Pool->block_size);
 }

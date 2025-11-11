@@ -26,7 +26,6 @@
 
 #define BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS      2
 
-
 /**
  * @struct BPLib_MEM_PoolImpl_t
  * @brief Represents the internal structure of a memory pool implementation.
@@ -35,16 +34,10 @@
  */
 typedef struct BPLib_MEM_PoolImpl
 {
-    void* MemBuffer; /**< Pointer to the start of the memory region backing the pool */
-    CFE_ES_MemHandle_t          CfeHandle;
-    size_t TotalSize;
-    size_t UsedSize;
-
-    void* mem_next; /**< Pointer to the next available memory block location within the pool */
-    size_t num_blocks; /**< The maximum number of blocks that can be allocated by this pool. */
-    size_t block_size; /**< Size of each block in the pool, in bytes. */
-    size_t num_free; /**< Number of free blocks available */
-    size_t num_init; /**< Number of initialized blocks. */
+    void* MemBuffer;                /** \brief Pointer to the start of the memory region backing the pool */
+    CFE_ES_MemHandle_t CfeHandle;   /** \brief The handle used for by cFE Memory Pool */
+    size_t TotalSize;               /** \brief Total size of the pool in bytes */
+    size_t UsedSize;                /** \brief Bytes in pool currently in use */
 } BPLib_MEM_PoolImpl_t;
 
 #endif /* BPLIB_MEM_CFE_ALLOCATOR_H */

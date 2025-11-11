@@ -341,3 +341,13 @@ BPLib_Status_t BPLib_MEM_CopyOutFromOffset(BPLib_Bundle_t* Bundle, uint64_t Offs
 
     return ReturnStatus;
 }
+
+size_t BPLib_MEM_GetBytesInUse(BPLib_MEM_Pool_t *Pool)
+{
+    return BPLib_MEM_GetBytesInUseImpl(&Pool->impl);
+}
+
+size_t BPLib_MEM_GetBytesFree(BPLib_MEM_Pool_t *Pool)
+{
+    return BPLib_MEM_GetBytesFreeImpl(&Pool->impl);
+}

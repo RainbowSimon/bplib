@@ -22,15 +22,11 @@
  */
 
 #include "bplib_mem_impl.h"
-#include "bplib_cfe_allocator.h"
-#include "bplib_em.h"
-#include "bplib_eventids.h"
-#include "cfe.h"
 
 #include <stdio.h>
 #include <string.h>
 
-const size_t BlockSizes[BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS] =
+static const size_t BlockSizes[BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS] =
 {
     BPLib_MEM_BlockSize_Small,
     BPLib_MEM_BlockSize_Bundle
@@ -40,6 +36,7 @@ BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* Pool, void* MemBuff,
                                                         size_t MemLen, size_t BlockSize)
 {
     CFE_Status_t CfeStatus;
+    uint8_t i;
 
     if (Pool == NULL || MemBuff == NULL || MemLen == 0)
     {
@@ -58,6 +55,13 @@ BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* Pool, void* MemBuff,
     {
         return BPLIB_ERROR;
     }
+
+    printf("MEM CFE_ALLOC: Allocated %d types of blocks of sizes: ", BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS);
+    for (i = 0; i < BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS; i++)
+    {
+        printf("%ld ", BlockSizes[i]);
+    }
+    printf("\n");
 
     return BPLIB_SUCCESS;
 }
@@ -85,10 +89,6 @@ void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* Pool, size_t Size)
     {
         Pool->UsedSize += BytesAllocd;
     }
-    else
-    {
-        printf("Err Status =%d\n", BytesAllocd);
-    }
 
     return (void*)RetPtr;
 }
@@ -109,4 +109,14 @@ void BPLib_MEM_PoolImplFree(BPLib_MEM_PoolImpl_t* Pool, void* Ptr)
     }
 
     return;
+}
+
+size_t BPLib_MEM_GetBytesInUseImpl(BPLib_MEM_PoolImpl_t *Pool)
+{
+    return Pool->UsedSize;
+}
+
+size_t BPLib_MEM_GetBytesFreeImpl(BPLib_MEM_PoolImpl_t *Pool)
+{
+    return (Pool->TotalSize - Pool->UsedSize);
 }

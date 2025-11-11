@@ -55,8 +55,9 @@ set(BPLIB_COMMON_COMPILE_OPTIONS)
 
 if (IS_CFS_ARCH_BUILD)
   set(BPLIB_MEM_IMPL CFE)
-  add_definitions(-DBPLIB_MEM_CFE_IMPL)
   add_definitions(-DCFS_BUILD)
+else()
+  set(BPLIB_MEM_IMPL DEFAULT)
 endif()
 
 # If using an external OSAL package, then locate it now

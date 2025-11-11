@@ -82,4 +82,8 @@ void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* pool, size_t Size);
  */
 void BPLib_MEM_PoolImplFree(BPLib_MEM_PoolImpl_t* pool, void* to_free);
 
+size_t BPLib_MEM_GetBytesInUseImpl(BPLib_MEM_PoolImpl_t *Pool);
+
+size_t BPLib_MEM_GetBytesFreeImpl(BPLib_MEM_PoolImpl_t *Pool);
+
 #endif /* BPIB_MEM_IMPL_H */

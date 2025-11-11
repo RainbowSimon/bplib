@@ -200,10 +200,11 @@ BPLib_Status_t BPLib_MEM_BlobCopyOut(BPLib_Bundle_t* bundle, void* out_buffer, s
  * 
  * @return Status of the operation.
  */
-BPLib_Status_t BPLib_MEM_CopyOutFromOffset(BPLib_Bundle_t* Bundle,
-    uint64_t Offset,
-    uint64_t NumBytesToCopy,
-    void* OutputBuffer,
-    size_t OutputBufferSize);
+BPLib_Status_t BPLib_MEM_CopyOutFromOffset(BPLib_Bundle_t* Bundle, uint64_t Offset,
+                    uint64_t NumBytesToCopy, void* OutputBuffer, size_t OutputBufferSize);
+
+size_t BPLib_MEM_GetBytesInUse(BPLib_MEM_Pool_t *Pool);
+
+size_t BPLib_MEM_GetBytesFree(BPLib_MEM_Pool_t *Pool);
 
 #endif /* BPLIB_MEM_H */

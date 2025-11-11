@@ -25,13 +25,12 @@
  * @struct BPLib_MEM_PoolImpl_t
  * @brief Represents the internal structure of a memory pool implementation.
  * 
- * This structure is used to manage memory allocation and deallocation within the pool.
+ * Since the standard allocator just calls malloc/free, there's no real need for this
+ * struct.
  */
 typedef struct 
 {
-    void* mem;
-    size_t size;
-    uint32_t block_size;
+    size_t DummyParam;
 } BPLib_MEM_PoolImpl_t;
 
 #endif
