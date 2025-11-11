@@ -18,25 +18,20 @@
  *
  */
 
-#ifndef BPLIB_MEM_STD_ALLOCATOR_H
-#define BPLIB_MEM_STD_ALLOCATOR_H
+#ifndef BPLIB_STD_ALLOCATOR_H
+#define BPLIB_STD_ALLOCATOR_H
 
-#include "bplib_api_types.h"
-
-typedef struct BPLib_MEM_PoolImpl
+/**
+ * @struct BPLib_MEM_PoolImpl_t
+ * @brief Represents the internal structure of a memory pool implementation.
+ * 
+ * This structure is used to manage memory allocation and deallocation within the pool.
+ */
+typedef struct 
 {
     void* mem;
     size_t size;
     uint32_t block_size;
 } BPLib_MEM_PoolImpl_t;
 
-BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* pool, const void* init_mem,
-    size_t mem_len, uint32_t block_size);
-
-void BPLib_MEM_PoolImplDestroy(BPLib_MEM_PoolImpl_t* pool);
-
-void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* pool);
-
-void BPLib_MEM_PoolImplFree(BPLib_MEM_PoolImpl_t* pool, void* to_free);
-
-#endif /* BPLIB_MEM_STD_ALLOCATOR_H */
+#endif

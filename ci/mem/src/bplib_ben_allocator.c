@@ -20,26 +20,12 @@
  * https://arxiv.org/pdf/2210.16471
  *
  */
-#include "bplib_ben_allocator.h"
+#include "bplib_mem_impl.h"
 #include "bplib_em.h"
 #include "bplib_eventids.h"
 
 #include <stdio.h>
 #include <string.h>
-
-/*******************************************************************************
- * Defines and Types
- */
-
-/* It is expected that the memory returned from this allocator will be cast
-** to structs with valid alignment. For these casts to work, the memory
-** that backs this pool needs to start on a boundary of the largest primitive
-** type. It is assumed that this alignment will be sizeof(uint64_t) because
-** many RFC 9171 fields require this type to be supported natively.
-*/
-#define BPLIB_BEN_ALLOC_LARGEST_ALIGNMENT  (8u)
-
-typedef uint64_t MemIndex_t;
 
 /*******************************************************************************
  * Static Functions

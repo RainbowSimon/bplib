@@ -6,11 +6,23 @@
 #
 ##################################################################
 
-add_library(bplib_mem OBJECT
-    src/bplib_mem.c
-    src/bplib_ben_allocator.c
-    #src/bplib_std_allocator.c
-)
+if (BPLIB_MEM_IMPL STREQUAL CFE)
+    message (STATUS "**************HERE")
+    add_library(bplib_mem OBJECT
+        src/bplib_mem.c
+        src/bplib_cfe_allocator.c
+    )
+elseif (BPLIB_MEM_IMPL STREQUAL BEN_ALLOC)
+    add_library(bplib_mem OBJECT
+        src/bplib_mem.c
+        src/bplib_ben_allocator.c
+    )
+else()
+    add_library(bplib_mem OBJECT
+        src/bplib_mem.c
+        src/bplib_std_allocator.c
+    )
+endif()
 
 target_include_directories(bplib_mem PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/inc

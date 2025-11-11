@@ -11,6 +11,7 @@ cmake_minimum_required(VERSION 3.5)
 project(BPLIB C)
 
 set(BPLIB_OS_LAYER OSAL CACHE STRING "Operating system adapter layer to enable (POSIX or NASA OSAL)")
+set(BPLIB_MEM_IMPL DEFAULT CACHE STRING "Memory allocation implementation to use (DEFAULT, BEN_ALLOC, or CFE)")
 
 # Check if this is a subdirectory within a larger project, or if it was built standalone
 # This affects how to find dependencies (e.g. OSAL) and whether to install the libraries
@@ -53,6 +54,8 @@ set(BPLIB_SRC)
 set(BPLIB_COMMON_COMPILE_OPTIONS)
 
 if (IS_CFS_ARCH_BUILD)
+  set(BPLIB_MEM_IMPL CFE)
+  add_definitions(-DBPLIB_MEM_CFE_IMPL)
   add_definitions(-DCFS_BUILD)
 endif()
 

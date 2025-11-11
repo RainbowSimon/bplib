@@ -21,7 +21,7 @@
 #ifndef BPLIB_MEM_H
 #define BPLIB_MEM_H
 
-#include "bplib_ben_allocator.h"
+#include "bplib_mem_impl.h"
 #include "bplib_bblocks.h"
 
 #include <pthread.h>
@@ -112,7 +112,7 @@ void BPLib_MEM_PoolDestroy(BPLib_MEM_Pool_t* pool);
  * 
  * @return Pointer to the allocated memory block.
  */
-BPLib_MEM_Block_t* BPLib_MEM_BlockAlloc(BPLib_MEM_Pool_t* pool);
+BPLib_MEM_Block_t* BPLib_MEM_BlockAlloc(BPLib_MEM_Pool_t* pool, size_t Size);
 
 /**
  * @brief Frees a memory block back to the pool.

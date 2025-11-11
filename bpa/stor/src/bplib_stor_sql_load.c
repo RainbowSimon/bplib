@@ -502,7 +502,7 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
             }
 
             /* Allocate a MEM pool block for the meta data */
-            BundleHead = BPLib_MEM_BlockAlloc(Pool);
+            BundleHead = BPLib_MEM_BlockAlloc(Pool, BPLib_MEM_BlockSize_Bundle);
             if (BundleHead == NULL)
             {
                 SQLStatus = SQLITE_NOMEM;
@@ -534,7 +534,7 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
             }
 
             /* Allocate a MEM pool block for the blob data */
-            NextBlock = BPLib_MEM_BlockAlloc(Pool);
+            NextBlock = BPLib_MEM_BlockAlloc(Pool, BPLib_MEM_BlockSize_Bundle);
             if (NextBlock == NULL)
             {
                 SQLStatus = SQLITE_NOMEM;

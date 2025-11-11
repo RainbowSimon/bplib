@@ -56,7 +56,7 @@ void BPLib_MEM_PoolDestroy(BPLib_MEM_Pool_t* pool)
     memset(pool, 0, sizeof(BPLib_MEM_Pool_t));
 }
 
-BPLib_MEM_Block_t* BPLib_MEM_BlockAlloc(BPLib_MEM_Pool_t* pool)
+BPLib_MEM_Block_t* BPLib_MEM_BlockAlloc(BPLib_MEM_Pool_t* pool, size_t Size)
 {
     BPLib_MEM_Block_t* block;
 
@@ -66,7 +66,7 @@ BPLib_MEM_Block_t* BPLib_MEM_BlockAlloc(BPLib_MEM_Pool_t* pool)
     }
 
     pthread_mutex_lock(&pool->lock);
-    block = (BPLib_MEM_Block_t*)(BPLib_MEM_PoolImplAlloc(&pool->impl));
+    block = (BPLib_MEM_Block_t*)(BPLib_MEM_PoolImplAlloc(&pool->impl, Size));
     pthread_mutex_unlock(&pool->lock);
     if (block != NULL)
     {
@@ -105,7 +105,7 @@ BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_
     blocks_alloc = 0;
     do
     {
-        new_block = BPLib_MEM_BlockAlloc(pool);
+        new_block = BPLib_MEM_BlockAlloc(pool, BPLib_MEM_BlockSize_Bundle);
         if (new_block == NULL)
         {
             BPLib_MEM_BlockListFree(pool, head);
@@ -163,7 +163,7 @@ BPLib_Bundle_t* BPLib_MEM_BundleAlloc(BPLib_MEM_Pool_t* pool, const void* blob_d
     }
 
     /* Allocate a MEM_Block_t for the Bundle Metadata (bblocks) */
-    curr_block = BPLib_MEM_BlockAlloc(pool);
+    curr_block = BPLib_MEM_BlockAlloc(pool, BPLib_MEM_BlockSize_Bundle);
     if (curr_block == NULL)
     {
         return NULL;
