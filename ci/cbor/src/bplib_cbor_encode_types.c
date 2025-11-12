@@ -161,24 +161,58 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t C
 }
 
 /*
-BPLib_Status_t BPLib_CBOR_EncodeBSR(QCBOREncodeContext* Context, BPLib_ARP_BundleStatusReport_t* BSR)
+BPLib_Status_t BPLib_CBOR_EncodeBsr(QCBOREncodeContext* Context,
+                                    BPLib_ARP_BundleStatusReport_t* BSR,
+                                    size_t* EncodedSize)
 {
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_CBOR_EncodeCRS(QCBOREncodeContext* Context, BPLib_ARP_CompressedReportingSignal_t* CRS)
+BPLib_Status_t BPLib_CBOR_EncodeCrs(QCBOREncodeContext* Context,
+                                    BPLib_ARP_CompressedReportingSignal_t* CRS,
+                                    size_t* EncodedSize)
 {
     return BPLIB_SUCCESS;
 }
 */
 
-BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS)
+BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context,
+                                    BPLib_CT_DeserializedCcs_t* CCS,
+                                    size_t* EncodedSize)
 {
-    BPLib_Status_t Status = BPLIB_SUCCESS;
-
+    BPLib_Status_t                 Status = BPLIB_SUCCESS;
+    QCBORError                     QCBOR_Status;
+    uint8_t                        CollectionNum;
+    uint8_t                        SeqRangeEntry;
+    UsefulBufC                     SizeData;
+    UsefulOutBuf                   SizeFinder;
+    BPLib_CT_BundleSeqCollection_t BundleSeqCollection;
+    
     if (Context != NULL)
     {
-        /* TODO */
+        UsefulOutBuf_Init(&SizeFinder, SizeCalculateUsefulBuf);
+        QCBOREncode_OpenMap(Context);
+
+        for (CollectionNum = 0; CollectionNum < CCS->NumBundleSeqCollections; CollectionNum++)
+        {
+            BundleSeqCollection = CCS->BundleSeqCollections[CollectionNum];
+            
+            QCBOREncode_OpenArrayInMapN(Context, (uint64_t) BundleSeqCollection.DispositionCode);
+            UsefulOutBuf_AppendUint64(&SizeFinder, (uint64_t) BundleSeqCollection.DispositionCode);
+
+            for (SeqRangeEntry = 0; SeqRangeEntry < BundleSeqCollection.SeqRangeLen; SeqRangeEntry++)
+            {
+                QCBOREncode_AddUInt64(Context, BundleSeqCollection.SeqRange[SeqRangeEntry]);
+                UsefulOutBuf_AppendUint64(&SizeFinder, BundleSeqCollection.SeqRange[SeqRangeEntry]);
+            }
+
+            QCBOREncode_CloseArray(Context);
+        }
+
+        QCBOREncode_CloseMap(Context);
+
+        SizeData      = UsefulOutBuf_OutUBuf(&SizeFinder);
+        *EncodedSize += SizeData.len;
     }
     else
     {
