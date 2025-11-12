@@ -121,8 +121,10 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     uintptr_t                CurrentOutputBufferAddr;
     size_t                   TotalBytesCopied;
     size_t                   BytesLeftInOutputBuffer;
-    size_t                   ByteStringCborHeadSize;
+    size_t                   EncodedSize;
     BPLib_ARP_AdminRecord_t* AdminRecord;
+
+    UsefulOutBuf EncodeBuffer;
 
     if ((StoredBundle == NULL) ||
         (OutputBuffer == NULL) ||
@@ -144,6 +146,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
         **  6. CRC Value
         ** 0b100_00110 == 0x86
         */
+
         CurrentOutputBufferAddr = (uintptr_t)(OutputBuffer);
         *(uint8_t*)CurrentOutputBufferAddr = 0x86;
         TotalBytesCopied = 1;
@@ -186,14 +189,14 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
         /*
         ** Jam in our own "byte string" cbor encoding head
         */
-        ByteStringCborHeadSize = BPLib_CBOR_AddByteStringHead(StoredBundle->blocks.PayloadHeader.DataSize,
+        EncodedSize = BPLib_CBOR_AddByteStringHead(StoredBundle->blocks.PayloadHeader.DataSize,
                                                               CurrentOutputBufferAddr,
                                                               BytesLeftInOutputBuffer);
-        if (ByteStringCborHeadSize > 0)
+        if (EncodedSize > 0)
         {
-            CurrentOutputBufferAddr += ByteStringCborHeadSize;
-            TotalBytesCopied        += ByteStringCborHeadSize;
-            BytesLeftInOutputBuffer -= ByteStringCborHeadSize;
+            CurrentOutputBufferAddr += EncodedSize;
+            TotalBytesCopied        += EncodedSize;
+            BytesLeftInOutputBuffer -= EncodedSize;
         }
         else
         {
@@ -203,7 +206,10 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
 
         if (StoredBundle->blocks.PayloadHeader.BlockProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
         {
-            AdminRecord = (BPLib_ARP_AdminRecord_t*) StoredBundle->blob->user_data.raw_bytes;
+            memcpy((void*) &AdminRecord, (void*) StoredBundle->blob->user_data.raw_bytes, sizeof(BPLib_ARP_AdminRecord_t));
+
+            QCBOREncode_OpenArray(&Context);
+            QCBOREncode_AddUInt64(&Context, AdminRecord->AdminRecordType);
 
             /* Determine which encoding is needed by checking the admin record type */
             switch(AdminRecord->AdminRecordType)
@@ -217,13 +223,34 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                     break;
 
                 case BPLib_CT_CcsRecordTypeCode:
-                    ReturnStatus = BPLib_CBOR_EncodeCCS(Context, &(AdminRecord->AdminRecordBody.CCS));
+                    // TODO: Remove
+                    EncodeBuffer.data_len = TotalBytesCopied;
+                    ReturnStatus = BPLib_CBOR_EncodeCcs(&Context, &(AdminRecord->AdminRecordBody.CCS), &EncodeBuffer);
+
+                    if (BPLib_CBOR_EncodeGetBufferSize(&EncodeBuffer, &EncodedSize) != BPLIB_SUCCESS)
+                    {
+                        printf("\n================\nCCS encode error\n================\n\n");
+                    }
                     break;
                 default:
                     /* TODO: Handle unsupported admin record type */
                     ReturnStatus = BPLIB_ARP_UNK_REC_TYPE_ERR;
                     break;
             }
+
+            if (ReturnStatus == BPLIB_SUCCESS)
+            {
+                CurrentOutputBufferAddr += EncodedSize;
+                BytesLeftInOutputBuffer -= EncodedSize;
+                TotalBytesCopied        += EncodedSize;
+            }
+            else
+            {
+                *NumBytesCopied = 0;
+                return ReturnStatus;
+            }
+
+            QCBOREncode_CloseArray(&Context);
         }
         else
         {
