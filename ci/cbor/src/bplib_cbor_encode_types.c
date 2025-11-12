@@ -181,7 +181,7 @@ BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context,
                                     size_t* EncodedSize)
 {
     BPLib_Status_t                 Status = BPLIB_SUCCESS;
-    QCBORError                     QCBOR_Status;
+    uint8_t                        UsefulBufError;
     uint8_t                        CollectionNum;
     uint8_t                        SeqRangeEntry;
     UsefulBufC                     SizeData;
@@ -211,8 +211,26 @@ BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context,
 
         QCBOREncode_CloseMap(Context);
 
-        SizeData      = UsefulOutBuf_OutUBuf(&SizeFinder);
-        *EncodedSize += SizeData.len;
+        SizeData = UsefulOutBuf_OutUBuf(&SizeFinder);
+        UsefulBufError = UsefulOutBuf_GetError(&SizeFinder);
+        if (UsefulBufError == 0)
+        {
+            /* Everything is ok */
+            *EncodedSize += SizeData.len;
+        }
+        else
+        {
+            /*
+            ** Per UsefulBuf.h:
+            ** "Possible error conditions are:
+            **  - bytes to be inserted will not fit
+            **  - insertion point is out of buffer or past valid data
+            **  - current position is off end of buffer (probably corrupted or uninitialized)
+            **  - detect corruption / uninitialized by bad magic number"
+            */
+
+            Status = BPLIB_CBOR_ENC_PAYL_COPY_SIZE_OVERFLOW;
+        }
     }
     else
     {
