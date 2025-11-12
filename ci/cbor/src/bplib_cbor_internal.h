@@ -442,42 +442,42 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t C
  * \brief Encode a Bundle Status Report
  * \param[in]  Context QCBOR encode context instance pointer
  * \param[in]  BSR     Pointer to the Bundle Status Report to be encoded
- * \param[out] EncodedSize Number of bytes encoded
+ * \param[out] EncodeBuffer Buffer that tracks the size of the encoded values
  * \return     Execution status
  * \retval     BPLIB_SUCCESS: Successful execution
  * \retval     BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
 
 BPLib_Status_t BPLIB_CBOR_EncodeBsr(QCBOREncodeContext* Context,
                                     BPLib_ARP_BundleStatusReport_t* BSR,
-                                    size_t* EncodedSize);
+                                    UsefulOutBuf* EncodeBuffer);
 */
 
 /**
  * \brief Encode a Compressed Reporting Signal
  * \param[in]  Context QCBOR encode context instance pointer
  * \param[in]  CRS     Pointer to the Compressed Reporting Signal to be encoded
- * \param[out] EncodedSize Number of bytes encoded
+ * \param[out] EncodeBuffer Buffer that tracks the size of the encoded values
  * \return     Execution status
  * \retval     BPLIB_SUCCESS: Successful execution
  * \retval     BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
 
 BPLib_Status_t BPLIB_CBOR_EncodeCrs(QCBOREncodeContext* Context,
                                     BPLib_ARP_CompressedReportingSignal_t* CRS,
-                                    size_t* EncodedSize);
+                                    UsefulOutBuf* EncodeBuffer);
 */
 
 /**
  * \brief Encode a Compressed Custody Signal
- * \param[in]  Context     QCBOR encode context instance pointer
- * \param[in]  CCS         Pointer to the Compressed Custody Signal to be encoded
- * \param[out] EncodedSize Number of bytes encoded
+ * \param[in]  Context      QCBOR encode context instance pointer
+ * \param[in]  CCS          Pointer to the Compressed Custody Signal to be encoded
+ * \param[out] EncodeBuffer Buffer that tracks the size of the encoded values
  * \return     Execution status
  * \retval     BPLIB_SUCCESS: Successful execution
  * \retval     BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
  */
-BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context,
+BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
                                     BPLib_CT_DeserializedCcs_t* CCS,
-                                    size_t* EncodedSize);
+                                    UsefulOutBuf* EncodeBuffer);
 
 /**
  * \brief     Validates a block's CRC value

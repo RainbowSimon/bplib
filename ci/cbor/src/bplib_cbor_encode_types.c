@@ -215,7 +215,7 @@ BPLib_Status_t BPLib_CBOR_EncodeCrs(QCBOREncodeContext* Context,
 }
 */
 
-BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context,
+BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
                                     BPLib_CT_DeserializedCcs_t* CCS,
                                     UsefulOutBuf* EncodeBuffer)
 {
@@ -243,7 +243,7 @@ BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context,
             for (SeqRangeEntry = 0; SeqRangeEntry < BundleSeqCollection.SeqRangeLen; SeqRangeEntry++)
             {
                 /* Encode bundle sequence range value into map under disposition code label */
-                BPLib_CBOR_EncodeUInt64(Context, BundleSeqCollection.SeqRange[SeqRangeEntry], EncodeBuffer);
+                BPLib_CBOR_EncodeUInt64(Context, EncodeBuffer, BundleSeqCollection.SeqRange[SeqRangeEntry]);
             }
 
             QCBOREncode_CloseArray(Context);
