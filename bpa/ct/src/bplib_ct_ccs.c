@@ -31,6 +31,7 @@
 #include "bplib_pdb.h"
 #include "bplib_as.h"
 #include "bplib_em.h"
+#include "bplib_arp.h"
 
 /*
 ** Function Definitions
