@@ -125,7 +125,6 @@ BPLib_Status_t BPLib_CBOR_EncodeEID(QCBOREncodeContext* Context, BPLib_EID_t* So
     return ReturnStatus;
 }
 
-
 BPLib_Status_t BPLib_CBOR_EncodeCreationTimeStamp(QCBOREncodeContext* Context, BPLib_CreationTimeStamp_t* TimeStamp)
 {
     BPLib_Status_t ReturnStatus;
