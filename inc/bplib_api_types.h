@@ -343,7 +343,7 @@ typedef enum
 #define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_HEAD_ERR      ((BPLib_Status_t) -228) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
 #define BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR      ((BPLib_Status_t) -229) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
 #define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR      ((BPLib_Status_t) -230) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_COPY_SIZE_OVERFLOW         ((BPLib_Status_t) -231) /* BPLib_CBOR_EncodePayload: Encoded bytes exceeded output buffer size */
+#define BPLIB_CBOR_ENC_PAYL_CCS_ERR                    ((BPLib_Status_t) -231) /* BPLib_CBOR_EncodePayload: Error while encoding CCS */
 
 #define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_1_ERR     ((BPLib_Status_t) -232) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 1) */
 #define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_2_ERR     ((BPLib_Status_t) -233) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 2) */

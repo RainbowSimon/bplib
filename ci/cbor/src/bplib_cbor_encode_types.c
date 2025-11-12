@@ -28,6 +28,45 @@
 /* Function Definitions */
 /* ==================== */
 
+BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t* EncodedSize)
+{
+    BPLib_Status_t Status;
+    UsefulBufC     SizeData;
+    uint8_t        UsefulOutBufError;
+
+    Status = BPLIB_SUCCESS;
+
+    SizeData          = UsefulOutBuf_OutUBuf(EncodeBuffer);
+    UsefulOutBufError = UsefulOutBuf_GetError(EncodeBuffer);
+
+    if (UsefulOutBufError == 0)
+    {
+        /* Everything is ok */
+        *EncodedSize += SizeData.len;
+    }
+    else
+    {
+        /*
+        ** Per UsefulBuf.h:
+        ** "Possible error conditions are:
+        **  - bytes to be inserted will not fit
+        **  - insertion point is out of buffer or past valid data
+        **  - current position is off end of buffer (probably corrupted or uninitialized)
+        **  - detect corruption / uninitialized by bad magic number"
+        */
+
+        Status = BPLIB_ERROR;
+    }
+
+    return Status;
+}
+
+void BPLib_CBOR_EncodeUInt64(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint64_t ValueToEncode)
+{
+    QCBOREncode_AddUInt64(Context, ValueToEncode);
+    UsefulOutBuf_AppendUint64(EncodeBuffer, ValueToEncode);
+}
+
 BPLib_Status_t BPLib_CBOR_EncodeEID(QCBOREncodeContext* Context, BPLib_EID_t* SourceData)
 {
     BPLib_Status_t ReturnStatus = BPLIB_SUCCESS;
@@ -178,59 +217,39 @@ BPLib_Status_t BPLib_CBOR_EncodeCrs(QCBOREncodeContext* Context,
 
 BPLib_Status_t BPLIB_CBOR_EncodeCcs(QCBOREncodeContext* Context,
                                     BPLib_CT_DeserializedCcs_t* CCS,
-                                    size_t* EncodedSize)
+                                    UsefulOutBuf* EncodeBuffer)
 {
-    BPLib_Status_t                 Status = BPLIB_SUCCESS;
+    BPLib_Status_t                 Status;
     uint8_t                        UsefulBufError;
     uint8_t                        CollectionNum;
     uint8_t                        SeqRangeEntry;
     UsefulBufC                     SizeData;
-    UsefulOutBuf                   SizeFinder;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollection;
     
+    Status = BPLIB_SUCCESS;
+
     if (Context != NULL)
     {
-        UsefulOutBuf_Init(&SizeFinder, SizeCalculateUsefulBuf);
         QCBOREncode_OpenMap(Context);
 
         for (CollectionNum = 0; CollectionNum < CCS->NumBundleSeqCollections; CollectionNum++)
         {
             BundleSeqCollection = CCS->BundleSeqCollections[CollectionNum];
             
+            /* Use disposition code to create map label */
             QCBOREncode_OpenArrayInMapN(Context, (uint64_t) BundleSeqCollection.DispositionCode);
-            UsefulOutBuf_AppendUint64(&SizeFinder, (uint64_t) BundleSeqCollection.DispositionCode);
+            UsefulOutBuf_AppendUint64(EncodeBuffer, (uint64_t) BundleSeqCollection.DispositionCode);
 
             for (SeqRangeEntry = 0; SeqRangeEntry < BundleSeqCollection.SeqRangeLen; SeqRangeEntry++)
             {
-                QCBOREncode_AddUInt64(Context, BundleSeqCollection.SeqRange[SeqRangeEntry]);
-                UsefulOutBuf_AppendUint64(&SizeFinder, BundleSeqCollection.SeqRange[SeqRangeEntry]);
+                /* Encode bundle sequence range value into map under disposition code label */
+                BPLib_CBOR_EncodeUInt64(Context, BundleSeqCollection.SeqRange[SeqRangeEntry], EncodeBuffer);
             }
 
             QCBOREncode_CloseArray(Context);
         }
 
         QCBOREncode_CloseMap(Context);
-
-        SizeData = UsefulOutBuf_OutUBuf(&SizeFinder);
-        UsefulBufError = UsefulOutBuf_GetError(&SizeFinder);
-        if (UsefulBufError == 0)
-        {
-            /* Everything is ok */
-            *EncodedSize += SizeData.len;
-        }
-        else
-        {
-            /*
-            ** Per UsefulBuf.h:
-            ** "Possible error conditions are:
-            **  - bytes to be inserted will not fit
-            **  - insertion point is out of buffer or past valid data
-            **  - current position is off end of buffer (probably corrupted or uninitialized)
-            **  - detect corruption / uninitialized by bad magic number"
-            */
-
-            Status = BPLIB_CBOR_ENC_PAYL_COPY_SIZE_OVERFLOW;
-        }
     }
     else
     {

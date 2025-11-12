@@ -386,6 +386,28 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePayload(BPLib_Bundle_t* StoredBundle,
     size_t* NumBytesCopied);
 
 /**
+ * \brief Check the size of the encoded buffer for overflows and increment a
+ *        buffer size tracking value if successful
+ * \param[in]  EncodedBuffer Buffer to check for overflows
+ * \param[out] EncodedSize   Size of the encode buffer
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Bytes were encoded without error and EncodedSize
+ *                            was incremented
+ * \retval     BPLIB_ERROR:   An error was encountered, see definition for causes
+ */
+BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t* EncodedSize);
+
+/**
+ * \brief Encode a uint64_t value while tracking the size of the buffer with a
+ *        UsefulOutBuf pointer
+ * \param[in] Context       QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer  Buffer to track the size of the encode buffer
+ * \param[in] ValueToEncode uint64_t value to encode
+ * \return    void
+ */
+void BPLib_CBOR_EncodeUInt64(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint64_t ValueToEncode);
+
+/**
  * \brief     Encodes a BPLib_EID_t type
  * \param[in] Context (QCBOREncodeContext*) QCBOR encode context instance pointer
  * \param[in] SourceData (BPLib_EID_t*) pointer to the field that needs to be encoded
