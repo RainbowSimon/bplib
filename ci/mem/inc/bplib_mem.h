@@ -23,35 +23,47 @@
 
 #include "bplib_mem_impl.h"
 #include "bplib_bblocks.h"
+#include "bplib_api_types.h"
 
 #include <pthread.h>
 
-/**
- ** \brief Defines the size of a memory block user data if used as a bytearray
-*/
-#define BPLIB_MEM_CHUNKSIZE (512U)
+#define BPLIB_MEM_META_DATA_SIZE (sizeof(size_t) + sizeof(struct BPLib_MEM_Block *))
 
-typedef struct BPLib_MEM_Block BPLib_MEM_Block_t;
+/**
+ ** \brief Defines the size of a big memory block
+*/
+#define BPLIB_MEM_BIG_BLK_SIZE (1024u)
+
+#define BPLIB_MEM_BIG_BLK_DATA_SIZE (BPLIB_MEM_BIG_BLK_SIZE - BPLIB_MEM_META_DATA_SIZE)
+
+/**
+ ** \brief Defines the size of a small memory block
+*/
+#define BPLIB_MEM_SMALL_BLK_SIZE (64u)
+
+#define BPLIB_MEM_SMALL_BLK_DATA_SIZE (BPLIB_MEM_SMALL_BLK_SIZE - BPLIB_MEM_META_DATA_SIZE)
+
+#define BPLIB_MEM_TOTAL_NUM_BLOCKS      2
+
+typedef uint8_t BPLib_MEM_SmallData_t[BPLIB_MEM_SMALL_BLK_DATA_SIZE];
+typedef uint8_t BPLib_MEM_BigData_t[BPLIB_MEM_BIG_BLK_DATA_SIZE];
 
 /**
  * @struct BPLib_Bundle_t
  * @brief Represents the entire bundle, including its blocks and an additional blob for other data.
  */
-typedef struct BPLib_Bundle
+typedef struct
 {
     BPLib_BundleMetaData_t  Meta;
     BPLib_BBlocks_t         blocks;
-    struct BPLib_MEM_Block* blob;
+    struct BPLib_MEM_Block *blob;
 } BPLib_Bundle_t;
 
-/**
- * @brief This union represents data types anticipated for allocation by this memory pool.
- * @union BPLib_MEM_UserData_t
- */
-typedef union BPLib_MEM_UserData
+typedef union
 {
-    uint8_t raw_bytes[BPLIB_MEM_CHUNKSIZE]; /**< A raw byte array, useful for storing arbitrary binary data */
-    struct BPLib_Bundle bundle; /**< A bundle type, intended to store CBOR-decoded Bundle metadata */
+    BPLib_MEM_SmallData_t SmallData;
+    BPLib_MEM_BigData_t   BigData;
+    BPLib_Bundle_t        Bundle;
 } BPLib_MEM_UserData_t;
 
 /**
@@ -63,9 +75,9 @@ typedef union BPLib_MEM_UserData
  */
 struct BPLib_MEM_Block
 {
-    BPLib_MEM_UserData_t user_data; /**< User data stored in the block */
     size_t used_len; /**< Byte-length of user data currently within the chunk. This is initialized to 0. */
     struct BPLib_MEM_Block* next; /**< Pointer to the next block in the list */
+    BPLib_MEM_UserData_t user_data; /**< User data stored in the block */
 };
 
 /**
@@ -134,7 +146,7 @@ void BPLib_MEM_BlockFree(BPLib_MEM_Pool_t* pool, BPLib_MEM_Block_t* block);
  * 
  * @return Pointer to the head of the allocated block list.
  */
-BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_len);
+BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_len, size_t BlockSize);
 
 /**
  * @brief Frees a list of memory blocks back to the pool.

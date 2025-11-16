@@ -24,8 +24,6 @@
 #include "bplib_api_types.h"
 #include "cfe.h"
 
-#define BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS      2
-
 /**
  * @struct BPLib_MEM_PoolImpl_t
  * @brief Represents the internal structure of a memory pool implementation.

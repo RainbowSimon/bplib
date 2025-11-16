@@ -21,15 +21,16 @@
  *
  */
 
+#include "bplib_mem.h"
 #include "bplib_mem_impl.h"
 
 #include <stdio.h>
 #include <string.h>
 
-static const size_t BlockSizes[BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS] =
+static const size_t BlockSizes[BPLIB_MEM_TOTAL_NUM_BLOCKS] =
 {
-    BPLib_MEM_BlockSize_Small,
-    BPLib_MEM_BlockSize_Bundle
+    BPLIB_MEM_BIG_BLK_SIZE,
+    BPLIB_MEM_SMALL_BLK_SIZE
 };
 
 BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* Pool, void* MemBuff,
@@ -50,14 +51,14 @@ BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* Pool, void* MemBuff,
     Pool->UsedSize = 0;
 
     CfeStatus = CFE_ES_PoolCreateEx(&Pool->CfeHandle, Pool->MemBuffer, Pool->TotalSize,
-                        BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS, BlockSizes, CFE_ES_NO_MUTEX);
+                        BPLIB_MEM_TOTAL_NUM_BLOCKS, BlockSizes, CFE_ES_NO_MUTEX);
     if (CfeStatus != CFE_SUCCESS)
     {
         return BPLIB_ERROR;
     }
 
-    printf("MEM CFE_ALLOC: Allocated %d types of blocks of sizes: ", BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS);
-    for (i = 0; i < BPLIB_MEM_CFE_TOTAL_NUM_BLOCKS; i++)
+    printf("MEM CFE_ALLOC: Allocated %d types of blocks of sizes: ", BPLIB_MEM_TOTAL_NUM_BLOCKS);
+    for (i = 0; i < BPLIB_MEM_TOTAL_NUM_BLOCKS; i++)
     {
         printf("%ld ", BlockSizes[i]);
     }
@@ -72,6 +73,9 @@ void BPLib_MEM_PoolImplDestroy(BPLib_MEM_PoolImpl_t* Pool)
     {
         return;
     }
+    
+    (void) CFE_ES_PoolDelete(Pool->CfeHandle);
+    
     memset(Pool, 0, sizeof(BPLib_MEM_PoolImpl_t));
 }
 
@@ -84,7 +88,7 @@ void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* Pool, size_t Size)
         return NULL;
     }
 
-    BytesAllocd = CFE_ES_GetPoolBuf((void**)&RetPtr, Pool->CfeHandle, Size);
+    BytesAllocd = CFE_ES_GetPoolBuf((void**)&RetPtr, Pool->CfeHandle, (uint32_t) Size);
     if (BytesAllocd > 0)
     {
         Pool->UsedSize += BytesAllocd;

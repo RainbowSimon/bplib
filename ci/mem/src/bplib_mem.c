@@ -35,6 +35,13 @@ BPLib_Status_t BPLib_MEM_PoolInit(BPLib_MEM_Pool_t* pool, void* init_mem, size_t
 {
     if (pool == NULL)
     {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    if (sizeof(BPLib_Bundle_t) > BPLIB_MEM_BIG_BLK_DATA_SIZE)
+    {
+        printf("MEM ERROR: Bundle size (%ld) is bigger than big block size (%ld)\n",
+                    sizeof(BPLib_Bundle_t), BPLIB_MEM_BIG_BLK_DATA_SIZE);
         return BPLIB_ERROR;
     }
 
@@ -88,7 +95,7 @@ void BPLib_MEM_BlockFree(BPLib_MEM_Pool_t* pool, BPLib_MEM_Block_t* block)
     pthread_mutex_unlock(&pool->lock);
 }
 
-BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_len)
+BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_len, size_t BlockSize)
 {
     size_t bytes_alloc, blocks_alloc;
     BPLib_MEM_Block_t* head;
@@ -105,14 +112,14 @@ BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_
     blocks_alloc = 0;
     do
     {
-        new_block = BPLib_MEM_BlockAlloc(pool, BPLib_MEM_BlockSize_Bundle);
+        new_block = BPLib_MEM_BlockAlloc(pool, BlockSize);
         if (new_block == NULL)
         {
             BPLib_MEM_BlockListFree(pool, head);
             return NULL;
         }
         blocks_alloc++;
-        bytes_alloc += BPLIB_MEM_CHUNKSIZE;
+        bytes_alloc += BlockSize;
 
         if (head == NULL)
         {
@@ -163,18 +170,18 @@ BPLib_Bundle_t* BPLib_MEM_BundleAlloc(BPLib_MEM_Pool_t* pool, const void* blob_d
     }
 
     /* Allocate a MEM_Block_t for the Bundle Metadata (bblocks) */
-    curr_block = BPLib_MEM_BlockAlloc(pool, BPLib_MEM_BlockSize_Bundle);
+    curr_block = BPLib_MEM_BlockAlloc(pool, BPLIB_MEM_BIG_BLK_SIZE);
     if (curr_block == NULL)
     {
         return NULL;
     }
 
-    memset(&curr_block->user_data.bundle, 0, sizeof(BPLib_Bundle_t));
+    memset(&curr_block->user_data.Bundle, 0, sizeof(BPLib_Bundle_t));
     curr_block->used_len = sizeof(BPLib_Bundle_t);
-    bundle               = (BPLib_Bundle_t *)(&curr_block->user_data.bundle);
+    bundle               = (BPLib_Bundle_t *)(&curr_block->user_data.Bundle);
 
     /* Allocate a blob */
-    curr_block = BPLib_MEM_BlockListAlloc(pool, data_len);
+    curr_block = BPLib_MEM_BlockListAlloc(pool, data_len, BPLIB_MEM_BIG_BLK_SIZE);
     if (curr_block == NULL)
     {
         BPLib_MEM_BlockFree(pool, (BPLib_MEM_Block_t *) bundle);
@@ -188,9 +195,9 @@ BPLib_Bundle_t* BPLib_MEM_BundleAlloc(BPLib_MEM_Pool_t* pool, const void* blob_d
     while (curr_block != NULL)
     {
         bytes_remaining = data_len - bytes_copied;
-        copy_len        = (bytes_remaining < BPLIB_MEM_CHUNKSIZE) ? bytes_remaining : BPLIB_MEM_CHUNKSIZE;
+        copy_len        = (bytes_remaining < BPLIB_MEM_BIG_BLK_DATA_SIZE) ? bytes_remaining : BPLIB_MEM_BIG_BLK_DATA_SIZE;
 
-        memcpy(curr_block->user_data.raw_bytes,
+        memcpy(curr_block->user_data.BigData,
                 (void*)((uintptr_t)(blob_data) + bytes_copied),
                 copy_len);
 
@@ -221,7 +228,7 @@ void BPLib_MEM_BundleFree(BPLib_MEM_Pool_t* pool, BPLib_Bundle_t* bundle)
     ** is undefined behavior, and is noted in the docstring.
     */
     BPLib_MEM_BlockListFree(pool, bundle->blob);
-    BPLib_MEM_BlockFree(pool, (BPLib_MEM_Block_t*)bundle);
+    BPLib_MEM_BlockFree(pool, (BPLib_MEM_Block_t*)((uintptr_t)bundle - offsetof(BPLib_MEM_Block_t, user_data)));
 }
 
 BPLib_Status_t BPLib_MEM_BlobCopyOut(BPLib_Bundle_t* bundle, void* out_buffer, size_t max_len, size_t* out_size)
@@ -245,7 +252,7 @@ BPLib_Status_t BPLib_MEM_BlobCopyOut(BPLib_Bundle_t* bundle, void* out_buffer, s
         }
 
         memcpy((void*)((uintptr_t)out_buffer + bytes_copied),
-            (void*)curr_block->user_data.raw_bytes,
+            (void*)curr_block->user_data.BigData,
             curr_block->used_len);
 
         bytes_copied += curr_block->used_len;
@@ -284,10 +291,10 @@ BPLib_Status_t BPLib_MEM_CopyOutFromOffset(BPLib_Bundle_t* Bundle, uint64_t Offs
     /* find the first blob that contains data after the offset */
     CurrentBlock = Bundle->blob;
     NumBytesLeftToSkip = Offset;
-    ExpectedMemBlockNumber = Offset / BPLIB_MEM_CHUNKSIZE;
+    ExpectedMemBlockNumber = Offset / BPLIB_MEM_BIG_BLK_DATA_SIZE;
     for (CurrentMemBlockNumber = 0; CurrentMemBlockNumber < ExpectedMemBlockNumber; CurrentMemBlockNumber++)
     {
-        NumBytesLeftToSkip -= BPLIB_MEM_CHUNKSIZE;
+        NumBytesLeftToSkip -= BPLIB_MEM_BIG_BLK_DATA_SIZE;
         CurrentBlock = CurrentBlock->next;
         if (CurrentBlock == NULL)
         {
@@ -297,8 +304,8 @@ BPLib_Status_t BPLib_MEM_CopyOutFromOffset(BPLib_Bundle_t* Bundle, uint64_t Offs
 
     /* Start copying from the first block */
     CurrentOutputPointer = (uintptr_t) OutputBuffer;
-    CurrentInputOffset = (uintptr_t) &CurrentBlock->user_data.raw_bytes[NumBytesLeftToSkip];
-    BytesLeftInThisBlock = BPLIB_MEM_CHUNKSIZE - NumBytesLeftToSkip;
+    CurrentInputOffset = (uintptr_t) &CurrentBlock->user_data.BigData[NumBytesLeftToSkip];
+    BytesLeftInThisBlock = BPLIB_MEM_BIG_BLK_DATA_SIZE - NumBytesLeftToSkip;
     if (NumBytesToCopy <= BytesLeftInThisBlock)
     {
         memcpy((void*)CurrentOutputPointer, (void*)CurrentInputOffset, NumBytesToCopy);
@@ -314,13 +321,13 @@ BPLib_Status_t BPLib_MEM_CopyOutFromOffset(BPLib_Bundle_t* Bundle, uint64_t Offs
     while ((TotalBytesCopied < NumBytesToCopy) && (CurrentBlock->next != NULL))
     {
         CurrentBlock = CurrentBlock->next;
-        CurrentInputOffset = (uintptr_t) &CurrentBlock->user_data.raw_bytes[0];
+        CurrentInputOffset = (uintptr_t) &CurrentBlock->user_data.BigData[0];
         CurrentOutputPointer = (uintptr_t)(OutputBuffer) + TotalBytesCopied;
 
         RemainingBytesToCopy = NumBytesToCopy - TotalBytesCopied;
-        if (RemainingBytesToCopy >= BPLIB_MEM_CHUNKSIZE)
+        if (RemainingBytesToCopy >= BPLIB_MEM_BIG_BLK_DATA_SIZE)
         {
-            BytesToCopyInThisBlock = BPLIB_MEM_CHUNKSIZE;
+            BytesToCopyInThisBlock = BPLIB_MEM_BIG_BLK_DATA_SIZE;
         }
         else
         {

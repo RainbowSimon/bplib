@@ -31,12 +31,6 @@
 #include "bplib_std_allocator.h"
 #endif
 
-typedef enum 
-{
-    BPLib_MEM_BlockSize_Small = 64,
-    BPLib_MEM_BlockSize_Bundle = 1024,
-} BPLib_MEM_BlockSize_t;
-
 /**
  * @brief Initializes the memory pool implementation.
  * 
