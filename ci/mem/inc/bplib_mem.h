@@ -24,46 +24,70 @@
 #include "bplib_mem_impl.h"
 #include "bplib_bblocks.h"
 #include "bplib_api_types.h"
+#include "bplib_ct.h"
 
 #include <pthread.h>
 
+
+/*
+** Macro Definitions
+*/
+
+/**
+ ** \brief Defines the size of a memory block's metadata
+*/
 #define BPLIB_MEM_META_DATA_SIZE (sizeof(size_t) + sizeof(struct BPLib_MEM_Block *))
 
 /**
- ** \brief Defines the size of a big memory block
+ ** \brief Defines the total size of a big memory block
 */
 #define BPLIB_MEM_BIG_BLK_SIZE (1024u)
 
+/**
+ ** \brief Defines the size of a big memory block's available user data
+*/
 #define BPLIB_MEM_BIG_BLK_DATA_SIZE (BPLIB_MEM_BIG_BLK_SIZE - BPLIB_MEM_META_DATA_SIZE)
 
 /**
- ** \brief Defines the size of a small memory block
+ ** \brief Defines the total size of a small memory block
 */
-#define BPLIB_MEM_SMALL_BLK_SIZE (64u)
-
-#define BPLIB_MEM_SMALL_BLK_DATA_SIZE (BPLIB_MEM_SMALL_BLK_SIZE - BPLIB_MEM_META_DATA_SIZE)
-
-#define BPLIB_MEM_TOTAL_NUM_BLOCKS      2
-
-typedef uint8_t BPLib_MEM_SmallData_t[BPLIB_MEM_SMALL_BLK_DATA_SIZE];
-typedef uint8_t BPLib_MEM_BigData_t[BPLIB_MEM_BIG_BLK_DATA_SIZE];
+#define BPLIB_MEM_SMALL_BLK_SIZE (80u)
 
 /**
- * @struct BPLib_Bundle_t
- * @brief Represents the entire bundle, including its blocks and an additional blob for other data.
- */
-typedef struct
-{
-    BPLib_BundleMetaData_t  Meta;
-    BPLib_BBlocks_t         blocks;
-    struct BPLib_MEM_Block *blob;
-} BPLib_Bundle_t;
+ ** \brief Defines the size of a small memory block's available user data
+*/
+#define BPLIB_MEM_SMALL_BLK_DATA_SIZE (BPLIB_MEM_SMALL_BLK_SIZE - BPLIB_MEM_META_DATA_SIZE)
 
+/**
+ ** \brief Defines the total number of possible memory block types
+*/
+#define BPLIB_MEM_TOTAL_NUM_BLOCKS      2
+
+
+/*
+** Type Definitions
+*/
+
+/**
+ * @defgroup Memory Block User Data Types
+ * @{
+ */
+typedef uint8_t BPLib_MEM_SmallData_t[BPLIB_MEM_SMALL_BLK_DATA_SIZE];
+typedef uint8_t BPLib_MEM_BigData_t[BPLIB_MEM_BIG_BLK_DATA_SIZE];
+/** @} */
+
+/**
+ ** \brief Union of known possible user data types
+*/
 typedef union
 {
-    BPLib_MEM_SmallData_t SmallData;
+    /* Structs associated with the big memory block */
     BPLib_MEM_BigData_t   BigData;
     BPLib_Bundle_t        Bundle;
+
+    /* Structs associated with the small memory block */
+    BPLib_MEM_SmallData_t SmallData;
+    BPLib_CT_DbEntry_t    DbEntry;
 } BPLib_MEM_UserData_t;
 
 /**
@@ -85,13 +109,27 @@ struct BPLib_MEM_Block
  * @brief Represents a memory pool that manages memory blocks.
  * 
  * This structure holds the implementation of the pool (`impl`), and a mutex lock (`lock`)
- * for thread safety when accessing the memory pool.
+ * for thread safety when accessing the memory pool. There are three possible memory pool
+ * implementations: 
+ *    - STD, which just uses the standard library malloc/free functions and ignores the 
+ *      memory buffer passed in. This is the default memory pool for bpcat.
+ *    - BEN, which implements a custom fixed-size memory pool based on Ben Kenwright's
+ *      paper. This one is not currently used by any default implementations and can 
+ *      only handle blocks of one size, but it is kept for posterity and for future
+ *      extensions
+ *    - CFE, which is just a wrapper to the cFE Memory Pool functions. This is the default
+ *      memory pool for the cFS BPNode app and it supports all defined memory blocks types.
  */
 typedef struct BPLib_MEM_Pool
 {
     BPLib_MEM_PoolImpl_t impl; /**< The pool implementation (details hidden) */
     pthread_mutex_t lock; /**< Mutex for synchronizing access to the pool */
 } BPLib_MEM_Pool_t;
+
+
+/*
+** Function Definitions
+*/
 
 /**
  * @brief Initializes a memory pool.
@@ -143,6 +181,8 @@ void BPLib_MEM_BlockFree(BPLib_MEM_Pool_t* pool, BPLib_MEM_Block_t* block);
  * 
  * @param[in] pool Pointer to the memory pool from which to allocate blocks.
  * @param[in] byte_len The total byte length of the blocks to allocate.
+ * @param[in] BlockSize Size of blocks to allocate. Note that blocklists containing multiple
+ *                      block types are currently not supported.
  * 
  * @return Pointer to the head of the allocated block list.
  */
@@ -215,8 +255,40 @@ BPLib_Status_t BPLib_MEM_BlobCopyOut(BPLib_Bundle_t* bundle, void* out_buffer, s
 BPLib_Status_t BPLib_MEM_CopyOutFromOffset(BPLib_Bundle_t* Bundle, uint64_t Offset,
                     uint64_t NumBytesToCopy, void* OutputBuffer, size_t OutputBufferSize);
 
+/**
+ * @brief Get bytes in use
+ * 
+ * This function gets the current number of bytes in use by the memory pool.
+ * 
+ * @param[in] Pool Pointer to the memory pool
+ * 
+ * @return Number of bytes in use
+ */
 size_t BPLib_MEM_GetBytesInUse(BPLib_MEM_Pool_t *Pool);
 
+/**
+ * @brief Get bytes free
+ * 
+ * This function gets the current number of bytes not in use by the memory pool.
+ * 
+ * @param[in] Pool Pointer to the memory pool
+ * 
+ * @return Number of bytes not in use
+ */
 size_t BPLib_MEM_GetBytesFree(BPLib_MEM_Pool_t *Pool);
+
+/**
+ * @brief Get memory block from user data
+ * 
+ * This function takes a pointer to a user_data struct, finds the memory block containing
+ * this struct, and returns a pointer to the top of the memory block. Note that this
+ * function assumes that the pointer passed in is a valid user_data pointer, any other
+ * parameters could result in undefined behavior.
+ * 
+ * @param[in] UserData Pointer to a user data structure
+ * 
+ * @return Pointer to a memory block
+ */
+BPLib_MEM_Block_t *BPLib_MEM_GetBlockFromUserData(void *UserData);
 
 #endif /* BPLIB_MEM_H */

@@ -27,7 +27,7 @@
 #include "bplib_ct_db.h"
 #include "bplib_bblocks.h"
 #include "bplib_eid.h"
-#include "bplib_mem.h"
+#include "bplib_inst.h"
 #include "bplib_pdb.h"
 #include "bplib_as.h"
 #include "bplib_em.h"
@@ -172,7 +172,7 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     return;
 }
 
-BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_CT_Context_t *Context,
+BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                                         BPLib_CT_BundleSeqCollection_t *SeqCollection)
 {
     size_t SeqRangeIdx;
@@ -187,7 +187,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_CT_Context_t *Context,
     {
         for (NextSeqNum = CurrSeqNum; NextSeqNum < CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]; NextSeqNum++)
         {
-            Status = BPLib_CT_GetEntryFromCtdb(Context, SeqCollection->SeqId,
+            Status = BPLib_CT_GetEntryFromCtdb(&Inst->Ct, SeqCollection->SeqId,
                                                             NextSeqNum, &DbEntry);
 
             if (Status != BPLIB_SUCCESS || DbEntry == NULL)
@@ -200,7 +200,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_CT_Context_t *Context,
             /* Even sequence range numbers indicate sequences that are *included* */
             else if (SeqRangeIdx % 2 == 0)
             {
-                Status = BPLib_CT_RemoveFromCtdb(Context, DbEntry);
+                Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
 
                 /* Request bundle deletion from storage TODO */
 

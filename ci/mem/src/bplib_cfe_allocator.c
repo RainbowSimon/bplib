@@ -25,7 +25,6 @@
 #include "bplib_mem_impl.h"
 
 #include <stdio.h>
-#include <string.h>
 
 static const size_t BlockSizes[BPLIB_MEM_TOTAL_NUM_BLOCKS] =
 {
@@ -50,6 +49,7 @@ BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* Pool, void* MemBuff,
     Pool->TotalSize = MemLen;
     Pool->UsedSize = 0;
 
+    /* We handle the mutex in bplib_mem.c so no mutex needed */
     CfeStatus = CFE_ES_PoolCreateEx(&Pool->CfeHandle, Pool->MemBuffer, Pool->TotalSize,
                         BPLIB_MEM_TOTAL_NUM_BLOCKS, BlockSizes, CFE_ES_NO_MUTEX);
     if (CfeStatus != CFE_SUCCESS)

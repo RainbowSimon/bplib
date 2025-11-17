@@ -177,4 +177,15 @@ typedef struct
 
 } BPLib_BundleMetaData_t;
 
+/**
+ * @brief Represents the entire bundle, including its deserialized blocks plus an 
+ *        additional blob for the encoded CBOR bundle.
+ */
+typedef struct
+{
+    BPLib_BundleMetaData_t  Meta;
+    BPLib_BBlocks_t         blocks;
+    struct BPLib_MEM_Block *blob;
+} BPLib_Bundle_t;
+
 #endif /* BPLIB_BBLOCKS_H */

@@ -192,7 +192,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
             Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
 
-            Status = BPLib_CT_AddToCtdb(&(Inst->Ct), CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
+            Status = BPLib_CT_AddToCtdb(Inst, CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
                                         Bundle->blocks.PrimaryBlock.BundleId);
         }
         else
@@ -232,7 +232,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
             break;
         }
 
-        Status = BPLib_CT_ProcessBundleSeqCollection(&(Inst->Ct), &(Ccs->BundleSeqCollections[SeqCollectIdx]));
+        Status = BPLib_CT_ProcessBundleSeqCollection(Inst, &(Ccs->BundleSeqCollections[SeqCollectIdx]));
 
         if (Status != BPLIB_SUCCESS)
         {

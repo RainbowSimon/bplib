@@ -33,4 +33,4 @@ typedef struct
     size_t DummyParam;
 } BPLib_MEM_PoolImpl_t;
 
-#endif
+#endif /* BPLIB_STD_ALLOCATOR_H */

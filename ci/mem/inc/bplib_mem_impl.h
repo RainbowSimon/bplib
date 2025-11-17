@@ -76,8 +76,26 @@ void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* pool, size_t Size);
  */
 void BPLib_MEM_PoolImplFree(BPLib_MEM_PoolImpl_t* pool, void* to_free);
 
+/**
+ * @brief Get bytes in use
+ * 
+ * This function gets the current number of bytes in use by the memory pool.
+ * 
+ * @param[in] Pool Pointer to the memory pool implementation
+ * 
+ * @return Number of bytes in use
+ */
 size_t BPLib_MEM_GetBytesInUseImpl(BPLib_MEM_PoolImpl_t *Pool);
 
+/**
+ * @brief Get bytes free
+ * 
+ * This function gets the current number of bytes not in use by the memory pool.
+ * 
+ * @param[in] Pool Pointer to the memory pool implementation
+ * 
+ * @return Number of bytes not in use
+ */
 size_t BPLib_MEM_GetBytesFreeImpl(BPLib_MEM_PoolImpl_t *Pool);
 
 #endif /* BPIB_MEM_IMPL_H */

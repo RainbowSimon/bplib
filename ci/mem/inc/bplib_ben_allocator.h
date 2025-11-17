@@ -51,4 +51,4 @@ typedef struct
     size_t num_init; /**< Number of initialized blocks. */
 } BPLib_MEM_PoolImpl_t;
 
-#endif
+#endif /* BPLIB_BEN_ALLOCATOR_H */

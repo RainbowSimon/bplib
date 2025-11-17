@@ -26,8 +26,8 @@
 */
 
 #include "bplib_api_types.h"
-#include "bplib_mem.h"
 #include "bplib_rbt.h"
+#include "bplib_bblocks.h"
 
 /*
 ** Macros
@@ -146,7 +146,6 @@ typedef struct
     uint64_t SeqId;
     uint64_t SeqNum;
     uint32_t BundleId;
-    bool     Used;
 } BPLib_CT_DbEntry_t;
 
 /**
@@ -168,9 +167,7 @@ typedef struct
     uint64_t CurrActiveSeqIds[BPLIB_MAX_NUM_CONTACTS];
     uint64_t LastSeqCounterId;
 
-    BPLib_CT_DbEntry_t Ctdb[BPLIB_CT_DB_MAX_ENTRIES];
     size_t CurrDbSize;
-    size_t LastDbEntry;
     BPLib_RBT_Root_t CtdbRoot;
 } BPLib_CT_Context_t;
 

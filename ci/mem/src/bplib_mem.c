@@ -23,6 +23,7 @@
 /* ======== */
 
 #include "bplib_mem.h"
+#include "bplib_ct.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,11 +39,18 @@ BPLib_Status_t BPLib_MEM_PoolInit(BPLib_MEM_Pool_t* pool, void* init_mem, size_t
         return BPLIB_NULL_PTR_ERROR;
     }
 
+    /* Sanity check that the struct sizes have not changed and exceeded the block data sizes */
     if (sizeof(BPLib_Bundle_t) > BPLIB_MEM_BIG_BLK_DATA_SIZE)
     {
         printf("MEM ERROR: Bundle size (%ld) is bigger than big block size (%ld)\n",
                     sizeof(BPLib_Bundle_t), BPLIB_MEM_BIG_BLK_DATA_SIZE);
         return BPLIB_ERROR;
+    }
+    if (sizeof(BPLib_CT_DbEntry_t) > BPLIB_MEM_SMALL_BLK_DATA_SIZE)
+    {
+        printf("MEM ERROR: CTDB entry (%ld) is bigger than small block size (%ld)\n",
+                    sizeof(BPLib_CT_DbEntry_t), BPLIB_MEM_SMALL_BLK_DATA_SIZE);
+        return BPLIB_ERROR;        
     }
 
     memset(pool, 0, sizeof(BPLib_MEM_Pool_t));
@@ -228,7 +236,7 @@ void BPLib_MEM_BundleFree(BPLib_MEM_Pool_t* pool, BPLib_Bundle_t* bundle)
     ** is undefined behavior, and is noted in the docstring.
     */
     BPLib_MEM_BlockListFree(pool, bundle->blob);
-    BPLib_MEM_BlockFree(pool, (BPLib_MEM_Block_t*)((uintptr_t)bundle - offsetof(BPLib_MEM_Block_t, user_data)));
+    BPLib_MEM_BlockFree(pool, BPLib_MEM_GetBlockFromUserData(bundle));
 }
 
 BPLib_Status_t BPLib_MEM_BlobCopyOut(BPLib_Bundle_t* bundle, void* out_buffer, size_t max_len, size_t* out_size)
@@ -357,4 +365,10 @@ size_t BPLib_MEM_GetBytesInUse(BPLib_MEM_Pool_t *Pool)
 size_t BPLib_MEM_GetBytesFree(BPLib_MEM_Pool_t *Pool)
 {
     return BPLib_MEM_GetBytesFreeImpl(&Pool->impl);
+}
+
+BPLib_MEM_Block_t *BPLib_MEM_GetBlockFromUserData(void *UserData)
+{
+    /* Return pointer to the top of the mem block if given a pointer to a block's user_data */
+    return (BPLib_MEM_Block_t*)((uintptr_t)UserData - offsetof(BPLib_MEM_Block_t, user_data));
 }

@@ -127,14 +127,13 @@ void Test_BPLib_STOR_UpdateHkPkt_Nominal(void)
 
     memset((void*) &BPLib_STOR_StoragePayload, 0, sizeof(BPLib_StorageHkTlm_Payload_t));
 
-    BplibInst.pool.impl.num_blocks = 10;
-    BplibInst.pool.impl.num_free   = 20;
-    BplibInst.pool.impl.block_size = 30;
-
-    ExpectedBytesMemInUse     = ((BplibInst.pool.impl.num_blocks - BplibInst.pool.impl.num_free) * BplibInst.pool.impl.block_size);
+    ExpectedBytesMemInUse     = 100;
     ExpectedBytesMemHighWater = ExpectedBytesMemInUse;
-    ExpectedBytesMemFree      = (BplibInst.pool.impl.num_free * BplibInst.pool.impl.block_size);
+    ExpectedBytesMemFree      = 200;
     ExpectedKbBundlesInStor    = (BplibInst.BundleStorage.BytesStorageInUse / 1000);
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_GetBytesInUse), ExpectedBytesMemInUse);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_GetBytesFree), ExpectedBytesMemFree);
 
     BPLib_STOR_UpdateHkPkt(&BplibInst);
 

@@ -27,32 +27,6 @@
 #include "bplib_mem.h"
 #include "utgenstub.h"
 
-
-/*
- * ----------------------------------------------------
- * Generated stub function for BPLib_MEM_CopyOutFromOffset()
- * ----------------------------------------------------
- */
-BPLib_Status_t BPLib_MEM_CopyOutFromOffset(BPLib_Bundle_t* Bundle,
-                                            uint64_t Offset,
-                                            uint64_t NumBytesToCopy,
-                                            void* OutputBuffer,
-                                            size_t OutputBufferSize)
-{
-    UT_GenStub_SetupReturnBuffer(BPLib_MEM_CopyOutFromOffset, BPLib_Status_t);
-
-    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, BPLib_Bundle_t *, Bundle);
-    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, uint64_t, Offset);
-    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, uint64_t, NumBytesToCopy);
-    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, void *, OutputBuffer);
-    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, size_t, OutputBufferSize);
-
-    UT_GenStub_Execute(BPLib_MEM_CopyOutFromOffset, Basic, NULL);
-
-    return UT_GenStub_GetReturnValue(BPLib_MEM_CopyOutFromOffset, BPLib_Status_t);
-}
-
-
 /*
  * ----------------------------------------------------
  * Generated stub function for BPLib_MEM_BlobCopyOut()
@@ -77,11 +51,12 @@ BPLib_Status_t BPLib_MEM_BlobCopyOut(BPLib_Bundle_t *bundle, void *out_buffer, s
  * Generated stub function for BPLib_MEM_BlockAlloc()
  * ----------------------------------------------------
  */
-BPLib_MEM_Block_t *BPLib_MEM_BlockAlloc(BPLib_MEM_Pool_t *pool)
+BPLib_MEM_Block_t *BPLib_MEM_BlockAlloc(BPLib_MEM_Pool_t *pool, size_t Size)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_MEM_BlockAlloc, BPLib_MEM_Block_t *);
 
     UT_GenStub_AddParam(BPLib_MEM_BlockAlloc, BPLib_MEM_Pool_t *, pool);
+    UT_GenStub_AddParam(BPLib_MEM_BlockAlloc, size_t, Size);
 
     UT_GenStub_Execute(BPLib_MEM_BlockAlloc, Basic, NULL);
 
@@ -106,12 +81,13 @@ void BPLib_MEM_BlockFree(BPLib_MEM_Pool_t *pool, BPLib_MEM_Block_t *block)
  * Generated stub function for BPLib_MEM_BlockListAlloc()
  * ----------------------------------------------------
  */
-BPLib_MEM_Block_t *BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t *pool, size_t byte_len)
+BPLib_MEM_Block_t *BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t *pool, size_t byte_len, size_t BlockSize)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_MEM_BlockListAlloc, BPLib_MEM_Block_t *);
 
     UT_GenStub_AddParam(BPLib_MEM_BlockListAlloc, BPLib_MEM_Pool_t *, pool);
     UT_GenStub_AddParam(BPLib_MEM_BlockListAlloc, size_t, byte_len);
+    UT_GenStub_AddParam(BPLib_MEM_BlockListAlloc, size_t, BlockSize);
 
     UT_GenStub_Execute(BPLib_MEM_BlockListAlloc, Basic, NULL);
 
@@ -160,6 +136,75 @@ void BPLib_MEM_BundleFree(BPLib_MEM_Pool_t *pool, BPLib_Bundle_t *bundle)
     UT_GenStub_AddParam(BPLib_MEM_BundleFree, BPLib_Bundle_t *, bundle);
 
     UT_GenStub_Execute(BPLib_MEM_BundleFree, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_MEM_CopyOutFromOffset()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_MEM_CopyOutFromOffset(BPLib_Bundle_t *Bundle, uint64_t Offset, uint64_t NumBytesToCopy,
+                                           void *OutputBuffer, size_t OutputBufferSize)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_MEM_CopyOutFromOffset, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, BPLib_Bundle_t *, Bundle);
+    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, uint64_t, Offset);
+    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, uint64_t, NumBytesToCopy);
+    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, void *, OutputBuffer);
+    UT_GenStub_AddParam(BPLib_MEM_CopyOutFromOffset, size_t, OutputBufferSize);
+
+    UT_GenStub_Execute(BPLib_MEM_CopyOutFromOffset, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_MEM_CopyOutFromOffset, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_MEM_GetBlockFromUserData()
+ * ----------------------------------------------------
+ */
+BPLib_MEM_Block_t *BPLib_MEM_GetBlockFromUserData(void *UserData)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_MEM_GetBlockFromUserData, BPLib_MEM_Block_t *);
+
+    UT_GenStub_AddParam(BPLib_MEM_GetBlockFromUserData, void *, UserData);
+
+    UT_GenStub_Execute(BPLib_MEM_GetBlockFromUserData, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_MEM_GetBlockFromUserData, BPLib_MEM_Block_t *);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_MEM_GetBytesFree()
+ * ----------------------------------------------------
+ */
+size_t BPLib_MEM_GetBytesFree(BPLib_MEM_Pool_t *Pool)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_MEM_GetBytesFree, size_t);
+
+    UT_GenStub_AddParam(BPLib_MEM_GetBytesFree, BPLib_MEM_Pool_t *, Pool);
+
+    UT_GenStub_Execute(BPLib_MEM_GetBytesFree, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_MEM_GetBytesFree, size_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_MEM_GetBytesInUse()
+ * ----------------------------------------------------
+ */
+size_t BPLib_MEM_GetBytesInUse(BPLib_MEM_Pool_t *Pool)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_MEM_GetBytesInUse, size_t);
+
+    UT_GenStub_AddParam(BPLib_MEM_GetBytesInUse, BPLib_MEM_Pool_t *, Pool);
+
+    UT_GenStub_Execute(BPLib_MEM_GetBytesInUse, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_MEM_GetBytesInUse, size_t);
 }
 
 /*
