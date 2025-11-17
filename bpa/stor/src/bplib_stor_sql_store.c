@@ -298,7 +298,6 @@ SQL_Status_t BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStore
         NewBundleBytes = Inst->BundleStorage.InsertBatch[i]->Meta.TotalBytes;
         if (Inst->BundleStorage.BytesStorageInUse + *TotalBytesStored + NewBundleBytes > BPLIB_MAX_STORED_BUNDLE_BYTES)
         {
-            printf("full, %ld %ld %ld\n", Inst->BundleStorage.BytesStorageInUse, *TotalBytesStored, NewBundleBytes);
             SQLStatus = SQLITE_FULL;
             break;
         }

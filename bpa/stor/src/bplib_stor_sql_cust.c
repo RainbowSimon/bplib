@@ -245,9 +245,8 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdat
         {
             sqlite3_reset(TriggerRetransmitStmt);
 
-            SQLStatus = sqlite3_bind_int64(TriggerRetransmitStmt, 1, BPLib_TIME_GetMonotonicTime());
-            
             /* Set the retransmit_timestamp to the current time to trigger an egress on the next egress option */
+            SQLStatus = sqlite3_bind_int64(TriggerRetransmitStmt, 1, BPLib_TIME_GetMonotonicTime());
             if (SQLStatus != SQLITE_OK)
             {
                 fprintf(stderr, "Failed to bind retransmit_timestamp: %s\n", sqlite3_errmsg(db));
@@ -274,9 +273,8 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdat
         {
             sqlite3_reset(StopRetransmitStmt);
 
-            SQLStatus = sqlite3_bind_int64(StopRetransmitStmt, 1, BPLIB_NO_RETRANSMIT_TRIGGER);
-            
             /* Set the retransmit_trigger to a garbage value to turn it off */
+            SQLStatus = sqlite3_bind_int64(StopRetransmitStmt, 1, BPLIB_NO_RETRANSMIT_TRIGGER);            
             if (SQLStatus != SQLITE_OK)
             {
                 fprintf(stderr, "Failed to bind retransmit_trigger: %s\n", sqlite3_errmsg(db));

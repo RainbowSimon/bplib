@@ -188,17 +188,17 @@ typedef struct
  */
 typedef struct 
 {
-    BPLib_CT_OpenCcs_t OpenCcss[BPLIB_CT_MAX_OPEN_CCS];
+    BPLib_CT_OpenCcs_t OpenCcss[BPLIB_CT_MAX_OPEN_CCS];         /** \brief All CCSs that are currently being constructed */
 
-    uint64_t SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];
-    uint64_t CurrActiveSeqIds[BPLIB_MAX_NUM_CONTACTS];
-    uint64_t LastSeqCounterId;
+    uint64_t SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];    /** \brief All currently open sequence counters */
+    uint64_t CurrActiveSeqIds[BPLIB_MAX_NUM_CONTACTS];          /** \brief Last assigned sequence counter IDs for each contact */
+    uint64_t LastSeqCounterId;                                  /** \brief Last sequence counter ID assigned to a contact */
 
     BPLib_CT_DbEntry_t Ctdb[BPLIB_CT_DB_MAX_ENTRIES];
-    size_t CurrDbSize;
+    size_t CurrDbSize;                                          /** \brief Number of entries in CTDB */
     size_t LastDbEntry;
-    BPLib_RBT_Root_t SeqTreeRoot;
-    BPLib_RBT_Root_t IdTreeRoot;
+    BPLib_RBT_Root_t SeqTreeRoot;                               /** \brief An RBT that allows for CTDB queries based on sequence ID/number */
+    BPLib_RBT_Root_t IdTreeRoot;                                /** \brief An RBT that allows for CTDB queries based on bundle ID */
 } BPLib_CT_Context_t;
 
 
