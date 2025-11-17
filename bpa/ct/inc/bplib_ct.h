@@ -258,6 +258,8 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle);
  *
  *  \return Execution status
  *  \retval BPLIB_SUCCESS Operation was successful
+ *  \retval BPLIB_NO_STOR_ERR Bundle could not be accepted due to a lack of storage
+ *  \retval BPLIB_CT_CUSTODY_REFUSED_ERR Bundle custody could not be accepted
  */
 BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle);
 
