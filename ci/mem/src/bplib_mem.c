@@ -34,7 +34,7 @@
 */
 BPLib_Status_t BPLib_MEM_PoolInit(BPLib_MEM_Pool_t* pool, void* init_mem, size_t init_size)
 {
-    if (pool == NULL)
+    if (pool == NULL || init_mem == NULL || init_size == 0)
     {
         return BPLIB_NULL_PTR_ERROR;
     }
@@ -112,7 +112,12 @@ BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_
 
     if (pool == NULL || byte_len == 0)
     {
-        return 0;
+        return NULL;
+    }
+
+    if (BlockSize != BPLIB_MEM_BIG_BLK_SIZE && BlockSize != BPLIB_MEM_SMALL_BLK_SIZE)
+    {
+        return NULL;
     }
 
     head = NULL;
