@@ -79,6 +79,9 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
 
         /* Update full CCS size accordingly */
         OpenCcs->Size += 1;
+
+        /* Set the time for the start of the collection of CCS data */
+        OpenCcs->CollectionStartTime = BPLib_TIME_GetMonotonicTime();
     }
     else
     {

@@ -125,6 +125,7 @@ typedef struct
     size_t                         Size;
     BPLib_EID_t                    SourceAdminEid;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
+    int64_t                        CollectionStartTime;
 } BPLib_CT_OpenCcs_t;
 
 /**
