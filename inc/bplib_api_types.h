@@ -66,7 +66,7 @@ typedef uint8_t BPLib_BlockType_t;
 typedef int32_t BPLib_Status_t;
 
 // Integer typedefs
-typedef uintmax_t BPLib_Val_t;
+typedef uint64_t BPLib_Val_t;
 
 typedef struct BPLib_Instance BPLib_Instance_t;
 
@@ -103,6 +103,8 @@ typedef enum
 */
 
 #define BPLIB_BUNDLE_PROTOCOL_VERSION                   (7u)     /** @brief Version of Bundle Protocol being implemented */
+
+#define BPLIB_NO_RETRANSMIT_TRIGGER                     (0u)     /** @brief Garbage retransmit time trigger */
 
 #define BPLIB_BITS_IN_BYTE                              (8u)     /** \brief Number of bits in a byte */
 
@@ -412,13 +414,6 @@ typedef enum
 #define BPLIB_QM_GENERIC_ERR_287                       ((BPLib_Status_t) -287) // QM error
 #define BPLIB_QM_GENERIC_ERR_288                       ((BPLib_Status_t) -288) // QM error
 #define BPLIB_QM_GENERIC_ERR_289                       ((BPLib_Status_t) -289) // QM error
-#define BPLIB_QM_GENERIC_ERR_290                       ((BPLib_Status_t) -290) // QM error
-#define BPLIB_QM_GENERIC_ERR_291                       ((BPLib_Status_t) -291) // QM error
-#define BPLIB_QM_GENERIC_ERR_292                       ((BPLib_Status_t) -292) // QM error
-#define BPLIB_QM_GENERIC_ERR_293                       ((BPLib_Status_t) -293) // QM error
-#define BPLIB_QM_GENERIC_ERR_294                       ((BPLib_Status_t) -294) // QM error
-#define BPLIB_QM_GENERIC_ERR_295                       ((BPLib_Status_t) -295) // QM error
-#define BPLIB_QM_GENERIC_ERR_296                       ((BPLib_Status_t) -296) // QM error
 */
 
 /* Storage Errors: SQL */
@@ -437,9 +432,10 @@ typedef enum
 #define BPLIB_STOR_SQL_MARK_EGRESSED_ERR               ((BPLib_Status_t) -302)
 #define BPLIB_STOR_NO_BUNDLE_FOUND_ERR                 ((BPLib_Status_t) -303)
 #define BPLIB_STOR_CLEANUP_ERR                         ((BPLib_Status_t) -304)
+#define BPLIB_STOR_SQL_NEW_RETRANSMIT_ERR              ((BPLib_Status_t) -305)
+#define BPLIB_SQL_CUSTODY_UPDATE_ERR                   ((BPLib_Status_t) -306)
+
 /*
-#define BPLIB_STOR_GENERIC_ERR_305                     ((BPLib_Status_t) -305) // STOR error
-#define BPLIB_STOR_GENERIC_ERR_306                     ((BPLib_Status_t) -306) // STOR error
 #define BPLIB_STOR_GENERIC_ERR_307                     ((BPLib_Status_t) -307) // STOR error
 #define BPLIB_STOR_GENERIC_ERR_308                     ((BPLib_Status_t) -308) // STOR error
 #define BPLIB_STOR_GENERIC_ERR_309                     ((BPLib_Status_t) -309) // STOR error

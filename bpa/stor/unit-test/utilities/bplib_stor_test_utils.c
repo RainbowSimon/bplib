@@ -48,14 +48,14 @@ BPLib_NC_MibPerNodeConfig_t MibPnTbl;
 /*
 ** Test Setup Helpers
 */
-void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle)
+void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle, uint32_t BundleId)
 {
     /* Test Bundle (Minimal Metadata needed to store) */
     Bundle->blocks.PrimaryBlock.Timestamp.CreateTime = 797186475264;
     Bundle->blocks.PrimaryBlock.Lifetime = 5000;
     Bundle->blocks.PrimaryBlock.DestEID.Node = 100;
     Bundle->blocks.PrimaryBlock.DestEID.Service = 1;
-    Bundle->blocks.PrimaryBlock.BundleId = 0;
+    Bundle->blocks.PrimaryBlock.BundleId = BundleId;
     Bundle->Meta.TotalBytes = 1000;
 
     /* MEM is stubbed so the tests can check the call's in UTAssert 
@@ -95,6 +95,7 @@ void BPLib_STOR_Test_Setup(void)
     UT_ResetState(0);
 
     memset(&BplibInst, 0, sizeof(BplibInst));
+    memset(&Context_BPLib_AS_Increment, 0, sizeof(BPLib_AS_IncrementDecrementContext_t));
 
     BPLib_NC_ConfigPtrs.ChanConfigPtr = &TestChanTbl;
     BPLib_NC_ConfigPtrs.ContactsConfigPtr = &TestContTbl;
@@ -125,7 +126,7 @@ void BPLib_STOR_Test_Teardown(void)
 void BPLib_STOR_Test_SetupOneBundleStored(void)
 {
     BPLib_STOR_Test_Setup();
-    BPLib_STOR_Test_CreateTestBundle(&TestBundle);
+    BPLib_STOR_Test_CreateTestBundle(&TestBundle, 0);
 
     /* 
     ** Assume bundle creation time is valid and DTN time is valid; assume a
