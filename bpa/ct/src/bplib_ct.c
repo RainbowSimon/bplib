@@ -160,9 +160,9 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
 
 BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle)
 {
-    BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_Status_t            Status = BPLIB_SUCCESS;
     BPLib_CustodyBlockData_t *CtebPtr;
-    uint8_t ExtBlockIdx;
+    uint8_t                   ExtBlockIdx;
     uint64_t SeqId;
 
     if (Inst == NULL || Bundle == NULL)
