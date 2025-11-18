@@ -560,6 +560,7 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
     }
 
     pthread_mutex_lock(&(Inst->BundleStorage.lock));
+    BPLib_NC_ReaderLock();
 
     Status = BPLib_SQL_SetNewRetransmitTrigger(Inst, ContactId,
                 BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].DestEIDs,
@@ -567,6 +568,7 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
                 BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].RetransmitTimeout,
                 &NumUpdated);
 
+    BPLib_NC_ReaderUnlock();
     pthread_mutex_unlock(&(Inst->BundleStorage.lock));
 
     if (Status == BPLIB_SUCCESS)
