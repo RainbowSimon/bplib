@@ -86,7 +86,7 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t InProgressCcs, BPLib_Bund
     /* Mark every block as requiring encoding */
     Bundle->blocks.PrimaryBlock.RequiresEncode  = true;
     Bundle->blocks.PayloadHeader.RequiresEncode = true;
-    
+
     for(ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
     {
         Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
@@ -102,12 +102,16 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t InProgressCcs, BPLib_Bund
     /* Set routing destination of bundle */
     BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.DestEID),
                         InProgressCcs.SourceAdminEid);
-    
+
     /* Shove the bundle sequence collections into the CCS */
-    memcpy(CcsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections, InProgressCcs.BundleSeqCollections, sizeof(BPLib_CT_BundleSeqCollection_t) * BPLIB_CT_MAX_SEQ_COLLECTIONS);
+    memcpy(CcsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections,
+            InProgressCcs.BundleSeqCollections,
+            sizeof(BPLib_CT_BundleSeqCollection_t) * BPLIB_CT_MAX_SEQ_COLLECTIONS);
 
-    // CcsAdminRecord->AdminRecordBody.CCS.NumBundleSeqCollections
+    // TODO: CcsAdminRecord->AdminRecordBody.CCS.NumBundleSeqCollections
 
-    // Copy the administrative record into the bundle's payload
-    memcpy((void*) Bundle->blob->user_data.raw_bytes, (void*) &CcsAdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
+    /* Copy the administrative record into the bundle's payload */
+    memcpy((void*) Bundle->blob->user_data.raw_bytes,
+            (void*) &CcsAdminRecord,
+            sizeof(BPLib_ARP_AdminRecord_t));
 }
