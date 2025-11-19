@@ -390,7 +390,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
             }
 
             /* Shove the administrative record into the bundle's user data */
-            BPLib_ARP_ProcessCcs(&AdminRecord, bundle);
+            BPLib_ARP_ProcessNewCcs(&AdminRecord, bundle);
         }
     }
     else

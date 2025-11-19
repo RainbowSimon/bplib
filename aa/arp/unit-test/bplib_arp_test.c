@@ -103,7 +103,7 @@ void Test_BPLib_ARP_ProcessCcs(void)
     memset(&Block, 0, sizeof(BPLib_MEM_Block_t));
     Bundle.blob = &Block;
 
-    BPLib_ARP_ProcessCcs(&AdminRecord, &Bundle);
+    BPLib_ARP_ProcessNewCcs(&AdminRecord, &Bundle);
 
     BPLib_ARP_Test_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD,   1, 1);
     BPLib_ARP_Test_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1, 2);
