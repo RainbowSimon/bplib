@@ -18,51 +18,24 @@
  *
  */
 
-#ifndef BPLIB_CT_TEST_UTILS_H
-#define BPLIB_CT_TEST_UTILS_H
+#ifndef BPLIB_STOR_SQL_CUST_H
+#define BPLIB_STOR_SQL_CUST_H
 
-/*
-** Include
-*/
+/* ======== */
+/* Includes */
+/* ======== */
 
-#include "utassert.h"
-#include "utstubs.h"
-#include "uttest.h"
+#include "bplib_stor.h"
+#include "bplib_stor_sql.h"
 
-#include "bplib_api_types.h"
-#include "bplib_ct.h"
-#include "bplib_bblocks.h"
-#include "bplib_eid.h"
-#include "bplib_mem.h"
-#include "bplib_ct_db.h"
-#include "bplib_ct_ccs.h"
-#include "bplib_pdb.h"
-#include "bplib_inst.h"
-#include "bplib_as_handlers.h"
+BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId,
+                BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, size_t RetransmitTrigger, size_t *NumUpdated);
 
+SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Pattern_t* DestEIDs, 
+                            size_t NumEIDs, size_t RetransmitTrigger, size_t *NumUpdated);
 
-/*
-** Macro Definitions 
-*/
+BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT_CcsUpdateBatch_t *Batch);
 
-/* Macro to add test case */
-#define ADD_TEST(test) UtTest_Add(test, BPLib_CT_Test_Setup, BPLib_CT_Test_Teardown, #test)
+SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdateBatch_t *Batch);
 
-
-/*
-** Global Data
-*/
-
-extern BPLib_Instance_t BplibInst;
-
-
-/*
-** Function Definitions
-*/
-
-void BPLib_CT_Test_Setup(void);
-void BPLib_CT_Test_Teardown(void);
-
-void TestBplibCt_Register(void);
-
-#endif /* BPLIB_CT_TEST_UTILS_H */
+#endif

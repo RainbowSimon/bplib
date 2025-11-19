@@ -33,6 +33,7 @@
 #include "bplib_stor_sql.h"
 #include "bplib_stor_sql_store.h"
 #include "bplib_stor_sql_load.h"
+#include "bplib_stor_sql_cust.h"
 #include "bplib_inst.h"
 
 #include <stdio.h>
@@ -416,15 +417,23 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     size_t               i;
     size_t               TotalBytesStored;
     size_t               DuplicateBundlesIgnored;
+    size_t               CustodialBundlesStored;
+    BPLib_CLA_ContactRunState_t ConState;
 
     CacheInst               = &Inst->BundleStorage;
     TotalBytesStored        = 0;
     DuplicateBundlesIgnored = 0;
+    CustodialBundlesStored  = 0;
 
-    Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored);
+    Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored, &CustodialBundlesStored);
 
     if (Status == BPLIB_SUCCESS)
     {
+        if (CustodialBundlesStored > 0)
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, CustodialBundlesStored);
+        }
+
         CacheInst->BytesStorageInUse += TotalBytesStored;
         CacheInst->BundleCountStored += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
 
@@ -467,7 +476,22 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     */
     for (i = 0; i < CacheInst->InsertBatchSize; i++)
     {
-        BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
+        /* Custodial bundles with an egress path should get sent out instead of freed */
+        if (CacheInst->InsertBatch[i]->Meta.IsCustodial && 
+            CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
+        {
+            (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
+
+            if (ConState == BPLIB_CLA_STARTED)
+            {
+                BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CacheInst->InsertBatch[i]->Meta.EgressID]), 
+                                            &CacheInst->InsertBatch[i], QM_WAIT_FOREVER);
+            }
+        }
+        else
+        {
+            BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
+        }
     }
 
     CacheInst->InsertBatchSize = 0;
@@ -494,4 +518,67 @@ BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst)
     pthread_mutex_unlock(&(Inst->BundleStorage.lock));
     
     return Status;
+}
+
+BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_CT_CcsUpdateBatch_t *Batch)
+{
+    BPLib_Status_t Status;
+
+    if (Inst == NULL || Batch == NULL || Batch->Size > BPLIB_CT_BATCH_SIZE)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    pthread_mutex_lock(&(Inst->BundleStorage.lock));
+
+    Status = BPLib_SQL_UpdateCustodialBundles(Inst, Batch);
+
+    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
+
+    if (Status != BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_STOR_CCS_ERR_EID, BPLib_EM_EventType_ERROR,
+                "Error performing CCS storage operations, Status = %d.", Status);
+    }
+    
+    return Status;
+}
+
+BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId)
+{
+    BPLib_Status_t Status;
+    size_t NumUpdated;
+
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    if (ContactId >= BPLIB_MAX_NUM_CONTACTS)
+    {
+        return BPLIB_INVALID_CONT_ID_ERR;
+    }
+
+    pthread_mutex_lock(&(Inst->BundleStorage.lock));
+    BPLib_NC_ReaderLock();
+
+    Status = BPLib_SQL_SetNewRetransmitTrigger(Inst, ContactId,
+                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].DestEIDs,
+                BPLIB_MAX_CONTACT_DEST_EIDS, 
+                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].RetransmitTimeout,
+                &NumUpdated);
+
+    BPLib_NC_ReaderUnlock();
+    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
+
+    if (Status == BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_STOR_RETRANSMIT_UPDATE_DBG_EID, BPLib_EM_EventType_DEBUG,
+                        "Updated retransmit triggers of %ld bundles for contact %d.",
+                        NumUpdated, ContactId);
+    }
+
+    /* Error event handled upstream */
+    
+    return Status;    
 }

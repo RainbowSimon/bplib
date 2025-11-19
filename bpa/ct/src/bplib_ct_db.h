@@ -38,18 +38,39 @@
  *
  *  \par Description
  *       Given a pointer to a red-black tree link, return a pointer to the CTDB entry
- *       that the link corresponds to.
+ *       that the link corresponds to. The link should be for the *sequence ID/number* RBT
+ *       specifically.
  *
  *  \par Assumptions, External Events, and Notes:
  *       Somewhat sketchy pointer logic but since the CTDB is the only implementation
  *       of a RBT in the code, the assumption that there's an associated CTDB entry
  *       for the provided RBT link is safe.
  * 
- *  \param[in] Node Pointer to a red-black tree link
+ *  \param[in] Node Pointer to a sequence ID/number red-black tree link
  *
  *  \return Pointer to a CTDB entry
  */
-BPLib_CT_DbEntry_t *BPLib_CT_GetDbEntryFromRbt(const BPLib_RBT_Link_t *Node);
+BPLib_CT_DbEntry_t *BPLib_CT_GetDbEntryFromSeqRbt(const BPLib_RBT_Link_t *Node);
+
+
+/**
+ * \brief Get pointer to the CTDB entry from the RBT link
+ *
+ *  \par Description
+ *       Given a pointer to a red-black tree link, return a pointer to the CTDB entry
+ *       that the link corresponds to. The link should be for the bundle ID RBT
+ *       specifically.
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       Somewhat sketchy pointer logic but since the CTDB is the only implementation
+ *       of a RBT in the code, the assumption that there's an associated CTDB entry
+ *       for the provided RBT link is safe.
+ * 
+ *  \param[in] Node Pointer to a bundle ID red-black tree link
+ *
+ *  \return Pointer to a CTDB entry
+ */
+BPLib_CT_DbEntry_t *BPLib_CT_GetDbEntryFromIdRbt(const BPLib_RBT_Link_t *Node);
 
 /**
  * \brief Compare some value with a CTDB entry
@@ -76,8 +97,11 @@ int BPLib_CT_CompareDbEntries(const BPLib_RBT_Link_t *Node, void *Arg);
 BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqId, 
                                                     uint64_t SeqNum, uint32_t BundleId);
 
-BPLib_Status_t BPLib_CT_GetEntryFromCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId, 
+BPLib_Status_t BPLib_CT_GetEntryFromCtdbWithSeq(BPLib_CT_Context_t *Context, uint64_t SeqId, 
                                             uint64_t SeqNum, BPLib_CT_DbEntry_t **DbEntry);
+
+BPLib_Status_t BPLib_CT_GetEntryFromCtdbWithId(BPLib_CT_Context_t *Context, 
+                                        uint32_t BundleId, BPLib_CT_DbEntry_t **DbEntry);
 
 BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_t *DbEntry);
 

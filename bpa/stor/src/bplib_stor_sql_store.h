@@ -52,9 +52,9 @@ SQL_Status_t BPLib_SQL_StoreChunk(int64_t BundleRowID, const void* Chunk, size_t
 SQL_Status_t BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache);
 
 SQL_Status_t BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
-                                size_t *DuplicateBundlesIgnored);
+                                size_t *DuplicateBundlesIgnored, size_t *CustodialBundles);
 
 BPLib_Status_t BPLib_SQL_Store(BPLib_Instance_t* Inst, size_t *TotalBytesStored,
-                                size_t *DuplicateBundlesIgnored);
+                                size_t *DuplicateBundlesIgnored, size_t *CustodialBundles);
 
 #endif /* BPLIB_STOR_SQL_STORE_H */

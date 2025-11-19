@@ -73,10 +73,35 @@
  */
 #define BPLIB_CT_DB_MAX_ENTRIES                     (100u)
 
+/**
+ * \brief Size of a full CCS batch operation
+ */
+#define BPLIB_CT_BATCH_SIZE                         (100u)
 
 /*
 ** Type Definitions
 */
+
+/**
+ * \brief Possible operations to be taken upon receiving and processing a CCS
+ */
+typedef enum
+{
+    BPLIB_CT_STOP_RETRANSMIT,           /** \brief Stop storage retransmission timer  */
+    BPLIB_CT_MARK_DELETE,               /** \brief Mark bundle for deletion */
+    BPLIB_CT_START_RETRANSMIT           /** \brief Trigger bundle retransmission */
+} BPLib_CT_StorOp_t;
+
+/**
+ * \brief A batch of storage operations associated with a set of bundle IDs generated
+ *        after receiving and processing a CCS
+ */
+typedef struct 
+{
+    uint32_t BundleIDs[BPLIB_CT_BATCH_SIZE];
+    BPLib_CT_StorOp_t Ops[BPLIB_CT_BATCH_SIZE];
+    size_t   Size;
+} BPLib_CT_CcsUpdateBatch_t;
 
 /**
  * \brief Disposition codes relating custody information of a bundle sequence collection
@@ -142,7 +167,8 @@ typedef struct
  */
 typedef struct
 {
-    BPLib_RBT_Link_t RbtLink;
+    BPLib_RBT_Link_t SeqRbtLink;
+    BPLib_RBT_Link_t IdRbtLink;
     uint64_t SeqId;
     uint64_t SeqNum;
     uint32_t BundleId;
@@ -161,14 +187,15 @@ typedef struct
  */
 typedef struct 
 {
-    BPLib_CT_OpenCcs_t OpenCcss[BPLIB_CT_MAX_OPEN_CCS];
+    BPLib_CT_OpenCcs_t OpenCcss[BPLIB_CT_MAX_OPEN_CCS];         /** \brief All CCSs that are currently being constructed */
 
-    uint64_t SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];
-    uint64_t CurrActiveSeqIds[BPLIB_MAX_NUM_CONTACTS];
-    uint64_t LastSeqCounterId;
+    uint64_t SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];    /** \brief All currently open sequence counters */
+    uint64_t CurrActiveSeqIds[BPLIB_MAX_NUM_CONTACTS];          /** \brief Last assigned sequence counter IDs for each contact */
+    uint64_t LastSeqCounterId;                                  /** \brief Last sequence counter ID assigned to a contact */
 
-    size_t CurrDbSize;
-    BPLib_RBT_Root_t CtdbRoot;
+    size_t CurrDbSize;                                          /** \brief Number of entries in CTDB */
+    BPLib_RBT_Root_t SeqTreeRoot;                               /** \brief An RBT that allows for CTDB queries based on sequence ID/number */
+    BPLib_RBT_Root_t IdTreeRoot;                                /** \brief An RBT that allows for CTDB queries based on bundle ID */
 } BPLib_CT_Context_t;
 
 
@@ -228,6 +255,8 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle);
  *
  *  \return Execution status
  *  \retval BPLIB_SUCCESS Operation was successful
+ *  \retval BPLIB_NO_STOR_ERR Bundle could not be accepted due to a lack of storage
+ *  \retval BPLIB_CT_CUSTODY_REFUSED_ERR Bundle custody could not be accepted
  */
 BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle);
 

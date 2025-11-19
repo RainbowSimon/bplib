@@ -31,6 +31,7 @@
 #include "bplib_mem.h"
 #include "bplib_stor_loadbatch.h"
 #include "bplib_stor_sql.h"
+#include "bplib_ct.h"
 
 /* ====== */
 /* Macros */
@@ -167,5 +168,9 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst);
 BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst);
 
 BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst);
+
+BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_CT_CcsUpdateBatch_t *Batch);
+
+BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId);
 
 #endif /* BPLIB_STOR_H */

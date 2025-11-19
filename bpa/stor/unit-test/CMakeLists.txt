@@ -27,6 +27,7 @@ add_library(utobj_bplib_stor OBJECT
    ../src/bplib_stor_sql_load.c
    ../src/bplib_stor_sql_store.c
    ../src/bplib_stor_loadbatch.c
+   ../src/bplib_stor_sql_cust.c
 )
 
 target_compile_definitions(utobj_bplib_stor PRIVATE

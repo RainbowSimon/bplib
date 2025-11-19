@@ -199,4 +199,7 @@ SQL_Status_t BPLib_SQL_DiscardEgressedImpl(sqlite3* db, size_t* NumDiscarded, BP
 
 BPLib_Status_t BPLib_SQL_Cleanup(BPLib_Instance_t* Inst);
 
+BPLib_Status_t BPLib_SQL_GetDestEidWhereClause(BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, 
+                                                                        char *WhereClause);
+
 #endif /* BPLIB_STOR_SQL_H */

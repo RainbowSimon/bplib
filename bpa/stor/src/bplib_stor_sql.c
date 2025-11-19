@@ -46,6 +46,82 @@ sqlite3_stmt* EgressedBytesStmt;
 
 /* SQL query strings */
 
+/*
+** Table and Index Creation for bundle_data and bundle_blobs
+**
+** This schema is designed to support efficient queries and operations on bundle metadata and associated blob data.
+** The following indexes are created:
+**
+** 1. idx_bundle_blobs_bundle_row:
+**    - Index on the 'bundle_row' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
+**      by its associated bundle_row in the 'bundle_data' table.
+**
+** 2. idx_action_timestamp:
+**    - Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter
+**      based on the timestamp of the bundle: This is used for expiring bundles
+**
+** 3. idx_egress_id (Composite Index):
+**    - Composite index on the columns 'dest_node', 'dest_service', 'egress_attempted', 'action_timestamp', and 'id'.
+**    - This index optimizes queries that filter by node and service ranges, filter by egress_attempted (0),
+**      and sort by action_timestamp. It can also enable an index-only scan to quickly retrieve 'id'.
+**    - This composite index is designed for loading egress bundles by batch for a particular EgressID (A channel or contact)
+**
+** 4. idx_egress_attempted:
+**    - Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up
+**      DELETE queries and other queries filtering by 'egress_attempted'.
+**
+** 5. idx_bundle_id
+**    - Index on the bplib-assigned unique 'bundle_id' in the 'bundle_data' table. This is used to detect duplicate bundles
+**      in storage and by Custody Transfer to request the deletion or retransmission of custodial bundles. Whether or not
+**      to allow duplicate bundles in storage is toggled by the BPLIB_ALLOW_DUPLICATE_BUNDLES flag.
+**/
+
+const char* CreateTableSQL =
+"CREATE TABLE IF NOT EXISTS bundle_data (\n"
+"    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+"    bundle_id INTEGER UNIQUE,\n"
+#else
+"    bundle_id INTEGER,\n"
+#endif
+"    action_timestamp INTEGER,\n"
+"    retransmit_timestamp INTEGER,\n"
+"    retransmit_trigger INTEGER,\n"
+"    egress_attempted INTEGER DEFAULT 0,\n"
+"    dest_node INTEGER,\n"
+"    dest_service INTEGER,\n"
+"    is_custodial INTEGER,\n"
+"    bundle_bytes INTEGER\n"
+");\n"
+"\n"
+"CREATE TABLE IF NOT EXISTS bundle_blobs (\n"
+"    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+"    bundle_row INTEGER,\n"
+"    blob_data BLOB,\n"
+"    FOREIGN KEY (bundle_row) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
+");\n"
+"\n"
+"CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_row);\n"
+"CREATE INDEX IF NOT EXISTS idx_action_timestamp ON bundle_data (action_timestamp);\n"
+#if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
+"CREATE UNIQUE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
+#else
+"CREATE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
+#endif
+"\n"
+"CREATE INDEX IF NOT EXISTS idx_egress_id\n"
+"ON bundle_data (\n"
+"    dest_node,\n"
+"    dest_service,\n"
+"    egress_attempted,\n"
+"    action_timestamp,\n"
+"    id\n"
+");\n"
+"\n"
+"CREATE INDEX IF NOT EXISTS idx_egress_attempted\n"
+"ON bundle_data (egress_attempted);\n";
+
+
 const char* GetNumBundlesSQL =
 "SELECT COUNT(*) FROM bundle_data;";
 
@@ -91,6 +167,7 @@ const char* EgressedBytesSQL =
 "AS bytes_deleted\n"
 "FROM bundle_data\n"
 "WHERE id IN (SELECT id FROM egressed_bytes);\n";
+
 
 /* ==================== */
 /* Function Definitions */
@@ -168,78 +245,6 @@ SQL_Status_t BPLib_SQL_InitDb(const char* DbName, sqlite3** ActiveDbPtr)
 
 SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst)
 {
-    /*
-    ** Table and Index Creation for bundle_data and bundle_blobs
-    **
-    ** This schema is designed to support efficient queries and operations on bundle metadata and associated blob data.
-    ** The following indexes are created:
-    **
-    ** 1. idx_bundle_blobs_bundle_row:
-    **    - Index on the 'bundle_row' column in the 'bundle_blobs' table. This index supports quick lookup of blob data
-    **      by its associated bundle_row in the 'bundle_data' table.
-    **
-    ** 2. idx_action_timestamp:
-    **    - Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter
-    **      based on the timestamp of the bundle: This is used for expiring bundles
-    **
-    ** 3. idx_find_bundle (Composite Index):
-    **    - Composite index on the columns 'dest_node', 'dest_service', 'egress_attempted', 'action_timestamp', and 'id'.
-    **    - This index optimizes queries that filter by node and service ranges, filter by egress_attempted (0),
-    **      and sort by action_timestamp. It can also enable an index-only scan to quickly retrieve 'id'.
-    **    - This composite index is designed for loading egress bundles by batch for a particular EgressID (A channel or contact)
-    **
-    ** 4. idx_egress_attempted:
-    **    - Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up
-    **      DELETE queries and other queries filtering by 'egress_attempted'.
-    **
-    ** 5. idx_bundle_id
-    **    - Index on the bplib-assigned unique 'bundle_id' in the 'bundle_data' table. This is used to detect duplicate bundles
-    **      in storage and by Custody Transfer to request the deletion or retransmission of custodial bundles. Whether or not
-    **      to allow duplicate bundles in storage is toggled by the BPLIB_ALLOW_DUPLICATE_BUNDLES flag.
-    **/
-
-    const char* CreateTableSQL =
-    "CREATE TABLE IF NOT EXISTS bundle_data (\n"
-    "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-    #if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
-    "    bundle_id INTEGER UNIQUE,\n"
-    #else
-    "    bundle_id INTEGER,\n"
-    #endif
-    "    action_timestamp INTEGER,\n"
-    "    egress_attempted INTEGER DEFAULT 0,\n"
-    "    dest_node INTEGER,\n"
-    "    dest_service INTEGER,\n"
-    "    bundle_bytes INTEGER\n"
-    ");\n"
-    "\n"
-    "CREATE TABLE IF NOT EXISTS bundle_blobs (\n"
-    "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-    "    bundle_row INTEGER,\n"
-    "    blob_data BLOB,\n"
-    "    FOREIGN KEY (bundle_row) REFERENCES bundle_data(id) ON DELETE CASCADE\n"
-    ");\n"
-    "\n"
-    "CREATE INDEX IF NOT EXISTS idx_bundle_blobs ON bundle_blobs (bundle_row);\n"
-    "CREATE INDEX IF NOT EXISTS idx_action_timestamp ON bundle_data (action_timestamp);\n"
-    #if BPLIB_ALLOW_DUPLICATE_BUNDLES == false
-    "CREATE UNIQUE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
-    #else
-    "CREATE INDEX IF NOT EXISTS idx_bundle_id ON bundle_data (bundle_id);\n"
-    #endif
-    "\n"
-    "CREATE INDEX IF NOT EXISTS idx_egress_id\n"
-    "ON bundle_data (\n"
-    "    dest_node,\n"
-    "    dest_service,\n"
-    "    egress_attempted,\n"
-    "    action_timestamp,\n"
-    "    id\n"
-    ");\n"
-    "\n"
-    "CREATE INDEX IF NOT EXISTS idx_egress_attempted\n"
-    "ON bundle_data (egress_attempted);\n";
-    
     SQL_Status_t SQLStatus;
     uint32_t     NumStoredBundles;
     uint64_t     TotalBundleBytes;
@@ -680,4 +685,106 @@ BPLib_Status_t BPLib_SQL_Cleanup(BPLib_Instance_t* Inst)
     }    
 
     return Status;
+}
+
+BPLib_Status_t BPLib_SQL_GetDestEidWhereClause(BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, 
+                                                                        char *WhereClause)
+{
+    size_t         MaxWhereLen;
+    size_t         CurrWhereLen;
+    size_t         i;
+    const char*    FindForDestNodeSql_RangeClause = "((dest_node BETWEEN ? AND ?) AND";
+    const char*    FindForDestNodeSql_EqualityClause = "((dest_node = ?) AND";
+    const char*    FindForDestServSql_RangeClause = " (dest_service BETWEEN ? AND ?))";
+    const char*    FindForDestServSql_EqalityClause = " (dest_service = ?))";
+    const char**   FindClausePtr;
+
+    MaxWhereLen = BPLIB_SQL_MAX_STRLEN - 180; /* size of final query minus the non-where clause stuff */
+
+    /* To keep search as efficient possible, we generate one combined query that contains all
+    ** the DestEID patterns.
+    **
+    ** NOTE:
+    ** This bit is tricky to understand from inspection. Basically, for each destination
+    ** eid pattern node number or service number it checks if the pattern is a true pattern
+    ** depicting a range, or if the minimum value equals the maximum value. In the former 
+    ** case, it checks if either dest_node or dest_service is "BETWEEN ? AND ?". In the
+    ** latter case it does an exact value check, so whether dest_node or dest_service "= ?".
+    ** This is a minor optimization since exact queries are a bit faster in sqlite than 
+    ** range queries. The final output should look something like 
+    ** "((dest_node BETWEEN ? AND ?)) AND (dest_service = ?)) OR 
+    **  ((dest_node = ?) AND (dest_service BETWEEN ? AND ?)) OR
+    **  ((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))",
+    ** or any additional combinations of the sort, depending on the DestEIDs.
+    */
+
+    CurrWhereLen = 0;
+
+    for (i = 0; i < NumEIDs; i++)
+    {
+        /* If maxNode == minNode, do an exact query, otherwise do a range query */
+        if (DestEIDs[i].MaxNode == DestEIDs[i].MinNode)
+        {
+            CurrWhereLen += strlen(FindForDestNodeSql_EqualityClause);
+            FindClausePtr = &FindForDestNodeSql_EqualityClause;
+        }
+        else
+        {
+            CurrWhereLen += strlen(FindForDestNodeSql_RangeClause);
+            FindClausePtr = &FindForDestNodeSql_RangeClause;
+        }
+
+        if (CurrWhereLen >= MaxWhereLen)
+        {
+            fprintf(stderr, "Programming Error: Node WHERE clause too long\n");
+            return BPLIB_STOR_SQL_OVERFLOW_ERR;       
+        }
+        else
+        {
+            /* Add the node query to the where clause */
+            strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
+        }
+
+        /* If MaxService == MinService, do an exact query, otherwise do a range query */
+        if (DestEIDs[i].MaxService == DestEIDs[i].MinService)
+        {
+            CurrWhereLen += strlen(FindForDestServSql_EqalityClause);
+            FindClausePtr = &FindForDestServSql_EqalityClause;
+        }
+        else
+        {
+            CurrWhereLen += strlen(FindForDestServSql_RangeClause);
+            FindClausePtr = &FindForDestServSql_RangeClause;
+        }
+
+        if (CurrWhereLen >= MaxWhereLen)
+        {
+            fprintf(stderr, "Programming Error: Node WHERE clause too long\n");
+            return BPLIB_STOR_SQL_OVERFLOW_ERR;
+        }
+        else
+        {
+            /* Add the service query to the where clause */
+            strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
+        }
+
+        /* Link multiple EID queries with an OR, unless this is the last EID */
+        if (i != (NumEIDs - 1))
+        {
+            if (CurrWhereLen + strlen(" OR ") >= MaxWhereLen)
+            {
+                fprintf(stderr, "Programming Error: OR WHERE clause too long\n");
+                return BPLIB_STOR_SQL_OVERFLOW_ERR;
+            }
+            else
+            {
+                strncat(WhereClause, " OR ", MaxWhereLen - CurrWhereLen);
+                CurrWhereLen += strlen(" OR ");
+            }
+        }
+    }
+
+    WhereClause[strlen(WhereClause)] = '\0';  
+    
+    return BPLIB_SUCCESS;
 }
