@@ -197,7 +197,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         if (Bundle->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
         {
             /* Check if this is a bundle retransmission from storage or a new bundle */
-            Status = BPLib_CT_GetEntryFromCtdbWithId(Inst, 
+            Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
                                 Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
 
             if (Status == BPLIB_SUCCESS)
@@ -217,7 +217,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
                 BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
                 Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
 
-                Status = BPLib_CT_AddToCtdb(&(Inst->Ct), CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
+                Status = BPLib_CT_AddToCtdb(Inst, CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
                                             Bundle->blocks.PrimaryBlock.BundleId);
             }
         }

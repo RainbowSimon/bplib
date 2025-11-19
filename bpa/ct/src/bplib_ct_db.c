@@ -74,7 +74,6 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqId,
     BPLib_MEM_Block_t  *DbMemBlk = NULL;
     BPLib_CT_DbEntry_t *DbEntry  = NULL;
     BPLib_Status_t Status;
-    size_t CurrDbEntry;
 
     if (Inst->Ct.CurrDbSize == BPLIB_CT_DB_MAX_ENTRIES)
     {
@@ -97,14 +96,14 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqId,
 
     Inst->Ct.CurrDbSize++;
     
-    return BPLib_RBT_InsertValueGeneric(SeqId, &(Inst->Ct.CtdbRoot), 
+    return BPLib_RBT_InsertValueGeneric(SeqId, &(Inst->Ct.SeqTreeRoot), 
                                         &(DbEntry->SeqRbtLink),
                                         BPLib_CT_CompareDbEntries, &SeqNum);
 
     if (Status == BPLIB_SUCCESS)
     {
-        Status = BPLib_RBT_InsertValueUnique(BundleId, &(Context->IdTreeRoot), 
-                                            &(Context->Ctdb[CurrDbEntry].IdRbtLink));
+        Status = BPLib_RBT_InsertValueUnique(BundleId, &(Inst->Ct.IdTreeRoot), 
+                                            &(DbEntry->IdRbtLink));
     }
 
     return Status;
@@ -149,13 +148,13 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_RBT_ExtractNode(&Context->SeqTreeRoot, &DbEntry->SeqRbtLink);
+    Status = BPLib_RBT_ExtractNode(&(Inst->Ct.SeqTreeRoot), &DbEntry->SeqRbtLink);
     if (Status == BPLIB_SUCCESS)
     {
-        Status = BPLib_RBT_ExtractNode(&Context->IdTreeRoot, &DbEntry->IdRbtLink);
+        Status = BPLib_RBT_ExtractNode(&(Inst->Ct.IdTreeRoot), &DbEntry->IdRbtLink);
         if (Status == BPLIB_SUCCESS)
         {
-            Context->CurrDbSize--;
+            Inst->Ct.CurrDbSize--;
             BPLib_MEM_BlockFree(&Inst->pool, BPLib_MEM_GetBlockFromUserData(DbEntry));
         }
     }
