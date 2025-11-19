@@ -168,13 +168,23 @@ void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* 
 void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
 
 /**
- * \brief     Count the Compressed Custody Signal then overwrite Bundle's user
- *            data with the administrative record provided
+ * \brief      Count the Compressed Custody Signal then overwrite Bundle's user
+ *             data with the administrative record provided
  * \param[in]  AdminRecord Decoded Compressed Custody Signal administrative record
  * \param[out] Bundle      Bundle whose user_data will be overwritten with
  *                         AdminRecord
  * \return    void
  */
 void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
+
+/**
+ * \brief     When an open CCS hits a trigger, whether it be size, time, or number
+ *            of open CCSs, this function will wrap that CCS into a bundle and
+ *            place it on the job queue
+ * \param[in] InProgressCcs An in-progress CCS that has reached a configured limit
+ * \param[in] Pool          Memory pool to generate a bundle from
+ * \return    void
+ */
+void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t* InProgressCcs, BPLib_MEM_Pool_t* Pool);
 
 #endif /* BPLIB_ARP_H */

@@ -78,10 +78,33 @@ void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_
     memcpy((void*) &(Bundle->blob->user_data), AdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
 }
 
-void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t InProgressCcs, BPLib_Bundle_t* Bundle)
+void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t* InProgressCcs, BPLib_MEM_Pool_t* Pool)
 {
     BPLib_ARP_AdminRecord_t CcsAdminRecord;
     uint8_t                 ExtBlockIdx;
+    BPLib_Bundle_t*         Bundle;
+
+    /* === Build the Administrative Record's CCS === */
+
+    /* Set the Administrative Record type */
+    CcsAdminRecord.AdminRecordType = BPLib_CT_CcsRecordTypeCode;
+
+    /* Copy over source administrative EID */
+    BPLib_EID_CopyEids(&(CcsAdminRecord.AdminRecordBody.CCS.SourceAdminEid),
+                        InProgressCcs->SourceAdminEid);
+
+    /* Shove the bundle sequence collections into the CCS */
+    memcpy(CcsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections,
+            InProgressCcs->BundleSeqCollections,
+            sizeof(BPLib_CT_BundleSeqCollection_t) * BPLIB_CT_MAX_SEQ_COLLECTIONS);
+
+    // TODO: CcsAdminRecord->AdminRecordBody.CCS.NumBundleSeqCollections
+
+    /* === Generate the bundle with a CCS Administrative Record as the payload === */
+
+    Bundle = BPLib_MEM_BundleAlloc(Pool, &CcsAdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
+
+    /* === Configure the bundle for egressing === */
 
     /* Mark every block as requiring encoding */
     Bundle->blocks.PrimaryBlock.RequiresEncode  = true;
@@ -92,26 +115,10 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t InProgressCcs, BPLib_Bund
         Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
     }
 
-    /* Set the Administrative Record type */
-    CcsAdminRecord.AdminRecordType = BPLib_CT_CcsRecordTypeCode;
-
-    /* Copy over source administrative EID */
-    BPLib_EID_CopyEids(&(CcsAdminRecord.AdminRecordBody.CCS.SourceAdminEid),
-                        InProgressCcs.SourceAdminEid);
+    /* Set the administrative record flag */
+    Bundle->blocks.PrimaryBlock.BundleProcFlags |= BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
 
     /* Set routing destination of bundle */
     BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.DestEID),
-                        InProgressCcs.SourceAdminEid);
-
-    /* Shove the bundle sequence collections into the CCS */
-    memcpy(CcsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections,
-            InProgressCcs.BundleSeqCollections,
-            sizeof(BPLib_CT_BundleSeqCollection_t) * BPLIB_CT_MAX_SEQ_COLLECTIONS);
-
-    // TODO: CcsAdminRecord->AdminRecordBody.CCS.NumBundleSeqCollections
-
-    /* Copy the administrative record into the bundle's payload */
-    memcpy((void*) Bundle->blob->user_data.raw_bytes,
-            (void*) &CcsAdminRecord,
-            sizeof(BPLib_ARP_AdminRecord_t));
+                        InProgressCcs->SourceAdminEid);
 }

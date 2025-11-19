@@ -34,13 +34,14 @@
 
 void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs);
 
-BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint32_t ContactId,
-                                        uint64_t SequenceNum, uint64_t SequenceId,
-                                        BPLib_CT_DispositionCode_t DispositionCode);
+BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, BPLib_MEM_Pool_t* Pool,
+                                        uint32_t ContactId, uint64_t SequenceNum,
+                                        uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode);
 
-size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID, uint64_t SequenceId);
+size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_MEM_Pool_t* Pool,
+                                BPLib_EID_t *SourceAdminEID, uint64_t SequenceId);
 
-void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs);
+void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, BPLib_MEM_Pool_t* Pool);
 
 BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             BPLib_CT_Context_t *Context, BPLib_CT_BundleSeqCollection_t *SeqCollection);
