@@ -92,10 +92,11 @@ void Test_BPLib_MEM_BlockFree_Null(void)
 
 void Test_BPLib_MEM_BlockListAlloc_Nominal(void)
 {
-    BPLib_MEM_Block_t *HeadBlk;
+    BPLib_MEM_Block_t *HeadBlk = NULL;
     BPLib_MEM_Pool_t Pool;
+    #ifdef BPLIB_MEM_CFE_IMPL
     BPLib_MEM_Block_t Blk1, Blk2;
-
+    #endif
     memset(&Pool, 0, sizeof(Pool));
 
     #ifdef BPLIB_MEM_CFE_IMPL
@@ -104,6 +105,9 @@ void Test_BPLib_MEM_BlockListAlloc_Nominal(void)
     #endif
 
     HeadBlk = BPLib_MEM_BlockListAlloc(&Pool, BPLIB_MEM_BIG_BLK_DATA_SIZE * 2, BPLIB_MEM_BIG_BLK_SIZE);
+
+    UtAssert_NOT_NULL(HeadBlk);
+    UtAssert_NOT_NULL(HeadBlk->next);
 
     #ifdef BPLIB_MEM_CFE_IMPL
     UtAssert_ADDRESS_EQ(HeadBlk, &Blk1);
@@ -119,6 +123,9 @@ void Test_BPLib_MEM_BlockListAlloc_Nominal(void)
 
     HeadBlk = BPLib_MEM_BlockListAlloc(&Pool, BPLIB_MEM_SMALL_BLK_SIZE * 2, BPLIB_MEM_SMALL_BLK_SIZE);
 
+    UtAssert_NOT_NULL(HeadBlk);
+    UtAssert_NOT_NULL(HeadBlk->next);
+    
     #ifdef BPLIB_MEM_CFE_IMPL
     UtAssert_ADDRESS_EQ(HeadBlk, &Blk1);
     UtAssert_ADDRESS_EQ(HeadBlk->next, &Blk2);
@@ -141,8 +148,10 @@ void Test_BPLib_MEM_BlockListFree_Null(void)
 void Test_BPLib_MEM_BundleAlloc_Nominal(void)
 {
     BPLib_MEM_Pool_t Pool;
+    #ifdef BPLIB_MEM_CFE_IMPL
     BPLib_MEM_Block_t Blk1, Blk2;
-    BPLib_Bundle_t *Bundle;
+    #endif
+    BPLib_Bundle_t *Bundle = NULL;
     uint8_t Buff[BPLIB_MEM_BIG_BLK_DATA_SIZE];
 
     memset(&Pool, 0, sizeof(Pool));
@@ -154,7 +163,13 @@ void Test_BPLib_MEM_BundleAlloc_Nominal(void)
 
     Bundle = BPLib_MEM_BundleAlloc(&Pool, Buff, BPLIB_MEM_BIG_BLK_DATA_SIZE);
 
+    UtAssert_NOT_NULL(Bundle);
+    UtAssert_NOT_NULL(Bundle->blob);
+
+    #ifdef BPLIB_MEM_CFE_IMPL
     UtAssert_ADDRESS_EQ(Bundle, Blk1.user_data.BigData);
+    UtAssert_ADDRESS_EQ(Bundle->blob, &Blk2);
+    #endif
 
     UtAssert_VOIDCALL(BPLib_MEM_BundleFree(&Pool, Bundle));
 }
