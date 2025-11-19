@@ -148,6 +148,7 @@ typedef struct
 {
     bool                           InProgress;
     size_t                         Size;
+    size_t                         MaxSize;
     BPLib_EID_t                    SourceAdminEid;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
     int64_t                        CollectionStartTime;

@@ -33,6 +33,7 @@
 #include "bplib_em.h"
 #include "bplib_arp.h"
 #include "bplib_stor.h"
+#include "bplib_nc.h"
 
 /*
 ** Function Definitions
@@ -53,8 +54,9 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     return;
 }
 
-BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t SequenceNum,
-                          uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode)
+BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint32_t ContactId,
+                                        uint64_t SequenceNum, uint64_t SequenceId,
+                                        BPLib_CT_DispositionCode_t DispositionCode)
 {
     BPLib_CT_BundleSeqCollection_t *Collection;
     BPLib_CT_SeqCollectionIdx_t     DispCodeIdx;
@@ -75,7 +77,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
     /* If OpenCcs is empty, add first sequence number */
     if (Collection->SeqRangeLen == 0)
     {
-        Collection->SeqId = SequenceId;
+        Collection->SeqId       = SequenceId;
         Collection->FirstSeqNum = SequenceNum;
         Collection->SeqRange[0] = 1;
         Collection->SeqRangeLen = 1;
@@ -83,8 +85,13 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
         /* Update full CCS size accordingly */
         OpenCcs->Size += 1;
 
-        /* Set the time for the start of the collection of CCS data */
+        /* Set the collection start time for a time trigger */
         OpenCcs->CollectionStartTime = BPLib_TIME_GetMonotonicTime();
+
+        /* Set the maximum collection size for a size trigger */
+        BPLib_NC_ReaderLock();
+        OpenCcs->MaxSize = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].CSSizeTrigger;
+        BPLib_NC_ReaderUnlock();
     }
     else
     {
