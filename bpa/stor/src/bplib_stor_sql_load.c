@@ -34,6 +34,7 @@
 sqlite3_stmt* FindBlobStmt;
 sqlite3_stmt* FindForEgressIDStmt;
 sqlite3_stmt* MarkEgressedStmt;
+sqlite3_stmt* ResetRetransmitStmt;
 
 /* SQL query strings */
 
@@ -43,9 +44,19 @@ const char* FindBlobSQL =
 "WHERE bundle_row = ?;";
 
 char FindForEgressIdSQL[BPLIB_SQL_MAX_STRLEN] = {0};
+char FindForEgressIdRetransmitSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 
 const char* MarkEgressedSQL =
-"UPDATE bundle_data SET egress_attempted = 1 WHERE id = ?;";
+"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ? AND is_custodial = 0);";
+
+const char* ResetRetransmitTriggerSQL =
+"UPDATE bundle_data SET retransmit_timestamp = retransmit_trigger + ? WHERE (id = ? AND is_custodial = 1);";
+
+const char *FindForEgressIdBaseSQL =
+"SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND "
+            "((is_custodial = 0 AND egress_attempted = 0) OR "
+            "(is_custodial = 1 AND retransmit_trigger != ? AND retransmit_timestamp <= ?)) "
+            "ORDER BY action_timestamp ASC LIMIT ?;";
 
 /* ==================== */
 /* Function Definitions */
@@ -56,20 +67,11 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
 {
     BPLib_Status_t Status;
     SQL_Status_t   SQLStatus;
-    size_t         i;
     sqlite3*       db;
-    size_t         MaxWhereLen;
-    size_t         CurrWhereLen;
     char           WhereClause[BPLIB_SQL_MAX_STRLEN] = {0};
-    const char*    FindForDestNodeSql_RangeClause = "((dest_node BETWEEN ? AND ?) AND";
-    const char*    FindForDestNodeSql_EqualityClause = "((dest_node = ?) AND";
-    const char*    FindForDestServSql_RangeClause = " (dest_service BETWEEN ? AND ?))";
-    const char*    FindForDestServSql_EqalityClause = " (dest_service = ?))";
-    const char**   FindClausePtr;
 
     Status      = BPLIB_SUCCESS;
     db          = Inst->BundleStorage.db;
-    MaxWhereLen = BPLIB_SQL_MAX_STRLEN - 102; /* size of final query minus the non-where clause stuff */
 
     if ((Inst == NULL) || (Batch == NULL) || (DestEIDs == NULL))
     {
@@ -81,98 +83,18 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
         return BPLIB_STOR_PARAM_ERR;
     }
 
-    /* To keep search as efficient possible, we generate one combined query that contains all
-    ** the DestEID patterns.
-    **
-    ** NOTE:
-    ** This bit is tricky to understand from inspection. Basically, for each destination
-    ** eid pattern node number or service number it checks if the pattern is a true pattern
-    ** depicting a range, or if the minimum value equals the maximum value. In the former 
-    ** case, it checks if either dest_node or dest_service is "BETWEEN ? AND ?". In the
-    ** latter case it does an exact value check, so whether dest_node or dest_service "= ?".
-    ** This is a minor optimization since exact queries are a bit faster in sqlite than 
-    ** range queries. The final output should look something like 
-    ** "((dest_node BETWEEN ? AND ?)) AND (dest_service = ?)) OR 
-    **  ((dest_node = ?) AND (dest_service BETWEEN ? AND ?)) OR
-    **  ((dest_node BETWEEN ? AND ?) AND (dest_service BETWEEN ? AND ?))",
-    ** or any additional combinations of the sort, depending on the DestEIDs.
-    */
-
-    CurrWhereLen = 0;
-
-    for (i = 0; i < NumEIDs; i++)
+    Status = BPLib_SQL_GetDestEidWhereClause(DestEIDs, NumEIDs, WhereClause);
+    if (Status != BPLIB_SUCCESS)
     {
-        /* If maxNode == minNode, do an exact query, otherwise do a range query */
-        if (DestEIDs[i].MaxNode == DestEIDs[i].MinNode)
-        {
-            CurrWhereLen += strlen(FindForDestNodeSql_EqualityClause);
-            FindClausePtr = &FindForDestNodeSql_EqualityClause;
-        }
-        else
-        {
-            CurrWhereLen += strlen(FindForDestNodeSql_RangeClause);
-            FindClausePtr = &FindForDestNodeSql_RangeClause;
-        }
-
-        if (CurrWhereLen >= MaxWhereLen)
-        {
-            fprintf(stderr, "Programming Error: Node WHERE clause too long\n");
-            return BPLIB_STOR_SQL_OVERFLOW_ERR;       
-        }
-        else
-        {
-            /* Add the node query to the where clause */
-            strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
-        }
-
-        /* If MaxService == MinService, do an exact query, otherwise do a range query */
-        if (DestEIDs[i].MaxService == DestEIDs[i].MinService)
-        {
-            CurrWhereLen += strlen(FindForDestServSql_EqalityClause);
-            FindClausePtr = &FindForDestServSql_EqalityClause;
-        }
-        else
-        {
-            CurrWhereLen += strlen(FindForDestServSql_RangeClause);
-            FindClausePtr = &FindForDestServSql_RangeClause;
-        }
-
-        if (CurrWhereLen >= MaxWhereLen)
-        {
-            fprintf(stderr, "Programming Error: Node WHERE clause too long\n");
-            return BPLIB_STOR_SQL_OVERFLOW_ERR;
-        }
-        else
-        {
-            /* Add the service query to the where clause */
-            strncat(WhereClause, *FindClausePtr, MaxWhereLen - strlen(WhereClause));
-        }
-
-        /* Link multiple EID queries with an OR, unless this is the last EID */
-        if (i != (NumEIDs - 1))
-        {
-            if (CurrWhereLen + strlen(" OR ") >= MaxWhereLen)
-            {
-                fprintf(stderr, "Programming Error: OR WHERE clause too long\n");
-                return BPLIB_STOR_SQL_OVERFLOW_ERR;
-            }
-            else
-            {
-                strncat(WhereClause, " OR ", MaxWhereLen - CurrWhereLen);
-                CurrWhereLen += strlen(" OR ");
-            }
-        }
+        return Status;
     }
-
-    WhereClause[strlen(WhereClause)] = '\0';
 
     /* 
     ** Build the final query. Note that "INDEXED BY idx_egress_id" is necessary to force
     ** sqlite to use the right index, otherwise it will try to use the much slower
     ** egress_attempted index by default, which will result in worse performance.
     */
-    snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN,
-            "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND egress_attempted = 0 ORDER BY action_timestamp ASC LIMIT ?;",
+    snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN, FindForEgressIdBaseSQL,
             WhereClause);
 
     FindForEgressIdSQL[strlen(FindForEgressIdSQL)] = '\0';
@@ -218,6 +140,7 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
     sqlite3_reset(FindForEgressIDStmt);
 
     BindIndex = 1;
+    /* Bind destination EID query */
     for (i = 0; i < NumEIDs; i++)
     {
         SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MinNode);
@@ -256,6 +179,23 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
 
     }
 
+    /* Bind retransmit_trigger to garbage value */
+    SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, BPLIB_NO_RETRANSMIT_TRIGGER);
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind retransmit_trigger: %s\n", sqlite3_errmsg(db));
+        return SQLStatus;
+    }
+
+    /* Bind retransmit_time to current time */
+    SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, BPLib_TIME_GetMonotonicTime());
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind retransmit_time: %s\n", sqlite3_errmsg(db));
+        return SQLStatus;
+    }
+
+    /* Bind maximum bundle limit */
     SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, MaxBundles);
     if (SQLStatus != SQLITE_OK)
     {
@@ -320,12 +260,24 @@ BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, BPLib_STOR_Lo
         Status = BPLIB_STOR_SQL_MARK_EGRESSED_ERR;
     }
 
+    if (SQLStatus == SQLITE_OK)
+    {
+        SQLStatus = sqlite3_prepare_v2(db, ResetRetransmitTriggerSQL, -1, &ResetRetransmitStmt, 0);
+    }
+
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Programming Error: ResetRetransmitTriggerSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
+        Status = BPLIB_STOR_SQL_MARK_EGRESSED_ERR;
+    }
+
     if (Status == BPLIB_SUCCESS)
     {
         SQLStatus = BPLib_SQL_MarkBatchEgressedImpl(Inst, Batch);
     }
 
     sqlite3_finalize(MarkEgressedStmt);
+    sqlite3_finalize(ResetRetransmitStmt);
 
     if (SQLStatus != SQLITE_OK)
     {
@@ -355,14 +307,44 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
     /* Go through the load batch and add each ID as egressed */
     for (i = 0; i < Batch->Size; i++)
     {
+        /* Mark non-custodial bundles as egressed */
         sqlite3_reset(MarkEgressedStmt);
 
-        sqlite3_bind_int64(MarkEgressedStmt, 1, Batch->BundleRowIDs[i]);
+        SQLStatus = sqlite3_bind_int64(MarkEgressedStmt, 1, Batch->BundleRowIDs[i]);
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
+            break;
+        }
 
         SQLStatus = sqlite3_step(MarkEgressedStmt);
         if (SQLStatus != SQLITE_DONE)
         {
             fprintf(stderr, "Mark Egressed Failed: %s\n", sqlite3_errstr(SQLStatus));
+            break;
+        }
+
+        /* Reset retransmission trigger for custodial bundles */
+        sqlite3_reset(ResetRetransmitStmt);
+
+        SQLStatus = sqlite3_bind_int64(ResetRetransmitStmt, 1, BPLib_TIME_GetMonotonicTime());
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to bind retransmission_timestamp: %s\n", sqlite3_errmsg(db));
+            break;
+        }
+
+        SQLStatus = sqlite3_bind_int64(ResetRetransmitStmt, 2, Batch->BundleRowIDs[i]);
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
+            break;
+        }
+
+        SQLStatus = sqlite3_step(ResetRetransmitStmt);
+        if (SQLStatus != SQLITE_DONE)
+        {
+            fprintf(stderr, "Reset Transmit Failed: %s\n", sqlite3_errstr(SQLStatus));
             break;
         }
     }

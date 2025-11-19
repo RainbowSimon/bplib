@@ -44,26 +44,23 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
 {
     BPLib_Status_t Status;
 
-    if (Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
+    /* Check whether the bundle is an administrative record destined for this node */
+    if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&
+        BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
     {
-        /* Check whether the bundle is an administrative record destined for this node */
-        if (BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
-        {
-            BPLib_ARP_AdminRecord_t BundleAdminRecord;
+        BPLib_ARP_AdminRecord_t BundleAdminRecord;
 
-            /* Recover the admin record from the bundle */
-            memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.raw_bytes), sizeof(BPLib_ARP_AdminRecord_t));
+        /* Recover the admin record from the bundle */
+        memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.raw_bytes), sizeof(BPLib_ARP_AdminRecord_t));
 
-            /* Send the deserialized CCS off to CT */
-            (void) BPLib_CT_ProcessCcs(Inst, &BundleAdminRecord.AdminRecordBody.CCS);
+        /* Send the deserialized CCS off to CT */
+        (void) BPLib_CT_ProcessCcs(Inst, &BundleAdminRecord.AdminRecordBody.CCS);
 
-            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
-            return NO_NEXT_STATE;
-        }
-        else
-        {
-            /* This is an outbound administrative record */
-        }
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);        
+        BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+        
+        return NO_NEXT_STATE;
     }
     else
     {
@@ -71,7 +68,10 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
 
         if (Status != BPLIB_SUCCESS)
         {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+
             return NO_NEXT_STATE;
         }
     }
@@ -155,6 +155,10 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
     BPLib_EID_t* DestEID;
     BPLib_CLA_ContactRunState_t ContactState;
 
+    /* Default to garbage values */
+    Bundle->Meta.RetransmitTime = BPLIB_NO_RETRANSMIT_TRIGGER;
+    Bundle->Meta.EgressID = BPLIB_MAX_NUM_CONTACTS;
+
     /* For build 7.0 our ingress route strategy is as follows:
     ** - If the bundle is local, forward to the channel immediatley
     ** - If the bundle is for an available contact, deliver without storing
@@ -195,17 +199,29 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     {
                         /* We have a contact we can deliver to: forward without storing */
                         Bundle->Meta.EgressID = i;
+                        
+                        /* Custodial bundles still need to be stored, even during a loopback */
+                        if (Bundle->Meta.IsCustodial)
+                        {
+                            Bundle->Meta.RetransmitTime = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[i].RetransmitTimeout;
+                            BPLib_STOR_StoreBundle(Inst, Bundle);
+                        }
+                        else
+                        {
+                            BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
+                        }
+
                         BPLib_NC_ReaderUnlock();
-                        BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
-                        return NO_NEXT_STATE;
+                        return NO_NEXT_STATE;                        
                     }
                 }
             }
         }
     }
+
     BPLib_NC_ReaderUnlock();
 
-    /* We never found an active channel or contact: store this bundle */
+    /* Either no egress path was found or the bundle was custodial and must be stored */
     BPLib_STOR_StoreBundle(Inst, Bundle);
     return NO_NEXT_STATE;
 }

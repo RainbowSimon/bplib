@@ -34,7 +34,7 @@
 #define BPLIB_STOR_LOADBATCHSIZE 30000
 #endif
 
-typedef struct BPLib_STOR_LoadBatch
+typedef struct
 {
     int64_t BundleRowIDs[BPLIB_STOR_LOADBATCHSIZE];
     size_t Size;

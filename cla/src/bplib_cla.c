@@ -259,41 +259,53 @@ BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId
     BPLib_Status_t              Status;
     BPLib_CLA_ContactRunState_t RunState;
 
-    if (ContactId < BPLIB_MAX_NUM_CONTACTS)
+    if (ContactId >= BPLIB_MAX_NUM_CONTACTS)
     {
-        (void) BPLib_CLA_GetContactRunState(ContactId, &RunState); /* Ignore return status since ContactId is valid */
-        if (RunState == BPLIB_CLA_SETUP || RunState == BPLIB_CLA_STOPPED)
-        { /* Contact must be set up before running */
-            Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactStart(ContactId);
-            if (Status == BPLIB_SUCCESS)
-            {
-                (void) BPLib_CT_AssignSeqCounter(Inst, ContactId);
-                (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STARTED); /* Ignore return since pre-call run state is valid */
-            }
-        }
-        else if (RunState == BPLIB_CLA_STARTED)
-        {
-            Status = BPLIB_SUCCESS;
-            BPLib_EM_SendEvent(BPLIB_CLA_CONTACT_NO_STATE_CHG_DBG_EID,
-                                BPLib_EM_EventType_DEBUG,
-                                "Contact with ID #%d is already started",
-                                ContactId);
-        }
-        else
-        {
-            Status = BPLIB_CLA_INCORRECT_STATE;
-            BPLib_EM_SendEvent(BPLIB_CLA_CONTACT_NO_STATE_CHG_DBG_EID,
-                                BPLib_EM_EventType_DEBUG,
-                                "Contact with ID #%d must be setup before starting",
-                                ContactId);
-        }
-    }
-    else
-    {
-        Status = BPLIB_INVALID_CONT_ID_ERR;
         BPLib_EM_SendEvent(BPLIB_CLA_INVALID_CONTACT_ID_DBG_EID,
                             BPLib_EM_EventType_DEBUG,
                             "Contact ID %d is invalid",
+                            ContactId);
+        return BPLIB_INVALID_CONT_ID_ERR;
+    }
+
+    (void) BPLib_CLA_GetContactRunState(ContactId, &RunState); /* Ignore return status since ContactId is valid */
+
+    if (RunState == BPLIB_CLA_SETUP || RunState == BPLIB_CLA_STOPPED)
+    { /* Contact must be set up before running */
+        Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactStart(ContactId);
+        if (Status == BPLIB_SUCCESS)
+        {
+            (void) BPLib_CT_AssignSeqCounter(Inst, ContactId);
+
+            Status = BPLib_STOR_SetNewRetransmitTrigger(Inst, ContactId);
+            
+            if (Status != BPLIB_SUCCESS)
+            {
+                BPLib_EM_SendEvent(BPLIB_CLA_RESET_TRIGGERS_DBG_EID, BPLib_EM_EventType_DEBUG,
+                                    "Setting new retransmission triggers for stored bundles on contact %d failed, Status = %d.",
+                                    ContactId, Status);                
+            }
+            else
+            {
+                (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STARTED); /* Ignore return since pre-call run state is valid */
+            }
+
+        }
+    }
+    else if (RunState == BPLIB_CLA_STARTED)
+    {
+        Status = BPLIB_SUCCESS;
+        BPLib_EM_SendEvent(BPLIB_CLA_CONTACT_NO_STATE_CHG_DBG_EID,
+                            BPLib_EM_EventType_DEBUG,
+                            "Contact with ID #%d is already started",
+                            ContactId);
+    }
+    else
+    {
+        Status = BPLIB_CLA_INCORRECT_STATE;
+        BPLib_EM_SendEvent(BPLIB_CLA_CONTACT_NO_STATE_CHG_DBG_EID,
+                            BPLib_EM_EventType_DEBUG,
+                            "Contact with ID #%d must be setup before starting",
                             ContactId);
     }
 

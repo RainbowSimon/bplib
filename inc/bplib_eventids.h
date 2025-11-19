@@ -154,12 +154,13 @@
 #define BPLIB_STOR_DELETE_DBG_EID                       (614u)
 #define BPLIB_STOR_DUPL_DBG_EID                         (615u)
 #define BPLIB_STOR_CLEANUP_INF_EID                      (616u)
+#define BPLIB_STOR_CCS_ERR_EID                          (617u)
+#define BPLIB_STOR_RETRANSMIT_UPDATE_DBG_EID            (618u)
 
 /* ============ */
 /* BI event IDs */
 /* ============ */
 #define BPLIB_BI_INGRESS_CBOR_DECODE_INF_EID            (650u)
-#define BPLIB_BI_INGRESS_NO_STOR_ERR_EID                (651u)
 
 /* ============= */
 /* CLA event IDs */
@@ -169,6 +170,7 @@
 #define BPLIB_CLA_INVALID_CONTACT_ID_DBG_EID            (662u)
 #define BPLIB_CLA_REMOVE_QUEUE_FLUSH_DGB_EID            (663u)
 #define BPLIB_CLA_DUPLICATE_EIDS_WRN_EID                (664u)
+#define BPLIB_CLA_RESET_TRIGGERS_DBG_EID                (665u)
 
 /* ============ */
 /* PI event IDs */
@@ -206,5 +208,6 @@
 #define BPLIB_CT_BUNDLE_DLT_ERR_EID                     (753u)
 #define BPLIB_CT_CCS_CRRPTD_ERR_EID                     (754u)
 #define BPLIB_CT_INV_EGRESS_ID_ERR_EID                  (755u)
+#define BPLIB_CT_NO_STOR_ERR_EID                        (756u)
 
 #endif /* BPLIB_EVENTIDS_H */

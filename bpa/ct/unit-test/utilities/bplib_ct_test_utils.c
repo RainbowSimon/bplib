@@ -42,6 +42,9 @@ void BPLib_CT_Test_Setup(void)
     UT_ResetState(0);
 
     memset(&BplibInst, 0, sizeof(BPLib_Instance_t));
+    UT_SetHandlerFunction(UT_KEY(BPLib_AS_Increment), UT_Handler_BPLib_AS_Increment, NULL);
+    UT_SetHandlerFunction(UT_KEY(BPLib_AS_Decrement), UT_Handler_BPLib_AS_Decrement, NULL);
+
 }
 
 void BPLib_CT_Test_Teardown(void)
