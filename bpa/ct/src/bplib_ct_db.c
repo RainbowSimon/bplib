@@ -96,7 +96,7 @@ BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqId,
 
     Inst->Ct.CurrDbSize++;
     
-    return BPLib_RBT_InsertValueGeneric(SeqId, &(Inst->Ct.SeqTreeRoot), 
+    Status = BPLib_RBT_InsertValueGeneric(SeqId, &(Inst->Ct.SeqTreeRoot), 
                                         &(DbEntry->SeqRbtLink),
                                         BPLib_CT_CompareDbEntries, &SeqNum);
 

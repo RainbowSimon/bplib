@@ -51,7 +51,7 @@
 /**
  ** \brief Defines the total size of a small memory block
 */
-#define BPLIB_MEM_SMALL_BLK_SIZE (124u)
+#define BPLIB_MEM_SMALL_BLK_SIZE (128u)
 
 /**
  ** \brief Defines the size of a small memory block's available user data

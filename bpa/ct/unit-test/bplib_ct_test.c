@@ -193,6 +193,7 @@ void Test_BPLib_CT_ProcessNewBundle_StorFull(void)
 void Test_BPLib_CT_ProcessNewBundle_Dupl(void)
 {
     BPLib_Bundle_t Bundle;
+    BPLib_CT_DbEntry_t Entry1;  /* Existing DB entry for a duplicate bundle */
 
     /* Set up custodial bundle */
     memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
@@ -201,7 +202,7 @@ void Test_BPLib_CT_ProcessNewBundle_Dupl(void)
     Bundle.blocks.ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS - 1].BlockData.CustodyBlockData.BundleSeqNum = 33;
 
     /* Return link with duplicate bundle */
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].IdRbtLink));
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(Entry1.IdRbtLink));
 
     /*
     ** CCS data explanation:
@@ -233,6 +234,8 @@ void Test_BPLib_CT_UpdateBundle_Null(void)
 void Test_BPLib_CT_UpdateBundle_Custodial(void)
 {
     BPLib_Bundle_t Bundle;
+    BPLib_MEM_Block_t MemBlk;
+    BPLib_CT_DbEntry_t *NewDbEntry;
 
     /* Set up custodial bundle */
     memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
@@ -247,22 +250,19 @@ void Test_BPLib_CT_UpdateBundle_Custodial(void)
     BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS] = 69;
 
     /* Set up CTDB context */
-    BplibInst.Ct.Ctdb[0].Used = true;
-    BplibInst.Ct.Ctdb[1].Used = false;
-    BplibInst.Ct.LastDbEntry = 0;
+    UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BlockAlloc), 1, (UT_IntReturn_t) &MemBlk);
+    NewDbEntry = &MemBlk.user_data.DbEntry;
     BplibInst.Ct.CurrDbSize = 10;
-
+    
     UtAssert_INT32_EQ(BPLib_CT_UpdateBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
     
     UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqId, 56);
     UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqNum, 69);
     UtAssert_STUB_COUNT(BPLib_EID_CopyEids, 1);
-    UtAssert_EQ(bool, BplibInst.Ct.Ctdb[1].Used, true);
-    UtAssert_EQ(uint32_t, BplibInst.Ct.Ctdb[1].BundleId, 0xdead);
-    UtAssert_EQ(uint64_t, BplibInst.Ct.Ctdb[1].SeqId, 56);
-    UtAssert_EQ(uint64_t, BplibInst.Ct.Ctdb[1].SeqNum, 69);
+    UtAssert_EQ(uint32_t, NewDbEntry->BundleId, 0xdead);
+    UtAssert_EQ(uint64_t, NewDbEntry->SeqId, 56);
+    UtAssert_EQ(uint64_t, NewDbEntry->SeqNum, 69);
     UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, 11);
-    UtAssert_EQ(size_t, BplibInst.Ct.LastDbEntry, 1);
     UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS], 70);
 }
 
@@ -299,6 +299,8 @@ void Test_BPLib_CT_UpdateBundle_BadEgressId(void)
 void Test_BPLib_CT_UpdateBundle_Retransmit(void)
 {
     BPLib_Bundle_t Bundle;
+    BPLib_MEM_Block_t MemBlk;
+    BPLib_CT_DbEntry_t *ExistingDbEntry;
 
     /* Set up custodial bundle */
     memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
@@ -313,15 +315,15 @@ void Test_BPLib_CT_UpdateBundle_Retransmit(void)
     BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS] = 69;
 
     /* Set up CTDB context */
-    BplibInst.Ct.Ctdb[0].Used = true;
-    BplibInst.Ct.Ctdb[0].SeqId = 12;
-    BplibInst.Ct.Ctdb[0].SeqNum = 34;
-    BplibInst.Ct.Ctdb[1].Used = false;
-    BplibInst.Ct.LastDbEntry = 0;
-    BplibInst.Ct.CurrDbSize = 10;
-
+    UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BlockAlloc), 1, (UT_IntReturn_t) &MemBlk);
+    ExistingDbEntry = &MemBlk.user_data.DbEntry;
+    ExistingDbEntry->SeqId = 12;
+    ExistingDbEntry->SeqNum = 34;
+    ExistingDbEntry->BundleId = 0xdead;
+    BplibInst.Ct.CurrDbSize = 10;    
+    
     /* Find bundle in CTDB */
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].IdRbtLink));
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(ExistingDbEntry->IdRbtLink));
 
     UtAssert_INT32_EQ(BPLib_CT_UpdateBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
     
@@ -403,7 +405,7 @@ void Test_BPLib_CT_ProcessCcs_Nominal(void)
     ExpCtdbSize = BPLIB_CT_DB_MAX_ENTRIES - 9; /* CCS should remove only the 9 custody accepted entries from CTDB */
 
     /* Set RBT to always return same link (for simplicity) */
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].SeqRbtLink));
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.SeqTreeRoot));
 
     UtAssert_INT32_EQ(BPLib_CT_ProcessCcs(&BplibInst, &Ccs), BPLIB_SUCCESS);
     UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, ExpCtdbSize);

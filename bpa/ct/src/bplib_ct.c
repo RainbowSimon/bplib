@@ -150,7 +150,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     {
         DispCode = BPLib_CT_CustodyAccepted;
     }
-    /* else PDB rejected custody */
+    /* Else PDB rejected custody */
 
     /* Add to an open CCS to confirm either acceptance or rejection */
     OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID),

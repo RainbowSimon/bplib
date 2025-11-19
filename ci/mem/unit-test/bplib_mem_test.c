@@ -99,8 +99,8 @@ void Test_BPLib_MEM_BlockListAlloc_Nominal(void)
     memset(&Pool, 0, sizeof(Pool));
 
     #ifdef BPLIB_MEM_CFE_IMPL
-    UT_SetDataBuffer(UT_KEY(CFE_ES_GetPoolBuf), &Blk1, sizeof(BPLib_MEM_Block_t), false);
-    UT_SetDataBuffer(UT_KEY(CFE_ES_GetPoolBuf), &Blk2, sizeof(BPLib_MEM_Block_t), false);
+    UT_SetDataBuffer(UT_KEY(CFE_ES_GetPoolBuf), &Blk1, BPLIB_MEM_BIG_BLK_SIZE, false);
+    UT_SetDataBuffer(UT_KEY(CFE_ES_GetPoolBuf), &Blk2, BPLIB_MEM_BIG_BLK_SIZE, false);
     #endif
 
     HeadBlk = BPLib_MEM_BlockListAlloc(&Pool, BPLIB_MEM_BIG_BLK_DATA_SIZE * 2, BPLIB_MEM_BIG_BLK_SIZE);
