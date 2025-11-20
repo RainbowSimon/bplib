@@ -156,9 +156,8 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(Inst->pool), &(CtebPtr->BlockSrcAdminEID),
                                         CtebPtr->BundleSeqId);
 
-    Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), &(Inst->pool),
-                                    Bundle->Meta.IngressID, CtebPtr->BundleSeqNum,
-                                    CtebPtr->BundleSeqId, DispCode);
+    Status = BPLib_CT_AddToOpenCcs(Inst, OpenCcsIdx, Bundle->Meta.IngressID,
+                                    CtebPtr, DispCode);
 
     if (DispCode == BPLib_CT_CustodyRefused)
     {
