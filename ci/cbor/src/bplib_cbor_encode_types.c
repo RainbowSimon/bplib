@@ -219,10 +219,8 @@ BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
                                     UsefulOutBuf* EncodeBuffer)
 {
     BPLib_Status_t                 Status;
-    uint8_t                        UsefulBufError;
     uint8_t                        CollectionNum;
     uint8_t                        SeqRangeEntry;
-    UsefulBufC                     SizeData;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollection;
     
     Status = BPLIB_SUCCESS;
