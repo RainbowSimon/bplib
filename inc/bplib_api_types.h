@@ -515,9 +515,9 @@ typedef enum
 
 /* Administrative Record Processor Errors */
 #define BPLIB_ARP_UNK_REC_TYPE_ERR                     ((BPLib_Status_t) -370)
+#define BPLIB_ARP_CREATE_JOB_ERR                       ((BPLib_Status_t) -371)
+#define BPLIB_ARP_NULL_BUNDLE_ERR                      ((BPLib_Status_t) -372)
 /*
-#define BPLIB_ARP_GENERIC_ERR_371                      ((BPLib_Status_t) -371)
-#define BPLIB_ARP_GENERIC_ERR_372                      ((BPLib_Status_t) -372)
 #define BPLIB_ARP_GENERIC_ERR_373                      ((BPLib_Status_t) -373)
 #define BPLIB_ARP_GENERIC_ERR_374                      ((BPLib_Status_t) -374)
 #define BPLIB_ARP_GENERIC_ERR_375                      ((BPLib_Status_t) -375)
