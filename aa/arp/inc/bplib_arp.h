@@ -181,10 +181,13 @@ void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_
  * \brief     When an open CCS hits a trigger, whether it be size, time, or number
  *            of open CCSs, this function will wrap that CCS into a bundle and
  *            place it on the job queue
+ * \param[in] Instance      Abstraction of the node that will be used for putting
+ *                          the bundle with a CCS in the payload on the job queue.
+ *                          Instance also contains the memory pool used to create
+ *                          the bundle
  * \param[in] InProgressCcs An in-progress CCS that has reached a configured limit
- * \param[in] Pool          Memory pool to generate a bundle from
  * \return    void
  */
-void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t* InProgressCcs, BPLib_MEM_Pool_t* Pool);
+void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* InProgressCcs);
 
 #endif /* BPLIB_ARP_H */

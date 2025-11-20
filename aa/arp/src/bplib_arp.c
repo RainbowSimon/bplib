@@ -24,6 +24,7 @@
 
 #include "bplib_arp.h"
 #include "bplib_as.h"
+#include "bplib_inst.h"
 
 /* ==================== */
 /* Function Definitions */
@@ -78,11 +79,12 @@ void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_
     memcpy((void*) &(Bundle->blob->user_data), AdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
 }
 
-void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t* InProgressCcs, BPLib_MEM_Pool_t* Pool)
+void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* InProgressCcs)
 {
     BPLib_ARP_AdminRecord_t CcsAdminRecord;
     uint8_t                 ExtBlockIdx;
     BPLib_Bundle_t*         Bundle;
+    BPLib_Status_t          Status;
 
     /* === Build the Administrative Record's CCS === */
 
@@ -102,23 +104,49 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_CT_OpenCcs_t* InProgressCcs, BPLib_MEM
 
     /* === Generate the bundle with a CCS Administrative Record as the payload === */
 
-    Bundle = BPLib_MEM_BundleAlloc(Pool, &CcsAdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
-
-    /* === Configure the bundle for egressing === */
-
-    /* Mark every block as requiring encoding */
-    Bundle->blocks.PrimaryBlock.RequiresEncode  = true;
-    Bundle->blocks.PayloadHeader.RequiresEncode = true;
-
-    for(ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
+    Bundle = BPLib_MEM_BundleAlloc(&(Instance->pool), &CcsAdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
+    if (Bundle != NULL)
     {
-        Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
+        /* === Configure the bundle for egressing === */
+
+        /* Mark every block as requiring encoding */
+        Bundle->blocks.PrimaryBlock.RequiresEncode  = true;
+        Bundle->blocks.PayloadHeader.RequiresEncode = true;
+
+        for(ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
+        {
+            Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
+        }
+
+        /* Set the administrative record flag */
+        Bundle->blocks.PrimaryBlock.BundleProcFlags |= BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+
+        /* Set routing destination of bundle */
+        BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.DestEID),
+                            InProgressCcs->SourceAdminEid);
+
+        /* === Put the constructed bundle on the job queue === */
+
+        Status = BPLib_QM_CreateJob(Instance, Bundle, CONTACT_IN_CT_TO_STOR, QM_PRI_NORMAL, QM_WAIT_FOREVER);
+        if (Status != BPLIB_SUCCESS)
+        { /* If something failed, cease bundle processing and free memory */
+            BPLib_MEM_BundleFree(&(Instance->pool), Bundle);
+
+            BPLib_EM_SendEvent(BPLIB_ARP_CREATE_JOB_ERR,
+                                BPLib_EM_EventType_INFORMATION,
+                                "Error putting an in-progress CCS on the job queue, RC = %d",
+                                Status);
+
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+        }
+    }
+    else
+    { /* BPLib_MEM_BundleAlloc returned NULL */
+        BPLib_EM_SendEvent(BPLIB_ARP_NULL_BUNDLE_ERR,
+                            BPLib_EM_EventType_ERROR,
+                            "Could not be allocated a bundle while processing an in-progress CCS");
     }
 
-    /* Set the administrative record flag */
-    Bundle->blocks.PrimaryBlock.BundleProcFlags |= BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
-
-    /* Set routing destination of bundle */
-    BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.DestEID),
-                        InProgressCcs->SourceAdminEid);
+    return;
 }

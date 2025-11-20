@@ -153,7 +153,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* else PDB rejected custody */
 
     /* Add to an open CCS to confirm either acceptance or rejection */
-    OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(Inst->pool), &(CtebPtr->BlockSrcAdminEID),
+    OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(Inst, &(CtebPtr->BlockSrcAdminEID),
                                         CtebPtr->BundleSeqId);
 
     Status = BPLib_CT_AddToOpenCcs(Inst, OpenCcsIdx, Bundle->Meta.IngressID,
