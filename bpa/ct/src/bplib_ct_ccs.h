@@ -34,9 +34,29 @@
 
 void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs);
 
-BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, BPLib_MEM_Pool_t* Pool,
-                                        uint32_t ContactId, uint64_t SequenceNum,
-                                        uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode);
+/**
+ * \brief     Add values from a CTEB to an open CCS's suite of information. Builds
+ *            the CCS into a bundle and sends the CCS if it reaches the size limit
+ * \param[in] Instance        The struct that holds the currently open CCSs, one
+ *                            of which we need to add to, and the memory pool from
+ *                            which bundles can be generated from if the open CCS
+ *                            reaches the size limit
+ * \param[in] OpenCcsIdx      Indicates which open CCS in Instances's CT context
+ *                            to add to
+ * \param[in] ContactId       Contact that the bundle came in on. This is used to
+ *                            determine the size limit of an open CCS
+ * \param[in] CtebPtr         CTEB information to store in the Open CCS's bundle
+ *                            sequence collection
+ * \param[in] DispositionCode The open CCS's bundle sequence collection to add
+ *                            CTEB information to
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * \retval    BPLIB_CT_CUSTODY_REFUSED_ERR: Open CCS data failed sanity checks
+ */
+BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsIdx,
+                                        uint32_t ContactId,
+                                        BPLib_CustodyBlockData_t* CtebPtr,
+                                        BPLib_CT_DispositionCode_t DispositionCode);
 
 size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_MEM_Pool_t* Pool,
                                 BPLib_EID_t *SourceAdminEID, uint64_t SequenceId);

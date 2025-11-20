@@ -34,6 +34,7 @@
 #include "bplib_arp.h"
 #include "bplib_stor.h"
 #include "bplib_nc.h"
+#include "bplib_inst.h"
 
 /*
 ** Function Definitions
@@ -54,20 +55,23 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     return;
 }
 
-BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, BPLib_MEM_Pool_t* Pool,
-                                        uint32_t ContactId, uint64_t SequenceNum,
-                                        uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode)
+BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsIdx,
+                                        uint32_t ContactId,
+                                        BPLib_CustodyBlockData_t* CtebPtr,
+                                        BPLib_CT_DispositionCode_t DispositionCode)
 {
     BPLib_CT_BundleSeqCollection_t *Collection;
     BPLib_CT_SeqCollectionIdx_t     DispCodeIdx;
+    BPLib_CT_OpenCcs_t*             OpenCcs;
 
+    OpenCcs     = &(Instance->Ct.OpenCcss[OpenCcsIdx]);
     DispCodeIdx = BPLib_ARP_GetDispCodeIdx(DispositionCode);
     Collection  = &(OpenCcs->BundleSeqCollections[DispCodeIdx]);
 
     /* Sanity checks */
     if ((Collection->SeqRangeLen != 0 && Collection->SeqRangeLen % 2 != 1) ||
         Collection->SeqRangeLen >= (BPLIB_CT_MAX_SEQ_RANGE_LEN - 1) ||
-        SequenceNum < Collection->LastSeqNumAdded)
+        CtebPtr->BundleSeqNum < Collection->LastSeqNumAdded)
     {
         BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
                 "Open CCS data failed sanity checks, check for memory corruption.");
@@ -77,8 +81,8 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, BPLib_MEM_Pool
     /* If OpenCcs is empty, add first sequence number */
     if (Collection->SeqRangeLen == 0)
     {
-        Collection->SeqId       = SequenceId;
-        Collection->FirstSeqNum = SequenceNum;
+        Collection->SeqId       = CtebPtr->BundleSeqId;
+        Collection->FirstSeqNum = CtebPtr->BundleSeqNum;
         Collection->SeqRange[0] = 1;
         Collection->SeqRangeLen = 1;
 
@@ -96,14 +100,14 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, BPLib_MEM_Pool
     else
     {
         /* If we received the previous sequence number, increment the relevant sequence range value */
-        if (SequenceNum == (Collection->LastSeqNumAdded + 1))
+        if (CtebPtr->BundleSeqNum == (Collection->LastSeqNumAdded + 1))
         {
             Collection->SeqRange[Collection->SeqRangeLen - 1]++;
         }
         /* If a gap in sequence numbers is detected, record missing sequence length */
         else
         {
-            Collection->SeqRange[Collection->SeqRangeLen] = SequenceNum - (Collection->LastSeqNumAdded + 1);
+            Collection->SeqRange[Collection->SeqRangeLen] = CtebPtr->BundleSeqNum - (Collection->LastSeqNumAdded + 1);
             Collection->SeqRange[Collection->SeqRangeLen + 1] = 1;
             Collection->SeqRangeLen += 2;
 
@@ -115,10 +119,10 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, BPLib_MEM_Pool
     /* Trigger CCS generation based on size */
     if (OpenCcs->Size >= OpenCcs->MaxSize)
     {
-        BPLib_CT_BuildAndSendOpenCcs(OpenCcs, Pool);
+        BPLib_CT_BuildAndSendOpenCcs(OpenCcs, &(Instance->pool));
     }
 
-    Collection->LastSeqNumAdded = SequenceNum;
+    Collection->LastSeqNumAdded = CtebPtr->BundleSeqNum;
 
     return BPLIB_SUCCESS;
 }
