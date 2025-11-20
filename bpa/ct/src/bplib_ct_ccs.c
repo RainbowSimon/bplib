@@ -183,7 +183,7 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_MEM_Pool_t* Poo
     return RetCcsIdx;
 }
 
-void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, BPLib_MEM_Pool_t* Pool)
+void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t* OpenCcs, BPLib_MEM_Pool_t* Pool)
 {
     /* Have ARP build CCS and send the open CCS */
     BPLib_ARP_ProcessInProgressCcs(OpenCcs, Pool);
