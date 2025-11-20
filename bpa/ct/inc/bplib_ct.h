@@ -28,6 +28,8 @@
 #include "bplib_api_types.h"
 #include "bplib_rbt.h"
 #include "bplib_bblocks.h"
+#include <pthread.h>
+
 
 /*
 ** Macros
@@ -196,6 +198,9 @@ typedef struct
     size_t CurrDbSize;                                          /** \brief Number of entries in CTDB */
     BPLib_RBT_Root_t SeqTreeRoot;                               /** \brief An RBT that allows for CTDB queries based on sequence ID/number */
     BPLib_RBT_Root_t IdTreeRoot;                                /** \brief An RBT that allows for CTDB queries based on bundle ID */
+
+    pthread_mutex_t DbLock;                                     /** \brief Read/write lock on CTDB */
+
 } BPLib_CT_Context_t;
 
 
