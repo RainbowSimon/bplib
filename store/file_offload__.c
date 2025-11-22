@@ -28,8 +28,11 @@
 #include "v7_mpool_bblocks.h"
 #include "v7_mpstream.h"
 
+/* for now this uses POSIX files directly */
 #include <fcntl.h>
-#include "vfs.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define BPLIB_FILE_PATH_SIZE     128
 #define BPLIB_FILE_OFFLOAD_MAGIC 0xdb5e774e
@@ -127,7 +130,7 @@ int bplib_file_offload_start(bplib_mpool_block_t *svc)
     state  = bplib_mpool_generic_data_cast(svc, BPLIB_FILE_OFFLOAD_MAGIC);
     if (state != NULL)
     {
-        result = vfs_mkdir(state->base_dir, 0700);
+        result = mkdir(state->base_dir, 0700);
         if (result == 0 || errno == EEXIST)
         {
             result = BP_SUCCESS;
@@ -184,7 +187,7 @@ static void bplib_file_offload_sid_to_name(bplib_file_offload_state_t *state, ch
         if (pd2 != NULL)
         {
             *pd2   = 0;
-            result = vfs_mkdir(name_buf, 0755);
+            result = mkdir(name_buf, 0755);
             if (result != 0)
             {
                 bplog(NULL, BP_FLAG_DIAGNOSTIC, "mkdir(%s): %s\n", name_buf, strerror(errno));
@@ -194,7 +197,7 @@ static void bplib_file_offload_sid_to_name(bplib_file_offload_state_t *state, ch
         if (pd1 != NULL)
         {
             *pd1   = 0;
-            result = vfs_mkdir(name_buf, 0755);
+            result = mkdir(name_buf, 0755);
             if (result != 0)
             {
                 bplog(NULL, BP_FLAG_DIAGNOSTIC, "mkdir(%s): %s\n", name_buf, strerror(errno));
@@ -217,7 +220,7 @@ static int bplib_file_offload_write_block_content(int fd, bplib_file_offload_rec
     rec->num_bytes += sz;
     rec->crc = bplib_crc_update(&BPLIB_CRC32_CASTAGNOLI, rec->crc, ptr, sz);
 
-    res = vfs_write(fd, ptr, sz);
+    res = write(fd, ptr, sz);
     if (res == sz)
     {
         status = BP_SUCCESS;
@@ -248,7 +251,7 @@ static int bplib_file_offload_read_block_content(int fd, bplib_file_offload_reco
 
     rec->num_bytes -= sz;
 
-    res = vfs_read(fd, ptr, sz);
+    res = read(fd, ptr, sz);
     if (res == sz)
     {
         status   = BP_SUCCESS;
@@ -508,14 +511,14 @@ static int bplib_file_offload_offload(bplib_mpool_block_t *svc, bp_sid_t *sid, b
     *sid = state->last_sid;
     bplib_file_offload_sid_to_name(state, bundle_file, sizeof(bundle_file), state->last_sid, true);
 
-    fd = vfs_open(bundle_file, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    fd = open(bundle_file, O_WRONLY | O_CREAT | O_TRUNC, 0600);
     if (fd >= 0)
     {
         memset(&rec, 0, sizeof(rec));
         rec.check_val = BPLIB_FILE_OFFLOAD_MAGIC;
         rec.crc       = bplib_crc_initial_value(&BPLIB_CRC32_CASTAGNOLI);
 
-        off = vfs_lseek(fd, sizeof(rec), SEEK_SET);
+        off = lseek(fd, sizeof(rec), SEEK_SET);
         if (off != sizeof(rec))
         {
             bplog(NULL, BP_FLAG_DIAGNOSTIC, "lseek(): %s\n", strerror(errno));
@@ -524,9 +527,9 @@ static int bplib_file_offload_offload(bplib_mpool_block_t *svc, bp_sid_t *sid, b
         result = bplib_file_offload_write_blocks(fd, &rec, pblk);
         if (result == BP_SUCCESS)
         {
-            vfs_fsync(fd);
+            fsync(fd);
 
-            vfs_lseek(fd, 0, SEEK_SET);
+            lseek(fd, 0, SEEK_SET);
             rec.crc = bplib_crc_finalize(&BPLIB_CRC32_CASTAGNOLI, rec.crc);
             if (write(fd, &rec, sizeof(rec)) != sizeof(rec))
             {
@@ -534,7 +537,7 @@ static int bplib_file_offload_offload(bplib_mpool_block_t *svc, bp_sid_t *sid, b
             }
         }
 
-        vfs_close(fd);
+        close(fd);
     }
 
     return result;
@@ -566,13 +569,13 @@ static int bplib_file_offload_restore(bplib_mpool_block_t *svc, bp_sid_t sid, bp
 
     do
     {
-        fd = vfs_open(bundle_file, O_RDONLY, 0600);
+        fd = open(bundle_file, O_RDONLY);
         if (fd < 0)
         {
             break;
         }
 
-        if (vfs_read(fd, &rec, sizeof(rec)) != sizeof(rec))
+        if (read(fd, &rec, sizeof(rec)) != sizeof(rec))
         {
             break;
         }
@@ -598,7 +601,7 @@ static int bplib_file_offload_restore(bplib_mpool_block_t *svc, bp_sid_t sid, bp
 
     if (fd >= 0)
     {
-        vfs_close(fd);
+        close(fd);
     }
 
     if (pblk != NULL && result != BP_SUCCESS)
@@ -625,7 +628,7 @@ static int bplib_file_offload_release(bplib_mpool_block_t *svc, bp_sid_t sid)
 
     bplib_file_offload_sid_to_name(state, bundle_file, sizeof(bundle_file), sid, false);
 
-    vfs_unlink(bundle_file);
+    unlink(bundle_file);
 
     return 0;
 }

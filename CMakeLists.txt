@@ -52,6 +52,10 @@ set(BPLIB_VERSION_STRING "3.0.99") # development
 set(BPLIB_SRC)
 set(BPLIB_COMMON_COMPILE_OPTIONS)
 
+message(STATUS "OS layer: ${BPLIB_OS_LAYER}")
+message(STATUS "Unit tests: ${BPLIB_ENABLE_UNIT_TESTS}")
+message(STATUS "Unit tests default: ${BPLIB_DEFAULT_BUILD_UNIT_TESTS}")
+
 # If using an external OSAL package, then locate it now
 # This needs to be done at the top level so the imported targets are
 # available to all submodules, for unit testing in particular.
@@ -134,6 +138,9 @@ else()
 
   # link with the requisite dependencies
   target_link_libraries(bplib ${TINYCBOR_LDFLAGS})
+
+  separate_arguments(RIOT_INCLUDES)
+  target_include_directories(bplib SYSTEM PRIVATE ${RIOT_INCLUDES})
 
   # Add in the required link libraries based on OS adapter selection
   # this should preferably be in OS subdirectory, but it needs to be done

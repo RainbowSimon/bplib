@@ -9,9 +9,9 @@
 
 # The BPv7 codec code currently uses the TinyCBOR external library
 # Use pkg-config to locate tinycbor dependency (for now)
-find_package(PkgConfig)
-pkg_search_module(TINYCBOR tinycbor REQUIRED)
-message(STATUS "Found tinycbor version ${TINYCBOR_VERSION}")
+#find_package(PkgConfig)
+#pkg_search_module(TINYCBOR tinycbor REQUIRED)
+#message(STATUS "Found tinycbor version ${TINYCBOR_VERSION}")
 
 add_library(bplib_v7 OBJECT
     src/v7_codec_common.c
@@ -32,6 +32,9 @@ add_library(bplib_v7 OBJECT
     src/v7_custody_acknowledgement_record.c
     src/v7.c
 )
+
+separate_arguments(TINYCBOR_INCLUDE_DIRS)
+target_include_directories(bplib_v7 PRIVATE ${TINYCBOR_INCLUDE_DIRS})
 
 target_include_directories(bplib_v7 PRIVATE
     # nothing outside of here should directly call TinyCBOR, so this

@@ -22,6 +22,9 @@ elseif(BPLIB_OS_LAYER STREQUAL POSIX)
 
     list(APPEND bplib_os_SOURCES src/posix.c)
 
+elseif(BPLIB_OS_LAYER STREQUAL RIOT)
+
+    list(APPEND bplib_os_SOURCES src/riot.c)
 else()
     message(FATAL_ERROR "Unknown OS adapter: ${BPLIB_OS_LAYER}")
 endif()
@@ -29,6 +32,9 @@ endif()
 add_library(bplib_os OBJECT
     ${bplib_os_SOURCES}
 )
+
+separate_arguments(RIOT_INCLUDES)
+target_include_directories(bplib_os SYSTEM PRIVATE ${RIOT_INCLUDES})
 
 target_include_directories(bplib_os PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
