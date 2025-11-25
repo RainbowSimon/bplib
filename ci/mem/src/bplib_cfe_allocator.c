@@ -15,10 +15,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * C implementation of Ben Kenwright's "Fast Efficient Fixed-Size Memory Pool"
- * https://arxiv.org/pdf/2210.16471
- *
  */
 
 #include "bplib_mem.h"
