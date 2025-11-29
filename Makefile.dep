@@ -1,0 +1,10 @@
+#USEPKG += tinycbor
+
+USEMODULE += vfs
+USEMODULE += core_mutex
+USEMODULE += core_thread
+USEMODULE += random
+USEMODULE += auto_init_random
+USEMODULE += ztimer
+USEMODULE += ztimer_msec
+USEMODULE += ztimer_sec

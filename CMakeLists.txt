@@ -96,12 +96,10 @@ else()
 
   # Building as a standalone library
   # This by will usually require a POSIX OS layer
-  if (BPLIB_INCLUDE_POSIX)
+  
+  list(APPEND BPLIB_SRC os/riot.c)
 
-    list(APPEND BPLIB_SRC os/posix.c)
-    list(APPEND BPLIB_LINK_LIBRARIES rt pthread)
 
-  endif()
 
   # Add the generic library target
   # The flavor of library (shared/static) being built here depends on the BUILD_SHARED_LIBS option
@@ -114,12 +112,15 @@ else()
   # If using GNU GCC, then also enable full warning reporting
   target_compile_options(bplib PRIVATE $<$<C_COMPILER_ID:GNU>:-Wall -Werror -pedantic>)
 
+  separate_arguments(RIOT_INCLUDES)
+  target_include_directories(bplib SYSTEM PRIVATE ${RIOT_INCLUDES})
+
   if (BPLIB_INCLUDE_BPV7)
 
     # Use pkg-config to locate tinycbor dependency (required only for v7)
-    find_package(PkgConfig)
-    pkg_search_module(TINYCBOR tinycbor)
-    message(STATUS "Found tinycbor version ${TINYCBOR_VERSION}")
+    #find_package(PkgConfig)
+    #pkg_search_module(TINYCBOR tinycbor)
+    #message(STATUS "Found tinycbor version ${TINYCBOR_VERSION}")
 
     list(APPEND BPLIB_LINK_LIBRARIES ${TINYCBOR_LIBRARIES})
     list(APPEND BPLIB_PRIVATE_INCLUDE_DIRS ${TINYCBOR_INCLUDE_DIRS})

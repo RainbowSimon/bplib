@@ -1,0 +1,7 @@
+# TODO change when moving to pkg
+INCLUDES += -isystem/home/simon/Code/dtn/bplib/bplib/inc
+#INCLUDES += -isystem/home/simon/Code/dtn/bplib/bplib/os/inc
+#INCLUDES += -isystem/home/simon/Code/dtn/bplib/bplib/common/inc
+#INCLUDES += -isystem/home/simon/Code/dtn/bplib/bplib/cache/inc
+
+ARCHIVES += $(BINDIR)/libbplib.a
