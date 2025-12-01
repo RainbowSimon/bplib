@@ -75,11 +75,6 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdm
 void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs);
 
 BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
-<<<<<<< HEAD
             BPLib_CT_Context_t *Context, BPLib_CT_BundleSeqCollection_t *SeqCollection);
 
-=======
-                                        BPLib_CT_BundleSeqCollection_t *SeqCollection);
-                                        
->>>>>>> c476501a07d923d1156f7b68b439d0aea8147acb
 #endif /* BPLIB_CT_CCS_H */
