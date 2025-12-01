@@ -366,9 +366,6 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_ENTER_ARR_ERR;
             }
 
-            /* Zero out all values, this is particularly important for Admin Record */
-            memset(&AdminRecord, 0, sizeof(BPLib_ARP_AdminRecord_t));
-
             /* Parse admin record type */
             Status = AdminRecordDataParser.RecordTypeParser(ctx, &TempAdminRecordType);
             if (Status != BPLIB_SUCCESS)
