@@ -104,6 +104,7 @@ void BPLib_ARP_Test_Setup(void)
     /* Initialize test environment to default state for every test */
     UT_ResetState(0);
 
+    /* Initialize the CCS Administrative Record */
     AdminRecord.AdminRecordType = BPLib_CT_CcsRecordTypeCode;
 
     AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqId           = 1;
