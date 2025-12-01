@@ -55,6 +55,50 @@ void BPLib_ARP_Test_VerifyIncrement(BPLib_EID_t EID, BPLib_AS_Counter_t Counter,
     }
 }
 
+void BPLib_ARP_Test_EIDs_EQ(BPLib_EID_t* Actual, BPLib_EID_t* Reference)
+{
+    UtAssert_EQ(uint64_t , Actual->Scheme, Reference->Scheme);
+    UtAssert_EQ(uint64_t , Actual->IpnSspFormat, Reference->IpnSspFormat);
+    UtAssert_EQ(uint64_t , Actual->Allocator, Reference->Allocator);
+    UtAssert_EQ(uint64_t , Actual->Node, Reference->Node);
+    UtAssert_EQ(uint64_t , Actual->Service, Reference->Service);
+}
+
+void BPLIB_ARP_Test_BundleSequenceCollections_EQ(BPLib_CT_BundleSeqCollection_t* Actual, BPLib_CT_BundleSeqCollection_t* Reference)
+{
+    uint8_t SeqRangeEntry;
+
+    /* Assess accepted custody values */
+    UtAssert_EQ(uint64_t, Actual[BPLib_CT_CustodyAccepted_Idx].SeqId, Reference[BPLib_CT_CustodyAccepted_Idx].SeqId);
+    UtAssert_EQ(uint64_t, Actual[BPLib_CT_CustodyAccepted_Idx].FirstSeqNum, Reference[BPLib_CT_CustodyAccepted_Idx].FirstSeqNum);
+    UtAssert_EQ(size_t, Actual[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen, Reference[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen);
+
+    for (SeqRangeEntry = 0; SeqRangeEntry < Reference[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen; SeqRangeEntry++)
+    {
+        UtAssert_EQ(uint64_t,
+                    Actual[BPLib_CT_CustodyAccepted_Idx].SeqRange[SeqRangeEntry],
+                    Reference[BPLib_CT_CustodyAccepted_Idx].SeqRange[SeqRangeEntry]);
+    }
+
+    UtAssert_EQ(size_t, Actual[BPLib_CT_CustodyAccepted_Idx].LastSeqNumAdded, Reference[BPLib_CT_CustodyAccepted_Idx].LastSeqNumAdded);
+    UtAssert_EQ(BPLib_CT_DispositionCode_t, Actual[BPLib_CT_CustodyAccepted_Idx].DispositionCode, Reference[BPLib_CT_CustodyAccepted_Idx].DispositionCode);
+
+    /* Assess refused custody values */
+    UtAssert_EQ(uint64_t, Actual[BPLib_CT_CustodyRefused_Idx].SeqId, Reference[BPLib_CT_CustodyRefused_Idx].SeqId);
+    UtAssert_EQ(uint64_t, Actual[BPLib_CT_CustodyRefused_Idx].FirstSeqNum, Reference[BPLib_CT_CustodyRefused_Idx].FirstSeqNum);
+    UtAssert_EQ(size_t, Actual[BPLib_CT_CustodyRefused_Idx].SeqRangeLen, Reference[BPLib_CT_CustodyRefused_Idx].SeqRangeLen);
+
+    for (SeqRangeEntry = 0; SeqRangeEntry < Reference[BPLib_CT_CustodyRefused_Idx].SeqRangeLen; SeqRangeEntry++)
+    {
+        UtAssert_EQ(uint64_t,
+                    Actual[BPLib_CT_CustodyRefused_Idx].SeqRange[SeqRangeEntry],
+                    Reference[BPLib_CT_CustodyRefused_Idx].SeqRange[SeqRangeEntry]);
+    }
+
+    UtAssert_EQ(size_t, Actual[BPLib_CT_CustodyRefused_Idx].LastSeqNumAdded, Reference[BPLib_CT_CustodyRefused_Idx].LastSeqNumAdded);
+    UtAssert_EQ(BPLib_CT_DispositionCode_t, Actual[BPLib_CT_CustodyRefused_Idx].DispositionCode, Reference[BPLib_CT_CustodyRefused_Idx].DispositionCode);
+}
+
 void BPLib_ARP_Test_Setup(void)
 {
     /* Initialize test environment to default state for every test */
