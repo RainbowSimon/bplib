@@ -81,10 +81,10 @@ void BPLib_EID_CopyEidPatterns(BPLib_EID_Pattern_t *EID_Actual, BPLib_EID_Patter
  * Generated stub function for BPLib_EID_CopyEids()
  * ----------------------------------------------------
  */
-void BPLib_EID_CopyEids(BPLib_EID_t *EID_Actual, BPLib_EID_t EID_Reference)
+void BPLib_EID_CopyEids(BPLib_EID_t *EID_Destination, BPLib_EID_t EID_Source)
 {
-    UT_GenStub_AddParam(BPLib_EID_CopyEids, BPLib_EID_t *, EID_Actual);
-    UT_GenStub_AddParam(BPLib_EID_CopyEids, BPLib_EID_t, EID_Reference);
+    UT_GenStub_AddParam(BPLib_EID_CopyEids, BPLib_EID_t *, EID_Destination);
+    UT_GenStub_AddParam(BPLib_EID_CopyEids, BPLib_EID_t, EID_Source);
 
     UT_GenStub_Execute(BPLib_EID_CopyEids, Basic, NULL);
 }
