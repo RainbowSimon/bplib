@@ -44,14 +44,14 @@ void UT_Handler_BPLib_EID_CopyEids(void *UserObj, UT_EntryKey_t FuncKey,
                                         const UT_StubContext_t *Context)
 {
     BPLib_EID_t* EID_Destination;
-    BPLib_EID_t* EID_Source;
+    BPLib_EID_t  EID_Source;
 
     EID_Destination = UT_Hook_GetArgValueByName(Context, "EID_Destination", BPLib_EID_t*);
-    EID_Source      = UT_Hook_GetArgValueByName(Context, "EID_Source", BPLib_EID_t*);
+    EID_Source      = UT_Hook_GetArgValueByName(Context, "EID_Source", BPLib_EID_t);
 
-    EID_Destination->Scheme       = EID_Source->Scheme;
-    EID_Destination->IpnSspFormat = EID_Source->IpnSspFormat;
-    EID_Destination->Allocator    = EID_Source->Allocator;
-    EID_Destination->Node         = EID_Source->Node;
-    EID_Destination->Service      = EID_Source->Service;
+    EID_Destination->Scheme       = EID_Source.Scheme;
+    EID_Destination->IpnSspFormat = EID_Source.IpnSspFormat;
+    EID_Destination->Allocator    = EID_Source.Allocator;
+    EID_Destination->Node         = EID_Source.Node;
+    EID_Destination->Service      = EID_Source.Service;
 }
