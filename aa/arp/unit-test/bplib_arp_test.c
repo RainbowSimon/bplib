@@ -66,16 +66,6 @@ void Test_BPLib_ARP_GetDispCodeIdx_Neg(void)
     UtAssert_EQ(BPLib_CT_DispositionCode_t, BPLib_ARP_GetDispCodeIdx(BPLib_CT_CustodyRefused), BPLib_CT_CustodyRefused_Idx);
 }
 
-void Test_BPLib_ARP_GetDispCode_Pos(void)
-{
-    UtAssert_EQ(BPLib_CT_DispositionCode_t, BPLib_ARP_GetDispCode(BPLib_CT_CustodyAccepted_Idx), BPLib_CT_CustodyAccepted);
-}
-
-void Test_BPLib_ARP_GetDispCode_Neg(void)
-{
-    UtAssert_EQ(BPLib_CT_DispositionCode_t, BPLib_ARP_GetDispCode(BPLib_CT_CustodyRefused_Idx), BPLib_CT_CustodyRefused);
-}
-
 void Test_BPLib_ARP_ProcessBsr_Nominal(void)
 {
     BPLib_Bundle_t    Bundle;
@@ -258,8 +248,6 @@ void TestBplibArp_Register(void)
     ADD_TEST(Test_BPLib_ARP_CRSTblValidateFunc_Invalid);
     ADD_TEST(Test_BPLib_ARP_GetDispCodeIdx_Pos);
     ADD_TEST(Test_BPLib_ARP_GetDispCodeIdx_Neg);
-    ADD_TEST(Test_BPLib_ARP_GetDispCode_Pos);
-    ADD_TEST(Test_BPLib_ARP_GetDispCode_Neg);
     ADD_TEST(Test_BPLib_ARP_ProcessBsr_Nominal);
     ADD_TEST(Test_BPLib_ARP_ProcessCrs_Nominal);
     ADD_TEST(Test_BPLib_ARP_ProcessNewCcs_Nominal);

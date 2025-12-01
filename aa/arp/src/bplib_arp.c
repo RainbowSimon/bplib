@@ -60,15 +60,6 @@ BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t 
     return (BPLib_CT_SeqCollectionIdx_t) DispositionCode;
 }
 
-BPLib_CT_DispositionCode_t BPLib_ARP_GetDispCode(BPLib_CT_SeqCollectionIdx_t DispositionCodeIdx)
-{
-    DispositionCodeIdx -= BPLib_CT_FirstAcceptDispCode; /* Push the disposition code to a polar maximum */
-    DispositionCodeIdx += (DispositionCodeIdx > 0);     /* Shift refusal codes down so 0 is skipped */
-    DispositionCodeIdx *= -1;                           /* Flip the poles so accepts are positive and refusals are negative */
-
-    return (BPLib_CT_DispositionCode_t) DispositionCodeIdx;
-}
-
 void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
 {
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
@@ -90,28 +81,35 @@ void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_
 
 void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* InProgressCcs)
 {
-    BPLib_ARP_AdminRecord_t    CcsAdminRecord;
-    uint8_t                    ExtBlockIdx;
-    BPLib_Bundle_t*            Bundle;
-    BPLib_Status_t             Status;
-    uint8_t                    DispCodeIdx;
-    BPLib_CT_DispositionCode_t DispCode;
-
-    /* === Build the Administrative Record's CCS === */
+    BPLib_ARP_AdminRecord_t     CcsAdminRecord;
+    BPLib_CT_DeserializedCcs_t* AdminRecordCcs;
+    uint8_t                     ExtBlockIdx;
+    BPLib_Bundle_t*             Bundle;
+    BPLib_Status_t              Status;
+    uint8_t                     DispCodeIdx;
 
     /* Set the Administrative Record type */
     CcsAdminRecord.AdminRecordType = BPLib_CT_CcsRecordTypeCode;
 
+    /* === Build the Administrative Record's CCS === */
+
+    AdminRecordCcs = &(CcsAdminRecord.AdminRecordBody.CCS);
+
     /* Copy over source administrative EID */
-    BPLib_EID_CopyEids(&(CcsAdminRecord.AdminRecordBody.CCS.SourceAdminEid),
+    BPLib_EID_CopyEids(&(AdminRecordCcs->SourceAdminEid),
                         InProgressCcs->SourceAdminEid);
 
     /* Shove the bundle sequence collections into the CCS */
-    memcpy(CcsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections,
-            InProgressCcs->BundleSeqCollections,
-            sizeof(BPLib_CT_BundleSeqCollection_t) * BPLIB_CT_MAX_SEQ_COLLECTIONS);
-
-    // TODO: CcsAdminRecord->AdminRecordBody.CCS.NumBundleSeqCollections
+    AdminRecordCcs->NumBundleSeqCollections = 0;
+    for (DispCodeIdx = 0; DispCodeIdx < BPLIB_CT_MAX_SEQ_COLLECTIONS; DispCodeIdx++)
+    {
+        if (InProgressCcs->BundleSeqCollections[DispCodeIdx].SeqRangeLen != 0)
+        { /* Only encode bundle sequence collections with at least 1 sequence range element */
+            memcpy(&(AdminRecordCcs->BundleSeqCollections[AdminRecordCcs->NumBundleSeqCollections++]),
+                    &(InProgressCcs->BundleSeqCollections[DispCodeIdx]),
+                    sizeof(BPLib_CT_BundleSeqCollection_t));
+        }
+    }
 
     /* === Generate the bundle with a CCS Administrative Record as the payload === */
 
