@@ -197,7 +197,7 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t
 }
 
 BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
-                                        BPLib_CT_BundleSeqCollection_t *SeqCollection)
+                                                    BPLib_CT_BundleSeqCollection_t *SeqCollection)
 {
     size_t SeqRangeIdx;
     size_t CurrSeqNum;
