@@ -23,6 +23,12 @@
  */
 
 #include "bplib_ct_test_utils.h"
+#include "bplib_arp.h"
+#include "bplib_nc.h"
+
+/* 
+ * Global Data
+ */
 
 extern BPLib_Instance_t BplibInst;
 
@@ -88,6 +94,7 @@ void Test_BPLib_CT_ProcessNewBundle_AcceptCustody(void)
     BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[1] = 2;
     BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[2] = 2;
     BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].FirstSeqNum = 28;
+    BplibInst.Ct.OpenCcss[0].MaxSize = 100;
 
     /*
     ** CCS data explanation:
@@ -101,6 +108,7 @@ void Test_BPLib_CT_ProcessNewBundle_AcceptCustody(void)
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_PDB_AcceptCustody), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyAccepted_Idx);
 
     UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
     UtAssert_EQ(size_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen, 5);
@@ -131,8 +139,12 @@ void Test_BPLib_CT_ProcessNewBundle_RejectCustody(void)
     **  [1]
     */
 
+    /* Avoid open CCS max size trigger */
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].CSSizeTrigger = 100;
+
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), false);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_PDB_AcceptCustody), BPLIB_ERROR);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyRefused_Idx);
 
     UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle), BPLIB_CT_CUSTODY_REFUSED_ERR);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqId, 12);
@@ -164,6 +176,12 @@ void Test_BPLib_CT_ProcessNewBundle_StorFull(void)
     Bundle.blocks.ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS - 1].Header.BlockType = BPLib_BlockType_CTEB;
     Bundle.blocks.ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS - 1].BlockData.CustodyBlockData.BundleSeqId = 12;
     Bundle.blocks.ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS - 1].BlockData.CustodyBlockData.BundleSeqNum = 33;
+
+    /* Make the disposition returned from BPLib_ARP_GetDispCode an expected value */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyRefused_Idx);
+
+    /* Avoid open CCS max size trigger */
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].CSSizeTrigger = 100;
 
     /* Set storage to full */
     BplibInst.BundleStorage.BytesStorageInUse = BPLIB_MAX_STORED_BUNDLE_BYTES;
@@ -202,6 +220,12 @@ void Test_BPLib_CT_ProcessNewBundle_Dupl(void)
 
     /* Return link with duplicate bundle */
     UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.Ctdb[0].IdRbtLink));
+
+    /* Make the disposition returned from BPLib_ARP_GetDispCode an expected value */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyRefused_Idx);
+
+    /* Avoid open CCS max size trigger */
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].CSSizeTrigger = 100;
 
     /*
     ** CCS data explanation:
