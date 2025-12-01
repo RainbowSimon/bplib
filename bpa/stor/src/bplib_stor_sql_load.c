@@ -484,7 +484,7 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
             }
 
             /* Allocate a MEM pool block for the meta data */
-            BundleHead = BPLib_MEM_BlockAlloc(Pool);
+            BundleHead = BPLib_MEM_BlockAlloc(Pool, BPLIB_MEM_BIG_BLK_SIZE);
             if (BundleHead == NULL)
             {
                 SQLStatus = SQLITE_NOMEM;
@@ -493,7 +493,7 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
             }
 
             /* Load the metadata directly into the mempool block */
-            SQLStatus = sqlite3_blob_read(blob, (void*)&BundleHead->user_data.bundle.blocks, ChunkSize, 0);
+            SQLStatus = sqlite3_blob_read(blob, (void*)&(BundleHead->user_data.Bundle.blocks), ChunkSize, 0);
             if (SQLStatus != SQLITE_OK)
             {
                 fprintf(stderr, "sqlite3_blob_read failed: %s\n", sqlite3_errmsg(db));
@@ -516,7 +516,7 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
             }
 
             /* Allocate a MEM pool block for the blob data */
-            NextBlock = BPLib_MEM_BlockAlloc(Pool);
+            NextBlock = BPLib_MEM_BlockAlloc(Pool, BPLIB_MEM_BIG_BLK_SIZE);
             if (NextBlock == NULL)
             {
                 SQLStatus = SQLITE_NOMEM;
@@ -531,10 +531,10 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
             ** will have to create a new database.
             */
             ChunkSize = sqlite3_blob_bytes(blob);
-            if (ChunkSize > sizeof(NextBlock->user_data.raw_bytes))
+            if (ChunkSize > BPLIB_MEM_BIG_BLK_DATA_SIZE)
             {
                 fprintf(stderr, "Stored BLOB is too large for buffer. DB is corrupted %lu > %lu\n",
-                        ChunkSize, sizeof(NextBlock->user_data.raw_bytes));
+                        ChunkSize, BPLIB_MEM_BIG_BLK_DATA_SIZE);
 
                 SQLStatus = SQLITE_CORRUPT;
 
@@ -544,7 +544,7 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
 
 
             /* Load the blob directly into the mempool block */
-            SQLStatus = sqlite3_blob_read(blob, (void*)&NextBlock->user_data.raw_bytes, ChunkSize, 0);
+            SQLStatus = sqlite3_blob_read(blob, (void*)&NextBlock->user_data.BigData, ChunkSize, 0);
             if (SQLStatus != SQLITE_OK)
             {
                 fprintf(stderr, "sqlite3_blob_read failed: %s\n", sqlite3_errmsg(db));
@@ -571,7 +571,7 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
     }
     else if (SQLStatus == SQLITE_DONE)
     { /* Expecting SQLITE_DONE */
-        RetBundle       = (BPLib_Bundle_t*)(BundleHead);
+        RetBundle       = &(BundleHead->user_data.Bundle);
         RetBundle->blob = BundleHead->next;
         *Bundle         = RetBundle;
 

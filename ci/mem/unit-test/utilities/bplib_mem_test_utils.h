@@ -34,6 +34,14 @@
 
 
 /*
+** Macro Definitions 
+*/
+
+/* Macro to add test case */
+#define ADD_TEST(test) UtTest_Add(test, BPLib_MEM_Test_Setup, BPLib_MEM_Test_Teardown, #test)
+
+
+/*
 ** Function Definitions
 */
 

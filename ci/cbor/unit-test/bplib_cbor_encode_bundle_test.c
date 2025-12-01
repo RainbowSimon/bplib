@@ -180,7 +180,7 @@ void Test_BPLib_CBOR_EncodeBundle_PayloadCopyLenError(void)
     InputBundle.blocks.PrimaryBlock.RequiresEncode = false;
     InputBundle.blocks.PayloadHeader.RequiresEncode = false;
 
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         primary_and_payload_with_aa_x_20,
         sizeof(primary_and_payload_with_aa_x_20));
     InputBundle.blob->used_len = sizeof(primary_and_payload_with_aa_x_20);
@@ -222,7 +222,7 @@ void Test_BPLib_CBOR_EncodeBundle_EncodePrimaryCopyPayload(void)
     InputBundle.blob = &FirstBlock;
 
     /* copy valid bundle into our block */
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         primary_and_payload_with_aa_x_20,
         sizeof(primary_and_payload_with_aa_x_20));
     InputBundle.blob->used_len = sizeof(primary_and_payload_with_aa_x_20);
@@ -298,7 +298,7 @@ void Test_BPLib_CBOR_EncodeBundle_EncodePrimaryAndPayload(void)
     memset(&FirstBlock, 0, sizeof(FirstBlock));
     InputBundle.blob = &FirstBlock;
 
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         primary_and_payload_with_aa_x_20,
         sizeof(primary_and_payload_with_aa_x_20));
     InputBundle.blob->used_len = sizeof(primary_and_payload_with_aa_x_20);
@@ -373,7 +373,7 @@ void Test_BPLib_CBOR_EncodeBundle_Nominal(void)
     memset(&FirstBlock, 0, sizeof(FirstBlock));
     InputBundle.blob = &FirstBlock;
 
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         primary_and_payload_with_aa_x_20,
         sizeof(primary_and_payload_with_aa_x_20));
     InputBundle.blob->used_len = sizeof(primary_and_payload_with_aa_x_20);
@@ -478,7 +478,7 @@ void Test_BPLib_CBOR_EncodeBundle_DtnNone(void)
     memset(&FirstBlock, 0, sizeof(FirstBlock));
     InputBundle.blob = &FirstBlock;
 
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         bundle_primary_and_payload_with_dtn_none,
         sizeof(bundle_primary_and_payload_with_dtn_none));
     InputBundle.blob->used_len = sizeof(bundle_primary_and_payload_with_dtn_none);

@@ -258,7 +258,7 @@ SQL_Status_t BPLib_SQL_StoreBundle(sqlite3* db, BPLib_Bundle_t* Bundle, BPLib_Bu
     CurrMemBlock = Bundle->blob;
     while (CurrMemBlock != NULL)
     {
-        SQLStatus = BPLib_SQL_StoreChunk(BundleRowID, (const void*)CurrMemBlock->user_data.raw_bytes,
+        SQLStatus = BPLib_SQL_StoreChunk(BundleRowID, (const void*)CurrMemBlock->user_data.BigData,
                                             CurrMemBlock->used_len);
 
         if (SQLStatus != SQLITE_DONE)

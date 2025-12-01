@@ -26,8 +26,10 @@
 */
 
 #include "bplib_api_types.h"
-#include "bplib_mem.h"
 #include "bplib_rbt.h"
+#include "bplib_bblocks.h"
+#include <pthread.h>
+
 
 /*
 ** Macros
@@ -172,7 +174,6 @@ typedef struct
     uint64_t SeqId;
     uint64_t SeqNum;
     uint32_t BundleId;
-    bool     Used;
 } BPLib_CT_DbEntry_t;
 
 /**
@@ -194,11 +195,12 @@ typedef struct
     uint64_t CurrActiveSeqIds[BPLIB_MAX_NUM_CONTACTS];          /** \brief Last assigned sequence counter IDs for each contact */
     uint64_t LastSeqCounterId;                                  /** \brief Last sequence counter ID assigned to a contact */
 
-    BPLib_CT_DbEntry_t Ctdb[BPLIB_CT_DB_MAX_ENTRIES];
     size_t CurrDbSize;                                          /** \brief Number of entries in CTDB */
-    size_t LastDbEntry;
     BPLib_RBT_Root_t SeqTreeRoot;                               /** \brief An RBT that allows for CTDB queries based on sequence ID/number */
     BPLib_RBT_Root_t IdTreeRoot;                                /** \brief An RBT that allows for CTDB queries based on bundle ID */
+
+    pthread_mutex_t DbLock;                                     /** \brief Read/write lock on CTDB */
+
 } BPLib_CT_Context_t;
 
 

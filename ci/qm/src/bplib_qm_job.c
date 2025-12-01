@@ -51,7 +51,7 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
         BPLib_ARP_AdminRecord_t BundleAdminRecord;
 
         /* Recover the admin record from the bundle */
-        memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.raw_bytes), sizeof(BPLib_ARP_AdminRecord_t));
+        memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.BigData), sizeof(BPLib_ARP_AdminRecord_t));
 
         /* Send the deserialized CCS off to CT */
         (void) BPLib_CT_ProcessCcs(Inst, &BundleAdminRecord.AdminRecordBody.CCS);
@@ -204,14 +204,15 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                         if (Bundle->Meta.IsCustodial)
                         {
                             Bundle->Meta.RetransmitTime = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[i].RetransmitTimeout;
+                            BPLib_NC_ReaderUnlock();
                             BPLib_STOR_StoreBundle(Inst, Bundle);
                         }
                         else
                         {
+                            BPLib_NC_ReaderUnlock();
                             BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
                         }
 
-                        BPLib_NC_ReaderUnlock();
                         return NO_NEXT_STATE;                        
                     }
                 }
@@ -223,6 +224,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
 
     /* Either no egress path was found or the bundle was custodial and must be stored */
     BPLib_STOR_StoreBundle(Inst, Bundle);
+    
     return NO_NEXT_STATE;
 }
 

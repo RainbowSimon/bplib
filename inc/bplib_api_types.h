@@ -72,6 +72,8 @@ typedef struct BPLib_Instance BPLib_Instance_t;
 
 typedef struct BPLib_BundleCache BPLib_BundleCache_t;
 
+typedef struct BPLib_MEM_Block BPLib_MEM_Block_t;
+
 typedef enum
 {
     BPLIB_BUNDLE_PROC_FRAG_FLAG         = 0x0000001, /** \brief Bundle is a fragment flag */

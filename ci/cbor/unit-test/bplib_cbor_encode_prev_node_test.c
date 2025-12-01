@@ -115,7 +115,7 @@ void Test_BPLib_CBOR_EncodeBundle_PrevNode(void)
     memset(&FirstBlock, 0, sizeof(FirstBlock));
     InputBundle.blob = &FirstBlock;
 
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         bundle_w_prev_node_and_payload,
         sizeof(bundle_w_prev_node_and_payload));
     InputBundle.blob->used_len = sizeof(bundle_w_prev_node_and_payload);

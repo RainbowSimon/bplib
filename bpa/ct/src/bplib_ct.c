@@ -45,6 +45,8 @@ BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
 
     memset(&(Inst->Ct), 0, sizeof(BPLib_CT_Context_t));
 
+    pthread_mutex_init(&Inst->Ct.DbLock, NULL);
+ 
     BPLib_RBT_InitRoot(&(Inst->Ct.SeqTreeRoot));
     BPLib_RBT_InitRoot(&(Inst->Ct.IdTreeRoot));
 
@@ -132,6 +134,8 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Default to refused custody */
     DispCode = BPLib_CT_CustodyRefused;
 
+    pthread_mutex_lock(&Inst->Ct.DbLock);
+
     /* Reject custody due to lack of storage */
     if (Status == BPLIB_NO_STOR_ERR)
     {
@@ -150,7 +154,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     {
         DispCode = BPLib_CT_CustodyAccepted;
     }
-    /* else PDB rejected custody */
+    /* Else PDB rejected custody */
 
     /* Add to an open CCS to confirm either acceptance or rejection */
     OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID),
@@ -163,6 +167,8 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
+
+    pthread_mutex_unlock(&Inst->Ct.DbLock);
 
     return Status;
 }
@@ -196,6 +202,8 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         /* Update CTEB fields */
         if (Bundle->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
         {
+            pthread_mutex_lock(&Inst->Ct.DbLock);
+
             /* Check if this is a bundle retransmission from storage or a new bundle */
             Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
                                 Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
@@ -217,7 +225,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
                 BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
                 Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
 
-                Status = BPLib_CT_AddToCtdb(&(Inst->Ct), CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
+                Status = BPLib_CT_AddToCtdb(Inst, CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
                                             Bundle->blocks.PrimaryBlock.BundleId);
             }
         }
@@ -227,6 +235,9 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
                     "Bundle has an invalid egress ID %d, check for memory corruption.", Bundle->Meta.EgressID);
         }
+
+        pthread_mutex_unlock(&Inst->Ct.DbLock);
+
     }
 
     /* Do nothing for non-custodial bundles */
@@ -251,6 +262,8 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
 
     /* Validate CCS here? TODO */
 
+    pthread_mutex_lock(&Inst->Ct.DbLock);
+
     for (SeqCollectIdx = 0; SeqCollectIdx < Ccs->NumBundleSeqCollections; SeqCollectIdx++)
     {
         if (Ccs->BundleSeqCollections[SeqCollectIdx].SeqRangeLen >= BPLIB_CT_MAX_SEQ_RANGE_LEN)
@@ -259,9 +272,10 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
             break;
         }
 
-        Status = BPLib_CT_ProcessBundleSeqCollection(Inst, &(Inst->Ct), 
-                                            &(Ccs->BundleSeqCollections[SeqCollectIdx]));
+        Status = BPLib_CT_ProcessBundleSeqCollection(Inst, &(Ccs->BundleSeqCollections[SeqCollectIdx]));
     }
+
+    pthread_mutex_unlock(&Inst->Ct.DbLock);
 
     return Status;
 }
