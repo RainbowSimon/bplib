@@ -60,6 +60,15 @@ BPLib_CT_SeqCollectionIdx_t BPLib_ARP_GetDispCodeIdx(BPLib_CT_DispositionCode_t 
     return (BPLib_CT_SeqCollectionIdx_t) DispositionCode;
 }
 
+BPLib_CT_DispositionCode_t BPLib_ARP_GetDispCode(BPLib_CT_SeqCollectionIdx_t DispositionCodeIdx)
+{
+    DispositionCodeIdx -= BPLib_CT_FirstAcceptDispCode; /* Push the disposition code to a polar maximum */
+    DispositionCodeIdx += (DispositionCodeIdx > 0);     /* Shift refusal codes down so 0 is skipped */
+    DispositionCodeIdx *= -1;                           /* Flip the poles so accepts are positive and refusals are negative */
+
+    return (BPLib_CT_DispositionCode_t) DispositionCodeIdx;
+}
+
 void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
 {
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
@@ -81,10 +90,12 @@ void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_
 
 void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* InProgressCcs)
 {
-    BPLib_ARP_AdminRecord_t CcsAdminRecord;
-    uint8_t                 ExtBlockIdx;
-    BPLib_Bundle_t*         Bundle;
-    BPLib_Status_t          Status;
+    BPLib_ARP_AdminRecord_t    CcsAdminRecord;
+    uint8_t                    ExtBlockIdx;
+    BPLib_Bundle_t*            Bundle;
+    BPLib_Status_t             Status;
+    uint8_t                    DispCodeIdx;
+    BPLib_CT_DispositionCode_t DispCode;
 
     /* === Build the Administrative Record's CCS === */
 
