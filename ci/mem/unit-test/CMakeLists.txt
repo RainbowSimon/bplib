@@ -20,11 +20,22 @@ target_link_libraries(bplib_mem_stubs PUBLIC ut_assert)
 
 
 # Create unit test object
-add_library(utobj_bplib_mem OBJECT
-    ../src/bplib_mem.c
-    ../src/bplib_ben_allocator.c
-    #../src/bplib_std_allocator.c
-)
+if (BPLIB_MEM_IMPL STREQUAL CFE)
+    add_library(utobj_bplib_mem OBJECT
+        ../src/bplib_mem.c
+        ../src/bplib_cfe_allocator.c
+    )
+elseif (BPLIB_MEM_IMPL STREQUAL BEN)
+    add_library(utobj_bplib_mem OBJECT
+        ../src/bplib_mem.c
+        ../src/bplib_ben_allocator.c
+    )
+else()
+    add_library(utobj_bplib_mem OBJECT
+        ../src/bplib_mem.c
+        ../src/bplib_std_allocator.c
+    )
+endif()
 
 target_compile_definitions(utobj_bplib_mem PRIVATE
     $<TARGET_PROPERTY:bplib_mem,COMPILE_DEFINITIONS>
@@ -56,11 +67,20 @@ target_include_directories(coverage-bplib_mem-testrunner PRIVATE
     $<TARGET_PROPERTY:bplib_em,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-target_link_libraries(coverage-bplib_mem-testrunner PUBLIC
-    ut_coverage_link
-    ut_assert
-    bplib_em_stubs
-)
+if (BPLIB_MEM_IMPL STREQUAL CFE)
+    target_link_libraries(coverage-bplib_mem-testrunner PUBLIC
+        ut_coverage_link
+        ut_assert
+        ut_core_api_stubs
+        bplib_em_stubs
+    )
+else()
+    target_link_libraries(coverage-bplib_mem-testrunner PUBLIC
+        ut_coverage_link
+        ut_assert
+        bplib_em_stubs
+    )
+endif()
 
 add_test(coverage-bplib_mem-testrunner coverage-bplib_mem-testrunner)
 

@@ -393,7 +393,7 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
     }
 
     /* Update the memory in use*/
-    BPLib_STOR_StoragePayload.BytesMemInUse = ((Inst->pool.impl.num_blocks - Inst->pool.impl.num_free) * Inst->pool.impl.block_size);
+    BPLib_STOR_StoragePayload.BytesMemInUse = BPLib_MEM_GetBytesInUse(&Inst->pool);
 
     /* Update the highwater mark if needed */
     if (BPLib_STOR_StoragePayload.BytesMemInUse > BPLib_STOR_StoragePayload.BytesMemHighWater)
@@ -402,7 +402,7 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
     }
 
     /* Update the free memory */
-    BPLib_STOR_StoragePayload.BytesMemFree = (Inst->pool.impl.num_free * Inst->pool.impl.block_size);
+    BPLib_STOR_StoragePayload.BytesMemFree = BPLib_MEM_GetBytesFree(&Inst->pool);
 
     /* Update kilobytes of data in use */
     BPLib_STOR_StoragePayload.KbBundlesInStor = (Inst->BundleStorage.BytesStorageInUse / 1000);

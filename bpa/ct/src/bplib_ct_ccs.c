@@ -27,7 +27,7 @@
 #include "bplib_ct_db.h"
 #include "bplib_bblocks.h"
 #include "bplib_eid.h"
-#include "bplib_mem.h"
+#include "bplib_inst.h"
 #include "bplib_pdb.h"
 #include "bplib_as.h"
 #include "bplib_em.h"
@@ -196,8 +196,8 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t
     return;
 }
 
-BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst, 
-            BPLib_CT_Context_t *Context, BPLib_CT_BundleSeqCollection_t *SeqCollection)
+BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
+                                        BPLib_CT_BundleSeqCollection_t *SeqCollection)
 {
     size_t SeqRangeIdx;
     size_t CurrSeqNum;
@@ -213,7 +213,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     {
         for (NextSeqNum = CurrSeqNum; NextSeqNum < CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]; NextSeqNum++)
         {
-            Status = BPLib_CT_GetEntryFromCtdbWithSeq(Context, SeqCollection->SeqId,
+            Status = BPLib_CT_GetEntryFromCtdbWithSeq(&Inst->Ct, SeqCollection->SeqId,
                                                             NextSeqNum, &DbEntry);
 
             if (Status != BPLIB_SUCCESS || DbEntry == NULL)
@@ -229,7 +229,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 /* Positive disposition code indicates custody was accepted */
                 if (SeqCollection->DispositionCode > 0)
                 {
-                    Status = BPLib_CT_RemoveFromCtdb(Context, DbEntry);   
+                    Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);   
 
                     if (Status == BPLIB_SUCCESS)
                     {

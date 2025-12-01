@@ -80,11 +80,10 @@ void Test_BPLib_STOR_EgressForID_NominalChan(void)
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.Lifetime, 5000);
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.DestEID.Node, 100);
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.DestEID.Service, 1);
-    UtAssert_UINT32_EQ(((BPLib_MEM_Block_t *)(LoadedBundle))->used_len, sizeof(BPLib_BBlocks_t));
 
     /* Check blob contents */
-    UtAssert_StrCmp((char*)LoadedBundle->blob->user_data.raw_bytes, "CBOR Blob", "Blob Comparison: %s == %s",
-        (char*)LoadedBundle->blob->user_data.raw_bytes, "CBOR Blob");
+    UtAssert_StrCmp((char*)LoadedBundle->blob->user_data.BigData, "CBOR Blob", "Blob Comparison: %s == %s",
+        (char*)LoadedBundle->blob->user_data.BigData, "CBOR Blob");
 
     /** Step 3: Verify batch was reset as a result of being consumed **/
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, true, &NumEgressed), BPLIB_SUCCESS);
@@ -133,11 +132,10 @@ void Test_BPLib_STOR_EgressForID_NominalCont(void)
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.Lifetime, 5000);
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.DestEID.Node, 100);
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.DestEID.Service, 1);
-    UtAssert_UINT32_EQ(((BPLib_MEM_Block_t *)(LoadedBundle))->used_len, sizeof(BPLib_BBlocks_t));
 
     /* Check blob contents */
-    UtAssert_StrCmp((char*)LoadedBundle->blob->user_data.raw_bytes, "CBOR Blob", "Blob Comparison: %s == %s",
-        (char*)LoadedBundle->blob->user_data.raw_bytes, "CBOR Blob");
+    UtAssert_StrCmp((char*)LoadedBundle->blob->user_data.BigData, "CBOR Blob", "Blob Comparison: %s == %s",
+        (char*)LoadedBundle->blob->user_data.BigData, "CBOR Blob");
 
     /** Step 3: Verify batch was reset as a result of being consumed **/
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, false, &NumEgressed), BPLIB_SUCCESS);

@@ -28,7 +28,7 @@
 #include "bplib_eid.h"
 #include "bplib_mem.h"
 #include "bplib_pdb.h"
-#include <stdio.h>
+#include "bplib_inst.h"
 
 /*
 ** Function Definitions
@@ -68,47 +68,42 @@ int BPLib_CT_CompareDbEntries(const BPLib_RBT_Link_t *Node, void *Arg)
     return -1;
 }
 
-BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_CT_Context_t *Context, uint64_t SeqId, 
+BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqId, 
                                                     uint64_t SeqNum, uint32_t BundleId)
 {
+    BPLib_MEM_Block_t  *DbMemBlk = NULL;
+    BPLib_CT_DbEntry_t *DbEntry  = NULL;
     BPLib_Status_t Status;
-    size_t CurrDbEntry;
 
-    if (Context->CurrDbSize == BPLIB_CT_DB_MAX_ENTRIES)
+    if (Inst->Ct.CurrDbSize == BPLIB_CT_DB_MAX_ENTRIES)
     {
         return BPLIB_CT_FULL_DB_ERR;
     }
 
     /* Get a CTDB entry to use */
-    /* TODO THIS IS NOT A GOOD ALGORITHM. FIND A MORE EFFICIENT IDEA */
-    CurrDbEntry = Context->LastDbEntry;
-    do
+    DbMemBlk = BPLib_MEM_BlockAlloc(&Inst->pool, BPLIB_MEM_SMALL_BLK_SIZE);
+    if (DbMemBlk == NULL)
     {
-        CurrDbEntry = (CurrDbEntry + 1) % BPLIB_CT_DB_MAX_ENTRIES;
+        return BPLIB_NULL_PTR_ERROR;
+    }
 
-        if (Context->Ctdb[CurrDbEntry].Used == false)
-        {
-            break;
-        }
-    } while (CurrDbEntry != Context->LastDbEntry);
+    DbEntry = &(DbMemBlk->user_data.DbEntry);
     
     /* Set CTDB entry values */
-    Context->Ctdb[CurrDbEntry].BundleId = BundleId;
-    Context->Ctdb[CurrDbEntry].SeqId = SeqId;
-    Context->Ctdb[CurrDbEntry].SeqNum = SeqNum;
-    Context->Ctdb[CurrDbEntry].Used = true;
+    DbEntry->BundleId = BundleId;
+    DbEntry->SeqId = SeqId;
+    DbEntry->SeqNum = SeqNum;
 
-    Context->CurrDbSize++;
-    Context->LastDbEntry = CurrDbEntry;
+    Inst->Ct.CurrDbSize++;
     
-    Status = BPLib_RBT_InsertValueGeneric(SeqId, &(Context->SeqTreeRoot), 
-                                        &(Context->Ctdb[CurrDbEntry].SeqRbtLink),
+    Status = BPLib_RBT_InsertValueGeneric(SeqId, &(Inst->Ct.SeqTreeRoot), 
+                                        &(DbEntry->SeqRbtLink),
                                         BPLib_CT_CompareDbEntries, &SeqNum);
 
     if (Status == BPLIB_SUCCESS)
     {
-        Status = BPLib_RBT_InsertValueUnique(BundleId, &(Context->IdTreeRoot), 
-                                            &(Context->Ctdb[CurrDbEntry].IdRbtLink));
+        Status = BPLib_RBT_InsertValueUnique(BundleId, &(Inst->Ct.IdTreeRoot), 
+                                            &(DbEntry->IdRbtLink));
     }
 
     return Status;
@@ -149,18 +144,18 @@ BPLib_Status_t BPLib_CT_GetEntryFromCtdbWithId(BPLib_CT_Context_t *Context,
     return Status;
 }
 
-BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_CT_Context_t *Context, BPLib_CT_DbEntry_t *DbEntry)
+BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_t *DbEntry)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_RBT_ExtractNode(&Context->SeqTreeRoot, &DbEntry->SeqRbtLink);
+    Status = BPLib_RBT_ExtractNode(&(Inst->Ct.SeqTreeRoot), &DbEntry->SeqRbtLink);
     if (Status == BPLIB_SUCCESS)
     {
-        Status = BPLib_RBT_ExtractNode(&Context->IdTreeRoot, &DbEntry->IdRbtLink);
+        Status = BPLib_RBT_ExtractNode(&(Inst->Ct.IdTreeRoot), &DbEntry->IdRbtLink);
         if (Status == BPLIB_SUCCESS)
         {
-            DbEntry->Used = false;
-            Context->CurrDbSize--;
+            Inst->Ct.CurrDbSize--;
+            BPLib_MEM_BlockFree(&Inst->pool, BPLib_MEM_GetBlockFromUserData(DbEntry));
         }
     }
 

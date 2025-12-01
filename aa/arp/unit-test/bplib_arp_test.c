@@ -123,7 +123,7 @@ void Test_BPLib_ARP_ProcessNewCcs_Nominal(void)
 
     UtAssert_STUB_COUNT(BPLib_AS_Increment, 2);
 
-    memcpy((void*) &BlobAsAdminRecord, (void*) Bundle.blob->user_data.raw_bytes, sizeof(BPLib_ARP_AdminRecord_t));
+    memcpy((void*) &BlobAsAdminRecord, (void*) Bundle.blob->user_data.BigData, sizeof(BPLib_ARP_AdminRecord_t));
 
     UtAssert_EQ(BPLib_ARP_AdminRecordTypeCode_t,
                 BlobAsAdminRecord.AdminRecordType,
