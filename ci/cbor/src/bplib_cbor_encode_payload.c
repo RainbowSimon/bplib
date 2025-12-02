@@ -206,7 +206,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
 
         if (StoredBundle->blocks.PayloadHeader.BlockProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
         {
-            memcpy((void*) &AdminRecord, (void*) StoredBundle->blob->user_data.raw_bytes, sizeof(BPLib_ARP_AdminRecord_t));
+            memcpy((void*) &AdminRecord, (void*) StoredBundle->blob->user_data.BigData, sizeof(BPLib_ARP_AdminRecord_t));
 
             QCBOREncode_OpenArray(&Context);
             QCBOREncode_AddUInt64(&Context, AdminRecord->AdminRecordType);

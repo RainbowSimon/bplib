@@ -221,15 +221,16 @@ void Test_BPLib_ARP_ProcessInProgressCcs_Nominal(void)
     BPLib_ARP_Test_EIDs_EQ(&(AllocBundle.blocks.PrimaryBlock.DestEID), &(InProgressCcs.SourceAdminEid));
 
     /* Evaluate constructed bundle payload */
-    memcpy(&BundleAdminRecord, AllocBundle.blob->user_data.raw_bytes, sizeof(BPLib_ARP_AdminRecord_t));
+    memcpy(&BundleAdminRecord, AllocBundle.blob->user_data.BigData, sizeof(BPLib_ARP_AdminRecord_t));
 
     UtAssert_EQ(BPLib_ARP_AdminRecordTypeCode_t, BundleAdminRecord.AdminRecordType, BPLib_CT_CcsRecordTypeCode);
     BPLib_ARP_Test_EIDs_EQ(&(BundleAdminRecord.AdminRecordBody.CCS.SourceAdminEid),
                             &(InProgressCcs.SourceAdminEid));
 
-    // UtAssert_EQ(uint64_t,
-    //             BundleAdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections,
-    //             BundleAdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections);
+    UtAssert_EQ(uint64_t,
+                BundleAdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections,
+                (InProgressCcs.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen > 0) +
+                    (InProgressCcs.BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRangeLen > 0));
 
     for (SequenceCollection = 0; SequenceCollection < BundleAdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections; SequenceCollection++)
     {

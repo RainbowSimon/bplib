@@ -35,7 +35,7 @@ void UT_Handler_BPLib_MEM_BundleAlloc(void *UserObj, UT_EntryKey_t FuncKey,
     void* Payload;
 
     Payload = UT_Hook_GetArgValueByName(Context, "blob_data", void*);
-    memcpy(((BPLib_Bundle_t*) UserObj)->blob->user_data.raw_bytes, Payload, sizeof(BPLib_MEM_UserData_t));
+    memcpy(((BPLib_Bundle_t*) UserObj)->blob->user_data.BigData, Payload, sizeof(BPLib_MEM_UserData_t));
 
     UT_Stub_SetReturnValue(UT_KEY(BPLib_MEM_BundleAlloc), UserObj);
 }
