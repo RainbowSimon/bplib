@@ -277,6 +277,7 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePayload(BPLib_Bundle_t* StoredBundle,
 
     if (StoredBundle->blocks.PayloadHeader.RequiresEncode)
     {
+        printf("ERROR encoding payload\n");
         ReturnStatus = BPLib_CBOR_EncodePayload(StoredBundle,
                                                 OutputBuffer,
                                                 OutputBufferSize,

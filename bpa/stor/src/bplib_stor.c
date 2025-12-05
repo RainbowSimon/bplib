@@ -234,8 +234,10 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
 
     BPLib_NC_ReaderUnlock();
 
+    int64_t TimeStart = BPLib_TIME_GetMonotonicTime();
     pthread_mutex_lock(&CacheInst->lock);
-
+    printf("EgressForID: Time elapsed for lock %ld\n", BPLib_TIME_GetMonotonicTime() - TimeStart);
+    
     /* If the load batch is empty, try to read more from storage */
     if (BPLib_STOR_LoadBatch_IsEmpty(LoadBatch))
     {
@@ -299,6 +301,41 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     return Status;
 }
 
+void BPLib_STOR_SetLastActiveTime(BPLib_Instance_t* Inst)
+{
+    if (Inst == NULL)
+    {
+        return;
+    }
+
+    pthread_mutex_lock(&Inst->BundleStorage.lock);
+
+    Inst->BundleStorage.LastActiveTime = BPLib_TIME_GetMonotonicTime();
+
+    pthread_mutex_unlock(&Inst->BundleStorage.lock);
+}
+
+bool BPLib_STOR_IsIngressEgressActive(BPLib_Instance_t* Inst)
+{
+    bool IsActive = false;
+
+    if (Inst == NULL)
+    {
+        return false;
+    }
+
+    pthread_mutex_lock(&Inst->BundleStorage.lock);
+
+    if ((Inst->BundleStorage.LastActiveTime + BPLIB_STOR_MAX_IDLE_TIME) > BPLib_TIME_GetMonotonicTime())
+    {
+        IsActive = true;
+    }
+
+    pthread_mutex_unlock(&Inst->BundleStorage.lock);
+
+    return IsActive;
+}
+
 BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
 {
     BPLib_Status_t       Status = BPLIB_SUCCESS;
@@ -311,7 +348,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
     {
         Status = BPLIB_NULL_PTR_ERROR;
     }
-    else if (BPLib_SQL_InProgressEgress(Inst) == false && BPLib_QM_IsSystemIdle(Inst) == true)
+    else if (BPLib_STOR_IsIngressEgressActive(Inst) == false)
     {
         /* 
         ** Avoid searching the DB if any of the ingress/egress queues are not empty or

@@ -56,6 +56,8 @@ BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t* Inst, uint32_t ContId, const 
         return BPLIB_INVALID_CONT_ID_ERR;
     }
 
+    BPLib_STOR_SetLastActiveTime(Inst);
+
     /* Not a RFC 9171 bundle. Can be a control message or junk*/
     if (BPLib_CLA_IsAControlMsg((const uint8_t*)Bundle, Size))
     {
@@ -103,6 +105,7 @@ BPLib_Status_t BPLib_CLA_Egress(BPLib_Instance_t* Inst, uint32_t ContId, void *B
         *Size = 0;
         return BPLIB_INVALID_CONT_ID_ERR;
     }
+
     *Size = 0;
 
     /* Try to pull bundle from the duct using user-specified timeout. */
