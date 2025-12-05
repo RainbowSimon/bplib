@@ -32,8 +32,9 @@
  * Generated stub function for BPLib_NC_AddAllApplications()
  * ----------------------------------------------------
  */
-void BPLib_NC_AddAllApplications(void)
+void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst)
 {
+    UT_GenStub_AddParam(BPLib_NC_AddAllApplications, BPLib_Instance_t *, Inst);
 
     UT_GenStub_Execute(BPLib_NC_AddAllApplications, Basic, NULL);
 }
@@ -43,8 +44,9 @@ void BPLib_NC_AddAllApplications(void)
  * Generated stub function for BPLib_NC_AddApplication()
  * ----------------------------------------------------
  */
-void BPLib_NC_AddApplication(const BPLib_AddApplication_Payload_t Payload)
+void BPLib_NC_AddApplication(BPLib_Instance_t *Inst, const BPLib_AddApplication_Payload_t Payload)
 {
+    UT_GenStub_AddParam(BPLib_NC_AddApplication, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_NC_AddApplication, const BPLib_AddApplication_Payload_t, Payload);
 
     UT_GenStub_Execute(BPLib_NC_AddApplication, Basic, NULL);

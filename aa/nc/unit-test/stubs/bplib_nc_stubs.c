@@ -38,9 +38,11 @@ BPLib_NC_ConfigPtrs_t BPLib_NC_ConfigPtrs;
  * Generated stub function for BPLib_NC_ConfigUpdate()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_NC_ConfigUpdate(void)
+BPLib_Status_t BPLib_NC_ConfigUpdate(BPLib_Instance_t *Inst)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_NC_ConfigUpdate, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_NC_ConfigUpdate, BPLib_Instance_t *, Inst);
 
     UT_GenStub_Execute(BPLib_NC_ConfigUpdate, Basic, NULL);
 
@@ -90,10 +92,11 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t *ConfigPtrs, void *Callbacks,
  * Generated stub function for BPLib_NC_InitImpl()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_NC_InitImpl(BPLib_NC_ConfigPtrs_t *ConfigPtrs)
+BPLib_Status_t BPLib_NC_InitImpl(BPLib_Instance_t *Instance, BPLib_NC_ConfigPtrs_t *ConfigPtrs)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_NC_InitImpl, BPLib_Status_t);
 
+    UT_GenStub_AddParam(BPLib_NC_InitImpl, BPLib_Instance_t *, Instance);
     UT_GenStub_AddParam(BPLib_NC_InitImpl, BPLib_NC_ConfigPtrs_t *, ConfigPtrs);
 
     UT_GenStub_Execute(BPLib_NC_InitImpl, Basic, NULL);

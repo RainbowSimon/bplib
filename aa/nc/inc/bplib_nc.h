@@ -106,11 +106,13 @@ extern BPLib_NC_ConfigPtrs_t BPLib_NC_ConfigPtrs;
  *             pointers passed in from BPNode. Save the instance EID in a place
  *             that is easily accessible. Initialize the CRC table. Initialize AS
  * \param[in]  ConfigPtrs Pointer to configurations for BPLib populated by BPNode
+ * \param[in]  Inst Pointer to bplib instance
+ * 
  * \return     Execution status
  * \retval     BPLIB_SUCCESS: Successful initialization of the NC module
  * \retval     BPLIB_FWP_CONFIG_PTRS_INIT_ERROR: At least one passed in configuration is NULL
  */
-BPLib_Status_t BPLib_NC_InitImpl(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
+BPLib_Status_t BPLib_NC_InitImpl(BPLib_Instance_t* Instance, BPLib_NC_ConfigPtrs_t* ConfigPtrs);
 
 /**
   * \brief      Initialize all BPLib subsystems
@@ -253,12 +255,12 @@ BPLib_NC_ApplicationState_t BPLib_NC_GetAppState(uint8_t ChanId);
   *            configurations to the module that controls that configuration
   * \note      As of right now, the API calls to modules that will update configurations are commented out, since
   *            some of those functions are not implemented yet
-  * \param[in] void No arguments accepted
+  * \param[in] Inst Pointer to bplib instance
   * \return    Execution status
   * \retval    BPLIB_SUCCESS: Successful execution without updates to configurations
   * \retval    BPLIB_TBL_UPDATED: Successful execution with configuration updates
   * \retval    BPLIB_ERROR: An error occured while attempting to refresh/update configurations
   */
-BPLib_Status_t BPLib_NC_ConfigUpdate(void);
+BPLib_Status_t BPLib_NC_ConfigUpdate(BPLib_Instance_t *Inst);
 
 #endif // BPLIB_NC_H

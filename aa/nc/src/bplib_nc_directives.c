@@ -42,14 +42,14 @@ void BPLib_NC_Noop(void)
                         BPLIB_BUILD_NUMBER, BPLib_TIME_GetBootEra());
 }
 
-void BPLib_NC_AddAllApplications(void)
+void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst)
 {
     BPLib_Status_t Status;
     uint32_t ChanId;
 
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        Status &= BPLib_PI_AddApplication(ChanId);
+        Status &= BPLib_PI_AddApplication(Inst, ChanId);
     }
 
     if (Status == BPLIB_SUCCESS)
@@ -351,12 +351,12 @@ void BPLib_NC_ResetErrorCounters(const BPLib_ResetErrorCounters_Payload_t Payloa
     }
 }
 
-void BPLib_NC_AddApplication(const BPLib_AddApplication_Payload_t Payload)
+void BPLib_NC_AddApplication(BPLib_Instance_t *Inst, const BPLib_AddApplication_Payload_t Payload)
 {
     BPLib_Status_t Status;
 
     /* Add application configurations */
-    Status = BPLib_PI_AddApplication(Payload.ChanId);
+    Status = BPLib_PI_AddApplication(Inst, Payload.ChanId);
 
     if (Status == BPLIB_SUCCESS)
     {

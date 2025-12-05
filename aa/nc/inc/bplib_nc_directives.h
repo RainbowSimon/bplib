@@ -59,11 +59,10 @@ void BPLib_NC_Noop(void);
 /**
   * \brief     Run add-application for all applications configured to start at startup
   * \details   Node Configuration Add All Applications command
-  * \note      This command is currently unimplemented and only returns BPLIB_SUCCESS
-  * \param[in] void No arguments accepted
+  * \param[in] Inst Pointer to bplib instance
   * \return    void
   */
-void BPLib_NC_AddAllApplications(void);
+void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst);
 
 /**
   * \brief     Start accepting and delivering ADUs for all configured applications
@@ -182,10 +181,11 @@ void BPLib_NC_ResetErrorCounters(BPLib_ResetErrorCounters_Payload_t Payload);
   * \brief     Adds new application configurations from ADU Proxy and Channel Config Tables
   * \details   Node Configuration Add Application command
   * \note      Calls BPLib_PI_AddApplication
+  * \param[in] Inst Pointer to bplib instance
   * \param[in] Payload BPLib_AddApplication_Payload_t type found in bplib_nc_payloads.h
   * \return    void
   */
-void BPLib_NC_AddApplication(const BPLib_AddApplication_Payload_t Payload);
+void BPLib_NC_AddApplication(BPLib_Instance_t *Inst, const BPLib_AddApplication_Payload_t Payload);
 
 /**
   * \brief     Terminate given application’s connection, close its ADU channel, and empty its queues

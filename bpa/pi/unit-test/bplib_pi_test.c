@@ -31,7 +31,7 @@ void Test_BPLib_PI_AddApplication_Nominal(void)
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_REMOVED);
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_SUCCESS);
     UtAssert_STUB_COUNT(BPLib_NC_SetAppState, 1);
 }
 
@@ -42,7 +42,7 @@ void Test_BPLib_PI_AddApplication_Added(void)
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_ADDED);
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_SUCCESS);
     UtAssert_STUB_COUNT(BPLib_NC_SetAppState, 1);
 }
 
@@ -51,7 +51,7 @@ void Test_BPLib_PI_AddApplication_BadId(void)
 {
     uint32_t ChanId = BPLIB_MAX_NUM_CHANNELS;
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_INVALID_CHAN_ID_ERR);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_INVALID_CHAN_ID_ERR);
     UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_PI_ADD_ID_DBG_EID);
     UtAssert_STRINGBUF_EQ("Error with add-application directive, invalid ChanId=%d", BPLIB_EM_EXPANDED_EVENT_SIZE, 
                             context_BPLib_EM_SendEvent[0].Spec, BPLIB_EM_EXPANDED_EVENT_SIZE);
@@ -64,7 +64,7 @@ void Test_BPLib_PI_AddApplication_BadState(void)
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_STARTED);
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_APP_STATE_ERR);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_APP_STATE_ERR);
 
     UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_PI_ADD_STATE_DBG_EID);
     UtAssert_STRINGBUF_EQ("Error with add-application directive, invalid AppState=%d for ChanId=%d", BPLIB_EM_EXPANDED_EVENT_SIZE, 
@@ -79,7 +79,7 @@ void Test_BPLib_PI_AddApplication_ProxyErr(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_REMOVED);
     UT_SetDefaultReturnValue(UT_KEY(BPA_ADUP_AddApplication), BPLIB_ERROR);
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_ERROR);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_ERROR);
     UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_PI_ADD_FWP_DBG_EID);
     UtAssert_STRINGBUF_EQ("Error with add-application directive, framework specific error code = %d", BPLIB_EM_EXPANDED_EVENT_SIZE, 
                             context_BPLib_EM_SendEvent[0].Spec, BPLIB_EM_EXPANDED_EVENT_SIZE);
@@ -655,7 +655,7 @@ void Test_BPLib_PI_Ingress_Nominal(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BundleAlloc), 1, (UT_IntReturn_t) &Bundle);
 
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_SUCCESS);
-    UtAssert_EQ(uint64_t, BPLib_PI_SequenceNums[ChanId], 1);
+    UtAssert_EQ(uint64_t, BplibInst.ChanCtxt[ChanId].SequenceNum, 1);
 
     /* Ensure Node Config is locked and unlocked */
     UtAssert_STUB_COUNT(BPLib_NC_ReaderLock, 1);
@@ -672,12 +672,12 @@ void Test_BPLib_PI_Ingress_ResetSequence(void)
 
     memset(&Bundle, 0, sizeof(Bundle));
 
-    BPLib_PI_SequenceNums[ChanId] = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM];
+    BplibInst.ChanCtxt[ChanId].SequenceNum = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM];
 
     UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BundleAlloc), 1, (UT_IntReturn_t) &Bundle);
 
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_SUCCESS);
-    UtAssert_EQ(uint64_t, BPLib_PI_SequenceNums[ChanId], 0);
+    UtAssert_EQ(uint64_t, BplibInst.ChanCtxt[ChanId].SequenceNum, 0);
 
     /* Ensure Node Config is locked and unlocked */
     UtAssert_STUB_COUNT(BPLib_NC_ReaderLock, 1);
@@ -832,6 +832,46 @@ void Test_BPLib_PI_Egress_Timeout(void)
     UtAssert_INT32_EQ(BPLib_PI_Egress(&BplibInst, ChanId, AduPtr, &AduSize, BufLen, Timeout), BPLIB_PI_TIMEOUT);
 }
 
+void Test_BPLib_PI_SetRegistrationState_BadParam(void)
+{
+    UtAssert_INT32_EQ(BPLIB_NULL_PTR_ERROR, BPLib_PI_SetRegistrationState(NULL, 0, 0));
+
+    UtAssert_INT32_EQ(BPLIB_INVALID_CHAN_ID_ERR, BPLib_PI_SetRegistrationState(&BplibInst, BPLIB_MAX_NUM_CHANNELS, 0));
+
+    UtAssert_INT32_EQ(BPLIB_INV_REG_STATE, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLib_PI_NUM_REG_STATE));
+}
+
+void Test_BPLib_PI_SetRegistrationState_Nominal(void)
+{
+    BplibInst.ChanCtxt[0].RegState = BPLIB_PI_ACTIVE;
+
+    UtAssert_INT32_EQ(BPLIB_SUCCESS, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLIB_PI_PASSIVE_DEFER));
+    UtAssert_INT32_EQ(BplibInst.ChanCtxt[0].RegState, BPLIB_PI_PASSIVE_DEFER);
+}
+
+void Test_BPLib_PI_SetRegistrationState_Abandon(void)
+{
+    BplibInst.ChanCtxt[0].RegState = BPLIB_PI_ACTIVE;
+
+    UT_SetDeferredRetcode(UT_KEY(BPLib_QM_WaitQueueTryPull), 1, true);
+
+    UtAssert_INT32_EQ(BPLIB_SUCCESS, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLIB_PI_PASSIVE_ABANDON));
+    UtAssert_INT32_EQ(BplibInst.ChanCtxt[0].RegState, BPLIB_PI_PASSIVE_ABANDON);
+    UtAssert_STUB_COUNT(BPLib_MEM_BundleFree, 1);
+}
+
+void Test_BPLib_PI_GetRegistrationState_Nominal(void)
+{
+    BplibInst.ChanCtxt[0].RegState = BPLIB_PI_ACTIVE;
+    UtAssert_INT32_EQ(BPLIB_PI_ACTIVE, BPLib_PI_GetRegistrationState(&BplibInst, 0));
+}
+
+void Test_BPLib_PI_GetRegistrationState_BadParam(void)
+{
+    UtAssert_INT32_EQ(BPLIB_PI_PASSIVE_ABANDON, BPLib_PI_GetRegistrationState(NULL, 0));
+    UtAssert_INT32_EQ(BPLIB_PI_PASSIVE_ABANDON, BPLib_PI_GetRegistrationState(&BplibInst, BPLIB_MAX_NUM_CHANNELS));
+}
+
 void TestBplibPi_Register(void)
 {
     ADD_TEST(Test_BPLib_PI_AddApplication_Nominal);
@@ -890,4 +930,10 @@ void TestBplibPi_Register(void)
     ADD_TEST(Test_BPLib_PI_Egress_BadChanId);
     ADD_TEST(Test_BPLib_PI_Egress_BadCopy);  
     
+    ADD_TEST(Test_BPLib_PI_SetRegistrationState_BadParam);
+    ADD_TEST(Test_BPLib_PI_SetRegistrationState_Nominal);
+    ADD_TEST(Test_BPLib_PI_SetRegistrationState_Abandon);
+
+    ADD_TEST(Test_BPLib_PI_GetRegistrationState_Nominal);
+    ADD_TEST(Test_BPLib_PI_GetRegistrationState_BadParam);
 }

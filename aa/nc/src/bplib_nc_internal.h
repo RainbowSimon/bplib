@@ -56,9 +56,11 @@ void BPLib_NC_UpdateContactHkTlm(void);
  *
  * \par Description
  *      Update the channel telemetry values to new channel configuration values
+ * 
+ * \param[in] Inst Pointer to bplib instance
  *
  */
-void BPLib_NC_UpdateChannelHkTlm(void);
+void BPLib_NC_UpdateChannelHkTlm(BPLib_Instance_t *Inst);
 
 /**
  * \brief Validate PARAM_BUNDLE_SIZE_NO_FRAGMENT

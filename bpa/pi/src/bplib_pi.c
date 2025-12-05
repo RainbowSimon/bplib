@@ -37,11 +37,6 @@
 #include "bplib_cbor.h"
 #include <stdio.h>
 
-/* 
-** Global Data 
-*/
-
-uint64_t      BPLib_PI_SequenceNums[BPLIB_MAX_NUM_CHANNELS];
 
 /*
 ** Internal Function Definitions
@@ -99,7 +94,7 @@ BPLib_Status_t BPLib_PI_ValidateCanBlkConfig(BPLib_PI_CanBlkConfig_t *CanBlkConf
 */
 
 /* Add application configurations */
-BPLib_Status_t BPLib_PI_AddApplication(uint32_t ChanId)
+BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
 {
     BPLib_NC_ApplicationState_t AppState;
     BPLib_Status_t Status = BPLIB_SUCCESS;
@@ -125,9 +120,10 @@ BPLib_Status_t BPLib_PI_AddApplication(uint32_t ChanId)
         return BPLIB_APP_STATE_ERR;
     }
 
-    /* Initialize sequence number */
-    BPLib_PI_SequenceNums[ChanId] = 0;
-
+    /* Initialize configs */
+    Inst->ChanCtxt[ChanId].SequenceNum = 0;
+    Inst->ChanCtxt[ChanId].RegState = BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].RegState;
+    
     /* Do any framework-specific operations */
     Status = BPLib_FWP_ProxyCallbacks.BPA_ADUP_AddApplication(ChanId);
     if (Status == BPLIB_SUCCESS)
@@ -288,7 +284,7 @@ BPLib_Status_t BPLib_PI_RemoveApplication(BPLib_Instance_t *Inst, uint32_t ChanI
     (void) BPLib_STOR_LoadBatch_Reset(&Inst->BundleStorage.ChannelLoadBatches[ChanId]);
 
     /* Reset sequence number */
-    BPLib_PI_SequenceNums[ChanId] = 0;
+    Inst->ChanCtxt[ChanId].SequenceNum = 0;
     
     /* Do any framework-specific operations */
     Status = BPLib_FWP_ProxyCallbacks.BPA_ADUP_RemoveApplication(ChanId);
@@ -474,13 +470,13 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         NewBundle->blocks.PrimaryBlock.MonoTime.Time = BPLib_TIME_GetMonotonicTime();
         NewBundle->blocks.PrimaryBlock.MonoTime.BootEra = BPLib_TIME_GetBootEra();
         NewBundle->blocks.PrimaryBlock.Timestamp.CreateTime = BPLib_TIME_GetDtnTime(NewBundle->blocks.PrimaryBlock.MonoTime);
-        NewBundle->blocks.PrimaryBlock.Timestamp.SequenceNumber = BPLib_PI_SequenceNums[ChanId];
+        NewBundle->blocks.PrimaryBlock.Timestamp.SequenceNumber = Inst->ChanCtxt[ChanId].SequenceNum;
 
         /* Update sequence number */
-        BPLib_PI_SequenceNums[ChanId]++;
-        if (BPLib_PI_SequenceNums[ChanId] > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM])
+        Inst->ChanCtxt[ChanId].SequenceNum++;
+        if (Inst->ChanCtxt[ChanId].SequenceNum > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM])
         {
-            BPLib_PI_SequenceNums[ChanId] = 0;
+            Inst->ChanCtxt[ChanId].SequenceNum = 0;
         }
 
         /* Initialize payload block */
@@ -603,6 +599,8 @@ BPLib_Status_t BPLib_PI_SetRegistrationState(BPLib_Instance_t *Inst, uint32_t Ch
         while (BPLib_QM_WaitQueueTryPull(&Inst->ChannelEgressJobs[ChanId], &Bundle, QM_NO_WAIT))
         {
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
         }
     } 
 
