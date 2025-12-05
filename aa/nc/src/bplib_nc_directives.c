@@ -44,70 +44,54 @@ void BPLib_NC_Noop(void)
 
 void BPLib_NC_AddAllApplications(void)
 {
-    /*
     BPLib_Status_t Status;
-    uint8_t AppIdx;
-    ??? AppList[???];
-    BPLib_AddApplication_Payload_t AddAllAppsPayload;
+    uint32_t ChanId;
 
-    for (AppIdx = 0; AppIdx < <num apps>; AppIdx++)
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        AddAllAppsPayload.ChanId = AppList[AppIdx]
-        Status &= BPLib_NC_AddApplication(AddAllAppsPayload);
+        Status &= BPLib_PI_AddApplication(ChanId);
     }
 
     if (Status == BPLIB_SUCCESS)
-    */
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_ADD_ALL_APPS_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
-                            "Add all applications directive is unimplemented");
+                            "Successful add-all-applications directive");
     }
-    /*
     else
     {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTTED_DIRECTIVE_COUNT, 1);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_ADD_ALL_APPS_ERR_EID,
                             BPLib_EM_EventType_ERROR,
-                            "Add all applications directive is unimplemented");
+                            "Failed add-all-applications directive, RC= = %d", Status);
     }
-    */
 }
 
 void BPLib_NC_StartAllApplications(void)
 {
-    /*
     BPLib_Status_t Status;
-    BPLib_StartApplication_Payload_t StartAllAppsPayload;
-    uint8_t AppIdx;
-    ??? AppList[???];
+    uint32_t ChanId;
 
-    Status = BPLIB_SUCCESS;
-
-    for (AppIdx = 0; AppIdx < <num apps>; AppIdx++)
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        StartAllAppsPayload.ChanId = AppList[AppIdx];
-        Status &= BPLib_NC_StartApplication(StartAllAppsPayload);
+        Status &= BPLib_PI_StartApplication(ChanId);
     }
 
     if (Status == BPLIB_SUCCESS)
-    */
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_START_ALL_APPS_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
-                            "Start all applications directive not implemented");
+                            "Successful start-all-applications directive");
     }
-    /*
     else
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_START_ALL_APPS_ERR_EID,
                             BPLib_EM_EventType_ERROR,
-                            "Start all applications directive not implemented");
+                            "Failed start-all-applications directive, RC= = %d", Status);
     }
-    */
 }
 
 void BPLib_NC_VerifyBundleStorage(void)

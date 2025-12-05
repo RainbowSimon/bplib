@@ -28,6 +28,7 @@
 #include "bplib_mem.h"
 #include "bplib_ct.h"
 #include "bplib_stor.h"
+#include "bplib_pi.h"
 
 
 /*
@@ -65,6 +66,9 @@ struct BPLib_Instance
 
     /* Custody transfer context */
     BPLib_CT_Context_t Ct;
+
+    /* Context for each channel */
+    BPLib_PI_ChanCtxt_t ChanCtxt[BPLIB_MAX_NUM_CHANNELS];
 };
 
 #endif /* BPLIB_INST_H */

@@ -54,7 +54,8 @@ typedef struct
 typedef enum {
     BPLIB_PI_ACTIVE = 0,
     BPLIB_PI_PASSIVE_DEFER = 1,
-    BPLIB_PI_PASSIVE_ABANDON = 2
+    BPLIB_PI_PASSIVE_ABANDON = 2,
+    BPLib_PI_NUM_REG_STATE = 3
 } BPLib_PI_RegistrationState_t;
 
 /**
@@ -90,6 +91,11 @@ typedef struct
 {
     BPLib_PI_Config_t Configs[BPLIB_MAX_NUM_CHANNELS];
 } BPLib_PI_ChannelTable_t;
+
+typedef struct 
+{
+    BPLib_PI_RegistrationState_t RegState;
+} BPLib_PI_ChanCtxt_t;
 
 
 /*

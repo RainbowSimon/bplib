@@ -575,3 +575,46 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
 
     return Status;
 }
+
+BPLib_Status_t BPLib_PI_SetRegistrationState(BPLib_Instance_t *Inst, uint32_t ChanId, uint32_t RegState)
+{
+    BPLib_Bundle_t *Bundle = NULL;
+
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+    
+    if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    {
+        return BPLIB_INVALID_CHAN_ID_ERR;
+    }
+
+    if (RegState >= BPLib_PI_NUM_REG_STATE)
+    {
+        return BPLIB_INV_REG_STATE;
+    }
+
+    Inst->ChanCtxt[ChanId].RegState = RegState;
+
+    if (RegState == BPLIB_PI_PASSIVE_ABANDON)
+    {
+        /* Delete ("abandon") any queued bundles */
+        while (BPLib_QM_WaitQueueTryPull(&Inst->ChannelEgressJobs[ChanId], &Bundle, QM_NO_WAIT))
+        {
+            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+        }
+    } 
+
+    return BPLIB_SUCCESS;
+}
+
+BPLib_PI_RegistrationState_t BPLib_PI_GetRegistrationState(BPLib_Instance_t *Inst, uint32_t ChanId)
+{
+    if (Inst == NULL || ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    {
+        return BPLIB_PI_PASSIVE_ABANDON;
+    }
+
+    return Inst->ChanCtxt[ChanId].RegState;
+}
