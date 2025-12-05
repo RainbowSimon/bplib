@@ -44,7 +44,7 @@ void BPLib_NC_Noop(void)
 
 void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst)
 {
-    BPLib_Status_t Status;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
     uint32_t ChanId;
 
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
@@ -70,7 +70,7 @@ void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst)
 
 void BPLib_NC_StartAllApplications(void)
 {
-    BPLib_Status_t Status;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
     uint32_t ChanId;
 
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
