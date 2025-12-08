@@ -403,39 +403,27 @@ void BPLib_NC_RemoveApplication(BPLib_Instance_t *Inst, const BPLib_RemoveApplic
     }
 }
 
-void BPLib_NC_SetRegistrationState(const BPLib_SetRegistrationState_Payload_t Payload)
+void BPLib_NC_SetRegistrationState(BPLib_Instance_t *Inst, const BPLib_SetRegistrationState_Payload_t Payload)
 {
-    /*
     BPLib_Status_t Status;
 
-    Status = BPLIB_SUCCESS;
-
-    Node Configuration calls Storage to set application state in-channel parameters to
-    * Active
-    * Passive, with action entry:
-        * Defer
-        * Abandon
-            * Node Configuration sends Storage request to delete any bundles already queued for the channel and future bundles for that channel
-
+    Status = BPLib_PI_SetRegistrationState(Inst, Payload.ChanId, Payload.RegState);
     if (Status == BPLIB_SUCCESS)
-    */
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_SET_REGI_STAT_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
-                            "Set registration state directive not implemented, received %d in payload",
-                            Payload.ExampleParameter);
+                            "Set the registration state of channel #%ld to %ld.",
+                            Payload.ChanId, Payload.RegState);
     }
-    /*
     else
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_SET_REGI_STAT_ERR_EID,
                             BPLib_EM_EventType_ERROR,
-                            "Set registration state directive not implemented, received %d in payload",
-                            Payload.ExampleParameter);
+                            "Failed to set the registration state of channel #%ld to %ld, Status=%ld.",
+                            Payload.ChanId, Payload.RegState, Status);
     }
-    */
 }
 
 void BPLib_NC_StartApplication(const BPLib_StartApplication_Payload_t Payload)

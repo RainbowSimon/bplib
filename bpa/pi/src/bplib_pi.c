@@ -528,13 +528,19 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
     {
         return BPLIB_NULL_PTR_ERROR;
     }
-    else if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
-    {
-        *AduSize = 0;
-        return BPLIB_INVALID_CHAN_ID_ERR;
-    }
+
     *AduSize = 0;
 
+    if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    {    
+        return BPLIB_INVALID_CHAN_ID_ERR;
+    }
+    else if (BPLib_PI_GetRegistrationState(Inst, ChanId) != BPLIB_PI_ACTIVE)
+    {
+        /* Only deliver ADUs if the registration state is active */
+        return BPLIB_PI_TIMEOUT;
+    }
+    
     /* Get the next bundle in the channel egress queue */
     Status = BPLib_QM_DuctPull(Inst, ChanId, true, Timeout, &Bundle);
     if (Status == BPLIB_SUCCESS)
