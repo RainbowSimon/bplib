@@ -20,111 +20,18 @@
 
 #include "bplib_cbor_internal.h"
 
-/**
- * \brief Add an "open byte string" CBOR head
- *
- * Major Type: 2 (byte string)
- * Additional Info: number of bytes in the string
- *  - If number of bytes in the string is less than 24:
- *      - the next 5 bits describe the length
- *  - If number of bytes in the string is 24 to 0xFF
- *      - the next 5 bits should be set to 24
- *      - the next 1 byte should describe the length
- *  - If number of bytes in the string is 0x100 to 0xFFFF
- *      - the next 5 bits should be set to 25
- *      - the next 2 bytes should describe the length
- *  - If number of bytes in the string is 0x1.0000 to 0xFFFF.FFFF
- *      - the next 5 bits should be set to 26
- *      - the next 4 bytes should describe the length
- *  - If number of bytes in the string is 0x1.0000.0000 to 0xFFFF.FFFF.FFFF.FFFF
- *      - the next 5 bits should be set to 27
- *      - the next 8 bytes should describe the length
- *
- * \param[in] DataSize (uint64_t) Size of the ADU (determines how many bytes of additional info are in the CBOR head)
- * \param[in] CurrentOutputBufferAddr (uintptr_t) Destination buffer, to write the cbor head
- * \param[in] BytesLeftInOutputBuffer (size_t) Destination buffer, to write the cbor head
- *
- * \return The number of bytes written to the output buffer (0 returned on error)
- */
-static size_t BPLib_CBOR_AddByteStringHead(uint64_t DataSize,
-    uintptr_t CurrentOutputBufferAddr,
-    size_t BytesLeftInOutputBuffer)
-{
-    size_t BytesWritten;
-    size_t DataSizeBitShift;
-    uint8_t DataSizeByte;
-    uint8_t FirstByte;
-    size_t BytesNeeded;
-
-    if (DataSize < 24)
-    {
-        BytesNeeded = 1;
-        FirstByte = (2 << 5) | DataSize;
-    }
-    else if (DataSize < 0x100)
-    {
-        BytesNeeded = 1 + 1;
-        FirstByte = (2 << 5) | 24;
-    }
-    else if (DataSize < 0x10000)
-    {
-        BytesNeeded = 1 + 2;
-        FirstByte = (2 << 5) | 25;
-    }
-    else if (DataSize < 0x100000000)
-    {
-        BytesNeeded = 1 + 4;
-        FirstByte = (2 << 5) | 26;
-    }
-    else
-    {
-        BytesNeeded = 1 + 8;
-        FirstByte = (2 << 5) | 27;
-    }
-
-    /* Make sure there is enough room in output buffer before writing anything */
-    if (BytesNeeded <= BytesLeftInOutputBuffer)
-    {
-        /* write the first byte */
-        *(uint8_t*)CurrentOutputBufferAddr = FirstByte;
-        CurrentOutputBufferAddr++;
-        /* optionally write any additional bytes */
-        for (BytesWritten = 1; BytesWritten < BytesNeeded; BytesWritten++)
-        {
-            DataSizeBitShift = ((BytesNeeded - 1) * 8) - (BytesWritten * 8);
-            DataSizeByte = (uint8_t) ((DataSize >> DataSizeBitShift) & 0xFF);
-            *(uint8_t*)CurrentOutputBufferAddr = DataSizeByte;
-            CurrentOutputBufferAddr++;
-        }
-    }
-    else
-    {
-        /* error - not enough room in output buffer */
-        BytesWritten = 0;
-    }
-
-    return BytesWritten;
-}
-
-
 BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                                         void* OutputBuffer,
                                         size_t OutputBufferSize,
                                         size_t* NumBytesCopied)
 {
     BPLib_Status_t           ReturnStatus;
-    BPLib_Status_t           PayloadDataCopyStatus;
     QCBOREncodeContext       Context;
     UsefulBuf                InitStorage;
-    UsefulBufC               FinishBuffer;
     QCBORError               QcborStatus;
-    uintptr_t                CurrentOutputBufferAddr;
-    size_t                   TotalBytesCopied;
     size_t                   BytesLeftInOutputBuffer;
-    size_t                   EncodedSize;
-    BPLib_ARP_AdminRecord_t* AdminRecord;
-
-    UsefulOutBuf EncodeBuffer;
+    UsefulOutBuf             EncodeBuffer;
+    uint8_t*                 AduByteString = NULL;
 
     if ((StoredBundle == NULL) ||
         (OutputBuffer == NULL) ||
@@ -135,186 +42,127 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     else
     {
         /*
-        ** Jam in an "open definite array" character
-        ** Major Type: 4 (array)
-        ** Additional Info: number of data items in array (6 total)
-        **  1. Block Type
-        **  2. Block Num
-        **  3. Block Processing Flags
-        **  4. CRC Type
-        **  5. Block-Specific Data (ADU)
-        **  6. CRC Value
-        ** 0b100_00110 == 0x86
+        ** Initialize the encoder
         */
-
-        CurrentOutputBufferAddr = (uintptr_t)(OutputBuffer);
-        *(uint8_t*)CurrentOutputBufferAddr = 0x86;
-        TotalBytesCopied = 1;
-        CurrentOutputBufferAddr++;
-        BytesLeftInOutputBuffer = OutputBufferSize - TotalBytesCopied;
-
-        /*
-        ** Initialize the encoder (encoding just the initial items before the ADU)
-        */
-        InitStorage.ptr = (void*) CurrentOutputBufferAddr;
-        InitStorage.len = BytesLeftInOutputBuffer;
+        InitStorage.ptr = OutputBuffer;
+        InitStorage.len = OutputBufferSize;
+        UsefulOutBuf_Init(&EncodeBuffer, InitStorage);
         QCBOREncode_Init(&Context, InitStorage);
+
+        ReturnStatus = BPLib_CBOR_EncodeArray(&Context, &EncodeBuffer);
+        if (ReturnStatus != BPLIB_SUCCESS)
+        {
+            return ReturnStatus; /* TODO Novel return status */
+        }
 
         /*
         ** Add our block header data
         */
-        QCBOREncode_AddUInt64(&Context, StoredBundle->blocks.PayloadHeader.BlockType);
-        QCBOREncode_AddUInt64(&Context, StoredBundle->blocks.PayloadHeader.BlockNum);
-        QCBOREncode_AddUInt64(&Context, StoredBundle->blocks.PayloadHeader.BlockProcFlags);
-        QCBOREncode_AddUInt64(&Context, StoredBundle->blocks.PayloadHeader.CrcType);
-
-        /*
-        ** Finish encoding, and check for errors
-        */
-        FinishBuffer.len = 0;
-        FinishBuffer.ptr = NULL;
-        QcborStatus = QCBOREncode_Finish(&Context, &FinishBuffer);
-        if (QcborStatus != QCBOR_SUCCESS)
+        ReturnStatus = BPLib_CBOR_EncodeUInt(&Context, &EncodeBuffer, StoredBundle->blocks.PayloadHeader.BlockType);
+        if (ReturnStatus != BPLIB_SUCCESS)
         {
             *NumBytesCopied = 0;
-            return BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_HEAD_ERR;
-        }
-        else
-        {
-            TotalBytesCopied += FinishBuffer.len;
-            CurrentOutputBufferAddr += FinishBuffer.len;
-            BytesLeftInOutputBuffer -= FinishBuffer.len;
+            return ReturnStatus; /* TODO: Novel return status */
         }
 
-        /*
-        ** Jam in our own "byte string" cbor encoding head
-        */
-        EncodedSize = BPLib_CBOR_AddByteStringHead(StoredBundle->blocks.PayloadHeader.DataSize,
-                                                              CurrentOutputBufferAddr,
-                                                              BytesLeftInOutputBuffer);
-        if (EncodedSize > 0)
-        {
-            CurrentOutputBufferAddr += EncodedSize;
-            TotalBytesCopied        += EncodedSize;
-            BytesLeftInOutputBuffer -= EncodedSize;
-        }
-        else
+        ReturnStatus = BPLib_CBOR_EncodeUInt(&Context, &EncodeBuffer, StoredBundle->blocks.PayloadHeader.BlockNum);
+        if (ReturnStatus != BPLIB_SUCCESS)
         {
             *NumBytesCopied = 0;
-            return BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR;
+            return ReturnStatus; /* TODO: Novel return status */
+        }
+
+        ReturnStatus = BPLib_CBOR_EncodeUInt(&Context, &EncodeBuffer, StoredBundle->blocks.PayloadHeader.BlockProcFlags);
+        if (ReturnStatus != BPLIB_SUCCESS)
+        {
+            *NumBytesCopied = 0;
+            return ReturnStatus; /* TODO: Novel return status */
+        }
+
+        ReturnStatus = BPLib_CBOR_EncodeUInt(&Context, &EncodeBuffer, StoredBundle->blocks.PayloadHeader.CrcType);
+        if (ReturnStatus != BPLIB_SUCCESS)
+        {
+            *NumBytesCopied = 0;
+            return ReturnStatus; /* TODO: Novel return status */
         }
 
         if (StoredBundle->blocks.PayloadHeader.BlockProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
         {
-            memcpy((void*) &AdminRecord, (void*) StoredBundle->blob->user_data.BigData, sizeof(BPLib_ARP_AdminRecord_t));
-
-            QCBOREncode_OpenArray(&Context);
-            QCBOREncode_AddUInt64(&Context, AdminRecord->AdminRecordType);
-
-            /* Determine which encoding is needed by checking the admin record type */
-            switch(AdminRecord->AdminRecordType)
-            {
-                case BPLib_CT_BsrRecordTypeCode:
-                    // ReturnStatus = BPLib_CBOR_EncodeBSR(Context, *(AdminRecord->AdminRecordBody.BSR));
-                    break;
-
-                case BPLib_CT_CrsRecordTypeCode:
-                    // ReturnStatus = BPLib_CBOR_EncodeCRS(Context, &(AdminRecord->AdminRecordBody.CRS));
-                    break;
-
-                case BPLib_CT_CcsRecordTypeCode:
-                    // TODO: Remove
-                    EncodeBuffer.data_len = TotalBytesCopied;
-                    ReturnStatus = BPLib_CBOR_EncodeCcs(&Context, &(AdminRecord->AdminRecordBody.CCS), &EncodeBuffer);
-
-                    if (BPLib_CBOR_EncodeGetBufferSize(&EncodeBuffer, &EncodedSize) != BPLIB_SUCCESS)
-                    {
-                        printf("\n================\nCCS encode error\n================\n\n");
-                    }
-                    break;
-                default:
-                    /* TODO: Handle unsupported admin record type */
-                    ReturnStatus = BPLIB_ARP_UNK_REC_TYPE_ERR;
-                    break;
-            }
-
-            if (ReturnStatus == BPLIB_SUCCESS)
-            {
-                CurrentOutputBufferAddr += EncodedSize;
-                BytesLeftInOutputBuffer -= EncodedSize;
-                TotalBytesCopied        += EncodedSize;
-            }
-            else
+            ReturnStatus = BPLib_CBOR_EncodeAdminRecord(&Context, &EncodeBuffer, StoredBundle);
+            if (ReturnStatus != BPLIB_SUCCESS)
             {
                 *NumBytesCopied = 0;
                 return ReturnStatus;
             }
-
-            QCBOREncode_CloseArray(&Context);
         }
         else
         {
             /*
             ** Add the ADU data
             */
-            PayloadDataCopyStatus = BPLib_MEM_CopyOutFromOffset(StoredBundle,
-                StoredBundle->blocks.PayloadHeader.DataOffsetStart,
-                StoredBundle->blocks.PayloadHeader.DataSize,
-                (void*) CurrentOutputBufferAddr,
-                BytesLeftInOutputBuffer);
+            BytesLeftInOutputBuffer = UsefulOutBuf_RoomLeft(&EncodeBuffer);
+            ReturnStatus = BPLib_MEM_CopyOutFromOffset(StoredBundle,
+                                                        StoredBundle->blocks.PayloadHeader.DataOffsetStart,
+                                                        StoredBundle->blocks.PayloadHeader.DataSize,
+                                                        (void*) AduByteString,
+                                                        BytesLeftInOutputBuffer);
 
-            if (PayloadDataCopyStatus == BPLIB_SUCCESS)
+            if (ReturnStatus == BPLIB_SUCCESS)
             {
-                CurrentOutputBufferAddr += StoredBundle->blocks.PayloadHeader.DataSize;
-                BytesLeftInOutputBuffer -= StoredBundle->blocks.PayloadHeader.DataSize;
-                TotalBytesCopied += StoredBundle->blocks.PayloadHeader.DataSize;
+                ReturnStatus = BPLib_CBOR_EncodeAdu(&Context, &EncodeBuffer, AduByteString,
+                                                    StoredBundle->blocks.PayloadHeader.DataSize);
+
+                if (ReturnStatus != BPLIB_SUCCESS)
+                {
+                    *NumBytesCopied = 0;
+                    return ReturnStatus; /* TODO: Novel return status */
+                }
             }
             else
             {
                 *NumBytesCopied = 0;
-                return PayloadDataCopyStatus;
+                return ReturnStatus;
             }
         }
-
-        /*
-        ** Initialize the encoder (to encode the CRC)
-        */
-        InitStorage.ptr = (void*) CurrentOutputBufferAddr;
-        InitStorage.len = BytesLeftInOutputBuffer;
-        QCBOREncode_Init(&Context, InitStorage);
 
         /*
         ** Add the CRC
         */
         /* Set CRC value to 0, real value will be jammed in after encoding is done */
-        (void) BPLib_CBOR_EncodeCrcValue(&Context, 0, StoredBundle->blocks.PayloadHeader.CrcType);
+        ReturnStatus = BPLib_CBOR_EncodeCrcValue(&Context, &EncodeBuffer, 0,
+                                                    StoredBundle->blocks.PayloadHeader.CrcType);
+
+        if (ReturnStatus != BPLIB_SUCCESS)
+        {
+            *NumBytesCopied = 0;
+            return ReturnStatus; /* TODO: Novel return status */
+        }
+
+        /* Close payload array */
+        QCBOREncode_CloseArray(&Context);
 
         /*
         ** Finish encoding, and check for errors
         */
-        FinishBuffer.len = 0;
-        FinishBuffer.ptr = NULL;
-        QcborStatus = QCBOREncode_Finish(&Context, &FinishBuffer);
-        if (QcborStatus != QCBOR_SUCCESS)
+        QcborStatus = QCBOREncode_Finish(&Context, &NULLUsefulBufC);
+        if (QcborStatus == QCBOR_SUCCESS)
         {
-            *NumBytesCopied = 0;
-            return BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR;
-        }
-        else
-        {
-            TotalBytesCopied += FinishBuffer.len;
+            ReturnStatus = BPLib_CBOR_EncodeGetBufferSize(&EncodeBuffer, NumBytesCopied);
+            if (ReturnStatus != BPLIB_SUCCESS)
+            {
+                return ReturnStatus; /* TODO: Novel return status */
+            }
 
             /* Calculate new CRC for encoded block */
             BPLib_CBOR_GenerateBlockCrc(OutputBuffer,
-                                    StoredBundle->blocks.PayloadHeader.CrcType,
-                                    0, TotalBytesCopied);
-
-            *NumBytesCopied += TotalBytesCopied;
-            CurrentOutputBufferAddr += FinishBuffer.len;
-            BytesLeftInOutputBuffer -= FinishBuffer.len;
+                                        StoredBundle->blocks.PayloadHeader.CrcType,
+                                        0, *NumBytesCopied);
         }
-
-        ReturnStatus = BPLIB_SUCCESS;
+        else
+        {
+            *NumBytesCopied = 0;
+            ReturnStatus = BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR;
+        }
     }
 
     return ReturnStatus;

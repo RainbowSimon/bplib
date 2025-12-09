@@ -362,6 +362,65 @@ void Test_BPLib_CBOR_EncodePayload_Nominal(void)
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_SUCCESS);
 }
 
+void Test_BPLib_CBOR_EncodePayload_AdminRecord(void)
+{
+    BPLib_Status_t          Status;
+    BPLib_ARP_AdminRecord_t AdminRecord;
+    BPLib_Bundle_t          Bundle;
+    uint8_t                 OutputBuffer[512];
+    size_t                  NumBytesCopied;
+    BPLib_MEM_Block_t       BundleBlob;
+    size_t                  TotalBytesCopied;
+    size_t                  SeqRangeSize;
+    uint8_t                 Collection;
+
+    NumBytesCopied   = 0;
+    TotalBytesCopied = 0;
+    SeqRangeSize     = 0;
+    
+    AdminRecord.AdminRecordType                                             = BPLib_CT_CcsRecordTypeCode;
+    AdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections                 = 1;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].DispositionCode = BPLib_CT_CustodyAccepted;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRangeLen     = 3;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[0]     = 1;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[1]     = 2;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[2]     = 3;
+
+    Bundle.blocks.PayloadHeader.BlockType      = BPLib_BlockType_Payload;
+    Bundle.blocks.PayloadHeader.BlockNum       = 0;
+    Bundle.blocks.PayloadHeader.BlockProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+    Bundle.blocks.PayloadHeader.CrcType        = BPLib_CRC_Type_CRC32C;
+
+    Bundle.blob = &BundleBlob;
+
+    memcpy(Bundle.blob->user_data.BigData, &AdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
+
+    for (Collection = 0; Collection < AdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections; Collection++)
+    {
+        /* ATTN: Assumes all sequence range values are <= 0x17. See CBOR RFC for details */
+        SeqRangeSize += AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[Collection].SeqRangeLen;
+    }
+
+    TotalBytesCopied = 1            + /* Open definite array initial byte */
+                       1            + /* Bundle.blocks.PayloadHeader.BlockType */
+                       1            + /* Bundle.blocks.PayloadHeader.BlockNum */
+                       1            + /* Bundle.blocks.PayloadHeader.BlockProcFlags */
+                       1            + /* Bundle.blocks.PayloadHeader.CrcType */
+                       1            + /* Open definite array initial byte for admin record */
+                       1            + /* AdminRecord.AdminRecordType */
+                       1            + /* Open definite map initial byte for CCS */
+                       1            + /* AdminRecord.DispositionCode */
+                       1            + /* Open definite array initial byte for sequence range */
+                       SeqRangeSize + /* Sequence range values */
+                       1            + /* Byte string initial byte for CRC */ 
+                       4;             /* ATTN: Assumes CRC is type BPLib_CRC_Type_CRC32C */
+
+
+    Status = BPLib_CBOR_EncodePayload(&Bundle, OutputBuffer, sizeof(OutputBuffer), &NumBytesCopied);
+    
+    UtAssert_INT32_EQ(Status, BPLIB_SUCCESS);
+    UtAssert_EQ(size_t, NumBytesCopied, TotalBytesCopied);
+}
 
 void TestBplibCborEncodeInternal_Register(void)
 {
@@ -378,4 +437,5 @@ void TestBplibCborEncodeInternal_Register(void)
 
     ADD_TEST(Test_BPLib_CBOR_EncodePayload_NullInputErrors);
     ADD_TEST(Test_BPLib_CBOR_EncodePayload_Nominal);
+    ADD_TEST(Test_BPLib_CBOR_EncodePayload_AdminRecord);
 }

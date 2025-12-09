@@ -28,6 +28,193 @@
 /* Function Definitions */
 /* ==================== */
 
+BPLib_Status_t BPLib_CBOR_EncodeArray(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer)
+{
+    BPLib_Status_t Status;
+
+    if (Context != NULL)
+    {
+        if (UsefulOutBuf_WillItFit(EncodeBuffer, 1) == 1) /* 1 byte for open definite array initial byte */
+        {
+            Status = BPLIB_SUCCESS;
+
+            UsefulOutBuf_AppendByte(EncodeBuffer, 0x80);
+            if (UsefulOutBuf_GetError(EncodeBuffer) == 0)
+            {
+                QCBOREncode_OpenArray(Context);
+            }
+            else
+            {
+                /*
+                ** Per UsefulBuf.h:
+                ** "Possible error conditions are:
+                **  - bytes to be inserted will not fit
+                **  - insertion point is out of buffer or past valid data
+                **  - current position is off end of buffer (probably corrupted or uninitialized)
+                **  - detect corruption / uninitialized by bad magic number"
+                */
+
+                Status = BPLIB_ERROR;
+            }
+        }
+        else
+        {
+            Status = BPLIB_ERROR;
+        }
+    }
+    else
+    {
+        Status = BPLIB_NULL_PTR_ERROR;
+    }
+
+    return Status;
+}
+
+BPLib_Status_t BPLib_CBOR_EncodeMap(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer)
+{
+    BPLib_Status_t Status;
+
+    if (Context != NULL)
+    {
+        if (UsefulOutBuf_WillItFit(EncodeBuffer, 1) == 1) /* 1 byte for open definite map initial byte */
+        {
+            Status = BPLIB_SUCCESS;
+
+            UsefulOutBuf_AppendByte(EncodeBuffer, 0xA0);
+            if (UsefulOutBuf_GetError(EncodeBuffer) == 0)
+            {
+                QCBOREncode_OpenMap(Context);
+            }
+            else
+            {
+                /*
+                ** Per UsefulBuf.h:
+                ** "Possible error conditions are:
+                **  - bytes to be inserted will not fit
+                **  - insertion point is out of buffer or past valid data
+                **  - current position is off end of buffer (probably corrupted or uninitialized)
+                **  - detect corruption / uninitialized by bad magic number"
+                */
+
+                Status = BPLIB_ERROR;
+            }
+        }
+        else
+        {
+            Status = BPLIB_ERROR;
+        }
+    }
+    else
+    {
+        Status = BPLIB_NULL_PTR_ERROR;
+    }
+
+    return Status;
+}
+
+BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint64_t ValueToEncode)
+{
+    BPLib_Status_t Status;
+
+    Status = BPLIB_SUCCESS;
+
+    if (Context != NULL)
+    {
+        if (ValueToEncode <= 0x17)
+        { /* Uses unsigned integer 0x00..0x17 (0..23) initial byte */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 1))
+            {
+                UsefulOutBuf_AppendByte(EncodeBuffer, ValueToEncode);
+            }
+            else
+            {
+                Status = BPLIB_ERROR;
+            }
+        }
+        else if (ValueToEncode > 0x17 && ValueToEncode <= 0xFF)
+        { /* Uses unsigned integer (one-byte uint8_t follows) initial byte */
+            /* 1 for initial byte and 1 to represent value */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 2))
+            {
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x18); /* uint8_t initial byte */
+                UsefulOutBuf_AppendByte(EncodeBuffer, ValueToEncode);
+            }
+            else
+            {
+                Status = BPLIB_ERROR;
+            }
+        }
+        else if (ValueToEncode > 0xFF && ValueToEncode <= 0xFFFF)
+        { /* Uses unsigned integer (two-byte uint16_t follows) initial byte */
+            /* 1 for initial byte and 2 to represent value */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 3))
+            {
+                UsefulOutBuf_AppendUint16(EncodeBuffer, ValueToEncode);
+            }
+            else
+            {
+                Status = BPLIB_ERROR;
+            }
+        }
+        else if (ValueToEncode > 0xFFFF && ValueToEncode <= 0xFFFFFFFF)
+        {   /* Uses unsigned integer (four-byte uint32_t follows) initial byte */
+            /* 1 for initial byte and 4 to represent value */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 5))
+            {
+                UsefulOutBuf_AppendUint32(EncodeBuffer, ValueToEncode);
+            }
+            else
+            {
+                Status = BPLIB_ERROR;
+            }
+        }
+        else if (ValueToEncode > 0xFFFFFFFF && ValueToEncode <= 0xFFFFFFFFFFFFFFFF)
+        { /* Uses unsigned integer (eight-byte uint64_t follows) initial byte */
+            /* 1 for initial byte and 8 to represent value */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 9))
+            {
+                UsefulOutBuf_AppendUint64(EncodeBuffer, ValueToEncode);
+            }
+            else
+            {
+                Status = BPLIB_ERROR;
+            }
+        }
+
+        if (Status == BPLIB_SUCCESS)
+        {
+            if (UsefulOutBuf_GetError(EncodeBuffer) == 0)
+            {
+                /* This add function will properly encode for all values regardless of size */
+                QCBOREncode_AddUInt64(Context, ValueToEncode);
+            }
+            else
+            {
+                /*
+                ** Per UsefulBuf.h:
+                ** "Possible error conditions are:
+                **  - bytes to be inserted will not fit
+                **  - insertion point is out of buffer or past valid data
+                **  - current position is off end of buffer (probably corrupted or uninitialized)
+                **  - detect corruption / uninitialized by bad magic number"
+                */
+
+                Status = BPLIB_ERROR;
+            }
+        }
+        else
+        {
+            Status = BPLIB_ERROR;
+        }
+    }
+    else
+    {
+        Status = BPLIB_NULL_PTR_ERROR;
+    }
+
+    return Status;
+}
+
 BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t* EncodedSize)
 {
     BPLib_Status_t Status;
@@ -42,7 +229,7 @@ BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t
     if (UsefulOutBufError == 0)
     {
         /* Everything is ok */
-        *EncodedSize += SizeData.len;
+        *EncodedSize = SizeData.len;
     }
     else
     {
@@ -55,16 +242,59 @@ BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t
         **  - detect corruption / uninitialized by bad magic number"
         */
 
-        Status = BPLIB_ERROR;
+        *EncodedSize = 0;
+        Status       = BPLIB_ERROR;
     }
 
     return Status;
 }
 
-void BPLib_CBOR_EncodeUInt64(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint64_t ValueToEncode)
+BPLib_Status_t BPLib_CBOR_EncodeAdu(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint8_t* Adu, size_t AduLen)
 {
-    QCBOREncode_AddUInt64(Context, ValueToEncode);
-    UsefulOutBuf_AppendUint64(EncodeBuffer, ValueToEncode);
+    BPLib_Status_t Status;
+    UsefulBufC     AduBuf;
+
+    Status = BPLIB_SUCCESS;
+
+    if (Context != NULL)
+    {
+        if (UsefulOutBuf_WillItFit(EncodeBuffer, AduLen + 1) == 1) /* +1 for byte string initial byte */
+        {
+            AduBuf.ptr = Adu;
+            AduBuf.len = AduLen;
+
+            UsefulOutBuf_AppendByte(EncodeBuffer, 0x40);
+            UsefulOutBuf_AppendUsefulBuf(EncodeBuffer, AduBuf);
+
+            if (UsefulOutBuf_GetError(EncodeBuffer) == 0)
+            {
+                QCBOREncode_AddBytes(Context, AduBuf);
+            }
+            else
+            {
+                /*
+                ** Per UsefulBuf.h:
+                ** "Possible error conditions are:
+                **  - bytes to be inserted will not fit
+                **  - insertion point is out of buffer or past valid data
+                **  - current position is off end of buffer (probably corrupted or uninitialized)
+                **  - detect corruption / uninitialized by bad magic number"
+                */
+
+                Status = BPLIB_ERROR;
+            }
+        }
+        else
+        {
+            Status = BPLIB_ERROR;
+        }
+    }
+    else
+    {
+        Status = BPLIB_NULL_PTR_ERROR;
+    }
+
+    return Status;
 }
 
 BPLib_Status_t BPLib_CBOR_EncodeEID(QCBOREncodeContext* Context, BPLib_EID_t* SourceData)
@@ -156,46 +386,128 @@ BPLib_Status_t BPLib_CBOR_EncodeCreationTimeStamp(QCBOREncodeContext* Context, B
     return ReturnStatus;
 }
 
-BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t CrcValue, uint64_t CrcType)
+BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint64_t CrcValue, uint64_t CrcType)
 {
-    BPLib_Status_t ReturnStatus;
-    UsefulBufC CrcInfo;
+    BPLib_Status_t Status;
+    UsefulBufC     CrcInfo;
+
+    Status      = BPLIB_SUCCESS;
     CrcInfo.ptr = &CrcValue;
 
-    if (Context == NULL)
+    if (Context != NULL)
     {
-        ReturnStatus = BPLIB_NULL_PTR_ERROR;
+        switch (CrcType)
+        {
+            case BPLib_CRC_Type_None:
+                /* If CRC is none, there's nothing to do */
+                break;
+
+            case BPLib_CRC_Type_CRC16:
+                /* Encode 16-bit CRC */
+                CrcInfo.len = 2;
+                break;
+
+            case BPLib_CRC_Type_CRC32C:
+                /* Encode 32-bit CRC */
+                CrcInfo.len = 4;
+                break;
+
+            default:
+                /* Unrecognized CRC type */
+                Status = BPLIB_ERROR; /* TODO: Existing error for this? */
+        }
+
+        if (Status == BPLIB_SUCCESS && CrcType != BPLib_CRC_Type_None)
+        {
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, CrcInfo.len + 1) == 1) /* +1 for byte string initial byte */
+            {
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x40);
+                UsefulOutBuf_AppendUsefulBuf(EncodeBuffer, CrcInfo);
+
+                if (UsefulOutBuf_GetError(EncodeBuffer) == 0)
+                {
+                    QCBOREncode_AddBytes(Context, CrcInfo);
+                }
+                else
+                {
+                    /*
+                    ** Per UsefulBuf.h:
+                    ** "Possible error conditions are:
+                    **  - bytes to be inserted will not fit
+                    **  - insertion point is out of buffer or past valid data
+                    **  - current position is off end of buffer (probably corrupted or uninitialized)
+                    **  - detect corruption / uninitialized by bad magic number"
+                    */
+
+                    Status = BPLIB_ERROR;
+                }
+            }
+            else
+            {
+                Status = BPLIB_ERROR;
+            }
+        }
     }
     else
     {
-        if (CrcType == BPLib_CRC_Type_None)
-        {
-            /* If CRC is none, there's nothing to do */
-            ReturnStatus = BPLIB_SUCCESS;
-        }
-        else if (CrcType == BPLib_CRC_Type_CRC16)
-        {
-            /* Encode 16-bit CRC */
-            CrcInfo.len = 2;
-            QCBOREncode_AddBytes(Context, CrcInfo);
-            ReturnStatus = BPLIB_SUCCESS;
-        }
-        else if (CrcType == BPLib_CRC_Type_CRC32C)
-        {
-            /* Encode 32-bit CRC */
-            CrcInfo.len = 4;
-            QCBOREncode_AddBytes(Context, CrcInfo);
-            ReturnStatus = BPLIB_SUCCESS;
-        }
-        else
-        {
-            /* Unrecognized CRC type */
-            ReturnStatus = BPLIB_ERROR;
-        }
-
+        Status = BPLIB_NULL_PTR_ERROR;
     }
 
-    return ReturnStatus;
+    return Status;
+}
+
+BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, BPLib_Bundle_t* Bundle)
+{
+    BPLib_Status_t          Status;
+    BPLib_ARP_AdminRecord_t AdminRecord;
+
+    if (Context != NULL)
+    {
+        /*
+        ** The bundle's payload has been determined to be an admin record, so copy the
+        ** payload into an admin record struct
+        */
+        memcpy((void*) &AdminRecord, (void*) Bundle->blob->user_data.BigData, sizeof(BPLib_ARP_AdminRecord_t));
+
+        /* Start an array that represents the admin record */
+        Status = BPLib_CBOR_EncodeArray(Context, EncodeBuffer);
+        if (Status == BPLIB_SUCCESS)
+        {
+            /* Encode the admin record type */
+            Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, AdminRecord.AdminRecordType);
+            if (Status == BPLIB_SUCCESS)
+            {
+                /* Determine which encoding is needed by checking the admin record type */
+                switch(AdminRecord.AdminRecordType)
+                {
+                    case BPLib_CT_BsrRecordTypeCode:
+                        // Status = BPLib_CBOR_EncodeBsr(&Context, &(AdminRecord.AdminRecordBody.BSR), &EncodeBuffer);
+                        break;
+
+                    case BPLib_CT_CrsRecordTypeCode:
+                        // Status = BPLib_CBOR_EncodeCrs(&Context, &(AdminRecord.AdminRecordBody.CRS), &EncodeBuffer);
+                        break;
+
+                    case BPLib_CT_CcsRecordTypeCode:
+                        Status = BPLib_CBOR_EncodeCcs(Context, &(AdminRecord.AdminRecordBody.CCS), EncodeBuffer);
+                        break;
+
+                    default:
+                        /* TODO: Handle unsupported admin record type */
+                        Status = BPLIB_ARP_UNK_REC_TYPE_ERR;
+                        break;
+                }
+            }
+
+            QCBOREncode_CloseArray(Context);
+        }
+    }
+    else
+    {
+        Status = BPLIB_NULL_PTR_ERROR;
+    }
+
+    return Status;
 }
 
 /*
@@ -222,31 +534,45 @@ BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
     uint8_t                        CollectionNum;
     uint8_t                        SeqRangeEntry;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollection;
-    
-    Status = BPLIB_SUCCESS;
 
     if (Context != NULL)
     {
-        QCBOREncode_OpenMap(Context);
-
-        for (CollectionNum = 0; CollectionNum < CCS->NumBundleSeqCollections; CollectionNum++)
+        Status = BPLib_CBOR_EncodeMap(Context, EncodeBuffer);
+        if (Status == BPLIB_SUCCESS)
         {
-            BundleSeqCollection = CCS->BundleSeqCollections[CollectionNum];
-            
-            /* Use disposition code to create map label */
-            QCBOREncode_OpenArrayInMapN(Context, (uint64_t) BundleSeqCollection.DispositionCode);
-            UsefulOutBuf_AppendUint64(EncodeBuffer, (uint64_t) BundleSeqCollection.DispositionCode);
-
-            for (SeqRangeEntry = 0; SeqRangeEntry < BundleSeqCollection.SeqRangeLen; SeqRangeEntry++)
+            for (CollectionNum = 0; CollectionNum < CCS->NumBundleSeqCollections; CollectionNum++)
             {
-                /* Encode bundle sequence range value into map under disposition code label */
-                BPLib_CBOR_EncodeUInt64(Context, EncodeBuffer, BundleSeqCollection.SeqRange[SeqRangeEntry]);
+                BundleSeqCollection = CCS->BundleSeqCollections[CollectionNum];
+
+                Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.DispositionCode);
+                if (Status == BPLIB_SUCCESS)
+                {
+                    Status = BPLib_CBOR_EncodeArray(Context, EncodeBuffer);
+                    if (Status == BPLIB_SUCCESS)
+                    {
+                        for (SeqRangeEntry = 0; SeqRangeEntry < BundleSeqCollection.SeqRangeLen; SeqRangeEntry++)
+                        {
+                            /* Encode bundle sequence range value into map under disposition code label */
+                            Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.SeqRange[SeqRangeEntry]);
+                            if (Status != BPLIB_SUCCESS)
+                            {
+                                /* Exit the loop if something went wrong */
+                                /* TODO: Status = ??? */
+                                break;
+                            }
+                        }
+
+                        QCBOREncode_CloseArray(Context);
+                    }
+                }
             }
 
-            QCBOREncode_CloseArray(Context);
+            QCBOREncode_CloseMap(Context);
         }
-
-        QCBOREncode_CloseMap(Context);
+        else
+        {
+            Status = BPLIB_ERROR;
+        }
     }
     else
     {
