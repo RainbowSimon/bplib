@@ -23,6 +23,7 @@
 /* ======== */
 
 #include "bplib_nc_directives.h"
+#include "bplib_nc_internal.h"
 #include "bplib_cla.h"
 #include "bplib_pi.h"
 
@@ -1151,7 +1152,7 @@ void BPLib_NC_SendStorageHk(BPLib_Instance_t* Instance)
     }
 }
 
-void BPLib_NC_SendChannelContactStatHk(void)
+void BPLib_NC_SendChannelContactStatHk(BPLib_Instance_t *Inst)
 {
     BPLib_Status_t              Status;
     uint32_t                    ContactId;
@@ -1169,6 +1170,8 @@ void BPLib_NC_SendChannelContactStatHk(void)
             // BPLib_EM_SendEvent()
         }
     }
+
+    BPLib_NC_UpdateChannelHkTlm(Inst);
 
     Status = BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendChannelContactPkt(&BPLib_NC_ChannelContactStatsPayload);
 

@@ -424,8 +424,9 @@ void BPLib_NC_ResetSourceCounters(const BPLib_ResetSourceCounters_Payload_t Payl
  * Generated stub function for BPLib_NC_SendChannelContactStatHk()
  * ----------------------------------------------------
  */
-void BPLib_NC_SendChannelContactStatHk(void)
+void BPLib_NC_SendChannelContactStatHk(BPLib_Instance_t *Instance)
 {
+    UT_GenStub_AddParam(BPLib_NC_SendChannelContactStatHk, BPLib_Instance_t *, Instance);
 
     UT_GenStub_Execute(BPLib_NC_SendChannelContactStatHk, Basic, NULL);
 }

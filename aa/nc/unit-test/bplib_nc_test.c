@@ -2022,9 +2022,14 @@ void Test_BPLib_NC_SendStorageHk_Error(void)
 
 void Test_BPLib_NC_SendChannelContactStatHk_Nominal(void)
 {
+    BPLib_Instance_t Inst;
+
+    memset(&Inst, 0, sizeof(BPLib_Instance_t));
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = TestConfigPtrs.ChanConfigPtr;
+
     UT_SetDefaultReturnValue(UT_KEY(BPA_TLMP_SendChannelContactPkt), BPLIB_SUCCESS);
 
-    BPLib_NC_SendChannelContactStatHk();
+    BPLib_NC_SendChannelContactStatHk(&Inst);
 
     // Verify directive counter was not incremented
     UtAssert_STUB_COUNT(BPLib_AS_Increment, 0);
@@ -2032,9 +2037,14 @@ void Test_BPLib_NC_SendChannelContactStatHk_Nominal(void)
 
 void Test_BPLib_NC_SendChannelContactStatHk_Error(void)
 {
+    BPLib_Instance_t Inst;
+
+    memset(&Inst, 0, sizeof(BPLib_Instance_t));
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = TestConfigPtrs.ChanConfigPtr;
+
     UT_SetDefaultReturnValue(UT_KEY(BPA_TLMP_SendChannelContactPkt), BPLIB_ERROR);
 
-    BPLib_NC_SendChannelContactStatHk();
+    BPLib_NC_SendChannelContactStatHk(&Inst);
 
     // Verify rejected directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
