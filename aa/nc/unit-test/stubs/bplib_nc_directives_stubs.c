@@ -515,8 +515,9 @@ void BPLib_NC_SetMibItem(const BPLib_SetMibItem_Payload_t Payload)
  * Generated stub function for BPLib_NC_SetRegistrationState()
  * ----------------------------------------------------
  */
-void BPLib_NC_SetRegistrationState(const BPLib_SetRegistrationState_Payload_t Payload)
+void BPLib_NC_SetRegistrationState(BPLib_Instance_t *Inst, const BPLib_SetRegistrationState_Payload_t Payload)
 {
+    UT_GenStub_AddParam(BPLib_NC_SetRegistrationState, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_NC_SetRegistrationState, const BPLib_SetRegistrationState_Payload_t, Payload);
 
     UT_GenStub_Execute(BPLib_NC_SetRegistrationState, Basic, NULL);

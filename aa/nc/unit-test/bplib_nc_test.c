@@ -1061,16 +1061,19 @@ void Test_BPLib_NC_RemoveApplication_Error(void)
 void Test_BPLib_NC_SetRegistrationState_Nominal(void)
 {
     BPLib_SetRegistrationState_Payload_t Payload;
+    BPLib_Instance_t Inst;
 
-    Payload.ExampleParameter = 3;
-    BPLib_NC_SetRegistrationState(Payload);
+    Payload.ChanId = 0;
+    Payload.RegState = BPLIB_PI_ACTIVE;
+
+    BPLib_NC_SetRegistrationState(&Inst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
 
     /* Verify event */
     BPLib_NC_Test_Verify_Event(0, BPLIB_NC_SET_REGI_STAT_SUCCESS_EID,
-                                "Set registration state directive not implemented, received %d in payload");
+                                "Set the registration state of channel #%ld to %ld.");
 }
 
 void Test_BPLib_NC_SetRegistrationState_Error(void)

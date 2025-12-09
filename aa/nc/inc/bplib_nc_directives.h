@@ -201,10 +201,11 @@ void BPLib_NC_RemoveApplication(BPLib_Instance_t *Inst, const BPLib_RemoveApplic
   * \brief     Set given application's channel state to specified state
   * \details   Node Configuration Set Registration State command
   * \note      This command is currently unimplemented and only returns BPLIB_SUCCESS
+  * \param[in] Inst Pointer to bplib instance
   * \param[in] Payload BPLib_SetRegistrationState_Payload_t type found in bplib_nc_payloads.h
   * \return    void
   */
-void BPLib_NC_SetRegistrationState(const BPLib_SetRegistrationState_Payload_t Payload);
+void BPLib_NC_SetRegistrationState(BPLib_Instance_t *Inst, const BPLib_SetRegistrationState_Payload_t Payload);
 
 /**
   * \brief     Verify given application’s channel configuration and begin moving bundles bidirectionally between host and PI
