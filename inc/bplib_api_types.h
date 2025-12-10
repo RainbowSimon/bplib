@@ -336,18 +336,18 @@ typedef enum
 */
 
 /* CBOR Encode Errors */
-#define BPLIB_CBOR_ENC_EXT_SIZES_CRRPTD_ERR            ((BPLib_Status_t) -220) /* BPLib_CBOR_EncodeExtensionBlock: Block Sizes Corrupted Error */
-#define BPLIB_CBOR_ENC_PAYL_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -221) /* BPLib_CBOR_CopyOrEncodePayload: Block Sizes Corrupted Error */
-#define BPLIB_CBOR_ENC_PRIM_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -222) /* BPLib_CBOR_CopyOrEncodePrimary: Block Sizes Corrupted Error */
-#define BPLIB_CBOR_ENC_PRIM_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -223) /* BPLib_CBOR_CopyOrEncodePrimary: Copy Size Error */
-#define BPLIB_CBOR_ENC_PAYL_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -224) /* BPLib_CBOR_CopyOrEncodePayload: Copy Size Error */
-#define BPLIB_CBOR_ENC_PRIM_QCBOR_FINISH_ERR           ((BPLib_Status_t) -225) /* BPLib_CBOR_EncodePrimary: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_EXT_INPUT_BLOCK_INDEX_ERR       ((BPLib_Status_t) -226) /* BPLib_CBOR_EncodeExtensionBlock: Ext Block Index Error */
-#define BPLIB_CBOR_ENC_EXT_QCBOR_FINISH_ERR            ((BPLib_Status_t) -227) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_HEAD_ERR      ((BPLib_Status_t) -228) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR      ((BPLib_Status_t) -229) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR      ((BPLib_Status_t) -230) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_CCS_ERR                    ((BPLib_Status_t) -231) /* BPLib_CBOR_EncodePayload: Error while encoding CCS */
+#define BPLIB_CBOR_ENC_QCBOR_FINISH_TAIL_ERR           ((BPLib_Status_t) -220) /* QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_EXT_SIZES_CRRPTD_ERR            ((BPLib_Status_t) -221) /* BPLib_CBOR_EncodeExtensionBlock: Block Sizes Corrupted Error */
+#define BPLIB_CBOR_ENC_EXT_INPUT_BLOCK_INDEX_ERR       ((BPLib_Status_t) -222) /* BPLib_CBOR_EncodeExtensionBlock: Ext Block Index Error */
+#define BPLIB_CBOR_ENC_EXT_QCBOR_FINISH_ERR            ((BPLib_Status_t) -223) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_PRIM_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -224) /* BPLib_CBOR_CopyOrEncodePrimary: Block Sizes Corrupted Error */
+#define BPLIB_CBOR_ENC_PRIM_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -225) /* BPLib_CBOR_CopyOrEncodePrimary: Copy Size Error */
+#define BPLIB_CBOR_ENC_PRIM_QCBOR_FINISH_ERR           ((BPLib_Status_t) -226) /* BPLib_CBOR_EncodePrimary: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_PAYL_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -227) /* BPLib_CBOR_CopyOrEncodePayload: Copy Size Error */
+#define BPLIB_CBOR_ENC_PAYL_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -228) /* BPLib_CBOR_CopyOrEncodePayload: Block Sizes Corrupted Error */
+#define BPLIB_CBOR_ENC_PAYL_HEADER_ERR                 ((BPLib_Status_t) -229) /* BPLib_CBOR_EncodePayload: Error while encoding payload header */
+#define BPLIB_CBOR_ENC_PAYL_ERR                        ((BPLib_Status_t) -230) /* BPLib_CBOR_EncodePayload: Error while encoding bundle's actual payload */
+#define BPLIB_CBOR_ENC_PAYL_CRC_ERR                    ((BPLib_Status_t) -231) /* BPLib_CBOR_EncodePayload: Error while encoding payload's CRC value */
 
 #define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_1_ERR     ((BPLib_Status_t) -232) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 1) */
 #define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_2_ERR     ((BPLib_Status_t) -233) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 2) */

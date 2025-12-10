@@ -54,11 +54,8 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
         Status = BPLib_CBOR_EncodeArray(&Context, &EncodeBuffer);
         if (Status == BPLIB_SUCCESS)
         { /* Addition of payload array needs to succeed for the payload to be properly encoded */
-            /*
-            ** Add our block header data
-            */
+            /* Add our block header data */
             Status = BPLib_CBOR_EncodeUInt(&Context, &EncodeBuffer, StoredBundle->blocks.PayloadHeader.BlockType);
-        
 
             if (Status == BPLIB_SUCCESS)
             {
@@ -74,6 +71,11 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
             {
                 Status = BPLib_CBOR_EncodeUInt(&Context, &EncodeBuffer, StoredBundle->blocks.PayloadHeader.CrcType);
             }
+            else
+            {
+                /* Any of the previous header encode operations failed */
+                Status = BPLIB_CBOR_ENC_PAYL_HEADER_ERR;
+            }
 
             if (Status == BPLIB_SUCCESS)
             {
@@ -83,9 +85,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                 }
                 else
                 {
-                    /*
-                    ** Add the ADU data
-                    */
+                    /* Add the ADU data */
                     BytesLeftInOutputBuffer = UsefulOutBuf_RoomLeft(&EncodeBuffer);
                     Status = BPLib_MEM_CopyOutFromOffset(StoredBundle,
                                                             StoredBundle->blocks.PayloadHeader.DataOffsetStart,
@@ -99,11 +99,15 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                                                         StoredBundle->blocks.PayloadHeader.DataSize);
                     }
                 }
+
+                if (Status != BPLIB_SUCCESS)
+                {
+                    /* An error occured while encoding the payload */
+                    Status = BPLIB_CBOR_ENC_PAYL_ERR;
+                }
             }
 
-            /*
-            ** Add the CRC
-            */
+            /* Add the CRC */
             if (Status == BPLIB_SUCCESS)
             {
                 /* Cloogy integration with BPLib_CBOR_EncodeCrcValue since it's used elsewhere and thus can't use UsefulOutBuf */
@@ -151,6 +155,11 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                         Status = BPLIB_ERROR;
                     }
                 }
+
+                if (Status != BPLIB_SUCCESS)
+                {
+                    Status = BPLIB_CBOR_ENC_PAYL_CRC_ERR;
+                }
             }
 
             /* Close payload array */
@@ -164,10 +173,6 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
             {
                 Status = BPLib_CBOR_EncodeGetBufferSize(&EncodeBuffer, NumBytesCopied);
             }
-            else
-            {
-                Status = BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR;
-            }
 
             if (Status == BPLIB_SUCCESS)
             {
@@ -176,8 +181,13 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                                             StoredBundle->blocks.PayloadHeader.CrcType,
                                             0, *NumBytesCopied);
             }
+
+            if (Status != BPLIB_SUCCESS)
+            {
+                Status = BPLIB_CBOR_ENC_QCBOR_FINISH_TAIL_ERR;
+            }
         }
-        
+
         if (Status != BPLIB_SUCCESS)
         {
             *NumBytesCopied = 0;
