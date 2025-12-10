@@ -32,13 +32,12 @@ BPLib_Status_t BPLib_CBOR_EncodeArray(QCBOREncodeContext* Context, UsefulOutBuf*
 {
     BPLib_Status_t Status;
 
+    Status = BPLIB_SUCCESS;
     if (Context != NULL)
     {
         /* 1 byte for open definite array initial byte */
         if (UsefulOutBuf_WillItFit(EncodeBuffer, 1) == 1)
         {
-            Status = BPLIB_SUCCESS;
-
             UsefulOutBuf_AppendByte(EncodeBuffer, 0x80);
             if (UsefulOutBuf_GetError(EncodeBuffer) == 0)
             {
@@ -55,17 +54,17 @@ BPLib_Status_t BPLib_CBOR_EncodeArray(QCBOREncodeContext* Context, UsefulOutBuf*
                 **  - detect corruption / uninitialized by bad magic number"
                 */
 
-                Status = BPLIB_ERROR;
+                Status = BPLIB_CBOR_ENC_ARRAY_ERR;
             }
         }
         else
         {
-            Status = BPLIB_ERROR;
+            Status = BPLIB_CBOR_ENC_ARRAY_ERR;
         }
     }
     else
     {
-        Status = BPLIB_NULL_PTR_ERROR;
+        Status = BPLIB_CBOR_ENC_ARRAY_ERR;
     }
 
     return Status;
@@ -75,12 +74,11 @@ BPLib_Status_t BPLib_CBOR_EncodeMap(QCBOREncodeContext* Context, UsefulOutBuf* E
 {
     BPLib_Status_t Status;
 
+    Status = BPLIB_SUCCESS;
     if (Context != NULL)
     {
         if (UsefulOutBuf_WillItFit(EncodeBuffer, 1) == 1) /* 1 byte for open definite map initial byte */
         {
-            Status = BPLIB_SUCCESS;
-
             UsefulOutBuf_AppendByte(EncodeBuffer, 0xA0);
             if (UsefulOutBuf_GetError(EncodeBuffer) == 0)
             {
@@ -97,17 +95,17 @@ BPLib_Status_t BPLib_CBOR_EncodeMap(QCBOREncodeContext* Context, UsefulOutBuf* E
                 **  - detect corruption / uninitialized by bad magic number"
                 */
 
-                Status = BPLIB_ERROR;
+                Status = BPLIB_CBOR_ENC_MAP_ERR;
             }
         }
         else
         {
-            Status = BPLIB_ERROR;
+            Status = BPLIB_CBOR_ENC_MAP_ERR;
         }
     }
     else
     {
-        Status = BPLIB_NULL_PTR_ERROR;
+        Status = BPLIB_CBOR_ENC_MAP_ERR;
     }
 
     return Status;
@@ -118,7 +116,6 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
     BPLib_Status_t Status;
 
     Status = BPLIB_SUCCESS;
-
     if (Context != NULL)
     {
         if (ValueToEncode <= 0x17)
@@ -129,7 +126,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
             }
             else
             {
-                Status = BPLIB_ERROR;
+                Status = BPLIB_CBOR_ENC_UINT_ERR;
             }
         }
         else if (ValueToEncode > 0x17 && ValueToEncode <= 0xFF)
@@ -142,7 +139,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
             }
             else
             {
-                Status = BPLIB_ERROR;
+                Status = BPLIB_CBOR_ENC_UINT_ERR;
             }
         }
         else if (ValueToEncode > 0xFF && ValueToEncode <= 0xFFFF)
@@ -154,7 +151,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
             }
             else
             {
-                Status = BPLIB_ERROR;
+                Status = BPLIB_CBOR_ENC_UINT_ERR;
             }
         }
         else if (ValueToEncode > 0xFFFF && ValueToEncode <= 0xFFFFFFFF)
@@ -166,7 +163,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
             }
             else
             {
-                Status = BPLIB_ERROR;
+                Status = BPLIB_CBOR_ENC_UINT_ERR;
             }
         }
         else if (ValueToEncode > 0xFFFFFFFF && ValueToEncode <= 0xFFFFFFFFFFFFFFFF)
@@ -178,7 +175,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
             }
             else
             {
-                Status = BPLIB_ERROR;
+                Status = BPLIB_CBOR_ENC_UINT_ERR;
             }
         }
 
@@ -200,17 +197,17 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
                 **  - detect corruption / uninitialized by bad magic number"
                 */
 
-                Status = BPLIB_ERROR;
+                Status = BPLIB_CBOR_ENC_UINT_ERR;
             }
         }
         else
         {
-            Status = BPLIB_ERROR;
+            Status = BPLIB_CBOR_ENC_UINT_ERR;
         }
     }
     else
     {
-        Status = BPLIB_NULL_PTR_ERROR;
+        Status = BPLIB_CBOR_ENC_UINT_ERR;
     }
 
     return Status;
@@ -219,18 +216,15 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
 BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t* EncodedSize)
 {
     BPLib_Status_t Status;
-    UsefulBufC     SizeData;
     uint8_t        UsefulOutBufError;
 
-    Status = BPLIB_SUCCESS;
-
-    SizeData          = UsefulOutBuf_OutUBuf(EncodeBuffer);
+    Status            = BPLIB_SUCCESS;
     UsefulOutBufError = UsefulOutBuf_GetError(EncodeBuffer);
 
     if (UsefulOutBufError == 0)
     {
         /* Everything is ok */
-        *EncodedSize = SizeData.len;
+        *EncodedSize = EncodeBuffer->data_len;
     }
     else
     {
@@ -244,7 +238,7 @@ BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t
         */
 
         *EncodedSize = 0;
-        Status       = BPLIB_ERROR;
+        Status       = BPLIB_CBOR_ENC_GET_BUFF_SIZE_ERR;
     }
 
     return Status;
@@ -283,17 +277,17 @@ BPLib_Status_t BPLib_CBOR_EncodeAdu(QCBOREncodeContext* Context, UsefulOutBuf* E
                 **  - detect corruption / uninitialized by bad magic number"
                 */
 
-                Status = BPLIB_ERROR;
+                Status = BPLIB_CBOR_ENC_ADU_ERR;
             }
         }
         else
         {
-            Status = BPLIB_ERROR;
+            Status = BPLIB_CBOR_ENC_ADU_ERR;
         }
     }
     else
     {
-        Status = BPLIB_NULL_PTR_ERROR;
+        Status = BPLIB_CBOR_ENC_ADU_ERR;
     }
 
     return Status;
@@ -419,12 +413,12 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t C
         else
         {
             /* Unrecognized CRC type */
-            ReturnStatus = BPLIB_ERROR;
+            ReturnStatus = BPLIB_CBOR_ENC_CRC_ERR;
         }
     }
     else
     {
-        ReturnStatus = BPLIB_NULL_PTR_ERROR;
+        ReturnStatus = BPLIB_CBOR_ENC_CRC_ERR;
     }
 
     return ReturnStatus;
@@ -467,18 +461,30 @@ BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext* Context, UsefulO
                         break;
 
                     default:
-                        /* TODO: Handle unsupported admin record type */
-                        Status = BPLIB_ARP_UNK_REC_TYPE_ERR;
+                        Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
                         break;
                 }
+
+                if (Status != BPLIB_SUCCESS)
+                {
+                    Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
+                }
+            }
+            else
+            {
+                Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
             }
 
             QCBOREncode_CloseArray(Context);
         }
+        else
+        {
+            Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
+        }
     }
     else
     {
-        Status = BPLIB_NULL_PTR_ERROR;
+        Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
     }
 
     return Status;
@@ -531,13 +537,21 @@ BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
                             if (Status != BPLIB_SUCCESS)
                             {
                                 /* Exit the loop if something went wrong */
-                                /* TODO: Status = ??? */
+                                Status = BPLIB_CBOR_ENC_CCS_ERR;
                                 break;
                             }
                         }
 
                         QCBOREncode_CloseArray(Context);
                     }
+                    else
+                    {
+                        Status = BPLIB_CBOR_ENC_CCS_ERR;
+                    }
+                }
+                else
+                {
+                    Status = BPLIB_CBOR_ENC_CCS_ERR;
                 }
             }
 
@@ -545,12 +559,12 @@ BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
         }
         else
         {
-            Status = BPLIB_ERROR;
+            Status = BPLIB_CBOR_ENC_CCS_ERR;
         }
     }
     else
     {
-        Status = BPLIB_NULL_PTR_ERROR;
+        Status = BPLIB_CBOR_ENC_CCS_ERR;
     }
 
     return Status;
