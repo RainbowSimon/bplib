@@ -25,7 +25,7 @@
 
 
 /*
-** Primary Block: 
+** Primary Block:
 **         CRC Type: 1
 **         Flags: 4
 **         Dest EID (scheme.node.service): 2.200.1
@@ -34,7 +34,7 @@
 **         Timestamp (created, seq): 755533838904, 0
 **         Lifetime: 3600000
 **         CRC Value: 0xB19
-** Canonical Block [0]: 
+** Canonical Block [0]:
 **         Block Type: 1
 **         Block Number: 1
 **         Flags: 0
@@ -42,14 +42,14 @@
 **         Offset Into Encoded Bundle: 42
 */
 unsigned char const primary_and_payload_with_aa_x_20[] = {
-    0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82, 
-    0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 
-    0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 0x01, 0x82, 
-    0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a, 
-    0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42, 
-    0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54, 
-    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
-    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
+    0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82,
+    0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64,
+    0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 0x01, 0x82,
+    0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a,
+    0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42,
+    0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
     0xaa, 0xaa, 0xaa, 0xaa, 0x42, 0xc6, 0x8f, 0xff,
 };
 
@@ -438,7 +438,7 @@ void Test_BPLib_CBOR_EncodeBundle_Nominal(void)
 void Test_BPLib_CBOR_EncodeBundle_DtnNone(void)
 {
     /*
-    Primary Block: 
+    Primary Block:
             CRC Type: 1
             Flags: 4
             Dest EID (scheme.node.service): 2.200.1
@@ -447,7 +447,7 @@ void Test_BPLib_CBOR_EncodeBundle_DtnNone(void)
             Timestamp (created, seq): 755533838904, 0
             Lifetime: 3600000
             CRC Value: 0xB19
-    Canonical Block [0]: 
+    Canonical Block [0]:
             Block Type: 1
             Block Number: 1
             Flags: 0
@@ -456,15 +456,59 @@ void Test_BPLib_CBOR_EncodeBundle_DtnNone(void)
             Offset Into Encoded Bundle: 42
     */
    unsigned char bundle_primary_and_payload_with_dtn_none[] = {
-        0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82, 
-        0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 
-        0x01, 0x82, 0x01, 0x00, 0x82, 
-        0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a, 
-        0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42, 
-        0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54, 
-        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
-        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
-        0xaa, 0xaa, 0xaa, 0xaa, 0x42, 0xc6, 0x8f, 0xff,
+        0x9f, /* Indefinite array */
+            /* Primary block */
+            0x89, /* Array (9 data items follow) */
+                0x07, /* Bundle protocol version */
+                0x04, /* BundleProcFlags */
+                0x01, /* CrcType */
+                /* DestEID */
+                0x82, /* Array (2 data items follow) */
+                    0x02, /* Scheme */
+                    /* SSP */
+                    0x82, /* Array (2 data items follow)                                     <=========================== */
+                        0x18, /* unsigned integer (one-byte uint8_t follows) */
+                            0xc8, /* Node */
+                        0x01, /* Service */
+                /* SrcEID */
+                0x82, /* Array (2 data items follow) */
+                    0x02, /* Scheme */
+                    /* SSP */
+                    0x82, /* Array (2 data items follow) */
+                        0x18, /* unsigned integer (one-byte uint8_t follows) */
+                            0x64, /* Node */
+                        0x01, /* Service */
+                /* ReportToEID */
+                0x82, /* Array (2 data items follow) */
+                    0x01, /* Scheme */
+                    0x00, /* dtn:none so 0 is encoded */
+                /* Timestamp */
+                0x82, /* Array (2 data items follow) */
+                    0x1b, /* unsigned integer (eight-byte uint64_t follows) */
+                        0x00, /* CreateTime byte 1 */
+                        0x00, /* CreateTime byte 2 */
+                        0x00, /* CreateTime byte 3 */
+                        0xaf, /* CreateTime byte 4 */
+                        0xe9, /* CreateTime byte 5 */
+                        0x53, /* CreateTime byte 6 */
+                        0x7a, /* CreateTime byte 7 */
+                        0x38, /* CreateTime byte 8 */
+                    0x00, /* SequenceNumber */
+                0x1a, /* unsigned integer (four-byte uint32_t follows) */
+                    0x00, /* Lifetime byte 1 */
+                    0x36, /* Lifetime byte 2 */
+                    0xee, /* Lifetime byte 3 */
+                    0x80, /* Lifetime byte 4 */
+                0x42, /* byte string (2 bytes follow) */
+                    0x0b, /* CrcVal byte 1 */
+                    0x19, /* unsigned integer (two-byte uint16_t follows) */
+                        0x85, /* CrcVal byte 2's first byte */
+                        0x00, /* CrcVal byte 2's second byte */
+            /* Everything after this doesn't get tested */
+            0x01, 0x00, 0x01, 0x54, 0xaa, 0xaa, 0xaa, 0xaa,
+            0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+            0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+            0x42, 0xc6, 0x8f, 0xff,
     };
 
     BPLib_Status_t ReturnStatus;
@@ -512,11 +556,11 @@ void Test_BPLib_CBOR_EncodeBundle_DtnNone(void)
     /* Primary Metadata */
     InputBundle.blocks.PrimaryBlock.RequiresEncode = true;
     InputBundle.blocks.PrimaryBlock.BlockOffsetStart = 1;
-    InputBundle.blocks.PrimaryBlock.BlockOffsetEnd = 38;
+    InputBundle.blocks.PrimaryBlock.BlockOffsetEnd = 40;
     /* Payload Metadata */
     InputBundle.blocks.PayloadHeader.RequiresEncode = true;
-    InputBundle.blocks.PayloadHeader.BlockOffsetStart = 39;
-    InputBundle.blocks.PayloadHeader.BlockOffsetEnd = InputBundle.blocks.PayloadHeader.BlockOffsetStart + 29;
+    InputBundle.blocks.PayloadHeader.BlockOffsetStart = 41;
+    InputBundle.blocks.PayloadHeader.BlockOffsetEnd = InputBundle.blocks.PayloadHeader.BlockOffsetStart + 27;
 
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_CopyOutFromOffset), BPLIB_SUCCESS);
