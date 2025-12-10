@@ -35,8 +35,8 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     uint8_t                  CrcValueSize;
     uint8_t                  CrcLoop;
 
-    if ((StoredBundle == NULL) ||
-        (OutputBuffer == NULL) ||
+    if ((StoredBundle   == NULL) ||
+        (OutputBuffer   == NULL) ||
         (NumBytesCopied == NULL))
     {
         Status = BPLIB_NULL_PTR_ERROR;
