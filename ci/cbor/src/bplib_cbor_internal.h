@@ -479,15 +479,14 @@ BPLib_Status_t BPLib_CBOR_EncodeCreationTimeStamp(QCBOREncodeContext* Context, B
 
 /**
  * \brief     Encodes a CRC value
- * \param[in] Context      QCBOR encode context instance pointer
- * \param[in] EncodeBuffer Buffer to track the size of the encode buffer
- * \param[in] CrcValue     CRC Value to be encoded
- * \param[in] CrcType      Specifies the expected CRC type (None, CRC16, or CRC32C)
+ * \param[in] Context (QCBOREncodeContext*) QCBOR encode context instance pointer
+ * \param[in] CrcValue (uint64_t) CRC Value to be encoded
+ * \param[in] CrcType (uint64_t) specifies the expected CRC type (None, CRC16, or CRC32C)
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
-BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint64_t CrcValue, uint64_t CrcType);
+BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t CrcValue, uint64_t CrcType);
 
 /**
  * \brief Encode a Bundle Status Report

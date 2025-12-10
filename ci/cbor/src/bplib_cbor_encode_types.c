@@ -388,75 +388,46 @@ BPLib_Status_t BPLib_CBOR_EncodeCreationTimeStamp(QCBOREncodeContext* Context, B
     return ReturnStatus;
 }
 
-BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint64_t CrcValue, uint64_t CrcType)
+BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t CrcValue, uint64_t CrcType)
 {
-    BPLib_Status_t Status;
+    BPLib_Status_t ReturnStatus;
     UsefulBufC     CrcInfo;
 
-    Status      = BPLIB_SUCCESS;
     CrcInfo.ptr = &CrcValue;
 
     if (Context != NULL)
     {
-        switch (CrcType)
+        if (CrcType == BPLib_CRC_Type_None)
         {
-            case BPLib_CRC_Type_None:
-                /* If CRC is none, there's nothing to do */
-                break;
-
-            case BPLib_CRC_Type_CRC16:
-                /* Encode 16-bit CRC */
-                CrcInfo.len = 2;
-                break;
-
-            case BPLib_CRC_Type_CRC32C:
-                /* Encode 32-bit CRC */
-                CrcInfo.len = 4;
-                break;
-
-            default:
-                /* Unrecognized CRC type */
-                Status = BPLIB_ERROR; /* TODO: Existing error for this? */
+            /* If CRC is none, there's nothing to do */
+            ReturnStatus = BPLIB_SUCCESS;
         }
-
-        if (Status == BPLIB_SUCCESS && CrcType != BPLib_CRC_Type_None)
+        else if (CrcType == BPLib_CRC_Type_CRC16)
         {
-            /* +1 for byte string initial byte */
-            if (UsefulOutBuf_WillItFit(EncodeBuffer, CrcInfo.len + 1) == 1)
-            {
-                UsefulOutBuf_AppendByte(EncodeBuffer, 0x40);
-                UsefulOutBuf_AppendUsefulBuf(EncodeBuffer, CrcInfo);
-
-                if (UsefulOutBuf_GetError(EncodeBuffer) == 0)
-                {
-                    QCBOREncode_AddBytes(Context, CrcInfo);
-                }
-                else
-                {
-                    /*
-                    ** Per UsefulBuf.h:
-                    ** "Possible error conditions are:
-                    **  - bytes to be inserted will not fit
-                    **  - insertion point is out of buffer or past valid data
-                    **  - current position is off end of buffer (probably corrupted or uninitialized)
-                    **  - detect corruption / uninitialized by bad magic number"
-                    */
-
-                    Status = BPLIB_ERROR;
-                }
-            }
-            else
-            {
-                Status = BPLIB_ERROR;
-            }
+            /* Encode 16-bit CRC */
+            CrcInfo.len = 2;
+            QCBOREncode_AddBytes(Context, CrcInfo);
+            ReturnStatus = BPLIB_SUCCESS;
+        }
+        else if (CrcType == BPLib_CRC_Type_CRC32C)
+        {
+            /* Encode 32-bit CRC */
+            CrcInfo.len = 4;
+            QCBOREncode_AddBytes(Context, CrcInfo);
+            ReturnStatus = BPLIB_SUCCESS;
+        }
+        else
+        {
+            /* Unrecognized CRC type */
+            ReturnStatus = BPLIB_ERROR;
         }
     }
     else
     {
-        Status = BPLIB_NULL_PTR_ERROR;
+        ReturnStatus = BPLIB_NULL_PTR_ERROR;
     }
 
-    return Status;
+    return ReturnStatus;
 }
 
 BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, BPLib_Bundle_t* Bundle)
