@@ -32,6 +32,8 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     size_t                   BytesLeftInOutputBuffer;
     UsefulOutBuf             EncodeBuffer;
     uint8_t*                 AduByteString = NULL;
+    uint8_t                  CrcValueSize;
+    uint8_t                  CrcLoop;
 
     if ((StoredBundle == NULL) ||
         (OutputBuffer == NULL) ||
@@ -128,9 +130,54 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
         /*
         ** Add the CRC
         */
-        /* Set CRC value to 0, real value will be jammed in after encoding is done */
-        ReturnStatus = BPLib_CBOR_EncodeCrcValue(&Context, &EncodeBuffer, 0,
-                                                    StoredBundle->blocks.PayloadHeader.CrcType);
+        if (ReturnStatus == BPLIB_SUCCESS)
+        {
+            /* Cloogy integration with BPLib_CBOR_EncodeCrcValue since it's used elsewhere and thus can't use UsefulOutBuf */
+            switch (StoredBundle->blocks.PayloadHeader.CrcType)
+            {
+                case BPLib_CRC_Type_None:
+                    /* If CRC is none, there's nothing to do */
+                    break;
+
+                case BPLib_CRC_Type_CRC16:
+                    /* Encode 16-bit CRC */
+                    CrcValueSize = 2;
+                    break;
+
+                case BPLib_CRC_Type_CRC32C:
+                    /* Encode 32-bit CRC */
+                    CrcValueSize = 4;
+                    break;
+
+                default:
+                    /* Unrecognized CRC type */
+                    ReturnStatus = BPLIB_ERROR; /* TODO: Existing error for this? */
+            }
+
+            if (ReturnStatus == BPLIB_SUCCESS)
+            {
+                /* +1 for byte string initial byte */
+                if (UsefulOutBuf_WillItFit(&EncodeBuffer, CrcValueSize + 1) == 1)
+                {
+                    UsefulOutBuf_AppendByte(&EncodeBuffer, 0x40);
+                    for (CrcLoop = 0; CrcLoop < CrcValueSize; CrcLoop++)
+                    {
+                        /* Add the CRC dummy value to the UsefulOutBuf */
+                        UsefulOutBuf_AppendByte(&EncodeBuffer, 0x00);
+                    }
+
+                    if (UsefulOutBuf_GetError(&EncodeBuffer) == 0)
+                    {
+                        /* Set CRC value to 0, real value will be jammed in after encoding is done */
+                        ReturnStatus = BPLib_CBOR_EncodeCrcValue(&Context, 0, StoredBundle->blocks.PayloadHeader.CrcType);
+                    }
+                }
+                else
+                {
+                    ReturnStatus = BPLIB_ERROR;
+                }
+            }
+        }
 
         if (ReturnStatus != BPLIB_SUCCESS)
         {
