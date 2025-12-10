@@ -362,7 +362,7 @@ void Test_BPLib_CBOR_EncodePayload_Nominal(void)
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_SUCCESS);
 }
 
-void Test_BPLib_CBOR_EncodePayload_AdminRecord(void)
+void Test_BPLib_CBOR_EncodePayload_Ccs(void)
 {
     BPLib_Status_t          Status;
     BPLib_ARP_AdminRecord_t AdminRecord;
@@ -437,5 +437,5 @@ void TestBplibCborEncodeInternal_Register(void)
 
     ADD_TEST(Test_BPLib_CBOR_EncodePayload_NullInputErrors);
     ADD_TEST(Test_BPLib_CBOR_EncodePayload_Nominal);
-    ADD_TEST(Test_BPLib_CBOR_EncodePayload_AdminRecord);
+    ADD_TEST(Test_BPLib_CBOR_EncodePayload_Ccs);
 }
