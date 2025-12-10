@@ -34,7 +34,8 @@ BPLib_Status_t BPLib_CBOR_EncodeArray(QCBOREncodeContext* Context, UsefulOutBuf*
 
     if (Context != NULL)
     {
-        if (UsefulOutBuf_WillItFit(EncodeBuffer, 1) == 1) /* 1 byte for open definite array initial byte */
+        /* 1 byte for open definite array initial byte */
+        if (UsefulOutBuf_WillItFit(EncodeBuffer, 1) == 1)
         {
             Status = BPLIB_SUCCESS;
 
@@ -258,7 +259,8 @@ BPLib_Status_t BPLib_CBOR_EncodeAdu(QCBOREncodeContext* Context, UsefulOutBuf* E
 
     if (Context != NULL)
     {
-        if (UsefulOutBuf_WillItFit(EncodeBuffer, AduLen + 1) == 1) /* +1 for byte string initial byte */
+        /* +1 for byte string initial byte */
+        if (UsefulOutBuf_WillItFit(EncodeBuffer, AduLen + 1) == 1)
         {
             AduBuf.ptr = Adu;
             AduBuf.len = AduLen;
@@ -419,7 +421,8 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, UsefulOutB
 
         if (Status == BPLIB_SUCCESS && CrcType != BPLib_CRC_Type_None)
         {
-            if (UsefulOutBuf_WillItFit(EncodeBuffer, CrcInfo.len + 1) == 1) /* +1 for byte string initial byte */
+            /* +1 for byte string initial byte */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, CrcInfo.len + 1) == 1)
             {
                 UsefulOutBuf_AppendByte(EncodeBuffer, 0x40);
                 UsefulOutBuf_AppendUsefulBuf(EncodeBuffer, CrcInfo);
