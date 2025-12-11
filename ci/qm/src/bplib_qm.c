@@ -340,11 +340,6 @@ BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool
         Status = BPLib_STOR_EgressForID(Inst, EgressID, LocalDelivery, &NumStoredEgressed);
         if (Status == BPLIB_SUCCESS)
         {
-            if (NumStoredEgressed != 0)
-            {
-                BPLib_STOR_SetLastActiveTime(Inst);
-            }
-
             /* 
             ** This should break the calling task's current wakeup cycle, this way some
             ** wakeups are dedicated to loading batches from storage, others just to 
@@ -362,8 +357,6 @@ BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool
     */
     if (BPLib_QM_WaitQueueTryPull(DuctQueue, &Bundle, TimeoutMs))
     {
-        BPLib_STOR_SetLastActiveTime(Inst);
-
         /* Take this bundle all the way to NO_NEXT_STATE */
         while (CurrState != NO_NEXT_STATE)
         {

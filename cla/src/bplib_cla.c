@@ -112,6 +112,8 @@ BPLib_Status_t BPLib_CLA_Egress(BPLib_Instance_t* Inst, uint32_t ContId, void *B
     Status = BPLib_QM_DuctPull(Inst, ContId, false, Timeout, &Bundle);
     if (Status == BPLIB_SUCCESS)
     {
+        BPLib_STOR_SetLastActiveTime(Inst);
+        
         /* Copy the bundle to the CLA buffer */
         Status = BPLib_BI_BlobCopyOut(Bundle, BundleOut, BufLen, Size);
         if (Status == BPLIB_SUCCESS)

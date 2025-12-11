@@ -544,6 +544,8 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
     Status = BPLib_QM_DuctPull(Inst, ChanId, true, Timeout, &Bundle);
     if (Status == BPLIB_SUCCESS)
     {
+        BPLib_STOR_SetLastActiveTime(Inst);
+        
         /* Copy out the contents of the bundle payload to the return pointer */
         Status = BPLib_MEM_CopyOutFromOffset(Bundle,
                                 Bundle->blocks.PayloadHeader.DataOffsetStart,
