@@ -118,7 +118,6 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePrimary(BPLib_Bundle_t* StoredBundle,
 
     if (StoredBundle->blocks.PrimaryBlock.RequiresEncode)
     {
-        printf("ERROR encoding primary\n");
         ReturnStatus = BPLib_CBOR_EncodePrimary(StoredBundle,
             OutputBuffer,
             OutputBufferSize,
