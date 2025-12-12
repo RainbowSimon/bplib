@@ -62,6 +62,7 @@ struct BPLib_BundleCache
 {
     pthread_mutex_t        lock;
     sqlite3*               db;
+    int64_t                BundleRowsToExpire[BPLIB_STOR_DISCARDBATCHSIZE];
     BPLib_Bundle_t*        InsertBatch[BPLIB_STOR_INSERTBATCHSIZE];
     size_t                 InsertBatchSize;
     BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
