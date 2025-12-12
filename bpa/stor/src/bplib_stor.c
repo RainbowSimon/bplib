@@ -234,8 +234,6 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
 
     BPLib_NC_ReaderUnlock();
 
-    int64_t TimeStart = BPLib_TIME_GetMonotonicTime();
-
     pthread_mutex_lock(&CacheInst->lock);
     
     /* If the load batch is empty, try to read more from storage */
