@@ -418,7 +418,6 @@ BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDisca
         fprintf(stderr, "Failed to prep: %s\n", sqlite3_errmsg(db));
         return BPLIB_STOR_SQL_DISCARD_ERR;
     }
-    printf("1\n");
 
     SQLStatus = BPLib_SQL_DiscardExpiredImpl(db, NumDiscarded, Inst);
     if (SQLStatus != SQLITE_OK)
@@ -429,8 +428,6 @@ BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDisca
     /* Finalize the statement */
     sqlite3_finalize(GetExpiredStmt);
     sqlite3_finalize(DeleteExpiredStmt);
-
-    printf("Expired %ld bundles at %ld\n", *NumDiscarded, BPLib_TIME_GetMonotonicTime());
 
     return Status;
 }
