@@ -235,8 +235,8 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     BPLib_NC_ReaderUnlock();
 
     int64_t TimeStart = BPLib_TIME_GetMonotonicTime();
+
     pthread_mutex_lock(&CacheInst->lock);
-    printf("EgressForID: Time elapsed for lock %ld\n", BPLib_TIME_GetMonotonicTime() - TimeStart);
     
     /* If the load batch is empty, try to read more from storage */
     if (BPLib_STOR_LoadBatch_IsEmpty(LoadBatch))
@@ -324,14 +324,10 @@ bool BPLib_STOR_IsIngressEgressActive(BPLib_Instance_t* Inst)
         return false;
     }
 
-    pthread_mutex_lock(&Inst->BundleStorage.lock);
-
     if ((Inst->BundleStorage.LastActiveTime + BPLIB_STOR_MAX_IDLE_TIME) > BPLib_TIME_GetMonotonicTime())
     {
         IsActive = true;
     }
-
-    pthread_mutex_unlock(&Inst->BundleStorage.lock);
 
     return IsActive;
 }
@@ -341,14 +337,20 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
     BPLib_Status_t       Status = BPLIB_SUCCESS;
     BPLib_BundleCache_t* CacheInst;
     size_t               NumDiscarded;
+    size_t               DbSize;
 
     NumDiscarded = 0;
 
     if (Inst == NULL)
     {
-        Status = BPLIB_NULL_PTR_ERROR;
+        return BPLIB_NULL_PTR_ERROR;
     }
-    else if (BPLib_STOR_IsIngressEgressActive(Inst) == false)
+
+    CacheInst = &Inst->BundleStorage;
+
+    pthread_mutex_lock(&CacheInst->lock);    
+
+    if (BPLib_STOR_IsIngressEgressActive(Inst) == false)
     {
         /* 
         ** Avoid searching the DB if any of the ingress/egress queues are not empty or
@@ -356,10 +358,6 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
         ** Note: this is a pretty critical performance optimization that allows bplib
         ** to use all of its CPU resources for ingress and egress.
         */
-
-        CacheInst = &Inst->BundleStorage;
-
-        pthread_mutex_lock(&CacheInst->lock);
 
         Status = BPLib_SQL_DiscardExpired(Inst, &NumDiscarded);
         if (Status != BPLIB_SUCCESS)
@@ -403,23 +401,13 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
                                 "Discarded %d egressed bundles from storage",
                                 NumDiscarded);
         }
-
-        pthread_mutex_unlock(&CacheInst->lock);
     }
 
-    return Status;
-}
-
-void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
-{
-    BPLib_Status_t Status;
-    size_t         DbSize;
-
+    /* While we're at it, update our records with the latest storage size */
     Status = BPLib_SQL_GetDbSize(Inst, &DbSize);
     if (Status == BPLIB_SUCCESS)
     {
         Inst->BundleStorage.StorageSize = DbSize;
-        BPLib_STOR_StoragePayload.KbStorageInUse = DbSize / 1000;
     }
     else
     {
@@ -428,6 +416,16 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
                             "Error getting database size, RC = %d.",
                             Status);
     }
+
+    pthread_mutex_unlock(&CacheInst->lock);
+
+    return Status;
+}
+
+void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
+{
+    /* Update total storage size */
+    BPLib_STOR_StoragePayload.KbStorageInUse = Inst->BundleStorage.StorageSize / 1000;
 
     /* Update the memory in use*/
     BPLib_STOR_StoragePayload.BytesMemInUse = BPLib_MEM_GetBytesInUse(&Inst->pool);
