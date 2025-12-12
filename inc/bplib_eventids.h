@@ -156,6 +156,9 @@
 #define BPLIB_STOR_CLEANUP_INF_EID                      (616u)
 #define BPLIB_STOR_CCS_ERR_EID                          (617u)
 #define BPLIB_STOR_RETRANSMIT_UPDATE_DBG_EID            (618u)
+#define BPLIB_STOR_AUTO_CLEAN_START_DBG_EID             (619u)
+#define BPLIB_STOR_AUTO_CLEAN_END_DBG_EID               (620u)
+#define BPLIB_STOR_AUTO_CLEAN_ERR_EID                   (621u)
 
 /* ============ */
 /* BI event IDs */

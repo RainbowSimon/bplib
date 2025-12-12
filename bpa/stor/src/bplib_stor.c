@@ -335,9 +335,11 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
     BPLib_Status_t       Status = BPLIB_SUCCESS;
     BPLib_BundleCache_t* CacheInst;
     size_t               NumDiscarded;
+    size_t               NumExpired;
     size_t               DbSize;
 
     NumDiscarded = 0;
+    NumExpired   = 0;
 
     if (Inst == NULL)
     {
@@ -357,7 +359,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
         ** to use all of its CPU resources for ingress and egress.
         */
 
-        Status = BPLib_SQL_DiscardExpired(Inst, &NumDiscarded);
+        Status = BPLib_SQL_DiscardExpired(Inst, &NumExpired);
         if (Status != BPLIB_SUCCESS)
         {
             BPLib_EM_SendEvent(BPLIB_STOR_SQL_GC_ERR_EID,
@@ -365,18 +367,18 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
                                 "BPLib_SQL_DiscardExpired failed. RC=%d",
                                 Status);
         }
-        else if (NumDiscarded > 0)
+        else if (NumExpired > 0)
         {
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_EXPIRED, NumDiscarded);
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumDiscarded);
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumDiscarded);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_EXPIRED, NumExpired);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, NumExpired);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumExpired);
 
-            CacheInst->BundleCountStored -= NumDiscarded;
+            CacheInst->BundleCountStored -= NumExpired;
 
             BPLib_EM_SendEvent(BPLIB_STOR_EXPIRE_DBG_EID,
                                 BPLib_EM_EventType_DEBUG,
                                 "Discarded %d expired bundles from storage",
-                                NumDiscarded);
+                                NumExpired);
         }
 
         Status = BPLib_SQL_DiscardEgressed(Inst, &NumDiscarded);
@@ -398,6 +400,25 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
                                 BPLib_EM_EventType_DEBUG,
                                 "Discarded %d egressed bundles from storage",
                                 NumDiscarded);
+        }
+    }
+
+    /* Storage just dropped to 0 bundles stored - trigger automatic cleanup */
+    if ((NumDiscarded > 0 || NumExpired > 0) && CacheInst->BundleCountStored == 0)
+    {
+        BPLib_EM_SendEvent(BPLIB_STOR_AUTO_CLEAN_START_DBG_EID, BPLib_EM_EventType_DEBUG,
+                            "Automatic storage cleanup triggered, this could take a minute...");
+
+        Status = BPLib_SQL_Cleanup(Inst);
+        if (Status == BPLIB_SUCCESS)
+        {
+            BPLib_EM_SendEvent(BPLIB_STOR_AUTO_CLEAN_END_DBG_EID, BPLib_EM_EventType_DEBUG,
+                    "Automatic storage cleanup completed.");            
+        }
+        else
+        {
+            BPLib_EM_SendEvent(BPLIB_STOR_AUTO_CLEAN_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "Automatic storage cleanup failed, Error = %d.", Status);              
         }
     }
 
