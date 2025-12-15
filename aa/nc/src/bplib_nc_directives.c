@@ -62,7 +62,7 @@ void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst)
         }
     }
 
-    if (Status == BPLIB_SUCCESS)
+    if (FinalStatus == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_ADD_ALL_APPS_SUCCESS_EID,
