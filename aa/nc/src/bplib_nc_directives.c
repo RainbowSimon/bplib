@@ -46,16 +46,18 @@ void BPLib_NC_Noop(void)
 void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst)
 {
     BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_Status_t FinalStatus = BPLIB_SUCCESS;
     uint32_t ChanId;
 
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        Status |= BPLib_PI_AddApplication(Inst, ChanId);
+        Status = BPLib_PI_AddApplication(Inst, ChanId);
 
         if (Status != BPLIB_SUCCESS)
         {
+            FinalStatus = BPLIB_ERROR;
             BPLib_EM_SendEvent(BPLIB_NC_ADD_ALL_APPS_ERR_EID, BPLib_EM_EventType_ERROR,
-                                "Failed add-all-applications directive for channel %d, RC= = %d", 
+                                "Failed add-all-applications directive for channel %d, RC=%d", 
                                 ChanId, Status);
         }
     }
@@ -76,21 +78,23 @@ void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst)
 void BPLib_NC_StartAllApplications(void)
 {
     BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_Status_t FinalStatus = BPLIB_SUCCESS;
     uint32_t ChanId;
 
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        Status |= BPLib_PI_StartApplication(ChanId);
+        Status = BPLib_PI_StartApplication(ChanId);
 
         if (Status != BPLIB_SUCCESS)
         {
+            FinalStatus = BPLIB_ERROR;
             BPLib_EM_SendEvent(BPLIB_NC_START_ALL_APPS_ERR_EID, BPLib_EM_EventType_ERROR,
-                                "Failed start-all-applications directive for channel ID %d, RC= = %d", 
+                                "Failed start-all-applications directive for channel ID %d, RC=%d", 
                                 ChanId, Status);            
         }
     }
 
-    if (Status == BPLIB_SUCCESS)
+    if (FinalStatus == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_START_ALL_APPS_SUCCESS_EID,
