@@ -108,7 +108,8 @@ typedef struct
 
 typedef struct
 {
-    uint32_t ExampleParameter;
+    uint32_t ChanId;         /** \brief Channel ID */
+    uint32_t RegState;      /** \brief Registration State */
 } BPLib_SetRegistrationState_Payload_t;
 
 typedef struct

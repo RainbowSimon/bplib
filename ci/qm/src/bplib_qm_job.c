@@ -173,12 +173,24 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
         {
             if (BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[i].LocalServiceNumber == DestEID->Service)
             {
-                if (BPLib_NC_GetAppState(i) == BPLIB_NC_APP_STATE_STARTED)
+                if (BPLib_PI_GetRegistrationState(Inst, i) == BPLIB_PI_PASSIVE_ABANDON)
+                {
+                    BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+                    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+                    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
+
+                    BPLib_NC_ReaderUnlock();
+                    
+                    return NO_NEXT_STATE;
+                }
+                else if (BPLib_NC_GetAppState(i) == BPLIB_NC_APP_STATE_STARTED && 
+                    BPLib_PI_GetRegistrationState(Inst, i) == BPLIB_PI_ACTIVE)
                 {
                     /* We have a channel we can deliver to: forward without storing */
                     Bundle->Meta.EgressID = i;
                     BPLib_NC_ReaderUnlock();
                     BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
+
                     return NO_NEXT_STATE;
                 }
             }

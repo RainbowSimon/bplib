@@ -54,7 +54,8 @@ typedef struct
 typedef enum {
     BPLIB_PI_ACTIVE = 0,
     BPLIB_PI_PASSIVE_DEFER = 1,
-    BPLIB_PI_PASSIVE_ABANDON = 2
+    BPLIB_PI_PASSIVE_ABANDON = 2,
+    BPLib_PI_NUM_REG_STATE = 3
 } BPLib_PI_RegistrationState_t;
 
 /**
@@ -91,6 +92,12 @@ typedef struct
     BPLib_PI_Config_t Configs[BPLIB_MAX_NUM_CHANNELS];
 } BPLib_PI_ChannelTable_t;
 
+typedef struct 
+{
+    BPLib_PI_RegistrationState_t RegState;
+    uint64_t                     SequenceNum;
+} BPLib_PI_ChanCtxt_t;
+
 
 /*
 ** Exported Functions
@@ -111,7 +118,7 @@ typedef struct
  *  \return Execution status
  *  \retval BPLIB_SUCCESS Operation was successful
  */
-BPLib_Status_t BPLib_PI_AddApplication(uint32_t ChanId);
+BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId);
 
 /**
  * \brief Start Application
@@ -224,6 +231,41 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t *Inst, uint32_t ChanId,
  */
 BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *AduPtr, 
                                     size_t *AduSize, size_t BufLen, uint32_t Timeout);
-
                                     
+/**
+ * \brief Set registration state
+ *
+ *  \par Description
+ *       Set registration state of given channel. If state is set to passive-abandon,
+ *       all bundles in the egress queue will be deleted.
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       None
+ *
+ *  \param[in] Inst Pointer to an the BPLib instance state struct
+ *  \param[in] ChanId Channel ID
+ *  \param[in] RegState New registration state
+ *
+ *  \return Execution status
+ *  \retval BPLIB_SUCCESS Operation was successful
+ */
+BPLib_Status_t BPLib_PI_SetRegistrationState(BPLib_Instance_t *Inst, uint32_t ChanId, uint32_t RegState);
+
+/**
+ * \brief Get registration state
+ *
+ *  \par Description
+ *       Get registration state of given channel. If parameter validation fails, 
+ *       defaults to passive-abandon
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       None
+ *
+ *  \param[in] Inst Pointer to an the BPLib instance state struct
+ *  \param[in] ChanId Channel ID
+ *
+ *  \return Registration state
+ */
+BPLib_PI_RegistrationState_t BPLib_PI_GetRegistrationState(BPLib_Instance_t *Inst, uint32_t ChanId);
+
 #endif /* BPLIB_PI_H */

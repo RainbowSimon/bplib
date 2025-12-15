@@ -53,7 +53,7 @@ void BPLib_NC_UpdateContactHkTlm(void)
 }
 
 /* Update the channel state telemetry with latest table values */
-void BPLib_NC_UpdateChannelHkTlm(void)
+void BPLib_NC_UpdateChannelHkTlm(BPLib_Instance_t *Inst)
 {
     uint32_t ChanId;
 
@@ -61,6 +61,8 @@ void BPLib_NC_UpdateChannelHkTlm(void)
     {
         BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].LocalServiceNum = 
             BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].LocalServiceNumber;
+        BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].RegistrationState = 
+            BPLib_PI_GetRegistrationState(Inst, ChanId);
     }
 }
 

@@ -23,6 +23,7 @@
 /* ======== */
 
 #include "bplib_nc_directives.h"
+#include "bplib_nc_internal.h"
 #include "bplib_cla.h"
 #include "bplib_pi.h"
 
@@ -42,72 +43,68 @@ void BPLib_NC_Noop(void)
                         BPLIB_BUILD_NUMBER, BPLib_TIME_GetBootEra());
 }
 
-void BPLib_NC_AddAllApplications(void)
+void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst)
 {
-    /*
-    BPLib_Status_t Status;
-    uint8_t AppIdx;
-    ??? AppList[???];
-    BPLib_AddApplication_Payload_t AddAllAppsPayload;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_Status_t FinalStatus = BPLIB_SUCCESS;
+    uint32_t ChanId;
 
-    for (AppIdx = 0; AppIdx < <num apps>; AppIdx++)
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        AddAllAppsPayload.ChanId = AppList[AppIdx]
-        Status &= BPLib_NC_AddApplication(AddAllAppsPayload);
+        Status = BPLib_PI_AddApplication(Inst, ChanId);
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            FinalStatus = BPLIB_ERROR;
+            BPLib_EM_SendEvent(BPLIB_NC_ADD_ALL_APPS_ERR_EID, BPLib_EM_EventType_ERROR,
+                                "Failed add-all-applications directive for channel %d, RC=%d", 
+                                ChanId, Status);
+        }
     }
 
-    if (Status == BPLIB_SUCCESS)
-    */
+    if (FinalStatus == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_ADD_ALL_APPS_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
-                            "Add all applications directive is unimplemented");
+                            "Successful add-all-applications directive");
     }
-    /*
-    else
+    else 
     {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTTED_DIRECTIVE_COUNT, 1);
-        BPLib_EM_SendEvent(BPLIB_NC_ADD_ALL_APPS_ERR_EID,
-                            BPLib_EM_EventType_ERROR,
-                            "Add all applications directive is unimplemented");
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1);
     }
-    */
 }
 
 void BPLib_NC_StartAllApplications(void)
 {
-    /*
-    BPLib_Status_t Status;
-    BPLib_StartApplication_Payload_t StartAllAppsPayload;
-    uint8_t AppIdx;
-    ??? AppList[???];
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_Status_t FinalStatus = BPLIB_SUCCESS;
+    uint32_t ChanId;
 
-    Status = BPLIB_SUCCESS;
-
-    for (AppIdx = 0; AppIdx < <num apps>; AppIdx++)
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        StartAllAppsPayload.ChanId = AppList[AppIdx];
-        Status &= BPLib_NC_StartApplication(StartAllAppsPayload);
+        Status = BPLib_PI_StartApplication(ChanId);
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            FinalStatus = BPLIB_ERROR;
+            BPLib_EM_SendEvent(BPLIB_NC_START_ALL_APPS_ERR_EID, BPLib_EM_EventType_ERROR,
+                                "Failed start-all-applications directive for channel ID %d, RC=%d", 
+                                ChanId, Status);            
+        }
     }
 
-    if (Status == BPLIB_SUCCESS)
-    */
+    if (FinalStatus == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_START_ALL_APPS_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
-                            "Start all applications directive not implemented");
+                            "Successful start-all-applications directive");
     }
-    /*
     else
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1);
-        BPLib_EM_SendEvent(BPLIB_NC_START_ALL_APPS_ERR_EID,
-                            BPLib_EM_EventType_ERROR,
-                            "Start all applications directive not implemented");
     }
-    */
 }
 
 void BPLib_NC_VerifyBundleStorage(void)
@@ -367,12 +364,12 @@ void BPLib_NC_ResetErrorCounters(const BPLib_ResetErrorCounters_Payload_t Payloa
     }
 }
 
-void BPLib_NC_AddApplication(const BPLib_AddApplication_Payload_t Payload)
+void BPLib_NC_AddApplication(BPLib_Instance_t *Inst, const BPLib_AddApplication_Payload_t Payload)
 {
     BPLib_Status_t Status;
 
     /* Add application configurations */
-    Status = BPLib_PI_AddApplication(Payload.ChanId);
+    Status = BPLib_PI_AddApplication(Inst, Payload.ChanId);
 
     if (Status == BPLIB_SUCCESS)
     {
@@ -419,39 +416,27 @@ void BPLib_NC_RemoveApplication(BPLib_Instance_t *Inst, const BPLib_RemoveApplic
     }
 }
 
-void BPLib_NC_SetRegistrationState(const BPLib_SetRegistrationState_Payload_t Payload)
+void BPLib_NC_SetRegistrationState(BPLib_Instance_t *Inst, const BPLib_SetRegistrationState_Payload_t Payload)
 {
-    /*
     BPLib_Status_t Status;
 
-    Status = BPLIB_SUCCESS;
-
-    Node Configuration calls Storage to set application state in-channel parameters to
-    * Active
-    * Passive, with action entry:
-        * Defer
-        * Abandon
-            * Node Configuration sends Storage request to delete any bundles already queued for the channel and future bundles for that channel
-
+    Status = BPLib_PI_SetRegistrationState(Inst, Payload.ChanId, Payload.RegState);
     if (Status == BPLIB_SUCCESS)
-    */
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_SET_REGI_STAT_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
-                            "Set registration state directive not implemented, received %d in payload",
-                            Payload.ExampleParameter);
+                            "Set the registration state of channel #%ld to %ld.",
+                            Payload.ChanId, Payload.RegState);
     }
-    /*
     else
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_SET_REGI_STAT_ERR_EID,
                             BPLib_EM_EventType_ERROR,
-                            "Set registration state directive not implemented, received %d in payload",
-                            Payload.ExampleParameter);
+                            "Failed to set the registration state of channel #%ld to %ld, Status=%ld.",
+                            Payload.ChanId, Payload.RegState, Status);
     }
-    */
 }
 
 void BPLib_NC_StartApplication(const BPLib_StartApplication_Payload_t Payload)
@@ -1179,7 +1164,7 @@ void BPLib_NC_SendStorageHk(BPLib_Instance_t* Instance)
     }
 }
 
-void BPLib_NC_SendChannelContactStatHk(void)
+void BPLib_NC_SendChannelContactStatHk(BPLib_Instance_t *Inst)
 {
     BPLib_Status_t              Status;
     uint32_t                    ContactId;
@@ -1197,6 +1182,8 @@ void BPLib_NC_SendChannelContactStatHk(void)
             // BPLib_EM_SendEvent()
         }
     }
+
+    BPLib_NC_UpdateChannelHkTlm(Inst);
 
     Status = BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendChannelContactPkt(&BPLib_NC_ChannelContactStatsPayload);
 
