@@ -406,13 +406,13 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
     /* Storage just dropped to 0 bundles stored - trigger automatic cleanup */
     if ((NumDiscarded > 0 || NumExpired > 0) && CacheInst->BundleCountStored == 0)
     {
-        BPLib_EM_SendEvent(BPLIB_STOR_AUTO_CLEAN_START_DBG_EID, BPLib_EM_EventType_DEBUG,
+        BPLib_EM_SendEvent(BPLIB_STOR_AUTO_CLEAN_START_INF_EID, BPLib_EM_EventType_INFORMATION,
                             "Automatic storage cleanup triggered, this could take a minute...");
 
         Status = BPLib_SQL_Cleanup(Inst);
         if (Status == BPLIB_SUCCESS)
         {
-            BPLib_EM_SendEvent(BPLIB_STOR_AUTO_CLEAN_END_DBG_EID, BPLib_EM_EventType_DEBUG,
+            BPLib_EM_SendEvent(BPLIB_STOR_AUTO_CLEAN_END_INF_EID, BPLib_EM_EventType_INFORMATION,
                     "Automatic storage cleanup completed.");            
         }
         else

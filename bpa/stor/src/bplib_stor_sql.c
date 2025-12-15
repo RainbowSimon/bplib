@@ -39,10 +39,10 @@
 
 sqlite3_stmt* GetNumBundlesStmt;
 sqlite3_stmt* TotalBytesStmt;
-sqlite3_stmt* DiscardExpiredStmt;
-sqlite3_stmt* ExpiredBytesStmt;
 sqlite3_stmt* DiscardEgressedStmt;
 sqlite3_stmt* EgressedBytesStmt;
+sqlite3_stmt* GetExpiredStmt;
+sqlite3_stmt* DeleteExpiredStmt;
 
 /* SQL query strings */
 
@@ -130,24 +130,13 @@ const char* TotalBytesSQL =
 "AS TotalBytes "
 "FROM bundle_data;";
 
-const char* DiscardExpiredSQL =
-"WITH to_delete AS ("
-"    SELECT id FROM bundle_data "
-"    WHERE (action_timestamp < ?) AND (egress_attempted = 0) "
-"    LIMIT ?"
-") "
-"DELETE FROM bundle_data "
-"WHERE id IN (SELECT id FROM to_delete);";
+const char* GetExpiredSQL = 
+"SELECT id, bundle_bytes, bundle_id, is_custodial FROM bundle_data "
+"WHERE (action_timestamp < ?) AND (egress_attempted = 0) "
+"LIMIT ?;";
 
-const char* ExpiredBytesSQL =
-"WITH expired_bytes AS (\n"
-"   SELECT id, bundle_bytes FROM bundle_data\n"
-"   WHERE (action_timestamp < ?) AND (egress_attempted = 0)\n"
-"   LIMIT ?)\n"
-"SELECT SUM(bundle_bytes)\n"
-"AS bytes_deleted\n"
-"FROM bundle_data\n"
-"WHERE id IN (SELECT id FROM expired_bytes);\n";
+const char* DeleteExpiredSQL =
+"DELETE FROM bundle_data WHERE id = ?;";
 
 const char* DiscardEgressedSQL =
 "WITH to_delete AS ("
@@ -384,17 +373,6 @@ BPLib_Status_t BPLib_SQL_GetDbSize(BPLib_Instance_t *Inst, size_t *DbSize)
 
     return BPLIB_SUCCESS;
 }
-
-const char* GetExpiredSQL = 
-"SELECT id, bundle_bytes, bundle_id, is_custodial FROM bundle_data "
-"WHERE (action_timestamp < ?) AND (egress_attempted = 0) "
-"LIMIT ?;";
-
-const char* DeleteExpiredSQL =
-"DELETE FROM bundle_data WHERE id = ?;";
-
-sqlite3_stmt *GetExpiredStmt;
-sqlite3_stmt *DeleteExpiredStmt;
 
 BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDiscarded)
 {
