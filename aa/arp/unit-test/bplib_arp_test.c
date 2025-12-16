@@ -96,7 +96,7 @@ void Test_BPLib_ARP_ProcessCcs(void)
     BPLib_ARP_ProcessCcs(&AdminRecord);
 
     BPLib_ARP_Test_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD,   1, 1);
-    BPLib_ARP_Test_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1, 2);
+    BPLib_ARP_Test_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CCS_RECEIVED, 1, 2);
 
     UtAssert_STUB_COUNT(BPLib_AS_Increment, 2);
 }
