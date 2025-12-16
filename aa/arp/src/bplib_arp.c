@@ -72,5 +72,5 @@ void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* 
 void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord)
 {
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
-    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CCS_RECEIVED, 1);
 }

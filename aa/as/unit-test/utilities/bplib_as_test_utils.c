@@ -120,7 +120,7 @@ void Test_BPLib_AS_SetBundleCounterValues(uint32_t SetValue)
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_UNINTELLIGIBLE_BLOCK]      = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_UNINTELLIGIBLE_EID]        = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_UNPROCESSED_BLOCKS]        = SetValue;
-    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_CUSTODY_SIGNAL_RECEIVED]   = SetValue;
+    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_CCS_RECEIVED]              = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_BSR_ACCEPTED]    = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_BSR_DELETED]     = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_BSR_DELIVERED]   = SetValue;
@@ -196,7 +196,7 @@ void Test_BPLib_AS_BundleCountersValueTest(uint32_t ActualValue)
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_UNINTELLIGIBLE_BLOCK]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_UNINTELLIGIBLE_EID]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_UNPROCESSED_BLOCKS]);
-    UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_CUSTODY_SIGNAL_RECEIVED]);
+    UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_CCS_RECEIVED]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_BSR_ACCEPTED]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_BSR_DELETED]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_BSR_DELIVERED]);

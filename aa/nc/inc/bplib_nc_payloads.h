@@ -254,7 +254,6 @@ typedef struct
 {
     BPLib_EID_t InstanceEID;                        /** \brief Endpoint ID of this BP instance */
     uint32_t Configs[BPLIB_NC_NODE_MIB_CONFIG_NUM]; /** \brief Node MIB configuration values */
-    uint32_t Spare;
 } BPLib_NC_MibPerNodeConfig_t;
 
 /*

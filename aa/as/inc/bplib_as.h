@@ -97,7 +97,7 @@ typedef enum
     BUNDLE_COUNT_RECEIVED_CRS_DELIVERED    = 41, /** \brief Number of delivered bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of delivered bundles per source node ID. */
     BUNDLE_COUNT_RECEIVED_CRS_FORWARDED    = 42, /** \brief Number of forwarded bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of forwarded bundles per source node ID. */
     BUNDLE_COUNT_RECEIVED_CRS_RECEIVED     = 43, /** \brief Number of received bundle reports included in received Compressed Reporting Signals (CRSs) since the last counter reset. Also includes total number of received bundles per source node ID. */
-    BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL   = 44, /** \brief Number of bundles for which Custody Signals Received */
+    BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL   = 44, /** \brief Number of bundles for which Custody Signals were received */
     BUNDLE_COUNT_RECEIVED_FRAGMENT         = 45, /** \brief Number of Bundles Received that were Marked as Fragments */
     BUNDLE_COUNT_REDUNDANT                 = 46, /** \brief Number of bundles for which successful Custody Signals generated for Duplicate Bundle reception */
     BUNDLE_COUNT_REJECTED_CUSTODY          = 47, /** \brief Number of Bundles where this node rejected custody. */
@@ -108,7 +108,7 @@ typedef enum
     /* Node-only counters */
     BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT  = 51, /** \brief Number of control directives received from the Monitor and Control interface that have been accepted */
     BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT  = 52, /** \brief Number of control directives received from the Monitor and Control interface that have been rejected as being invalid */
-    BUNDLE_COUNT_CUSTODY_SIGNAL_RECEIVED   = 53, /** \brief Number of Custody Signal Bundles received */
+    BUNDLE_COUNT_CCS_RECEIVED              = 53, /** \brief Number of Compressed Custody Signals received */
     BUNDLE_COUNT_GENERATED_BSR_ACCEPTED    = 54, /** \brief Number of Bundle Custody Accepted Status Report generated since the last counter reset */
     BUNDLE_COUNT_GENERATED_BSR_DELETED     = 55, /** \brief Number of Bundle Deleted Status Report generated since the last counter reset */
     BUNDLE_COUNT_GENERATED_BSR_DELIVERED   = 56, /** \brief Number of Bundle Delivered Status Report generated since the last counter reset */
