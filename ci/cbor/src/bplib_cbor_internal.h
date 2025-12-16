@@ -46,6 +46,7 @@
 /**
  * \brief     Decode Canonical Block Data
  * \details   Decode Canonical Block Data and fill in related bundle metadata
+ * \param[in] Inst (BPLib_Instance_t *) Pointer to bplib instance
  * \param[in] ctx (QCBORDecodeContext*) QCBOR decode context instance pointer
  * \param[in] bundle (BPLib_Bundle_t*) pointer to the bundle metadata (to be filled out)
  * \param[in] CanonicalBlockIndex (uint32_t) which bundle extension block metadata to fill out
@@ -55,8 +56,8 @@
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  * \retval    BPLIB_CBOR_DEC_CANON_BLOCK_INDEX_ERR: index past max supported canonical blocks
  */
-BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_t* bundle,
-    uint32_t CanonicalBlockIndex, const void *CandBundle);
+BPLib_Status_t BPLib_CBOR_DecodeCanonical(BPLib_Instance_t *Inst, QCBORDecodeContext* ctx, 
+            BPLib_Bundle_t* bundle, uint32_t CanonicalBlockIndex, const void *CandBundle);
 
 
 /**

@@ -29,6 +29,7 @@
 #include "bplib_rbt.h"
 #include "bplib_bblocks.h"
 #include <pthread.h>
+#include "bplib_cfg.h"
 
 
 /*
@@ -69,11 +70,6 @@
  *        own assigned sequence counter.
  */
 #define BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS           (BPLIB_MAX_NUM_CONTACTS * 3)
-
-/**
- * \brief Maximum number of entries allowed in the Custody Transfer Database (CTDB)
- */
-#define BPLIB_CT_DB_MAX_ENTRIES                     (100u)
 
 /**
  * \brief Size of a full CCS batch operation

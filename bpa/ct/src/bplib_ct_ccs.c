@@ -199,7 +199,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             {
                 BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_ERR_EID, BPLib_EM_EventType_ERROR,
                     "Error, bundle sequence number %ld with sequence ID %ld does not exist in CTDB.",
-                    SeqCollection->SeqId, NextSeqNum);
+                    NextSeqNum, SeqCollection->SeqId);
             }
 
             /* Even sequence range numbers indicate sequences that are *included* */

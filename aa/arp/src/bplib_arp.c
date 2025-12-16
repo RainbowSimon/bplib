@@ -69,11 +69,8 @@ void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* 
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
 }
 
-void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
+void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord)
 {
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
-
-    /* As of right now, administrative records are 264 bytes; < 512 bytes for user_data */
-    memcpy((void*) &(Bundle->blob->user_data), AdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
 }

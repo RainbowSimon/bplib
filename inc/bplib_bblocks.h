@@ -26,6 +26,7 @@
 #include "bplib_eid.h"
 #include "bplib_crc.h"
 #include "bplib_time.h"
+#include "bplib_arp.h"
 
 /*
 ** Macros
@@ -159,9 +160,10 @@ typedef struct
  */
 typedef struct
 {
-    BPLib_PrimaryBlock_t   PrimaryBlock;
-    BPLib_ExtensionBlock_t ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS];
-    BPLib_CanBlockHeader_t PayloadHeader;
+    BPLib_PrimaryBlock_t     PrimaryBlock;
+    BPLib_ExtensionBlock_t   ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS];
+    BPLib_CanBlockHeader_t   PayloadHeader;
+    BPLib_ARP_AdminRecord_t *AdminRecordPayload;     /** \brief If a bundle is an admin record, this gets populated with the data, otherwise it stays NULL */
 } BPLib_BBlocks_t;
 
 /**

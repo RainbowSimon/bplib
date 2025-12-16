@@ -168,13 +168,11 @@ void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* 
 void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
 
 /**
- * \brief     Count the Compressed Custody Signal then overwrite Bundle's user
- *            data with the administrative record provided
+ * \brief     Count the Compressed Custody Signal
  * \param[in]  AdminRecord Decoded Compressed Custody Signal administrative record
- * \param[out] Bundle      Bundle whose user_data will be overwritten with
- *                         AdminRecord
+ *
  * \return    void
  */
-void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
+void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord);
 
 #endif /* BPLIB_ARP_H */

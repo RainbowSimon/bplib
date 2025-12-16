@@ -185,7 +185,7 @@ extern "C" {
 /**
  *  \brief Maximum number of bundle bytes allowed in storage at any given time
  */
-#define BPLIB_MAX_STORED_BUNDLE_BYTES            ((size_t) 4000000000)     /* 4 gigabytes */
+#define BPLIB_MAX_STORED_BUNDLE_BYTES            ((size_t) 4000000000)  /* 4 gigabytes */
 
 /**
  *  \brief Whether to allow duplicate bundles in storage. This flag is recommended
@@ -194,6 +194,11 @@ extern "C" {
  *         and creation time.
  */
 #define BPLIB_ALLOW_DUPLICATE_BUNDLES            false
+
+/**
+ * \brief Maximum number of entries allowed in the Custody Transfer Database (CTDB)
+ */
+#define BPLIB_CT_DB_MAX_ENTRIES                     (10000u)
 
 #ifdef __cplusplus
 } // extern "C"

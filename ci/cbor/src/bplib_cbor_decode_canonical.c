@@ -109,7 +109,7 @@ static struct _AdminRecordParser AdminRecordDataParser = {
 /*******************************************************************************
 * RFC-9171 Canonical Block Parsers (Implementation)
 */
-BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_t* bundle,
+BPLib_Status_t BPLib_CBOR_DecodeCanonical(BPLib_Instance_t *Inst, QCBORDecodeContext* ctx, BPLib_Bundle_t* bundle,
                                     uint32_t CanonicalBlockIndex, const void *CandBundle)
 {
     BPLib_Status_t          Status;
@@ -124,6 +124,8 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
     uint32_t                HeaderStartOffset;
     UsefulBufC              CanonBlockDataByteStrInfo;
     QCBORItem               PeekItem;
+    uint64_t                TempAdminRecordType;
+    BPLib_MEM_Block_t      *AdminRecordBlk;
 
     if ((ctx == NULL) || (bundle == NULL))
     {
@@ -355,9 +357,15 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
 
         if (bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG &&
             BPLib_EID_IsMatch(&(bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
-        { /* Payload block is an administrative record */
-            BPLib_ARP_AdminRecord_t AdminRecord;
-            uint64_t                TempAdminRecordType;
+        { 
+            /* Payload block is an administrative record */
+            AdminRecordBlk = BPLib_MEM_BlockAlloc(&(Inst->pool), BPLIB_MEM_BIG_BLK_SIZE);
+            if (AdminRecordBlk == NULL)
+            {
+                return BPLIB_CBOR_DEC_ADMIN_RECORD_NULL_ERR;
+            }
+
+            bundle->blocks.AdminRecordPayload = AdminRecordBlk->user_data.AdminRecord;
 
             /* Enter admin record array */
             Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &AdminRecordItem);
@@ -373,10 +381,10 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR;
             }
 
-            AdminRecord.AdminRecordType = (BPLib_ARP_AdminRecordTypeCode_t) TempAdminRecordType;
+            AdminRecord->AdminRecordType = (BPLib_ARP_AdminRecordTypeCode_t) TempAdminRecordType;
 
             /* Parse admin record content */
-            Status = AdminRecordDataParser.ContentParser(ctx, &AdminRecord);
+            Status = AdminRecordDataParser.ContentParser(ctx, bundle->blocks.AdminRecordPayload);
             if (Status != BPLIB_SUCCESS)
             {
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_CONT_ERR;
@@ -388,9 +396,6 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
             {
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_EXIT_ARR_ERR;
             }
-
-            /* Shove the administrative record into the bundle's user data */
-            BPLib_ARP_ProcessCcs(&AdminRecord, bundle);
         }
     }
     else

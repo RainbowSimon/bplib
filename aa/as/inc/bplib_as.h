@@ -223,6 +223,8 @@ typedef struct
 
     uint64_t Rates[BPLIB_AS_NUM_RATES_TO_REPORT];               /** \brief Array of different rates to track */
 
+    uint64_t BundleAgentCtdbSize;                               /** \brief Size in bytes of the CTDB */
+
     uint32_t Spare;
     uint32_t NodeStartupCounter;                                /** \brief Node startup counter */
     int64_t  MonotonicTime;                                     /** \brief Monotonic Time Counter */

@@ -193,6 +193,7 @@
 #define BPLIB_PI_REMOVE_QUEUE_FLUSH_DBG_EID             (696u)
 #define BPLIB_PI_ADU_LEN_ERR_EID                        (697u)
 #define BPLIB_PI_INGRESS_NO_STOR_ERR_EID                (698u)
+#define BPLIB_PI_NO_CTEB_DBG_EID                        (699u)
 
 /* QM event IDs */
 #define BPLIB_QM_EBP_OUT_ERR_EID                        (700u)

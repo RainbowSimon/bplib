@@ -64,7 +64,7 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
     CandidateBundle->blocks.PrimaryBlock.MonoTime.BootEra = BPLib_TIME_GetBootEra();
 
     /* Decode the bundle */
-    Status = BPLib_CBOR_DecodeBundle(BundleIn, Size, CandidateBundle);
+    Status = BPLib_CBOR_DecodeBundle(Inst, BundleIn, Size, CandidateBundle);
 
     /* If decode was successful, try validating the bundle */
     if (Status == BPLIB_SUCCESS)
@@ -97,6 +97,11 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
     /* If decode and validation were successful, create the job to ingress bundle */
     if (Status == BPLIB_SUCCESS)
     {
+        if (CandidateBundle->blocks.AdminRecordPayload != NULL)
+        {
+            BPLib_ARP_ProcessCcs(CandidateBundle->blocks.AdminRecordPayload);
+        }
+
         Status = BPLib_QM_CreateJob(Inst, CandidateBundle, CONTACT_IN_BI_TO_EBP, QM_PRI_NORMAL, QM_WAIT_FOREVER);
     }
     

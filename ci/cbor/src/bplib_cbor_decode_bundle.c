@@ -29,7 +29,8 @@
 * Exported Functions
 */
 
-BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundleLen, BPLib_Bundle_t* bundle)
+BPLib_Status_t BPLib_CBOR_DecodeBundle(BPLib_Instance_t *Inst, const void* CandBundle, 
+                                            size_t CandBundleLen, BPLib_Bundle_t* bundle)
 {
     BPLib_Status_t Status;
     QCBORDecodeContext ctx;
@@ -105,7 +106,7 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundle
         }
 
         /* Decode the next canonical block */
-        Status = BPLib_CBOR_DecodeCanonical(&ctx, bundle, CanonicalBlockIndex, CandBundle);
+        Status = BPLib_CBOR_DecodeCanonical(Inst, &ctx, bundle, CanonicalBlockIndex, CandBundle);
         if (Status != BPLIB_SUCCESS)
         {
             break;

@@ -43,27 +43,34 @@ static BPLib_QM_JobState_t ContactIn_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
+    BPLib_QM_JobState_t JobState = CONTACT_IN_CT_TO_STOR;
 
+    BPLib_NC_ReaderLock();
+
+    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == false)
+    {
+        /* Don't do any custody operations, just pass bundles through */
+        BPLib_NC_ReaderUnlock();
+    }
     /* Check whether the bundle is an administrative record destined for this node */
-    if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&
+    else if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&
         BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
     {
-        BPLib_ARP_AdminRecord_t BundleAdminRecord;
-
-        /* Recover the admin record from the bundle */
-        memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.BigData), sizeof(BPLib_ARP_AdminRecord_t));
+        BPLib_NC_ReaderUnlock();
 
         /* Send the deserialized CCS off to CT */
-        (void) BPLib_CT_ProcessCcs(Inst, &BundleAdminRecord.AdminRecordBody.CCS);
-
+        (void) BPLib_CT_ProcessCcs(Inst, &(Bundle->blocks.AdminRecordPayload->AdminRecordBody.CCS));
+                    
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);        
         BPLib_MEM_BundleFree(&Inst->pool, Bundle);
         
-        return NO_NEXT_STATE;
+        JobState = NO_NEXT_STATE;
     }
     else
     {
+        BPLib_NC_ReaderUnlock();
+
         Status = BPLib_CT_ProcessNewBundle(Inst, Bundle);
 
         if (Status != BPLIB_SUCCESS)
@@ -72,26 +79,40 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
 
-            return NO_NEXT_STATE;
+            JobState = NO_NEXT_STATE;
         }
     }
     
-    return CONTACT_IN_CT_TO_STOR;
+    return JobState;
 }
 
 static BPLib_QM_JobState_t ContactOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
+    BPLib_QM_JobState_t JobState = CONTACT_OUT_CT_TO_EBP;
 
-    Status = BPLib_CT_UpdateBundle(Inst, Bundle);
+    BPLib_NC_ReaderLock();
 
-    if (Status != BPLIB_SUCCESS)
+    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == false)
     {
-        BPLib_MEM_BundleFree(&Inst->pool, Bundle);
-        return NO_NEXT_STATE;
+        BPLib_NC_ReaderUnlock();
+
+        /* Don't do any custody operations, just pass bundles through */
+    }
+    else
+    {
+        BPLib_NC_ReaderUnlock();
+
+        Status = BPLib_CT_UpdateBundle(Inst, Bundle);
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+            JobState = NO_NEXT_STATE;
+        }
     }
 
-    return CONTACT_OUT_CT_TO_EBP;
+    return JobState;
 }
 
 static BPLib_QM_JobState_t ContactOut_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
