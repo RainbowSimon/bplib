@@ -45,6 +45,7 @@
 /* =========== */
 
 extern BPLib_NC_MibPerNodeConfig_t TestMibConfigPnTbl;
+extern BPLib_Instance_t BplibInst;
 
 /* ==================== */
 /* Function Definitions */

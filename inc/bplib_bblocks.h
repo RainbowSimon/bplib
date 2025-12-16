@@ -26,7 +26,6 @@
 #include "bplib_eid.h"
 #include "bplib_crc.h"
 #include "bplib_time.h"
-#include "bplib_arp.h"
 
 /*
 ** Macros

@@ -93,62 +93,12 @@ void Test_BPLib_ARP_ProcessCrs(void)
 
 void Test_BPLib_ARP_ProcessCcs(void)
 {
-    BPLib_Bundle_t          Bundle;
-    BPLib_MEM_Block_t       Block;
-    BPLib_ARP_AdminRecord_t BlobAsAdminRecord;
-    uint8_t                 BundleSeqIdx;
-    uint8_t                 SeqRangeIdx;
-
-    memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
-    memset(&Block, 0, sizeof(BPLib_MEM_Block_t));
-    Bundle.blob = &Block;
-
-    BPLib_ARP_ProcessCcs(&AdminRecord, &Bundle);
+    BPLib_ARP_ProcessCcs(&AdminRecord);
 
     BPLib_ARP_Test_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD,   1, 1);
     BPLib_ARP_Test_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1, 2);
 
     UtAssert_STUB_COUNT(BPLib_AS_Increment, 2);
-
-    memcpy((void*) &BlobAsAdminRecord, (void*) Bundle.blob->user_data.BigData, sizeof(BPLib_ARP_AdminRecord_t));
-
-    UtAssert_EQ(BPLib_ARP_AdminRecordTypeCode_t,
-                BlobAsAdminRecord.AdminRecordType,
-                AdminRecord.AdminRecordType);
-
-    for (BundleSeqIdx = 0; BundleSeqIdx < BPLIB_CT_MAX_SEQ_COLLECTIONS; BundleSeqIdx++)
-    {
-        UtAssert_EQ(uint64_t,
-                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqId,
-                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqId);
-
-        UtAssert_EQ(uint64_t,
-                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].FirstSeqNum,
-                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].FirstSeqNum);
-
-        for (SeqRangeIdx = 0; SeqRangeIdx < BPLIB_CT_MAX_SEQ_RANGE_LEN; SeqRangeIdx++)
-        {
-            UtAssert_EQ(uint64_t,
-                        BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqRange[SeqRangeIdx],
-                        AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqRange[SeqRangeIdx]);
-        }
-
-        UtAssert_EQ(size_t,
-                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqRangeLen,
-                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].SeqRangeLen);
-
-        UtAssert_EQ(size_t,
-                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].LastSeqNumAdded,
-                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].LastSeqNumAdded);
-
-        UtAssert_EQ(BPLib_CT_DispositionCode_t,
-                    BlobAsAdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].DispositionCode,
-                    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BundleSeqIdx].DispositionCode);
-    }
-
-    UtAssert_EQ(size_t,
-                BlobAsAdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections,
-                AdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections);
 }
 
 void TestBplibArp_Register(void)

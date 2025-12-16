@@ -89,11 +89,11 @@ typedef union
  *        features of the Bundle Protocol as a response to bundle transmission
  *        requests presented by nodes' application agents.
  */
-typedef struct
+struct BPLib_ARP_AdminRecord
 {
     BPLib_ARP_AdminRecordTypeCode_t AdminRecordType; /** \brief Administrative record type */
     BPLib_ARP_AdminRecordBody_t     AdminRecordBody; /** \brief Contents of the admin record, dependent on type of admin record */
-} BPLib_ARP_AdminRecord_t;
+} ;
 
 /* =================== */
 /* Function Prototypes */

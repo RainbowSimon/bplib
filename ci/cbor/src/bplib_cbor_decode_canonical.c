@@ -365,7 +365,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(BPLib_Instance_t *Inst, QCBORDecodeCon
                 return BPLIB_CBOR_DEC_ADMIN_RECORD_NULL_ERR;
             }
 
-            bundle->blocks.AdminRecordPayload = AdminRecordBlk->user_data.AdminRecord;
+            bundle->blocks.AdminRecordPayload = &(AdminRecordBlk->user_data.AdminRecord);
 
             /* Enter admin record array */
             Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &AdminRecordItem);
@@ -381,7 +381,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(BPLib_Instance_t *Inst, QCBORDecodeCon
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR;
             }
 
-            AdminRecord->AdminRecordType = (BPLib_ARP_AdminRecordTypeCode_t) TempAdminRecordType;
+            bundle->blocks.AdminRecordPayload->AdminRecordType = (BPLib_ARP_AdminRecordTypeCode_t) TempAdminRecordType;
 
             /* Parse admin record content */
             Status = AdminRecordDataParser.ContentParser(ctx, bundle->blocks.AdminRecordPayload);

@@ -113,11 +113,11 @@ BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
     AppState = BPLib_NC_GetAppState(ChanId);
     if (AppState != BPLIB_NC_APP_STATE_REMOVED && AppState != BPLIB_NC_APP_STATE_ADDED)
     {
-        BPLib_EM_SendEvent(BPLIB_PI_NO_CTEB_DBG_EID, BPLib_EM_EventType_DEBUG,
+        BPLib_EM_SendEvent(BPLIB_PI_ADD_STATE_DBG_EID, BPLib_EM_EventType_DEBUG,
                             "Error with add-application directive, invalid AppState=%d for ChanId=%d",
                             AppState, ChanId);
 
-        return BPLIB_CT_NO_CUST_ERR;
+        return BPLIB_APP_STATE_ERR;
     }
 
     BPLib_NC_ReaderLock();
@@ -131,10 +131,10 @@ BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
     {
         BPLib_NC_ReaderUnlock();
 
-        BPLib_EM_SendEvent(BPLIB_PI_ADD_STATE_DBG_EID, BPLib_EM_EventType_DEBUG,
+        BPLib_EM_SendEvent(BPLIB_PI_NO_CTEB_DBG_EID, BPLib_EM_EventType_DEBUG,
                             "Error with add-application directive, cannot include CTEBs while custody support is disabled");
 
-        return BPLIB_APP_STATE_ERR;        
+        return BPLIB_CT_NO_CUST_ERR;        
     }
 
     BPLib_NC_ReaderUnlock();

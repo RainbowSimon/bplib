@@ -91,10 +91,9 @@ void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t *AdminRecord, BPLib_Bundle_t *
  * Generated stub function for BPLib_ARP_ProcessCcs()
  * ----------------------------------------------------
  */
-void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t *AdminRecord, BPLib_Bundle_t *Bundle)
+void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t *AdminRecord)
 {
     UT_GenStub_AddParam(BPLib_ARP_ProcessCcs, BPLib_ARP_AdminRecord_t *, AdminRecord);
-    UT_GenStub_AddParam(BPLib_ARP_ProcessCcs, BPLib_Bundle_t *, Bundle);
 
     UT_GenStub_Execute(BPLib_ARP_ProcessCcs, Basic, NULL);
 }

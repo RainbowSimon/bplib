@@ -30,6 +30,8 @@
 /* =========== */
 
 BPLib_NC_MibPerNodeConfig_t TestMibConfigPnTbl;
+BPLib_Instance_t BplibInst;
+
 
 /* ==================== */
 /* Function Definitions */
@@ -44,6 +46,8 @@ void BPLib_CBOR_Test_Setup(void)
 
     /* Set default max length to something excessively high for most tests */
     TestMibConfigPnTbl.Configs[PARAM_SET_MAX_BUNDLE_LENGTH] = 1000000;
+
+    memset(&BplibInst, 0, sizeof(BplibInst));
 }
 
 void BPLib_CBOR_Test_Teardown(void)
