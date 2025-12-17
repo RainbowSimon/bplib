@@ -81,6 +81,9 @@ void Test_BPLib_STOR_GarbageCollect_NominalExpired(void)
 {
     UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, 1);
 
+    BplibInst.BundleStorage.LastActiveTime = 0;
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, BPLIB_STOR_MAX_IDLE_TIME + 1);
+
     /* Nothing should be discarded if current time is before bundle expiration time */
     UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, 797186475264); /* 797186475264 is creation time for TestBundle */
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
@@ -90,6 +93,9 @@ void Test_BPLib_STOR_GarbageCollect_NominalExpired(void)
 
     /* Skip counters 3,4 which are for DiscardEgressed */
 
+    BplibInst.BundleStorage.LastActiveTime = 0;
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, BPLIB_STOR_MAX_IDLE_TIME + 1);
+    
     /* Storage should be discarded because bundle timestamp is expired */
     UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, INT64_MAX);
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
@@ -110,12 +116,17 @@ void Test_BPLib_STOR_GarbageCollect_SQLFail(void)
 {
     /* Force sql statements to fail by passing a NULL instance */
     BplibInst.BundleStorage.db = NULL;
-    UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_STOR_SQL_DISCARD_ERR);
+    BplibInst.BundleStorage.LastActiveTime = 0;
+
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, BPLIB_STOR_MAX_IDLE_TIME + 1);
+
+    UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_ERROR);
 
     /* Look for event message */
-    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 2);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 3);
     UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_STOR_SQL_GC_ERR_EID);
     UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[1].EventID, BPLIB_STOR_SQL_GC_ERR_EID);
+    UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[2].EventID, BPLIB_STOR_DB_GET_SIZE_ERR_EID);
 }
 
 void Test_BPLib_STOR_UpdateHkPkt_Nominal(void)
@@ -202,8 +213,10 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), RetransmissionTime);
     UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, &Batch), BPLIB_SUCCESS);
 
+    BplibInst.BundleStorage.LastActiveTime = 0;
+
     /* Garbage collect all bundles marked for expiration */
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), 0);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), BPLIB_STOR_MAX_IDLE_TIME + 1);
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_IN_CUSTODY, 
                                                 Context_BPLib_AS_Increment[0].Counter);

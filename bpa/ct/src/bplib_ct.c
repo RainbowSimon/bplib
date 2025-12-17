@@ -298,3 +298,22 @@ BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t Contac
 
     return BPLIB_SUCCESS;
 }
+
+BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
+{
+    BPLib_CT_DbEntry_t *DbEntry = NULL;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), BundleId, &DbEntry);
+    if (Status == BPLIB_SUCCESS)
+    {
+        Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
+    }
+
+    return Status;
+}

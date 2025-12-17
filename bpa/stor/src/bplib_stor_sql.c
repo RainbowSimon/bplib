@@ -39,10 +39,10 @@
 
 sqlite3_stmt* GetNumBundlesStmt;
 sqlite3_stmt* TotalBytesStmt;
-sqlite3_stmt* DiscardExpiredStmt;
-sqlite3_stmt* ExpiredBytesStmt;
 sqlite3_stmt* DiscardEgressedStmt;
 sqlite3_stmt* EgressedBytesStmt;
+sqlite3_stmt* GetExpiredStmt;
+sqlite3_stmt* DeleteExpiredStmt;
 
 /* SQL query strings */
 
@@ -130,24 +130,13 @@ const char* TotalBytesSQL =
 "AS TotalBytes "
 "FROM bundle_data;";
 
-const char* DiscardExpiredSQL =
-"WITH to_delete AS ("
-"    SELECT id FROM bundle_data "
-"    WHERE (action_timestamp < ?) AND (egress_attempted = 0) "
-"    LIMIT ?"
-") "
-"DELETE FROM bundle_data "
-"WHERE id IN (SELECT id FROM to_delete);";
+const char* GetExpiredSQL = 
+"SELECT id, bundle_bytes, bundle_id, is_custodial FROM bundle_data "
+"WHERE (action_timestamp < ?) AND (egress_attempted = 0) "
+"LIMIT ?;";
 
-const char* ExpiredBytesSQL =
-"WITH expired_bytes AS (\n"
-"   SELECT id, bundle_bytes FROM bundle_data\n"
-"   WHERE (action_timestamp < ?) AND (egress_attempted = 0)\n"
-"   LIMIT ?)\n"
-"SELECT SUM(bundle_bytes)\n"
-"AS bytes_deleted\n"
-"FROM bundle_data\n"
-"WHERE id IN (SELECT id FROM expired_bytes);\n";
+const char* DeleteExpiredSQL =
+"DELETE FROM bundle_data WHERE id = ?;";
 
 const char* DiscardEgressedSQL =
 "WITH to_delete AS ("
@@ -394,84 +383,49 @@ BPLib_Status_t BPLib_SQL_DiscardExpired(BPLib_Instance_t* Inst, size_t* NumDisca
     Status = BPLIB_SUCCESS;
     db     = Inst->BundleStorage.db;
 
-    SQLStatus = sqlite3_prepare_v2(db, DiscardExpiredSQL, -1, &DiscardExpiredStmt, 0);
+    SQLStatus = sqlite3_prepare_v2(db, GetExpiredSQL, -1, &GetExpiredStmt, 0);
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "Failed to prep: %s\n", sqlite3_errmsg(db));
+        return BPLIB_STOR_SQL_DISCARD_ERR;
+    }
+
+    SQLStatus = sqlite3_prepare_v2(db, DeleteExpiredSQL, -1, &DeleteExpiredStmt, 0);
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prep: %s\n", sqlite3_errmsg(db));
+        return BPLIB_STOR_SQL_DISCARD_ERR;
+    }
+
+    SQLStatus = BPLib_SQL_DiscardExpiredImpl(db, NumDiscarded, Inst);
+    if (SQLStatus != SQLITE_OK)
+    {
         Status = BPLIB_STOR_SQL_DISCARD_ERR;
     }
 
-    if (Status == BPLIB_SUCCESS)
-    {
-        SQLStatus = BPLib_SQL_DiscardExpiredImpl(db, NumDiscarded, &(Inst->BundleStorage));
-        if (SQLStatus != SQLITE_OK)
-        {
-            Status = BPLIB_STOR_SQL_DISCARD_ERR;
-        }
-    }
-
     /* Finalize the statement */
-    sqlite3_finalize(DiscardExpiredStmt);
+    sqlite3_finalize(GetExpiredStmt);
+    sqlite3_finalize(DeleteExpiredStmt);
 
     return Status;
 }
 
-SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib_BundleCache_t* BundleCache)
+SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPLib_Instance_t* Inst)
 {
     SQL_Status_t SQLStatus;
     uint64_t     MonoTime;
     size_t       ExpiredBytes;
+    uint32_t     CurrBundleId;
+    int64_t      BundleRow;
+    int64_t      IsCustodial;
+    size_t       NumToDiscard;
 
-    *NumDiscarded = 0;
-    ExpiredBytes  = 0;
+   *NumDiscarded = 0;
+    ExpiredBytes = 0;
+    NumToDiscard = 0;
 
     /* Get DTN Time */
-    MonoTime = BPLib_TIME_GetMonotonicTime();
-
-    /* Collect the size of the bundles to be discarded */
-    /* Load up the SQL command */
-    SQLStatus = sqlite3_prepare_v2(db, ExpiredBytesSQL, -1, &ExpiredBytesStmt, NULL);
-    if (SQLStatus == SQLITE_OK)
-    {
-        SQLStatus = sqlite3_bind_int64(ExpiredBytesStmt, 1, (int64_t) MonoTime);
-        if (SQLStatus == SQLITE_OK)
-        {
-            SQLStatus = sqlite3_bind_int64(ExpiredBytesStmt, 2, BPLIB_STOR_DISCARDBATCHSIZE);
-            if (SQLStatus == SQLITE_OK)
-            {
-                /* Evaluate the command */
-                SQLStatus = sqlite3_step(ExpiredBytesStmt);
-                if (SQLStatus == SQLITE_ROW)
-                {
-                    /* Assign the result of the query to EgressedBytes */
-                    ExpiredBytes = sqlite3_column_int64(ExpiredBytesStmt, 0);
-
-                    /* Amount is decremented when the command to discard is successful */
-                    sqlite3_finalize(ExpiredBytesStmt);
-                }
-                else
-                {
-                    fprintf(stderr, "Error code %s received while evaluating the SQL statement: %s\n",
-                            sqlite3_errmsg(db),
-                            ExpiredBytesSQL);
-                }
-            }
-            else
-            {
-                fprintf(stderr, "Failed to bind LIMIT: %s\n", sqlite3_errmsg(db));
-            }
-        }
-        else
-        {
-            fprintf(stderr, "Failed to bind action_timestamp: %s\n", sqlite3_errmsg(db));
-        }
-    }
-    else
-    {
-        fprintf(stderr, "Error code %s, received while preparing SQL statement: %s\n",
-                sqlite3_errmsg(db),
-                ExpiredBytesSQL);
-    }
+   MonoTime = BPLib_TIME_GetMonotonicTime();
 
     /* Create a batch query */
     SQLStatus = sqlite3_exec(db, "BEGIN;", 0, 0, 0);
@@ -481,31 +435,67 @@ SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPL
         return SQLStatus;
     }
 
-    sqlite3_reset(DiscardExpiredStmt);
+    sqlite3_reset(GetExpiredStmt);
 
-    SQLStatus = sqlite3_bind_int64(DiscardExpiredStmt, 1, (int64_t)MonoTime);
+    /* Get all bundle rows to expire */
+
+    SQLStatus = sqlite3_bind_int64(GetExpiredStmt, 1, (int64_t)MonoTime);
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "Failed to bind action_timestamp: %s\n", sqlite3_errmsg(db));
         return SQLStatus;
     }
 
-    SQLStatus = sqlite3_bind_int64(DiscardExpiredStmt, 2, BPLIB_STOR_DISCARDBATCHSIZE);
+    SQLStatus = sqlite3_bind_int64(GetExpiredStmt, 2, BPLIB_STOR_DISCARDBATCHSIZE);
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "Failed to bind LIMIT: %s\n", sqlite3_errmsg(db));
         return SQLStatus;
     }
 
-    /* Run the query */
-    SQLStatus = sqlite3_step(DiscardExpiredStmt);
-    if (SQLStatus != SQLITE_DONE)
+    SQLStatus = sqlite3_step(GetExpiredStmt);
+
+    /* Step through expired bundle rows */
+    while (SQLStatus == SQLITE_ROW)
     {
-        fprintf(stderr, "Failed to discard expired bundles: %s\n", sqlite3_errmsg(db));  
-        return SQLStatus;
+        /* Get information about bundle to delete */
+        Inst->BundleStorage.BundleRowsToExpire[NumToDiscard] = sqlite3_column_int64(GetExpiredStmt, 0);
+        ExpiredBytes += sqlite3_column_int64(GetExpiredStmt, 1);
+        CurrBundleId = sqlite3_column_int64(GetExpiredStmt, 2);
+        IsCustodial = sqlite3_column_int64(GetExpiredStmt, 3);
+
+        if (IsCustodial != 0)
+        {
+            BPLib_CT_DeleteBundleFromCtdb(Inst, CurrBundleId);
+        }
+
+        SQLStatus = sqlite3_step(GetExpiredStmt);
+
+        NumToDiscard++;
     }
 
-    /* If there have been no errors so far commit the delete  */
+    for (BundleRow = 0; BundleRow < NumToDiscard; BundleRow++)
+    {
+        sqlite3_reset(DeleteExpiredStmt);
+     
+        /* Delete bundle from storage */
+        SQLStatus = sqlite3_bind_int64(DeleteExpiredStmt, 1,
+                                    Inst->BundleStorage.BundleRowsToExpire[BundleRow]); 
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to bind BundleRow: %s\n", sqlite3_errmsg(db));
+            return SQLStatus;
+        }
+
+        SQLStatus = sqlite3_step(DeleteExpiredStmt);
+        if (SQLStatus != SQLITE_DONE)
+        {
+            fprintf(stderr, "Failed to delete expired bundle: %s\n", sqlite3_errmsg(db));
+            return SQLStatus;            
+        }
+    }
+
+    /* If there have been no errors so far commit the delete */
     if (SQLStatus == SQLITE_DONE)
     {
         SQLStatus = sqlite3_exec(db, "COMMIT;", 0, 0, 0);
@@ -530,10 +520,10 @@ SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPL
     /* Determine how many changes were made to the database, which is the number
     ** of discarded bundles.
     */
-    *NumDiscarded = sqlite3_changes(db);
+    *NumDiscarded = NumToDiscard;
 
     /* Decrement that counter that tracks bytes of storage used */
-    BundleCache->BytesStorageInUse -= ExpiredBytes;    
+    Inst->BundleStorage.BytesStorageInUse -= ExpiredBytes;    
 
     return SQLITE_OK;
 }

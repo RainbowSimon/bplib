@@ -426,8 +426,12 @@ BPLib_Status_t BPLib_AS_SendNodeMibReportsHk(BPLib_Instance_t *Inst)
     {
         return BPLIB_NULL_PTR_ERROR;
     }
+
+    BPLib_AS_LockCounters();
     
     BPLib_AS_UpdateReportsHkTlm(Inst);
+
+    BPLib_AS_UnlockCounters();
 
     return BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendNodeMibReportsPkt(&BPLib_AS_NodeReportsPayload);
 }

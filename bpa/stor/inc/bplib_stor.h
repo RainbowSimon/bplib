@@ -52,6 +52,8 @@
 #define BPLIB_STOR_DBNAME       "bplib-storage.db"
 #endif
 
+#define BPLIB_STOR_MAX_IDLE_TIME        (4000u)
+
 /* ======== */
 /* Typedefs */
 /* ======== */
@@ -60,10 +62,12 @@ struct BPLib_BundleCache
 {
     pthread_mutex_t        lock;
     sqlite3*               db;
+    int64_t                BundleRowsToExpire[BPLIB_STOR_DISCARDBATCHSIZE];
     BPLib_Bundle_t*        InsertBatch[BPLIB_STOR_INSERTBATCHSIZE];
     size_t                 InsertBatchSize;
     BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
     BPLib_STOR_LoadBatch_t ContactLoadBatches[BPLIB_MAX_NUM_CONTACTS];
+    int64_t                LastActiveTime;
 
     /* Storage-related MIB reports */
     uint32_t BundleCountStored;
@@ -172,5 +176,9 @@ BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst);
 BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_CT_CcsUpdateBatch_t *Batch);
 
 BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId);
+
+void BPLib_STOR_SetLastActiveTime(BPLib_Instance_t* Inst);
+
+bool BPLib_STOR_IsIngressEgressActive(BPLib_Instance_t* Inst);
 
 #endif /* BPLIB_STOR_H */
