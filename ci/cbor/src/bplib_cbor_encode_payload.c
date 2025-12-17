@@ -25,15 +25,15 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                                         size_t OutputBufferSize,
                                         size_t* NumBytesCopied)
 {
-    BPLib_Status_t           Status;
-    QCBOREncodeContext       Context;
-    UsefulBuf                InitStorage;
-    QCBORError               QcborStatus;
-    size_t                   BytesLeftInOutputBuffer;
-    UsefulOutBuf             EncodeBuffer;
-    uint8_t*                 AduByteString = NULL;
-    uint8_t                  CrcValueSize;
-    uint8_t                  CrcLoop;
+    BPLib_Status_t     Status;
+    QCBOREncodeContext Context;
+    UsefulBuf          InitStorage;
+    QCBORError         QcborStatus;
+    size_t             BytesLeftInOutputBuffer;
+    UsefulOutBuf       EncodeBuffer;
+    uint8_t            AduByteString[BPLIB_MEM_BIG_BLK_DATA_SIZE];
+    uint8_t            CrcValueSize;
+    uint8_t            CrcLoop;
 
     if ((StoredBundle   == NULL) ||
         (OutputBuffer   == NULL) ||
@@ -48,8 +48,10 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
         */
         InitStorage.ptr = OutputBuffer;
         InitStorage.len = OutputBufferSize;
-        UsefulOutBuf_Init(&EncodeBuffer, InitStorage);
         QCBOREncode_Init(&Context, InitStorage);
+
+        /* Mirror the encoder with a UsefulOutBuf to handle errors */
+        UsefulOutBuf_Init(&EncodeBuffer, InitStorage);
 
         Status = BPLib_CBOR_EncodeArray(&Context, &EncodeBuffer);
         if (Status == BPLIB_SUCCESS)
@@ -90,7 +92,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                     Status = BPLib_MEM_CopyOutFromOffset(StoredBundle,
                                                             StoredBundle->blocks.PayloadHeader.DataOffsetStart,
                                                             StoredBundle->blocks.PayloadHeader.DataSize,
-                                                            (void*) AduByteString,
+                                                            AduByteString,
                                                             BytesLeftInOutputBuffer);
 
                     if (Status == BPLIB_SUCCESS)
