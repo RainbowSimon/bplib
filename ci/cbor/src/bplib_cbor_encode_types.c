@@ -120,7 +120,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
     {
         if (ValueToEncode <= 0x17)
         { /* Uses unsigned integer 0x00..0x17 (0..23) initial byte */
-            if (UsefulOutBuf_WillItFit(EncodeBuffer, 1))
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 1) == 1)
             {
                 UsefulOutBuf_AppendByte(EncodeBuffer, ValueToEncode);
             }
@@ -132,7 +132,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
         else if (ValueToEncode > 0x17 && ValueToEncode <= 0xFF)
         { /* Uses unsigned integer (one-byte uint8_t follows) initial byte */
             /* 1 for initial byte and 1 to represent value */
-            if (UsefulOutBuf_WillItFit(EncodeBuffer, 2))
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 2) == 1)
             {
                 UsefulOutBuf_AppendByte(EncodeBuffer, 0x18); /* uint8_t initial byte */
                 UsefulOutBuf_AppendByte(EncodeBuffer, ValueToEncode);
@@ -145,7 +145,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
         else if (ValueToEncode > 0xFF && ValueToEncode <= 0xFFFF)
         { /* Uses unsigned integer (two-byte uint16_t follows) initial byte */
             /* 1 for initial byte and 2 to represent value */
-            if (UsefulOutBuf_WillItFit(EncodeBuffer, 3))
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 3) == 1)
             {
                 UsefulOutBuf_AppendUint16(EncodeBuffer, ValueToEncode);
             }
@@ -157,7 +157,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
         else if (ValueToEncode > 0xFFFF && ValueToEncode <= 0xFFFFFFFF)
         {   /* Uses unsigned integer (four-byte uint32_t follows) initial byte */
             /* 1 for initial byte and 4 to represent value */
-            if (UsefulOutBuf_WillItFit(EncodeBuffer, 5))
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 5) == 1)
             {
                 UsefulOutBuf_AppendUint32(EncodeBuffer, ValueToEncode);
             }
@@ -169,7 +169,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
         else if (ValueToEncode > 0xFFFFFFFF && ValueToEncode <= 0xFFFFFFFFFFFFFFFF)
         { /* Uses unsigned integer (eight-byte uint64_t follows) initial byte */
             /* 1 for initial byte and 8 to represent value */
-            if (UsefulOutBuf_WillItFit(EncodeBuffer, 9))
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 9) == 1)
             {
                 UsefulOutBuf_AppendUint64(EncodeBuffer, ValueToEncode);
             }
@@ -253,15 +253,87 @@ BPLib_Status_t BPLib_CBOR_EncodeAdu(QCBOREncodeContext* Context, UsefulOutBuf* E
 
     if (Context != NULL)
     {
-        /* +1 for byte string initial byte */
-        if (UsefulOutBuf_WillItFit(EncodeBuffer, AduLen + 1) == 1)
+         if (AduLen <= 0x17)
+        { /* Uses byte string (0x00..0x17 bytes follow) initial byte */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 1) == 1)
+            {
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x40);
+            }
+            else
+            {
+                Status = BPLIB_CBOR_ENC_ADU_ERR;
+            }
+        }
+        else if (AduLen > 0x17 && AduLen <= 0xFF)
+        { /* Uses byte string (one-byte uint8_t for n, and then n bytes follow) initial byte */
+            /* 1 for initial byte and 1 to represent length of byte string */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 2) == 1)
+            {
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x58);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+            }
+            else
+            {
+                Status = BPLIB_CBOR_ENC_ADU_ERR;
+            }
+        }
+        else if (AduLen > 0xFF && AduLen <= 0xFFFF)
+        { /* Uses byte string (two-byte uint16_t for n, and then n bytes follow) initial byte */
+            /* 1 for initial byte and 2 to represent length of byte string */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 3) == 1)
+            {
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x59);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+            }
+            else
+            {
+                Status = BPLIB_CBOR_ENC_ADU_ERR;
+            }
+        }
+        else if (AduLen > 0xFFFF && AduLen <= 0xFFFFFFFF)
+        { /* Uses byte string (four-byte uint32_t for n, and then n bytes follow) initial byte */
+            /* 1 for initial byte and 4 to represent length of byte string */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 5) == 1)
+            {
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x5A);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+            }
+            else
+            {
+                Status = BPLIB_CBOR_ENC_ADU_ERR;
+            }
+        }
+        else if (AduLen > 0xFFFFFFFF && AduLen <= 0xFFFFFFFFFFFFFFFF)
+        { /* Uses byte string (eight-byte uint64_t for n, and then n bytes follow) initial byte */
+            /* 1 for initial byte and 8 to represent length of byte string */
+            if (UsefulOutBuf_WillItFit(EncodeBuffer, 9) == 1)
+            {
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x5B);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+                UsefulOutBuf_AppendByte(EncodeBuffer, 0x00);
+            }
+            else
+            {
+                Status = BPLIB_CBOR_ENC_ADU_ERR;
+            }
+        }
+
+        if (UsefulOutBuf_WillItFit(EncodeBuffer, AduLen) == 1)
         {
             AduBuf.ptr = Adu;
             AduBuf.len = AduLen;
 
-            UsefulOutBuf_AppendByte(EncodeBuffer, 0x40);
             UsefulOutBuf_AppendUsefulBuf(EncodeBuffer, AduBuf);
-
             if (UsefulOutBuf_GetError(EncodeBuffer) == 0)
             {
                 QCBOREncode_AddBytes(Context, AduBuf);
