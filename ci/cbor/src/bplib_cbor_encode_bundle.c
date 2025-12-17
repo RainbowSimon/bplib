@@ -119,12 +119,6 @@ BPLib_Status_t BPLib_CBOR_EncodeBundle(BPLib_Bundle_t* StoredBundle,
         return PayloadBlockReturnStatus;
     }
 
-    if (OutputBufferSize <= TotalBytesCopied)
-    {
-        *NumBytesCopied = 0;
-        return BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_4_ERR;
-    }
-
     /*
     ** Close the indefinite-length array
     */
