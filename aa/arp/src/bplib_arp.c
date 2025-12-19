@@ -83,7 +83,6 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
 {
     BPLib_ARP_AdminRecord_t     CcsAdminRecord;
     BPLib_CT_DeserializedCcs_t* AdminRecordCcs;
-    uint8_t                     ExtBlockIdx;
     BPLib_Bundle_t*             Bundle;
     BPLib_Status_t              Status;
     uint8_t                     DispCodeIdx;
@@ -115,24 +114,39 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
 
     Bundle = BPLib_MEM_BundleAlloc(&(Instance->pool), &CcsAdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
     if (Bundle != NULL)
-    {
-        /* === Configure the bundle for egressing === */
+    { /* Configure the bundle for egressing */
+        /* === Set up the primary block === */
+        Bundle->blocks.PrimaryBlock.RequiresEncode = true;
 
-        /* Mark every block as requiring encoding */
-        Bundle->blocks.PrimaryBlock.RequiresEncode  = true;
-        Bundle->blocks.PayloadHeader.RequiresEncode = true;
-
-        for(ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
-        {
-            Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
-        }
-
-        /* Set the administrative record flag */
-        Bundle->blocks.PrimaryBlock.BundleProcFlags |= BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+        /* Set the appropriate flags */
+        Bundle->blocks.PrimaryBlock.BundleProcFlags  = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+        Bundle->blocks.PrimaryBlock.BundleProcFlags |= BPLIB_BUNDLE_PROC_NO_FRAG_FLAG;
+        
+        /* Set the CRC type of the CCS's primary block */
+        Bundle->blocks.PrimaryBlock.CrcType = BPLib_CRC_Type_CRC16;
 
         /* Set routing destination of bundle */
         BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.DestEID),
                             InProgressCcs->SourceAdminEid);
+
+        /* Identify source node of CCS */
+        BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.SrcEID),
+                            BPLIB_EID_INSTANCE);
+
+        /* Set timestamp for bundle creation */
+        Bundle->blocks.PrimaryBlock.MonoTime.Time        = BPLib_TIME_GetMonotonicTime();
+        Bundle->blocks.PrimaryBlock.MonoTime.BootEra     = BPLib_TIME_GetBootEra();
+        Bundle->blocks.PrimaryBlock.Timestamp.CreateTime = BPLib_TIME_GetDtnTime(Bundle->blocks.PrimaryBlock.MonoTime);
+
+        /* === Set up payload === */
+        Bundle->blocks.PayloadHeader.RequiresEncode = true;
+
+        /* Configure payload block header */
+        Bundle->blocks.PayloadHeader.BlockType       = BPLib_BlockType_Payload;
+        Bundle->blocks.PayloadHeader.BlockNum        = 0;
+        Bundle->blocks.PayloadHeader.BlockProcFlags  = BPLIB_BUNDLE_PROC_NO_FRAG_FLAG;
+        Bundle->blocks.PayloadHeader.BlockProcFlags |= BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+        Bundle->blocks.PayloadHeader.CrcType         = BPLib_CRC_Type_CRC16;
 
         /* === Put the constructed bundle on the job queue === */
 

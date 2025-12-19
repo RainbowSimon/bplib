@@ -131,7 +131,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
 
                     default:
                         /* Unrecognized CRC type */
-                        Status = BPLIB_ERROR; /* TODO: Existing error for this? */
+                        Status = BPLIB_ERROR;
                 }
 
                 if (Status == BPLIB_SUCCESS)
