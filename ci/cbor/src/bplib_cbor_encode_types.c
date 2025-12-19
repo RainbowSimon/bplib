@@ -224,7 +224,7 @@ BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t
     if (UsefulOutBufError == 0)
     {
         /* Everything is ok */
-        *EncodedSize = EncodeBuffer->data_len;
+        *EncodedSize += EncodeBuffer->data_len;
     }
     else
     {
