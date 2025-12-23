@@ -171,7 +171,7 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdm
     else if (FirstUnusedCcs != BPLIB_CT_MAX_OPEN_CCS)
     {
         Context->OpenCcss[FirstUnusedCcs].InProgress = true;
-        BPLib_EID_CopyEids(SourceAdminEID, Context->OpenCcss[FirstUnusedCcs].SourceAdminEid);
+        BPLib_EID_CopyEids(&(Context->OpenCcss[FirstUnusedCcs].SourceAdminEid), *SourceAdminEID);
 
         RetCcsIdx = FirstUnusedCcs;
     }
