@@ -94,10 +94,6 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
 
     AdminRecordCcs = &(CcsAdminRecord.AdminRecordBody.CCS);
 
-    /* Copy over source administrative EID */
-    BPLib_EID_CopyEids(&(AdminRecordCcs->SourceAdminEid),
-                        InProgressCcs->SourceAdminEid);
-
     /* Shove the bundle sequence collections into the CCS */
     AdminRecordCcs->NumBundleSeqCollections = 0;
     for (DispCodeIdx = 0; DispCodeIdx < BPLIB_CT_MAX_SEQ_COLLECTIONS; DispCodeIdx++)
