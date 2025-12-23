@@ -121,7 +121,7 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
         /* Set the appropriate flags */
         Bundle->blocks.PrimaryBlock.BundleProcFlags  = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
         Bundle->blocks.PrimaryBlock.BundleProcFlags |= BPLIB_BUNDLE_PROC_NO_FRAG_FLAG;
-        
+
         /* Set the CRC type of the CCS's primary block */
         Bundle->blocks.PrimaryBlock.CrcType = BPLib_CRC_Type_CRC16;
 
@@ -143,10 +143,14 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
 
         /* Configure payload block header */
         Bundle->blocks.PayloadHeader.BlockType       = BPLib_BlockType_Payload;
-        Bundle->blocks.PayloadHeader.BlockNum        = 0;
+        Bundle->blocks.PayloadHeader.BlockNum        = 1;
         Bundle->blocks.PayloadHeader.BlockProcFlags  = BPLIB_BUNDLE_PROC_NO_FRAG_FLAG;
         Bundle->blocks.PayloadHeader.BlockProcFlags |= BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
         Bundle->blocks.PayloadHeader.CrcType         = BPLib_CRC_Type_CRC16;
+
+        /* Set payload size for CRC operations */
+        Bundle->blocks.PayloadHeader.BlockOffsetStart = 0;
+        Bundle->blocks.PayloadHeader.BlockOffsetEnd   = sizeof(BPLib_ARP_AdminRecord_t) - 1;
 
         /* === Put the constructed bundle on the job queue === */
 
@@ -162,6 +166,10 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
 
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+        }
+        else
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_CUSTODY, 1);
         }
     }
     else
