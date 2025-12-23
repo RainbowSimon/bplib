@@ -112,6 +112,8 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
             /* Add the CRC */
             if (Status == BPLIB_SUCCESS)
             {
+                CrcValueSize = 0;
+
                 /* Cloogy integration with BPLib_CBOR_EncodeCrcValue since it's used elsewhere and thus can't use UsefulOutBuf */
                 switch (StoredBundle->blocks.PayloadHeader.CrcType)
                 {
