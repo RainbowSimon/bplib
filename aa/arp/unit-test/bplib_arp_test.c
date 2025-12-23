@@ -171,7 +171,7 @@ void Test_BPLib_ARP_ProcessInProgressCcs_Nominal(void)
     UT_SetHandlerFunction(UT_KEY(BPLib_MEM_BundleAlloc), UT_Handler_BPLib_MEM_BundleAlloc, &AllocBundle);
     UT_SetHandlerFunction(UT_KEY(BPLib_EID_CopyEids), UT_Handler_BPLib_EID_CopyEids, NULL);
     memset(&Instance, 0, sizeof(BPLib_Instance_t));
-    
+
     /* Initialize in-process CCS's source admin EID to evaluate later */
 
     InProgressCcs.SourceAdminEid.Scheme       = 2;
@@ -242,6 +242,16 @@ void Test_BPLib_ARP_ProcessInProgressCcs_Nominal(void)
     UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 0);
 }
 
+void Test_BPLib_ARP_ProcessInProgressCcs_NullBundleErr(void)
+{
+    // TODO
+}
+
+void Test_BPLib_ARP_ProcessInProgressCcs_CreateJobErr(void)
+{
+    // TODO
+}
+
 void TestBplibArp_Register(void)
 {
     ADD_TEST(Test_BPLib_ARP_Init);
@@ -253,4 +263,6 @@ void TestBplibArp_Register(void)
     ADD_TEST(Test_BPLib_ARP_ProcessCrs_Nominal);
     ADD_TEST(Test_BPLib_ARP_ProcessNewCcs_Nominal);
     ADD_TEST(Test_BPLib_ARP_ProcessInProgressCcs_Nominal);
+    ADD_TEST(Test_BPLib_ARP_ProcessInProgressCcs_NullBundleErr);
+    ADD_TEST(Test_BPLib_ARP_ProcessInProgressCcs_CreateJobErr);
 }
