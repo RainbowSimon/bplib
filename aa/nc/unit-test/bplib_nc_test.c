@@ -28,6 +28,9 @@
 #include "bplib_eventids.h"
 #include "bplib_inst.h"
 
+
+BPLib_Instance_t BplibInst;
+
 /* ==================== */
 /* Function Definitions */
 /* ==================== */
@@ -36,7 +39,7 @@ void Test_BPLib_NC_Init_Impl_Nominal(void)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
     UtAssert_True(BPLib_NC_ConfigPtrs.ChanConfigPtr      == TestConfigPtrs.ChanConfigPtr,      "BPLib_NC_ConfigPtrs ChanConfigPtr successfully modified");
@@ -58,7 +61,7 @@ void Test_BPLib_NC_Init_Impl_NullConfigPtrs_Error(void)
     BPLib_NC_ConfigPtrs_t* NullConfigPtr;
 
     NullConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(NullConfigPtr);
+    Status = BPLib_NC_InitImpl(&BplibInst, NullConfigPtr);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -68,7 +71,7 @@ void Test_BPLib_NC_Init_Impl_NullChanTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.ChanConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -78,7 +81,7 @@ void Test_BPLib_NC_Init_Impl_NullContactsTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.ContactsConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -88,7 +91,7 @@ void Test_BPLib_NC_Init_Impl_NullCrsTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.CrsConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -98,7 +101,7 @@ void Test_BPLib_NC_Init_Impl_NullCustodianTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.CustodianConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -108,7 +111,7 @@ void Test_BPLib_NC_Init_Impl_NullCustodyTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.CustodyConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -118,7 +121,7 @@ void Test_BPLib_NC_Init_Impl_NullMibPnTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.MibPnConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -128,7 +131,7 @@ void Test_BPLib_NC_Init_Impl_NullMibPsTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.MibPsConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -138,7 +141,7 @@ void Test_BPLib_NC_Init_Impl_NullReportTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.ReportConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -148,7 +151,7 @@ void Test_BPLib_NC_Init_Impl_NullAuthTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.AuthConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -158,7 +161,7 @@ void Test_BPLib_NC_Init_Impl_NullLatTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.LatConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -168,7 +171,7 @@ void Test_BPLib_NC_Init_Impl_NullStorTblPtr_Error(void)
     BPLib_Status_t Status;
 
     TestConfigPtrs.StorConfigPtr = NULL;
-    Status = BPLib_NC_InitImpl(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
@@ -617,14 +620,14 @@ void Test_BPLib_NC_Noop_Nominal(void)
 
 void Test_BPLib_NC_AddAllApplications_Nominal(void)
 {
-    BPLib_NC_AddAllApplications();
+    BPLib_NC_AddAllApplications(&BplibInst);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
 
     /* Verify event */
     BPLib_NC_Test_Verify_Event(0, BPLIB_NC_ADD_ALL_APPS_SUCCESS_EID,
-                                "Add all applications directive is unimplemented");
+                                "Successful add-all-applications directive");
 }
 
 void Test_BPLib_NC_AddAllApplications_Error(void)
@@ -646,7 +649,7 @@ void Test_BPLib_NC_StartAllApplications_Nominal(void)
 
     /* Verify event */
     BPLib_NC_Test_Verify_Event(0,BPLIB_NC_START_ALL_APPS_SUCCESS_EID,
-                                "Start all applications directive not implemented");
+                                "Successful start-all-applications directive");
 }
 
 void Test_BPLib_NC_StartAllApplications_Error(void)
@@ -986,7 +989,7 @@ void Test_BPLib_NC_AddApplication_Nominal(void)
     memset((void*) &Payload, 0, sizeof(BPLib_AddApplication_Payload_t));
 
     Payload.ChanId = 1;
-    BPLib_NC_AddApplication(Payload);
+    BPLib_NC_AddApplication(&BplibInst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
@@ -1006,7 +1009,7 @@ void Test_BPLib_NC_AddApplication_Error(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_PI_AddApplication), BPLIB_ERROR);
 
     Payload.ChanId = 2;
-    BPLib_NC_AddApplication(Payload);
+    BPLib_NC_AddApplication(&BplibInst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
@@ -1058,16 +1061,19 @@ void Test_BPLib_NC_RemoveApplication_Error(void)
 void Test_BPLib_NC_SetRegistrationState_Nominal(void)
 {
     BPLib_SetRegistrationState_Payload_t Payload;
+    BPLib_Instance_t Inst;
 
-    Payload.ExampleParameter = 3;
-    BPLib_NC_SetRegistrationState(Payload);
+    Payload.ChanId = 0;
+    Payload.RegState = BPLIB_PI_ACTIVE;
+
+    BPLib_NC_SetRegistrationState(&Inst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
 
     /* Verify event */
     BPLib_NC_Test_Verify_Event(0, BPLIB_NC_SET_REGI_STAT_SUCCESS_EID,
-                                "Set registration state directive not implemented, received %d in payload");
+                                "Set the registration state of channel #%ld to %ld.");
 }
 
 void Test_BPLib_NC_SetRegistrationState_Error(void)
@@ -2016,9 +2022,14 @@ void Test_BPLib_NC_SendStorageHk_Error(void)
 
 void Test_BPLib_NC_SendChannelContactStatHk_Nominal(void)
 {
+    BPLib_Instance_t Inst;
+
+    memset(&Inst, 0, sizeof(BPLib_Instance_t));
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = TestConfigPtrs.ChanConfigPtr;
+
     UT_SetDefaultReturnValue(UT_KEY(BPA_TLMP_SendChannelContactPkt), BPLIB_SUCCESS);
 
-    BPLib_NC_SendChannelContactStatHk();
+    BPLib_NC_SendChannelContactStatHk(&Inst);
 
     // Verify directive counter was not incremented
     UtAssert_STUB_COUNT(BPLib_AS_Increment, 0);
@@ -2026,9 +2037,14 @@ void Test_BPLib_NC_SendChannelContactStatHk_Nominal(void)
 
 void Test_BPLib_NC_SendChannelContactStatHk_Error(void)
 {
+    BPLib_Instance_t Inst;
+
+    memset(&Inst, 0, sizeof(BPLib_Instance_t));
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = TestConfigPtrs.ChanConfigPtr;
+
     UT_SetDefaultReturnValue(UT_KEY(BPA_TLMP_SendChannelContactPkt), BPLIB_ERROR);
 
-    BPLib_NC_SendChannelContactStatHk();
+    BPLib_NC_SendChannelContactStatHk(&Inst);
 
     // Verify rejected directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
@@ -2198,7 +2214,7 @@ void Test_BPLib_NC_TableUpdate_Success_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableUpdate), BPLIB_SUCCESS);
 
     /* Run function under test */
-    Status = BPLib_NC_ConfigUpdate();
+    Status = BPLib_NC_ConfigUpdate(&BplibInst);
 
     /* Show that the function returned success */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -2232,7 +2248,7 @@ void Test_BPLib_NC_TableUpdate_Update_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableUpdate), BPLIB_TBL_UPDATED);
 
     /* Run function under test */
-    Status = BPLib_NC_ConfigUpdate();
+    Status = BPLib_NC_ConfigUpdate(&BplibInst);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
 
@@ -2273,7 +2289,7 @@ void Test_BPLib_NC_TableUpdate_Error_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableUpdate), BPLIB_ERROR);
 
     /* Run function under test */
-    Status = BPLib_NC_ConfigUpdate();
+    Status = BPLib_NC_ConfigUpdate(&BplibInst);
 
     /* Show that the function returned an error */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_ERROR);

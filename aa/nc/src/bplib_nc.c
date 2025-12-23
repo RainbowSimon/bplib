@@ -51,13 +51,13 @@ static MibConfigValidateFunc_t MibConfigValidate[] = {
 /* ==================== */
 /* Prototypes           */
 /* ==================== */
-static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(void);
+static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(BPLib_Instance_t *Inst);
 
 /* ==================== */
 /* Function Definitions */
 /* ==================== */
 
-BPLib_Status_t BPLib_NC_InitImpl(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
+BPLib_Status_t BPLib_NC_InitImpl(BPLib_Instance_t *Inst, BPLib_NC_ConfigPtrs_t* ConfigPtrs)
 {
     BPLib_Status_t Status;
     
@@ -109,7 +109,7 @@ BPLib_Status_t BPLib_NC_InitImpl(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
 
             /* Initialize contact/channel status telemetry with table values */
             BPLib_NC_UpdateContactHkTlm();
-            BPLib_NC_UpdateChannelHkTlm();
+            BPLib_NC_UpdateChannelHkTlm(Inst);
         }
     }
 
@@ -162,7 +162,7 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
     #endif
 
     /* Initialize NC */
-    Status = BPLib_NC_InitImpl(ConfigPtrs);
+    Status = BPLib_NC_InitImpl(Instance, ConfigPtrs);
     if (Status != BPLIB_SUCCESS)
     { /* Failed initialization of NC */
         return BPLIB_NC_INIT_ERR;
@@ -233,12 +233,12 @@ void BPLib_NC_ReaderUnlock()
     BPLib_NC_RWLock_RUnlock(&BPLib_NC_CfgLock);
 }
 
-BPLib_Status_t BPLib_NC_ConfigUpdate()
+BPLib_Status_t BPLib_NC_ConfigUpdate(BPLib_Instance_t *Inst)
 {
     BPLib_Status_t Status;
 
     BPLib_NC_RWLock_WLock(&BPLib_NC_CfgLock);
-    Status = BPLib_NC_ConfigUpdateUnlocked();
+    Status = BPLib_NC_ConfigUpdateUnlocked(Inst);
     BPLib_NC_RWLock_WUnlock(&BPLib_NC_CfgLock);
 
     return Status;
@@ -369,7 +369,7 @@ BPLib_NC_ApplicationState_t BPLib_NC_GetAppState(uint8_t ChanId)
     return BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].State;
 }
 
-static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(void)
+static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(BPLib_Instance_t *Inst)
 {
     BPLib_Status_t FWP_UpdateStatus;
     // BPLib_Status_t ModuleStatus;
@@ -395,7 +395,7 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(void)
         */
         {
             /* Update channel telemetry with new table values */
-            BPLib_NC_UpdateChannelHkTlm();
+            BPLib_NC_UpdateChannelHkTlm(Inst);
 
             BPLib_EM_SendEvent(BPLIB_NC_TBL_UPDATE_INF_EID,
                                 BPLib_EM_EventType_INFORMATION,

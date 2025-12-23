@@ -195,6 +195,7 @@ typedef enum
 #define BPLIB_CLA_TIMEOUT                              ((BPLib_Status_t) -43)
 
 /* Payload Interface Errors */
+#define BPLIB_INV_REG_STATE                            ((BPLib_Status_t) -44)
 #define BPLIB_PI_TIMEOUT                               ((BPLib_Status_t) -45)
 
 /* Admin Statistics (AS) Errors */
