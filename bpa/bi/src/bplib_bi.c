@@ -41,6 +41,7 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
 {
     BPLib_Status_t Status;
     BPLib_Bundle_t* CandidateBundle;
+    char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
 
     if ((Inst == NULL) || (BundleIn == NULL))
     {
@@ -108,13 +109,16 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
     /* If something failed, cease bundle processing and free memory */
     if (Status != BPLIB_SUCCESS)
     {
-        BPLib_MEM_BundleFree(&Inst->pool, CandidateBundle);
+        BPLib_BI_GetBundleInfo(CandidateBundle, BundleInfo, BPLIB_MAX_BUNDLE_INFO_STR_LENGTH);
 
         BPLib_EM_SendEvent(BPLIB_BI_INGRESS_CBOR_DECODE_INF_EID, BPLib_EM_EventType_INFORMATION,
-                            "[CLA In #%d]: Error ingressing bundle, RC = %d", ContId, Status);
+                            "[CLA In #%d]: Error ingressing bundle, RC = %d. %s", 
+                            ContId, Status, BundleInfo);
 
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+
+        BPLib_MEM_BundleFree(&Inst->pool, CandidateBundle);
     }
 
     return Status;
@@ -289,4 +293,25 @@ BPLib_Status_t BPLib_BI_BlobCopyOut(BPLib_Bundle_t* StoredBundle,
     }
 
     return ReturnStatus;
+}
+
+void BPLib_BI_GetBundleInfo(BPLib_Bundle_t *Bundle, char *StrBuf, size_t StrLen)
+{
+    char EidStr[BPLIB_MAX_STR_LENGTH];
+
+    if (Bundle == NULL || StrBuf == NULL || StrLen == 0)
+    {
+        return;
+    }
+
+    BPLib_EID_GetString(&(Bundle->blocks.PrimaryBlock.SrcEID), EidStr, BPLIB_MAX_STR_LENGTH);
+
+    snprintf(StrBuf, StrLen, "src_eid=%s, creation_time=%ld, seq_num=%ld", 
+                EidStr, Bundle->blocks.PrimaryBlock.Timestamp.CreateTime,
+                Bundle->blocks.PrimaryBlock.Timestamp.SequenceNumber);
+
+    /* 
+    ** TODO if bundle fragmentation is ever implemented, 
+    ** the fragment offset and ADU length should also be included
+    */
 }

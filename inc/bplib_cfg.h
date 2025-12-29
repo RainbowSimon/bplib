@@ -36,6 +36,7 @@ extern "C" {
 
 #define BPLIB_MAX_IP_LENGTH                 16  /* Maximum length of an IP address string */
 #define BPLIB_MAX_STR_LENGTH                32  /* Maximum length for a generic string */
+#define BPLIB_MAX_BUNDLE_INFO_STR_LENGTH    64  /* Maximum length of a bundle information string */
 
 /**
  * \brief Configuration array constraints
