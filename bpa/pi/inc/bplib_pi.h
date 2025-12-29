@@ -92,10 +92,13 @@ typedef struct
     BPLib_PI_Config_t Configs[BPLIB_MAX_NUM_CHANNELS];
 } BPLib_PI_ChannelTable_t;
 
+/**
+** \brief Context information for each channel
+*/
 typedef struct 
 {
-    BPLib_PI_RegistrationState_t RegState;
     uint64_t                     SequenceNum;
+    BPLib_PI_Config_t            Config;
 } BPLib_PI_ChanCtxt_t;
 
 

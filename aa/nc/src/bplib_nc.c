@@ -106,10 +106,6 @@ BPLib_Status_t BPLib_NC_InitImpl(BPLib_Instance_t *Inst, BPLib_NC_ConfigPtrs_t* 
             /* Set telemetry values */
             memcpy(&(BPLib_NC_NodeMibConfigPayload.Values), BPLib_NC_ConfigPtrs.MibPnConfigPtr, 
                                                                 sizeof(BPLib_NC_MibPerNodeConfig_t));
-
-            /* Initialize contact/channel status telemetry with table values */
-            BPLib_NC_UpdateContactHkTlm();
-            BPLib_NC_UpdateChannelHkTlm(Inst);
         }
     }
 
@@ -394,9 +390,6 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(BPLib_Instance_t *Inst)
         else
         */
         {
-            /* Update channel telemetry with new table values */
-            BPLib_NC_UpdateChannelHkTlm(Inst);
-
             BPLib_EM_SendEvent(BPLIB_NC_TBL_UPDATE_INF_EID,
                                 BPLib_EM_EventType_INFORMATION,
                                 "Updated Channel configuration");
@@ -427,9 +420,6 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(BPLib_Instance_t *Inst)
         else
         */
         {
-            /* Update contact telemetry with new table values */
-            BPLib_NC_UpdateContactHkTlm();
-            
             BPLib_EM_SendEvent(BPLIB_NC_TBL_UPDATE_INF_EID,
                                 BPLib_EM_EventType_INFORMATION,
                                 "Updated Contacts configuration");

@@ -204,7 +204,7 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData)
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     /*
     1) Checks if path is available for assignment
@@ -221,7 +221,14 @@ BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
         (void) BPLib_CLA_GetContactRunState(ContactId, &RunState); /* Ignore return since ContactId is already valid */
 
         if (RunState == BPLIB_CLA_TORNDOWN)
-        { /* Contact has been not been setup if the state is anything other than torn down */
+        { 
+            /* Contact has been not been setup if the state is anything other than torn down */
+            
+            BPLib_NC_ReaderLock();
+            memcpy(&BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId], 
+                    &Inst->ContCtxt[ContactId].Config, sizeof(BPLib_CLA_ContactsSet_t));
+            BPLib_NC_ReaderUnlock();  
+
             Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactSetup(ContactId);
 
             if (Status == BPLIB_SUCCESS)

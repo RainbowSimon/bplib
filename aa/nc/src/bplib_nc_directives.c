@@ -373,6 +373,8 @@ void BPLib_NC_AddApplication(BPLib_Instance_t *Inst, const BPLib_AddApplication_
 
     if (Status == BPLIB_SUCCESS)
     {
+        BPLib_NC_UpdateChannelHkTlm(Inst);
+
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_ADD_APP_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
@@ -771,14 +773,16 @@ void BPLib_NC_RemoveLatency(const BPLib_RemoveLatency_Payload_t Payload)
     */
 }
 
-void BPLib_NC_ContactSetup(const BPLib_ContactSetup_Payload_t Payload)
+void BPLib_NC_ContactSetup(BPLib_Instance_t *Inst, const BPLib_ContactSetup_Payload_t Payload)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_CLA_ContactSetup(Payload.ContactId);
+    Status = BPLib_CLA_ContactSetup(Inst, Payload.ContactId);
 
     if (Status == BPLIB_SUCCESS)
     {
+        BPLib_NC_UpdateContactHkTlm(Inst);
+        
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_CONTACT_SETUP_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,

@@ -122,8 +122,12 @@ BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
 
     /* Initialize configs */
     Inst->ChanCtxt[ChanId].SequenceNum = 0;
-    Inst->ChanCtxt[ChanId].RegState = BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].RegState;
     
+    BPLib_NC_ReaderLock();
+    memcpy(&BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId], 
+            &Inst->ChanCtxt[ChanId].Config, sizeof(BPLib_PI_Config_t));
+    BPLib_NC_ReaderUnlock();  
+
     /* Do any framework-specific operations */
     Status = BPLib_FWP_ProxyCallbacks.BPA_ADUP_AddApplication(ChanId);
     if (Status == BPLIB_SUCCESS)
@@ -451,7 +455,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         /* Mark the primary block as "dirty" */
         NewBundle->blocks.PrimaryBlock.RequiresEncode = true;
 
-        CurrCanonConfig = &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId];
+        CurrCanonConfig = &Inst->ChanCtxt[ChanId].Config;
 
         /* Set primary block based on channel table configurations */
         BPLib_EID_CopyEids(&(NewBundle->blocks.PrimaryBlock.DestEID), CurrCanonConfig->DestEID);
@@ -492,7 +496,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         NewBundle->blocks.PayloadHeader.DataSize = AduSize;
 
         /* Initialize the extension block data - parameters have been validated, ignore return code */
-        (void) BPLib_EBP_InitializeExtensionBlocks(NewBundle, ChanId);
+        (void) BPLib_EBP_InitializeExtensionBlocks(Inst, NewBundle, ChanId);
 
         Status = BPLib_QM_CreateJob(Inst, NewBundle, CHANNEL_IN_PI_TO_EBP, QM_PRI_NORMAL, QM_WAIT_FOREVER);
     }
@@ -600,7 +604,7 @@ BPLib_Status_t BPLib_PI_SetRegistrationState(BPLib_Instance_t *Inst, uint32_t Ch
         return BPLIB_INV_REG_STATE;
     }
 
-    Inst->ChanCtxt[ChanId].RegState = RegState;
+    Inst->ChanCtxt[ChanId].Config.RegState = RegState;
 
     if (RegState == BPLIB_PI_PASSIVE_ABANDON)
     {
@@ -623,5 +627,5 @@ BPLib_PI_RegistrationState_t BPLib_PI_GetRegistrationState(BPLib_Instance_t *Ins
         return BPLIB_PI_PASSIVE_ABANDON;
     }
 
-    return Inst->ChanCtxt[ChanId].RegState;
+    return Inst->ChanCtxt[ChanId].Config.RegState;
 }

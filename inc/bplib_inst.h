@@ -69,6 +69,9 @@ struct BPLib_Instance
 
     /* Context for each channel */
     BPLib_PI_ChanCtxt_t ChanCtxt[BPLIB_MAX_NUM_CHANNELS];
+
+    /* Context for each contact */
+    BPLib_CLA_ContCtxt_t ContCtxt[BPLIB_MAX_NUM_CONTACTS];
 };
 
 #endif /* BPLIB_INST_H */

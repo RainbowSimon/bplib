@@ -33,7 +33,7 @@
 ** Exported Functions
 */
 
-BPLib_Status_t BPLib_EBP_InitializeExtensionBlocks(BPLib_Bundle_t *Bundle, uint32_t ChanId);
+BPLib_Status_t BPLib_EBP_InitializeExtensionBlocks(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle, uint32_t ChanId);
 
 BPLib_Status_t BPLib_EBP_UpdateExtensionBlocks(BPLib_Bundle_t *Bundle);
 
