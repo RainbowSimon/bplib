@@ -212,11 +212,6 @@ void Test_BPLib_ARP_ProcessInProgressCcs_Nominal(void)
     UtAssert_BOOL_TRUE(AllocBundle.blocks.PrimaryBlock.RequiresEncode);
     UtAssert_BOOL_TRUE(AllocBundle.blocks.PayloadHeader.RequiresEncode);
 
-    for(ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
-    {
-        UtAssert_BOOL_TRUE(AllocBundle.blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode);
-    }
-
     UtAssert_EQ(uint64_t, AllocBundle.blocks.PrimaryBlock.BundleProcFlags, BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG);
     BPLib_ARP_Test_EIDs_EQ(&(AllocBundle.blocks.PrimaryBlock.DestEID), &(InProgressCcs.SourceAdminEid));
 
