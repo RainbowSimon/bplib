@@ -159,7 +159,6 @@ void Test_BPLib_ARP_ProcessInProgressCcs_Nominal(void)
     BPLib_Instance_t        Instance;
     BPLib_CT_OpenCcs_t      InProgressCcs;
     uint8_t                 SequenceCollection;
-    uint8_t                 ExtBlockIdx;
     uint64_t                AcceptedSeqRange[3] = {1, 3, 5};
     uint64_t                RefusedSeqRange[3]  = {2, 4, 6};
     BPLib_ARP_AdminRecord_t BundleAdminRecord;
