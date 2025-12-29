@@ -599,19 +599,49 @@ BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
                 Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.DispositionCode);
                 if (Status == BPLIB_SUCCESS)
                 {
+                    /* Encode array encapsulating bundle sequence collection */
                     Status = BPLib_CBOR_EncodeArray(Context, EncodeBuffer);
                     if (Status == BPLIB_SUCCESS)
                     {
-                        for (SeqRangeEntry = 0; SeqRangeEntry < BundleSeqCollection.SeqRangeLen; SeqRangeEntry++)
+                        /* Encode bundle sequence ID */
+                        Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.SeqId);
+                        if (Status == BPLIB_SUCCESS)
                         {
-                            /* Encode bundle sequence range value into map under disposition code label */
-                            Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.SeqRange[SeqRangeEntry]);
-                            if (Status != BPLIB_SUCCESS)
+                            /* Encode first sequence number */
+                            Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.FirstSeqNum);
+                            if (Status == BPLIB_SUCCESS)
                             {
-                                /* Exit the loop if something went wrong */
-                                Status = BPLIB_CBOR_ENC_CCS_ERR;
-                                break;
+                                /* Encode array encapsulating bundle sequence range */
+                                Status = BPLib_CBOR_EncodeArray(Context, EncodeBuffer);
+                                if (Status == BPLIB_SUCCESS)
+                                {
+                                    for (SeqRangeEntry = 0; SeqRangeEntry < BundleSeqCollection.SeqRangeLen; SeqRangeEntry++)
+                                    {
+                                        /* Encode bundle sequence range value into map under disposition code label */
+                                        Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.SeqRange[SeqRangeEntry]);
+                                        if (Status != BPLIB_SUCCESS)
+                                        {
+                                            /* Exit the loop if something went wrong */
+                                            Status = BPLIB_CBOR_ENC_CCS_ERR;
+                                            break;
+                                        }
+                                    }
+
+                                    QCBOREncode_CloseArray(Context);
+                                }
+                                else
+                                {
+                                    Status = BPLIB_CBOR_ENC_CCS_ERR;
+                                }
                             }
+                            else
+                            {
+                                Status = BPLIB_CBOR_ENC_CCS_ERR;
+                            }
+                        }
+                        else
+                        {
+                            Status = BPLIB_CBOR_ENC_CCS_ERR;
                         }
 
                         QCBOREncode_CloseArray(Context);
