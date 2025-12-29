@@ -73,10 +73,6 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
         Collection->SeqRangeLen >= (BPLIB_CT_MAX_SEQ_RANGE_LEN - 1) ||
         CtebPtr->BundleSeqNum < Collection->LastSeqNumAdded)
     {
-        printf("Collection->SeqRangeLen: %lu\n", Collection->SeqRangeLen);
-        printf("CtebPtr->BundleSeqNum: %lu\n", CtebPtr->BundleSeqNum);
-        printf("Collection->LastSeqNumAdded: %lu\n", Collection->LastSeqNumAdded);
-
         BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
                 "Open CCS data failed sanity checks, check for memory corruption.");
 
