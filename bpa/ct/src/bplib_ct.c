@@ -318,3 +318,8 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
 
     return Status;
 }
+
+void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs)
+{
+    BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
+}

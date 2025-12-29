@@ -73,8 +73,13 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
         Collection->SeqRangeLen >= (BPLIB_CT_MAX_SEQ_RANGE_LEN - 1) ||
         CtebPtr->BundleSeqNum < Collection->LastSeqNumAdded)
     {
+        printf("Collection->SeqRangeLen: %lu\n", Collection->SeqRangeLen);
+        printf("CtebPtr->BundleSeqNum: %lu\n", CtebPtr->BundleSeqNum);
+        printf("Collection->LastSeqNumAdded: %lu\n", Collection->LastSeqNumAdded);
+
         BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
                 "Open CCS data failed sanity checks, check for memory corruption.");
+
         return BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 
@@ -94,6 +99,9 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
 
         /* Set the disposition code of the new bundle sequence collection */
         OpenCcs->BundleSeqCollections[DispCodeIdx].DispositionCode = DispositionCode;
+
+        /* Store the contact ID for expiration checking */
+        OpenCcs->ContactId = ContactId;
 
         /* Set the maximum collection size for a size trigger */
         BPLib_NC_ReaderLock();
@@ -122,7 +130,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
     /* Trigger CCS generation based on size */
     if (OpenCcs->Size >= OpenCcs->MaxSize)
     {
-        BPLib_CT_BuildAndSendOpenCcs(Instance, OpenCcs);
+        BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
     }
 
     Collection->LastSeqNumAdded = CtebPtr->BundleSeqNum;
@@ -181,7 +189,7 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdm
     /* No CCSs were available, send the largest one and wipe it to use */
     else
     {
-        BPLib_CT_BuildAndSendOpenCcs(Instance, &(Context->OpenCcss[LargestCcsIdx]));
+        BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, &(Context->OpenCcss[LargestCcsIdx]));
 
         RetCcsIdx = LargestCcsIdx;
     }
@@ -189,7 +197,7 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdm
     return RetCcsIdx;
 }
 
-void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs)
+void BPLib_CT_BuildAndSendOpenCcs_Impl(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs)
 {
     /* Have ARP build CCS and send the open CCS */
     BPLib_ARP_ProcessInProgressCcs(Instance, OpenCcs);
