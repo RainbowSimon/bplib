@@ -110,7 +110,6 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
     if (Status != BPLIB_SUCCESS)
     {
         BPLib_BI_GetBundleInfo(CandidateBundle, BundleInfo, BPLIB_MAX_BUNDLE_INFO_STR_LENGTH);
-
         BPLib_EM_SendEvent(BPLIB_BI_INGRESS_CBOR_DECODE_INF_EID, BPLib_EM_EventType_INFORMATION,
                             "[CLA In #%d]: Error ingressing bundle, RC = %d. %s", 
                             ContId, Status, BundleInfo);
