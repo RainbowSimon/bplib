@@ -503,8 +503,8 @@ typedef enum
 /* Custody Transfer Errors */
 #define BPLIB_CT_CUSTODY_REFUSED_ERR                   ((BPLib_Status_t) -350)
 #define BPLIB_CT_FULL_DB_ERR                           ((BPLib_Status_t) -351)
+#define BPLIB_CT_INIT_MUTEX_ERR                        ((BPLib_Status_t) -352)
 /*
-#define BPLIB_CT_GENERIC_ERR_352                       ((BPLib_Status_t) -352) // CT error
 #define BPLIB_CT_GENERIC_ERR_353                       ((BPLib_Status_t) -353) // CT error
 #define BPLIB_CT_GENERIC_ERR_354                       ((BPLib_Status_t) -354) // CT error
 #define BPLIB_CT_GENERIC_ERR_355                       ((BPLib_Status_t) -355) // CT error

@@ -28,6 +28,7 @@
 #include "bplib_api_types.h"
 #include "bplib_rbt.h"
 #include "bplib_bblocks.h"
+#include "osapi.h"
 #include <pthread.h>
 
 
@@ -79,6 +80,11 @@
  * \brief Size of a full CCS batch operation
  */
 #define BPLIB_CT_BATCH_SIZE                         (100u)
+
+/**
+ * \brief Max allowed length for CT CCS mutex name
+ */
+#define BPLIB_CT_MAX_MUTEX_NAME_SIZE                (20u)
 
 /*
 ** Type Definitions
@@ -206,6 +212,11 @@ typedef struct
 
 } BPLib_CT_Context_t;
 
+/* ======= */
+/* Globals */
+/* ======= */
+
+extern osal_id_t CcsMutexId;
 
 /*
 ** Exported Functions
@@ -333,5 +344,11 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
  * \return    void
  */
 void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs);
+
+BPLib_Status_t BPLib_CT_InitMutex(void);
+
+void BPLib_CT_LockCcs(void);
+
+void BPLib_CT_UnlockCcs(void);
 
 #endif /* BPLIB_CT_H */

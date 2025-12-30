@@ -31,6 +31,10 @@
 #include "bplib_as.h"
 #include "bplib_inst.h"
 
+/* =========== */
+/* Global Data */
+/* =========== */
+osal_id_t CcsMutexId;
 
 /*
 ** Function Definitions
@@ -38,19 +42,27 @@
 
 BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
 {
+    BPLib_Status_t Status;
+
+    Status = BPLIB_SUCCESS;
+
     if (Inst == NULL)
     {
-        return BPLIB_NULL_PTR_ERROR;
+        Status = BPLIB_NULL_PTR_ERROR;
+    }
+    else
+    {
+        memset(&(Inst->Ct), 0, sizeof(BPLib_CT_Context_t));
+
+        pthread_mutex_init(&Inst->Ct.DbLock, NULL);
+
+        BPLib_RBT_InitRoot(&(Inst->Ct.SeqTreeRoot));
+        BPLib_RBT_InitRoot(&(Inst->Ct.IdTreeRoot));
+
+        Status = BPLib_CT_InitMutex();
     }
 
-    memset(&(Inst->Ct), 0, sizeof(BPLib_CT_Context_t));
-
-    pthread_mutex_init(&Inst->Ct.DbLock, NULL);
- 
-    BPLib_RBT_InitRoot(&(Inst->Ct.SeqTreeRoot));
-    BPLib_RBT_InitRoot(&(Inst->Ct.IdTreeRoot));
-
-    return BPLIB_SUCCESS;
+    return Status;
 }
 
 BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
@@ -143,7 +155,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     }
 
     /* Reject duplicate bundles */
-    else if (BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+    else if (BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
                     Bundle->blocks.PrimaryBlock.BundleId, &DbEntry) == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REDUNDANT, 1);
@@ -206,7 +218,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             pthread_mutex_lock(&Inst->Ct.DbLock);
 
             /* Check if this is a bundle retransmission from storage or a new bundle */
-            Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+            Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
                                 Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
 
             if (Status == BPLIB_SUCCESS)
@@ -322,4 +334,57 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
 void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs)
 {
     BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
+}
+
+BPLib_Status_t BPLib_CT_InitMutex(void)
+{
+    uint32         OS_Status;
+    BPLib_Status_t Status;
+    char           MutexName[BPLIB_CT_MAX_MUTEX_NAME_SIZE];
+
+    CcsMutexId = OS_OBJECT_ID_UNDEFINED;
+    strncpy(MutexName, "BPLib_CT_CcsMut", BPLIB_CT_MAX_MUTEX_NAME_SIZE);
+
+    /* Instantiate a mutex for CT CCSs */
+    OS_Status = OS_MutSemCreate(&CcsMutexId, MutexName, 0);
+
+    /* Translate mutex status into BPLib_Status_t */
+    if (OS_Status == OS_SUCCESS)
+    {
+        Status = BPLIB_SUCCESS;
+    }
+    else
+    {
+        Status = BPLIB_CT_INIT_MUTEX_ERR;
+    }
+
+    return Status;
+}
+
+void BPLib_CT_LockCcs(void)
+{
+    uint32 OS_Status;
+
+    OS_Status = OS_MutSemTake(CcsMutexId);
+    if (OS_Status != OS_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_CT_TAKE_MUTEX_ERR_EID,
+                            BPLib_EM_EventType_ERROR,
+                            "Failed to take from the CCS mutex, RC = %d",
+                            OS_Status);
+    }
+}
+
+void BPLib_CT_UnlockCcs(void)
+{
+    uint32 OS_Status;
+
+    OS_Status = OS_MutSemGive(CcsMutexId);
+    if (OS_Status != OS_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_CT_GIVE_MUTEX_ERR_EID,
+                            BPLib_EM_EventType_ERROR,
+                            "Failed to give to the CCS mutex, RC = %d",
+                            OS_Status);
+    }
 }
