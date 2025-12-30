@@ -347,8 +347,8 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t
 
 BPLib_Status_t BPLib_CT_InitMutex(void);
 
-void BPLib_CT_LockCcs(void);
+void BPLib_CT_LockOpenCcs(void);
 
-void BPLib_CT_UnlockCcs(void);
+void BPLib_CT_UnlockOpenCcs(void);
 
 #endif /* BPLIB_CT_H */

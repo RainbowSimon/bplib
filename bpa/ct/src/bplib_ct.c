@@ -361,7 +361,7 @@ BPLib_Status_t BPLib_CT_InitMutex(void)
     return Status;
 }
 
-void BPLib_CT_LockCcs(void)
+void BPLib_CT_LockOpenCcs(void)
 {
     uint32 OS_Status;
 
@@ -375,7 +375,7 @@ void BPLib_CT_LockCcs(void)
     }
 }
 
-void BPLib_CT_UnlockCcs(void)
+void BPLib_CT_UnlockOpenCcs(void)
 {
     uint32 OS_Status;
 
