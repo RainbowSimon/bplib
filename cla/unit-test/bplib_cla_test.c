@@ -434,6 +434,7 @@ void Test_BPLib_CLA_ContactSetup_Nominal(void)
 {
     BPLib_Status_t Status;
     uint32_t       ContactId;
+    BPLib_Instance_t Inst;
 
     /* Set the ContactId to a valid value */
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
@@ -445,7 +446,7 @@ void Test_BPLib_CLA_ContactSetup_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_CLAP_ContactSetup), BPLIB_SUCCESS);
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactSetup(ContactId);
+    Status = BPLib_CLA_ContactSetup(&Inst, ContactId);
 
     /* Verify that Status is success */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -458,12 +459,13 @@ void Test_BPLib_CLA_ContactSetup_InvalidContactId(void)
 {
     BPLib_Status_t          Status;
     uint32_t                ContactId;
+    BPLib_Instance_t Inst;
 
     /* Set the ContactId to an invalid value */
     ContactId = BPLIB_MAX_NUM_CONTACTS + 1;
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactSetup(ContactId);
+    Status = BPLib_CLA_ContactSetup(&Inst, ContactId);
 
     /* Verify that Status is as expected */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_INVALID_CONT_ID_ERR);
@@ -479,6 +481,7 @@ void Test_BPLib_CLA_ContactSetup_InvalidRunState(void)
 {
     BPLib_Status_t Status;
     uint32_t       ContactId;
+    BPLib_Instance_t Inst;
 
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
 
@@ -486,7 +489,7 @@ void Test_BPLib_CLA_ContactSetup_InvalidRunState(void)
     BPLib_CLA_ContactRunStates[ContactId] = BPLIB_CLA_STARTED;
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactSetup(ContactId);
+    Status = BPLib_CLA_ContactSetup(&Inst, ContactId);
 
     /* Verify the execution status */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_CLA_INCORRECT_STATE);
@@ -505,6 +508,7 @@ void Test_BPLib_CLA_ContactSetup_CallbackError(void)
 {
     BPLib_Status_t          Status;
     uint32_t                ContactId;
+    BPLib_Instance_t Inst;
 
     /* Set the ContactId to a valid value */
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
@@ -516,7 +520,7 @@ void Test_BPLib_CLA_ContactSetup_CallbackError(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_CLAP_ContactSetup), BPLIB_CLA_IO_ERROR);
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactSetup(ContactId);
+    Status = BPLib_CLA_ContactSetup(&Inst, ContactId);
 
     /* Verify that Status is as expected */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_CLA_IO_ERROR);

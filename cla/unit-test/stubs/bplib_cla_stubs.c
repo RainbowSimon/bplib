@@ -32,10 +32,11 @@
  * Generated stub function for BPLib_CLA_ContactSetup()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_CLA_ContactSetup, BPLib_Status_t);
 
+    UT_GenStub_AddParam(BPLib_CLA_ContactSetup, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_CLA_ContactSetup, uint32_t, ContactId);
 
     UT_GenStub_Execute(BPLib_CLA_ContactSetup, Basic, NULL);
