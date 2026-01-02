@@ -225,8 +225,8 @@ BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId
             /* Contact has been not been setup if the state is anything other than torn down */
             
             BPLib_NC_ReaderLock();
-            memcpy(&BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId], 
-                    &Inst->ContCtxt[ContactId].Config, sizeof(BPLib_CLA_ContactsSet_t));
+            memcpy(&Inst->ContCtxt[ContactId].Config, 
+                &BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId], sizeof(BPLib_CLA_ContactsSet_t));
             BPLib_NC_ReaderUnlock();  
 
             Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactSetup(ContactId);

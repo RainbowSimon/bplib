@@ -373,8 +373,6 @@ void BPLib_NC_AddApplication(BPLib_Instance_t *Inst, const BPLib_AddApplication_
 
     if (Status == BPLIB_SUCCESS)
     {
-        BPLib_NC_UpdateChannelHkTlm(Inst);
-
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_ADD_APP_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
@@ -781,8 +779,6 @@ void BPLib_NC_ContactSetup(BPLib_Instance_t *Inst, const BPLib_ContactSetup_Payl
 
     if (Status == BPLIB_SUCCESS)
     {
-        BPLib_NC_UpdateContactHkTlm(Inst);
-        
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_CONTACT_SETUP_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
@@ -1188,6 +1184,7 @@ void BPLib_NC_SendChannelContactStatHk(BPLib_Instance_t *Inst)
     }
 
     BPLib_NC_UpdateChannelHkTlm(Inst);
+    BPLib_NC_UpdateContactHkTlm(Inst);
 
     Status = BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendChannelContactPkt(&BPLib_NC_ChannelContactStatsPayload);
 

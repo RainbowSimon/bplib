@@ -124,8 +124,8 @@ BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
     Inst->ChanCtxt[ChanId].SequenceNum = 0;
     
     BPLib_NC_ReaderLock();
-    memcpy(&BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId], 
-            &Inst->ChanCtxt[ChanId].Config, sizeof(BPLib_PI_Config_t));
+    memcpy(&Inst->ChanCtxt[ChanId].Config, 
+           &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId], sizeof(BPLib_PI_Config_t));
     BPLib_NC_ReaderUnlock();  
 
     /* Do any framework-specific operations */
