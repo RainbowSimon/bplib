@@ -17,6 +17,7 @@
  * limitations under the License.
  *
  */
+#define BPLIB_NC_RWLOCK_H
 
 /**
  * @file
@@ -26,7 +27,6 @@
 
 #include "bplib_nc_rwlock.h"
 #include "utgenstub.h"
-
 
 /*
  * ----------------------------------------------------
