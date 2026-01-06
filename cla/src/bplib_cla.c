@@ -317,10 +317,11 @@ BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId
     return Status;
 }
 
-BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t* Instance, uint32_t ContactId)
 {
     BPLib_Status_t              Status;
     BPLib_CLA_ContactRunState_t RunState;
+    uint8_t                     OpenCcsCtrl;
 
     if (ContactId < BPLIB_MAX_NUM_CONTACTS)
     {
@@ -331,6 +332,17 @@ BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId)
             if (Status == BPLIB_SUCCESS)
             {
                 (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STOPPED); /* Ignore return since pre-call run state is valid */
+
+                /* Send all remaining open CCSs */
+                for (OpenCcsCtrl = 0; OpenCcsCtrl < BPLIB_CT_MAX_OPEN_CCS; OpenCcsCtrl++)
+                {
+                    BPLib_CT_LockOpenCcs();
+                    if (Instance->Ct.OpenCcss[OpenCcsCtrl].InProgress)
+                    {
+                        BPLib_CT_BuildAndSendOpenCcs(Instance, &(Instance->Ct.OpenCcss[OpenCcsCtrl]));
+                    }
+                    BPLib_CT_UnlockOpenCcs();
+                }
             }
         }
         else if (RunState == BPLIB_CLA_STOPPED)

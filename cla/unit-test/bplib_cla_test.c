@@ -599,11 +599,17 @@ void Test_BPLib_CLA_ContactStart_InvalidRunState(void)
 
 void Test_BPLib_CLA_ContactStop_Nominal(void)
 {
-    BPLib_Status_t Status;
-    uint32_t       ContactId;
+    BPLib_Status_t   Status;
+    uint32_t         ContactId;
+    BPLib_Instance_t Inst;
+    uint8_t          OpenCcsCtrl;
 
     /* Assign a valid contact ID */
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
+
+    /* Make a CCS open */
+    Inst.Ct.OpenCcss[0].InProgress = true;
+    Inst.Ct.OpenCcss[1].InProgress = true;
 
     /* Put the contact in a valid run state */
     BPLib_CLA_ContactRunStates[ContactId] = BPLIB_CLA_STARTED;
@@ -616,6 +622,12 @@ void Test_BPLib_CLA_ContactStop_Nominal(void)
 
     /* Show that the run state transitioned */
     UtAssert_EQ(BPLib_CLA_ContactRunState_t, BPLib_CLA_ContactRunStates[ContactId], BPLIB_CLA_STOPPED);
+
+    /* Show that all open CCSs closed */
+    for (OpenCcsCtrl = 0; OpenCcsCtrl < BPLIB_CT_MAX_OPEN_CCS; OpenCcsCtrl++)
+    {
+        UtAssert_BOOL_FALSE(Inst.Ct.OpenCcss[OpenCcsCtrl].InProgress);
+    }
 }
 
 void Test_BPLib_CLA_ContactStop_InvalidContactId(void)
