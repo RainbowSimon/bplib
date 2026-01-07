@@ -336,7 +336,8 @@ BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t* Instance, uint32_t Contac
                 /* Send all remaining open CCSs */
                 for (OpenCcsCtrl = 0; OpenCcsCtrl < BPLIB_CT_MAX_OPEN_CCS; OpenCcsCtrl++)
                 {
-                    if (Instance->Ct.OpenCcss[OpenCcsCtrl].InProgress)
+                    if (Instance->Ct.OpenCcss[OpenCcsCtrl].InProgress &&
+                        Instance->Ct.OpenCcss[OpenCcsCtrl].ContactId == ContactId)
                     {
                         BPLib_CT_BuildAndSendOpenCcs(Instance, &(Instance->Ct.OpenCcss[OpenCcsCtrl]));
                     }
