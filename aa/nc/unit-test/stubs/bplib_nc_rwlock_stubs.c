@@ -17,7 +17,6 @@
  * limitations under the License.
  *
  */
-#define BPLIB_NC_RWLOCK_H
 
 /**
  * @file
