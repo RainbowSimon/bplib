@@ -105,16 +105,12 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
     AdminRecordCcs->NumBundleSeqCollections = 0;
     for (DispCodeIdx = 0; DispCodeIdx < BPLIB_CT_MAX_SEQ_COLLECTIONS; DispCodeIdx++)
     {
-        BPLib_CT_LockOpenCcs();
-
         if (InProgressCcs->BundleSeqCollections[DispCodeIdx].SeqRangeLen != 0)
         { /* Only encode bundle sequence collections with at least 1 sequence range element */
             memcpy(&(AdminRecordCcs->BundleSeqCollections[AdminRecordCcs->NumBundleSeqCollections++]),
                     &(InProgressCcs->BundleSeqCollections[DispCodeIdx]),
                     sizeof(BPLib_CT_BundleSeqCollection_t));
         }
-
-        BPLib_CT_UnlockOpenCcs();
     }
 
     /* === Generate the bundle with a CCS Administrative Record as the payload === */
@@ -132,12 +128,8 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
         Bundle->blocks.PrimaryBlock.CrcType = BPLib_CRC_Type_CRC16;
 
         /* Set routing destination of bundle */
-        BPLib_CT_LockOpenCcs();
-
         BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.DestEID),
                             InProgressCcs->SourceAdminEid);
-
-        BPLib_CT_UnlockOpenCcs();
 
         /* Identify source node of CCS */
         BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.SrcEID),

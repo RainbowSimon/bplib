@@ -31,38 +31,25 @@
 #include "bplib_as.h"
 #include "bplib_inst.h"
 
-/* =========== */
-/* Global Data */
-/* =========== */
-osal_id_t CcsMutexId;
-
 /*
 ** Function Definitions
 */
 
 BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
 {
-    BPLib_Status_t Status;
-
-    Status = BPLIB_SUCCESS;
-
     if (Inst == NULL)
     {
-        Status = BPLIB_NULL_PTR_ERROR;
-    }
-    else
-    {
-        memset(&(Inst->Ct), 0, sizeof(BPLib_CT_Context_t));
-
-        pthread_mutex_init(&Inst->Ct.DbLock, NULL);
-
-        BPLib_RBT_InitRoot(&(Inst->Ct.SeqTreeRoot));
-        BPLib_RBT_InitRoot(&(Inst->Ct.IdTreeRoot));
-
-        Status = BPLib_CT_InitMutex();
+        return BPLIB_NULL_PTR_ERROR;
     }
 
-    return Status;
+    memset(&(Inst->Ct), 0, sizeof(BPLib_CT_Context_t));
+
+    pthread_mutex_init(&Inst->Ct.Lock, NULL);
+
+    BPLib_RBT_InitRoot(&(Inst->Ct.SeqTreeRoot));
+    BPLib_RBT_InitRoot(&(Inst->Ct.IdTreeRoot));
+
+    return BPLIB_SUCCESS;
 }
 
 BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
@@ -146,7 +133,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Default to refused custody */
     DispCode = BPLib_CT_CustodyRefused;
 
-    pthread_mutex_lock(&Inst->Ct.DbLock);
+    pthread_mutex_lock(&Inst->Ct.Lock);
 
     /* Reject custody due to lack of storage */
     if (Status == BPLIB_NO_STOR_ERR)
@@ -168,6 +155,8 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     }
     /* Else PDB rejected custody */
 
+    pthread_mutex_lock(&Inst->Ct.Lock);
+
     /* Add to an open CCS to confirm either acceptance or rejection */
     OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(Inst, &(CtebPtr->BlockSrcAdminEID),
                                         CtebPtr->BundleSeqId);
@@ -175,13 +164,15 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     Status = BPLib_CT_AddToOpenCcs(Inst, OpenCcsIdx, Bundle->Meta.IngressID,
                                     CtebPtr, DispCode);
 
+    pthread_mutex_unlock(&Inst->Ct.Lock);
+
     if (DispCode == BPLib_CT_CustodyRefused)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 
-    pthread_mutex_unlock(&Inst->Ct.DbLock);
+    pthread_mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
@@ -215,7 +206,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         /* Update CTEB fields */
         if (Bundle->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
         {
-            pthread_mutex_lock(&Inst->Ct.DbLock);
+            pthread_mutex_lock(&Inst->Ct.Lock);
 
             /* Check if this is a bundle retransmission from storage or a new bundle */
             Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
@@ -249,7 +240,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
                     "Bundle has an invalid egress ID %d, check for memory corruption.", Bundle->Meta.EgressID);
         }
 
-        pthread_mutex_unlock(&Inst->Ct.DbLock);
+        pthread_mutex_unlock(&Inst->Ct.Lock);
 
     }
 
@@ -275,7 +266,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
 
     /* Validate CCS here? TODO */
 
-    pthread_mutex_lock(&Inst->Ct.DbLock);
+    pthread_mutex_lock(&Inst->Ct.Lock);
 
     for (SeqCollectIdx = 0; SeqCollectIdx < Ccs->NumBundleSeqCollections; SeqCollectIdx++)
     {
@@ -288,7 +279,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
         Status = BPLib_CT_ProcessBundleSeqCollection(Inst, &(Ccs->BundleSeqCollections[SeqCollectIdx]));
     }
 
-    pthread_mutex_unlock(&Inst->Ct.DbLock);
+    pthread_mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
@@ -333,58 +324,7 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
 
 void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs)
 {
+    pthread_mutex_lock(&Instance->Ct.Lock);
     BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
-}
-
-BPLib_Status_t BPLib_CT_InitMutex(void)
-{
-    uint32         OS_Status;
-    BPLib_Status_t Status;
-    char           MutexName[BPLIB_CT_MAX_MUTEX_NAME_SIZE];
-
-    CcsMutexId = OS_OBJECT_ID_UNDEFINED;
-    strncpy(MutexName, "BPLib_CT_CcsMut", BPLIB_CT_MAX_MUTEX_NAME_SIZE);
-
-    /* Instantiate a mutex for CT CCSs */
-    OS_Status = OS_MutSemCreate(&CcsMutexId, MutexName, 0);
-
-    /* Translate mutex status into BPLib_Status_t */
-    if (OS_Status == OS_SUCCESS)
-    {
-        Status = BPLIB_SUCCESS;
-    }
-    else
-    {
-        Status = BPLIB_CT_INIT_MUTEX_ERR;
-    }
-
-    return Status;
-}
-
-void BPLib_CT_LockOpenCcs(void)
-{
-    uint32 OS_Status;
-
-    OS_Status = OS_MutSemTake(CcsMutexId);
-    if (OS_Status != OS_SUCCESS)
-    {
-        BPLib_EM_SendEvent(BPLIB_CT_TAKE_MUTEX_ERR_EID,
-                            BPLib_EM_EventType_ERROR,
-                            "Failed to take from the CCS mutex, RC = %d",
-                            OS_Status);
-    }
-}
-
-void BPLib_CT_UnlockOpenCcs(void)
-{
-    uint32 OS_Status;
-
-    OS_Status = OS_MutSemGive(CcsMutexId);
-    if (OS_Status != OS_SUCCESS)
-    {
-        BPLib_EM_SendEvent(BPLIB_CT_GIVE_MUTEX_ERR_EID,
-                            BPLib_EM_EventType_ERROR,
-                            "Failed to give to the CCS mutex, RC = %d",
-                            OS_Status);
-    }
+    pthread_mutex_unlock(&Instance->Ct.Lock);
 }

@@ -44,8 +44,6 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
 {
     uint8_t i;
 
-    BPLib_CT_LockOpenCcs();
-
     for (i = 0; i < BPLIB_CT_MAX_SEQ_COLLECTIONS; i++)
     {
         OpenCcs->BundleSeqCollections[i].SeqRangeLen = 0;
@@ -54,10 +52,6 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     OpenCcs->InProgress          = false;
     OpenCcs->Size                = 0;
     OpenCcs->CollectionStartTime = 0;
-
-    printf("CCS reset!\n");
-
-    BPLib_CT_UnlockOpenCcs();
 
     return;
 }
@@ -94,8 +88,6 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
         Collection->SeqRange[0] = 1;
         Collection->SeqRangeLen = 1;
 
-        BPLib_CT_LockOpenCcs();
-
         /* Update full CCS size accordingly */
         OpenCcs->Size += 1;
 
@@ -112,8 +104,6 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
         BPLib_NC_ReaderLock();
         OpenCcs->MaxSize = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].CSSizeTrigger;
         BPLib_NC_ReaderUnlock();
-
-        BPLib_CT_UnlockOpenCcs();
     }
     else
     {
@@ -129,12 +119,8 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
             Collection->SeqRange[Collection->SeqRangeLen + 1] = 1;
             Collection->SeqRangeLen += 2;
 
-            BPLib_CT_LockOpenCcs();
-
             /* Update full CCS size accordingly */
             OpenCcs->Size += 2;
-
-            BPLib_CT_UnlockOpenCcs();
         }
     }
 
@@ -164,8 +150,6 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdm
 
     for (OpenCcsIdx = 0; OpenCcsIdx < BPLIB_CT_MAX_OPEN_CCS; OpenCcsIdx++)
     {
-        BPLib_CT_LockOpenCcs();
-
         /* See if there's already an in progress CCS with the right EID */
         if (Context->OpenCcss[OpenCcsIdx].InProgress == true &&
             Context->OpenCcss[OpenCcsIdx].BundleSeqCollections->SeqId == SequenceId &&
@@ -185,8 +169,6 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdm
             MaxCcsSize = Context->OpenCcss[OpenCcsIdx].Size;
             LargestCcsIdx = OpenCcsIdx;
         }
-
-        BPLib_CT_UnlockOpenCcs();
     }
 
     /* Found an in progress raw CCS with a matching EID */
@@ -197,12 +179,8 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdm
     /* Found an unused CCS */
     else if (FirstUnusedCcs != BPLIB_CT_MAX_OPEN_CCS)
     {
-        BPLib_CT_LockOpenCcs();
-
         Context->OpenCcss[FirstUnusedCcs].InProgress = true;
         BPLib_EID_CopyEids(&(Context->OpenCcss[FirstUnusedCcs].SourceAdminEid), *SourceAdminEID);
-
-        BPLib_CT_LockOpenCcs();
 
         RetCcsIdx = FirstUnusedCcs;
     }
