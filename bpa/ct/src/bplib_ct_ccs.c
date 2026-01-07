@@ -103,6 +103,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
         /* Set the maximum collection size for a size trigger */
         BPLib_NC_ReaderLock();
         OpenCcs->MaxSize = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].CSSizeTrigger;
+        OpenCcs->MaxTime = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].CSTimeTrigger;
         BPLib_NC_ReaderUnlock();
     }
     else

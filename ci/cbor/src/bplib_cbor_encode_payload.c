@@ -81,7 +81,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
 
             if (Status == BPLIB_SUCCESS)
             {
-                if (StoredBundle->blocks.PayloadHeader.BlockProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
+                if (StoredBundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
                 {
                     Status = BPLib_CBOR_EncodeAdminRecord(&Context, &EncodeBuffer, StoredBundle);
                 }

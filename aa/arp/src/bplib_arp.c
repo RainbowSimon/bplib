@@ -149,7 +149,7 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
         /* Configure payload block header */
         Bundle->blocks.PayloadHeader.BlockType       = BPLib_BlockType_Payload;
         Bundle->blocks.PayloadHeader.BlockNum        = 1;
-        Bundle->blocks.PayloadHeader.BlockProcFlags  = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+        Bundle->blocks.PayloadHeader.BlockProcFlags  = 0;
         Bundle->blocks.PayloadHeader.CrcType         = BPLib_CRC_Type_CRC16;
 
         /* Set payload size for CRC operations */

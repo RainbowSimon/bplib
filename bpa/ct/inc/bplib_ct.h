@@ -150,6 +150,7 @@ typedef struct
     bool                           InProgress;
     size_t                         Size;
     size_t                         MaxSize;
+    int64_t                        MaxTime;
     BPLib_EID_t                    SourceAdminEid;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
     int64_t                        CollectionStartTime;
@@ -330,5 +331,7 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
  * \return    void
  */
 void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs);
+
+void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance);
 
 #endif /* BPLIB_CT_H */

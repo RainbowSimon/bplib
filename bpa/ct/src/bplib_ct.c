@@ -30,6 +30,7 @@
 #include "bplib_pdb.h"
 #include "bplib_as.h"
 #include "bplib_inst.h"
+#include "bplib_nc.h"
 
 /*
 ** Function Definitions
@@ -155,16 +156,12 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     }
     /* Else PDB rejected custody */
 
-    pthread_mutex_lock(&Inst->Ct.Lock);
-
     /* Add to an open CCS to confirm either acceptance or rejection */
     OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(Inst, &(CtebPtr->BlockSrcAdminEID),
                                         CtebPtr->BundleSeqId);
 
     Status = BPLib_CT_AddToOpenCcs(Inst, OpenCcsIdx, Bundle->Meta.IngressID,
                                     CtebPtr, DispCode);
-
-    pthread_mutex_unlock(&Inst->Ct.Lock);
 
     if (DispCode == BPLib_CT_CustodyRefused)
     {
@@ -326,5 +323,43 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t
 {
     pthread_mutex_lock(&Instance->Ct.Lock);
     BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
+    pthread_mutex_unlock(&Instance->Ct.Lock);
+}
+
+void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance)
+{
+    BPLib_CT_Context_t* Context;
+    size_t              OpenCcsIdx;
+    int64_t             TimeOpen;
+    BPLib_CT_OpenCcs_t* OpenCcs;
+
+    pthread_mutex_lock(&Instance->Ct.Lock);
+
+    Context = &(Instance->Ct);
+    for (OpenCcsIdx = 0; OpenCcsIdx < BPLIB_CT_MAX_OPEN_CCS; OpenCcsIdx++)
+    {
+        OpenCcs = &(Context->OpenCcss[OpenCcsIdx]);
+
+        /* Check whether in progress CCSs exceed the time trigger */
+        if (OpenCcs->InProgress == true && OpenCcs->CollectionStartTime != 0)
+        {
+            TimeOpen = BPLib_TIME_GetMonotonicTime() - OpenCcs->CollectionStartTime;
+
+            /* Check if the open CCS due to be sent */
+            if (TimeOpen > OpenCcs->MaxTime)
+            {
+                printf("\n=============================================\n");
+                printf("Timeout reached for CCS #%lu!\n", OpenCcsIdx);
+                printf("BPLib_TIME_GetMonotonicTime(): %lu\n", BPLib_TIME_GetMonotonicTime());
+                printf("OpenCcs.CollectionStartTime:   %lu\n", OpenCcs->CollectionStartTime);
+                printf("TimeOpen:                      %lu\n", TimeOpen);
+                printf("CSTimeTrigger:                 %lu\n", OpenCcs->MaxTime);
+                printf("=============================================\n\n");
+
+                BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
+            }
+        }
+    }
+
     pthread_mutex_unlock(&Instance->Ct.Lock);
 }
