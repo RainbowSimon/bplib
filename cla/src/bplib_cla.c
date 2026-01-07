@@ -331,8 +331,6 @@ BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t* Instance, uint32_t Contac
             Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactStop(ContactId);
             if (Status == BPLIB_SUCCESS)
             {
-                (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STOPPED); /* Ignore return since pre-call run state is valid */
-
                 /* Send all remaining open CCSs */
                 for (OpenCcsCtrl = 0; OpenCcsCtrl < BPLIB_CT_MAX_OPEN_CCS; OpenCcsCtrl++)
                 {
@@ -342,6 +340,8 @@ BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t* Instance, uint32_t Contac
                         BPLib_CT_BuildAndSendOpenCcs(Instance, &(Instance->Ct.OpenCcss[OpenCcsCtrl]));
                     }
                 }
+
+                (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STOPPED); /* Ignore return since pre-call run state is valid */
             }
         }
         else if (RunState == BPLIB_CLA_STOPPED)
