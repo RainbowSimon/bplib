@@ -28,14 +28,15 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     BPLib_Status_t     Status;
     QCBOREncodeContext Context;
     UsefulBuf          InitStorage;
-    UsefulBufC         FinishBuffer;
+    UsefulBuf          MirrorStorage;
+    uint8_t            MirrorBuffer[OutputBufferSize];
     QCBORError         QcborStatus;
     size_t             BytesLeftInOutputBuffer;
     UsefulOutBuf       EncodeBuffer;
     uint8_t            AduByteString[BPLIB_MEM_BIG_BLK_DATA_SIZE];
     uint8_t            CrcValueSize;
     uint8_t            CrcLoop;
-    UsefulBuf          CurrentContextPlace;
+    size_t             temp = 0;
 
     if ((StoredBundle   == NULL) ||
         (OutputBuffer   == NULL) ||
@@ -45,6 +46,8 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     }
     else
     {
+        memcpy(MirrorBuffer, OutputBuffer, OutputBufferSize);
+
         /*
         ** Initialize the encoder
         */
@@ -53,7 +56,9 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
         QCBOREncode_Init(&Context, InitStorage);
 
         /* Mirror the encoder with a UsefulOutBuf to handle errors */
-        UsefulOutBuf_Init(&EncodeBuffer, InitStorage);
+        MirrorStorage.ptr = MirrorBuffer;
+        MirrorStorage.len = OutputBufferSize;
+        UsefulOutBuf_Init(&EncodeBuffer, MirrorStorage);
 
         Status = BPLib_CBOR_EncodeArray(&Context, &EncodeBuffer);
         if (Status == BPLIB_SUCCESS)
@@ -88,10 +93,18 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                 if (StoredBundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
                 {
                     /* Attempt to encapsultate block-specific data in a CBOR byte string */
-                    QCBOREncode_OpenBytes(&Context, &CurrentContextPlace);
+                    size_t EncodedSize = 0;
+                    Status = BPLib_CBOR_EncodeGetBufferSize(&EncodeBuffer, &EncodedSize);
+                    printf("EncodedSize: %ld\n", EncodedSize);
+
+                    QCBOREncode_OpenBytes(&Context, &NULLUsefulBuf);
                     Status = BPLib_CBOR_EncodeAdminRecord(&Context, &EncodeBuffer, StoredBundle);
 
-                    size_t ByteStringSize = BytesLeftInOutputBuffer - UsefulOutBuf_RoomLeft(&EncodeBuffer);
+                    size_t afterSize = 0;
+                    Status = BPLib_CBOR_EncodeGetBufferSize(&EncodeBuffer, &afterSize);
+                    printf("EncodedSize after: %ld\n", afterSize);
+
+                    size_t ByteStringSize = afterSize - EncodedSize;
                     printf("ByteStringSize: %ld\n", ByteStringSize);
                     if (ByteStringSize <= 0x17)
                     {
@@ -176,7 +189,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                     /* +1 for byte string initial byte */
                     if (UsefulOutBuf_WillItFit(&EncodeBuffer, CrcValueSize + 1) == 1)
                     {
-                        UsefulOutBuf_AppendByte(&EncodeBuffer, 0x40);
+                        UsefulOutBuf_AppendByte(&EncodeBuffer, 0x44);
                         for (CrcLoop = 0; CrcLoop < CrcValueSize; CrcLoop++)
                         {
                             /* Add the CRC dummy value to the UsefulOutBuf */
@@ -207,12 +220,11 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
             /*
             ** Finish encoding, and check for errors
             */
-            FinishBuffer.len = 0;
-            FinishBuffer.ptr = NULL;
-            QcborStatus = QCBOREncode_Finish(&Context, &FinishBuffer);
+            QcborStatus = QCBOREncode_Finish(&Context, &NULLUsefulBufC);
             if (QcborStatus == QCBOR_SUCCESS)
             {
-                Status = BPLib_CBOR_EncodeGetBufferSize(&EncodeBuffer, NumBytesCopied);
+                temp = 0;
+                Status = BPLib_CBOR_EncodeGetBufferSize(&EncodeBuffer, &temp);
             }
 
             if (Status == BPLIB_SUCCESS)
@@ -220,7 +232,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                 /* Calculate new CRC for encoded block */
                 BPLib_CBOR_GenerateBlockCrc(OutputBuffer,
                                             StoredBundle->blocks.PayloadHeader.CrcType,
-                                            0, *NumBytesCopied);
+                                            0, temp);
             }
 
             if (Status != BPLIB_SUCCESS)
@@ -232,6 +244,10 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
         if (Status != BPLIB_SUCCESS)
         {
             *NumBytesCopied = 0;
+        }
+        else
+        {
+            *NumBytesCopied += temp;
         }
     }
 
