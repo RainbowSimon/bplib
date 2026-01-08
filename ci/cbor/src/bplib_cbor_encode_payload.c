@@ -35,6 +35,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     uint8_t            AduByteString[BPLIB_MEM_BIG_BLK_DATA_SIZE];
     uint8_t            CrcValueSize;
     uint8_t            CrcLoop;
+    UsefulBuf          CurrentContextPlace;
 
     if ((StoredBundle   == NULL) ||
         (OutputBuffer   == NULL) ||
@@ -82,14 +83,47 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
 
             if (Status == BPLIB_SUCCESS)
             {
+                BytesLeftInOutputBuffer = UsefulOutBuf_RoomLeft(&EncodeBuffer);
+
                 if (StoredBundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
                 {
+                    /* Attempt to encapsultate block-specific data in a CBOR byte string */
+                    QCBOREncode_OpenBytes(&Context, &CurrentContextPlace);
                     Status = BPLib_CBOR_EncodeAdminRecord(&Context, &EncodeBuffer, StoredBundle);
+
+                    size_t ByteStringSize = BytesLeftInOutputBuffer - UsefulOutBuf_RoomLeft(&EncodeBuffer);
+                    printf("ByteStringSize: %ld\n", ByteStringSize);
+                    if (ByteStringSize <= 0x17)
+                    {
+                        /* 1 byte total*/
+                        UsefulOutBuf_Advance(&EncodeBuffer, 1);
+                    }
+                    else if (ByteStringSize > 0x17 && ByteStringSize <= sizeof(uint8_t))
+                    {
+                        /* 2 bytes total */
+                        UsefulOutBuf_Advance(&EncodeBuffer, 2);
+                    }
+                    else if (ByteStringSize > sizeof(uint8_t) && ByteStringSize <= sizeof(uint16_t))
+                    {
+                        /* 3 bytes total */
+                        UsefulOutBuf_Advance(&EncodeBuffer, 3);
+                    }
+                    else if (ByteStringSize > sizeof(uint16_t) && ByteStringSize <= sizeof(uint32_t))
+                    {
+                        /* 5 bytes total */
+                        UsefulOutBuf_Advance(&EncodeBuffer, 5);
+                    }
+                    else if (ByteStringSize > sizeof(uint32_t) && ByteStringSize <= sizeof(uint64_t))
+                    {
+                        /* 9 bytes total */
+                        UsefulOutBuf_Advance(&EncodeBuffer, 9);
+                    }
+
+                    QCBOREncode_CloseBytes(&Context, ByteStringSize);
                 }
                 else
                 {
                     /* Add the ADU data */
-                    BytesLeftInOutputBuffer = UsefulOutBuf_RoomLeft(&EncodeBuffer);
                     Status = BPLib_MEM_CopyOutFromOffset(StoredBundle,
                                                             StoredBundle->blocks.PayloadHeader.DataOffsetStart,
                                                             StoredBundle->blocks.PayloadHeader.DataSize,
@@ -186,7 +220,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
                 /* Calculate new CRC for encoded block */
                 BPLib_CBOR_GenerateBlockCrc(OutputBuffer,
                                             StoredBundle->blocks.PayloadHeader.CrcType,
-                                            0, FinishBuffer.len);
+                                            0, *NumBytesCopied);
             }
 
             if (Status != BPLIB_SUCCESS)

@@ -94,6 +94,10 @@ void BPLib_CBOR_GenerateBlockCrc(const void *EncodedBundle, BPLib_CRC_Type_t Crc
     uint8_t         CrcLen = 0;
     size_t          CrcOffsetStart;
 
+    printf("\nCrcType: %d\n", CrcType);
+    printf("BlockOffsetStart: %ld\n", BlockOffsetStart);
+    printf("BlockLength: %ld\n", BlockLength);
+
     if (CrcType == BPLib_CRC_Type_CRC16)
     {
         CrcLen = 2;
@@ -108,6 +112,7 @@ void BPLib_CBOR_GenerateBlockCrc(const void *EncodedBundle, BPLib_CRC_Type_t Crc
     }
 
     CrcOffsetStart = BlockOffsetStart + BlockLength - CrcLen;
+    printf("CrcOffsetStart: %ld\n\n", CrcOffsetStart);
 
     /* Calculate the CRC of the block */
     CalculatedCrc = BPLib_CRC_Calculate((void *) ((uintptr_t) EncodedBundle + BlockOffsetStart), 
