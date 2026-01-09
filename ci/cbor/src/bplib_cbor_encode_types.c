@@ -493,8 +493,6 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t C
         ReturnStatus = BPLIB_CBOR_ENC_CRC_ERR;
     }
 
-    printf("Crc len: %ld\n", CrcInfo.len);
-
     return ReturnStatus;
 }
 
