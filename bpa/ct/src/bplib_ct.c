@@ -345,17 +345,9 @@ void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance)
         {
             TimeOpen = BPLib_TIME_GetMonotonicTime() - OpenCcs->CollectionStartTime;
 
-            /* Check if the open CCS due to be sent */
+            /* Check if the open CCS is due to be sent */
             if (TimeOpen > OpenCcs->MaxTime)
             {
-                printf("\n=============================================\n");
-                printf("Timeout reached for CCS #%lu!\n", OpenCcsIdx);
-                printf("BPLib_TIME_GetMonotonicTime(): %lu\n", BPLib_TIME_GetMonotonicTime());
-                printf("OpenCcs.CollectionStartTime:   %lu\n", OpenCcs->CollectionStartTime);
-                printf("TimeOpen:                      %lu\n", TimeOpen);
-                printf("CSTimeTrigger:                 %lu\n", OpenCcs->MaxTime);
-                printf("=============================================\n\n");
-
                 BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
             }
         }

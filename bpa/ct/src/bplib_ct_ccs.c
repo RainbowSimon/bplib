@@ -128,7 +128,6 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
     /* Trigger CCS generation based on size */
     if (OpenCcs->Size >= OpenCcs->MaxSize)
     {
-        printf("Max size reached!\n");
         BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
     }
 
@@ -188,9 +187,7 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdm
     /* No CCSs were available, send the largest one and wipe it to use */
     else
     {
-        printf("Max num of open CCSs reached!\n");
         BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, &(Context->OpenCcss[LargestCcsIdx]));
-
         RetCcsIdx = LargestCcsIdx;
     }
 
