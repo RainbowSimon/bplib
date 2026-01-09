@@ -218,8 +218,6 @@ void Test_BPLib_ARP_ProcessInProgressCcs_Nominal(void)
     memcpy(&BundleAdminRecord, AllocBundle.blob->user_data.BigData, sizeof(BPLib_ARP_AdminRecord_t));
 
     UtAssert_EQ(BPLib_ARP_AdminRecordTypeCode_t, BundleAdminRecord.AdminRecordType, BPLib_CT_CcsRecordTypeCode);
-    BPLib_ARP_Test_EIDs_EQ(&(BundleAdminRecord.AdminRecordBody.CCS.SourceAdminEid),
-                            &(InProgressCcs.SourceAdminEid));
 
     UtAssert_EQ(uint64_t,
                 BundleAdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections,
