@@ -75,7 +75,7 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
             return NO_NEXT_STATE;
         }
     }
-    
+
     return CONTACT_IN_CT_TO_STOR;
 }
 
@@ -97,12 +97,12 @@ static BPLib_QM_JobState_t ContactOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 static BPLib_QM_JobState_t ContactOut_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
-    
+
     Status = BPLib_EBP_UpdateExtensionBlocks(Bundle);
 
     if (Status != BPLIB_SUCCESS)
     {
-        BPLib_EM_SendEvent(BPLIB_QM_EBP_OUT_ERR_EID, BPLib_EM_EventType_ERROR, 
+        BPLib_EM_SendEvent(BPLIB_QM_EBP_OUT_ERR_EID, BPLib_EM_EventType_ERROR,
                 "Error updating extension blocks, Status = %d.", Status);
     }
 
@@ -130,7 +130,7 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
         BPLib_MEM_BundleFree(&Inst->pool, Bundle);
         return NO_NEXT_STATE;
     }
-    
+
     return CHANNEL_IN_CT_TO_STOR;
 }
 

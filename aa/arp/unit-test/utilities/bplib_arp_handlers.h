@@ -18,52 +18,27 @@
  *
  */
 
-#ifndef BPLIB_CBOR_TEST_UTILS_H
-#define BPLIB_CBOR_TEST_UTILS_H
-
 /* ======== */
 /* Includes */
 /* ======== */
 
-#include "utassert.h"
 #include "utstubs.h"
-#include "uttest.h"
-
-#include "bplib_api_types.h"
-#include "bplib_cbor.h"
-#include "bplib_cbor_internal.h"
-#include "bplib_crc.h"
-
-/* ====== */
-/* Macros */
-/* ====== */
-
-#define ADD_TEST(test) UtTest_Add(test, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, #test)
-
-/* =========== */
-/* Global Data */
-/* =========== */
-
-extern BPLib_NC_MibPerNodeConfig_t TestMibConfigPnTbl;
-
-/* ======== */
-/* Handlers */
-/* ======== */
-
-void UT_Handler_BPLib_MEM_CopyOutFromOffset(void *UserObj, UT_EntryKey_t FuncKey, const UT_StubContext_t *Context);
+#include "bplib_mem.h"
 
 /* ==================== */
 /* Function Definitions */
 /* ==================== */
 
-void BPLib_CBOR_Test_Setup(void);
-void BPLib_CBOR_Test_Teardown(void);
+/**
+ * \brief Make BPLib_MEM_BundleAlloc return a bundle that can be evaluated in a
+ *        unit test
+ */
+void UT_Handler_BPLib_MEM_BundleAlloc(void *UserObj, UT_EntryKey_t FuncKey, 
+                                        const UT_StubContext_t *Context);
 
-void TestBplibCborDecode_Register(void);
-void TestBplibCborDecodeInternal_Register(void);
-
-void TestBplibCborEncode_Register(void);
-void TestBplibCborEncodePrevNode_Register(void);
-void TestBplibCborEncodeInternal_Register(void);
-
-#endif /* BPLIB_CBOR_TEST_UTILS_H */
+/**
+ * \brief Actually copy EIDs so the unit tests can evaluate that the bundle has
+ *        the admin record in the payload
+ */
+void UT_Handler_BPLib_EID_CopyEids(void *UserObj, UT_EntryKey_t FuncKey,
+                                        const UT_StubContext_t *Context);

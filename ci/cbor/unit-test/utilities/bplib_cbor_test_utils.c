@@ -31,6 +31,21 @@
 
 BPLib_NC_MibPerNodeConfig_t TestMibConfigPnTbl;
 
+/* ======== */
+/* Handlers */
+/* ======== */
+
+void UT_Handler_BPLib_MEM_CopyOutFromOffset(void *UserObj, UT_EntryKey_t FuncKey, const UT_StubContext_t *Context)
+{
+    void*    OutputBuffer;
+    uint64_t NumBytesToCopy;
+    
+    OutputBuffer   = UT_Hook_GetArgValueByName(Context, "OutputBuffer", void*);
+    NumBytesToCopy = UT_Hook_GetArgValueByName(Context, "NumBytesToCopy", uint64_t);
+
+    memcpy(OutputBuffer, UserObj, NumBytesToCopy);
+}
+
 /* ==================== */
 /* Function Definitions */
 /* ==================== */

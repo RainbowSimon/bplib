@@ -71,6 +71,9 @@ typedef enum
  */
 typedef union
 {
+    /* BPLib_ARP_BundleStatusReport_t        BSR; */
+    /* BPLib_ARP_CompressedReportingSignal_t CRS; */
+
     /**
      * \brief The value to the disposition key, bundle sequence collection value
      *        CBOR map that represents a CCS. The actual key (disposition code) is
@@ -78,10 +81,7 @@ typedef union
      */
     BPLib_CT_DeserializedCcs_t CCS;
 
-    /* BPLib_ARP_BundleStatusReport_t        BSR; */
-    /* BPLib_ARP_CompressedReportingSignal_t CRS; */
-
-    /* Other when applicable */
+    /* Others when applicable */
 } BPLib_ARP_AdminRecordBody_t;
 
 /**
@@ -168,13 +168,26 @@ void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* 
 void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
 
 /**
- * \brief     Count the Compressed Custody Signal then overwrite Bundle's user
- *            data with the administrative record provided
+ * \brief      Count the Compressed Custody Signal then overwrite Bundle's user
+ *             data with the administrative record provided
  * \param[in]  AdminRecord Decoded Compressed Custody Signal administrative record
  * \param[out] Bundle      Bundle whose user_data will be overwritten with
  *                         AdminRecord
  * \return    void
  */
-void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
+void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
+
+/**
+ * \brief     When an open CCS hits a trigger, whether it be size, time, or number
+ *            of open CCSs, this function will wrap that CCS into a bundle and
+ *            place it on the job queue
+ * \param[in] Instance      Abstraction of the node that will be used for putting
+ *                          the bundle with a CCS in the payload on the job queue.
+ *                          Instance also contains the memory pool used to create
+ *                          the bundle
+ * \param[in] InProgressCcs An in-progress CCS that has reached a configured limit
+ * \return    void
+ */
+void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* InProgressCcs);
 
 #endif /* BPLIB_ARP_H */

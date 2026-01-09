@@ -30,7 +30,6 @@
 #include "bplib_bblocks.h"
 #include <pthread.h>
 
-
 /*
 ** Macros
 */
@@ -150,8 +149,12 @@ typedef struct
 {
     bool                           InProgress;
     size_t                         Size;
+    size_t                         MaxSize;
+    int64_t                        MaxTime;
     BPLib_EID_t                    SourceAdminEid;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
+    int64_t                        CollectionStartTime;
+    uint32_t                       ContactId;
 } BPLib_CT_OpenCcs_t;
 
 /**
@@ -199,10 +202,8 @@ typedef struct
     BPLib_RBT_Root_t SeqTreeRoot;                               /** \brief An RBT that allows for CTDB queries based on sequence ID/number */
     BPLib_RBT_Root_t IdTreeRoot;                                /** \brief An RBT that allows for CTDB queries based on bundle ID */
 
-    pthread_mutex_t DbLock;                                     /** \brief Read/write lock on CTDB */
-
+    pthread_mutex_t Lock;                                     /** \brief Read/write lock on CTDB and open CCSs */
 } BPLib_CT_Context_t;
-
 
 /*
 ** Exported Functions
@@ -320,5 +321,17 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
 BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t ContactId);
 
 BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId);
+
+/**
+ * \brief     Wrapper to make BPLib_CT_BuildAndSendOpenCcs_Impl publicly callable
+ * \param[in] Instance Abstraction of the node that will be used for putting the
+ *                     bundle with a CCS in the payload on the job queue. Instance
+ *                     also contains the memory pool used to create the bundle
+ * \param[in] OpenCcs  An open CCS that has reached a configured limit
+ * \return    void
+ */
+void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs);
+
+void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance);
 
 #endif /* BPLIB_CT_H */

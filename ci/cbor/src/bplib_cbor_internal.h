@@ -386,6 +386,78 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePayload(BPLib_Bundle_t* StoredBundle,
     size_t* NumBytesCopied);
 
 /**
+ * \brief     Start encoding an array and account for encoded byte to track size
+ * \param[in] Context      QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer Buffer to track the size of the encode buffer
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: Array initial byte will fit in the buffer
+ * \retval    BPLIB_ERROR: Array initial byte will not fit in the buffer or byte
+ *                         string is malformed
+ */
+BPLib_Status_t BPLib_CBOR_EncodeArray(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer);
+
+/**
+ * \brief     Start encoding a map and account for encoded byte to track size
+ * \param[in] Context      QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer Buffer to track the size of the encode buffer
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: Map initial byte will fit in the buffer
+ * \retval    BPLIB_ERROR: Map initial byte will not fit in the buffer or byte
+ *                         string is malformed
+ */
+BPLib_Status_t BPLib_CBOR_EncodeMap(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer);
+
+/**
+ * \brief Check the size of the encoded buffer for overflows and increment a
+ *        buffer size tracking value if successful
+ * \param[in]  EncodedBuffer Buffer to check for overflows
+ * \param[out] EncodedSize   Size of the encode buffer
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Bytes were encoded without error and EncodedSize
+ *                            was incremented
+ * \retval     BPLIB_ERROR:   An error was encountered, see definition for causes
+ */
+BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t* EncodedSize);
+
+/**
+ * \brief     Encode an unsigned integer while tracking the size of the buffer
+ * \param[in] Context       QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer  Buffer to track the size of the encode buffer
+ * \param[in] ValueToEncode Integer you wish to encode
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: Value can be successfully encoded
+ * \retval    BPLIB_ERROR: Value won't fit the buffer or the value could not be
+ *                         encoded for several reasons (see function body for
+ *                         reasoning)
+ */
+BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint64_t ValueToEncode);
+
+/**
+ * \brief Encode the bytes in an administrative record while tracking the size
+ *        of the buffer
+ * \param[in] Context       QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer  Buffer to track the size of the encode buffer
+ * \param[in] Bundle        Bundle whose payload is an administrative record
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: Administrative record was successfully encoded
+ * \retval    BPLIB_NULL_PTR_ERROR: Provided Context pointer was NULL
+ * \retval    TODO: unsupported admin record type
+ */
+BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, BPLib_Bundle_t* Bundle);
+
+/**
+ * \brief Encode the bytes in an ADU while tracking the size of the buffer
+ * \param[in] Context      QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer Buffer to track the size of the encode buffer
+ * \param[in] Adu          ADU that is to be encoded
+ * \param[in] AduLen       Length of the ADU in bytes
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: ADU will fit the buffer and data was well formed
+ * \retval    BPLIB_ERROR: ADU won't fit the buffer or the data was malformed
+ */
+BPLib_Status_t BPLib_CBOR_EncodeAdu(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint8_t* Adu, size_t AduLen);
+
+/**
  * \brief     Encodes a BPLib_EID_t type
  * \param[in] Context (QCBOREncodeContext*) QCBOR encode context instance pointer
  * \param[in] SourceData (BPLib_EID_t*) pointer to the field that needs to be encoded
@@ -415,6 +487,47 @@ BPLib_Status_t BPLib_CBOR_EncodeCreationTimeStamp(QCBOREncodeContext* Context, B
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
 BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t CrcValue, uint64_t CrcType);
+
+/**
+ * \brief Encode a Bundle Status Report
+ * \param[in]  Context QCBOR encode context instance pointer
+ * \param[in]  BSR     Pointer to the Bundle Status Report to be encoded
+ * \param[out] EncodeBuffer Buffer that tracks the size of the encoded values
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Successful execution
+ * \retval     BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
+
+BPLib_Status_t BPLIB_CBOR_EncodeBsr(QCBOREncodeContext* Context,
+                                    BPLib_ARP_BundleStatusReport_t* BSR,
+                                    UsefulOutBuf* EncodeBuffer);
+*/
+
+/**
+ * \brief Encode a Compressed Reporting Signal
+ * \param[in]  Context QCBOR encode context instance pointer
+ * \param[in]  CRS     Pointer to the Compressed Reporting Signal to be encoded
+ * \param[out] EncodeBuffer Buffer that tracks the size of the encoded values
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Successful execution
+ * \retval     BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
+
+BPLib_Status_t BPLIB_CBOR_EncodeCrs(QCBOREncodeContext* Context,
+                                    BPLib_ARP_CompressedReportingSignal_t* CRS,
+                                    UsefulOutBuf* EncodeBuffer);
+*/
+
+/**
+ * \brief Encode a Compressed Custody Signal
+ * \param[in]  Context      QCBOR encode context instance pointer
+ * \param[in]  CCS          Pointer to the Compressed Custody Signal to be encoded
+ * \param[out] EncodeBuffer Buffer that tracks the size of the encoded values
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Successful execution
+ * \retval     BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
+ */
+BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
+                                    BPLib_CT_DeserializedCcs_t* CCS,
+                                    UsefulOutBuf* EncodeBuffer);
 
 /**
  * \brief     Validates a block's CRC value

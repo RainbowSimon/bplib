@@ -195,7 +195,8 @@ BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId
 
 /**
  * \brief     Pass Contact ID to stop, on to CLA proxy
- * \param[in] ContactId (uint32_t) Contact ID from the Contacts Configuration to stop
+ * \param[in] Instance  Instance that hold CT context of all open CCSs
+ * \param[in] ContactId Contact ID from the Contacts Configuration to stop
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_CLA_UNKNOWN_CONTACT: Provided contact ID does not match a contact ID in
@@ -204,7 +205,7 @@ BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId
  *                                       successful operation
  * \retval    BPLIB_INVALID_CONT_ID_ERR: Provided contact ID is invalid
  */
-BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId);
+BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t* Instance, uint32_t ContactId);
 
 /**
  * \brief     If the contact has been stopped, deconfigure the CLA via BI, CT, EBP, and CLA

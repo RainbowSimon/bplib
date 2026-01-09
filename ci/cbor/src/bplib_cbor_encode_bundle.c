@@ -119,12 +119,6 @@ BPLib_Status_t BPLib_CBOR_EncodeBundle(BPLib_Bundle_t* StoredBundle,
         return PayloadBlockReturnStatus;
     }
 
-    if (OutputBufferSize <= TotalBytesCopied)
-    {
-        *NumBytesCopied = 0;
-        return BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_4_ERR;
-    }
-
     /*
     ** Close the indefinite-length array
     */
@@ -139,7 +133,6 @@ BPLib_Status_t BPLib_CBOR_EncodeBundle(BPLib_Bundle_t* StoredBundle,
     *NumBytesCopied = TotalBytesCopied;
 
     #if (BPLIB_CBOR_DEBUG_PRINTS_ENABLED)
-    printf("Output encoded bundle generated with size %lu: \n", *NumBytesCopied);
     for (size_t i = 0 ; i < *NumBytesCopied; i++)
     {
         printf("0x%02x, ", ((uint8_t*)OutputBuffer)[i]);
@@ -148,7 +141,6 @@ BPLib_Status_t BPLib_CBOR_EncodeBundle(BPLib_Bundle_t* StoredBundle,
             printf("\n");
         }
     }
-    printf("\n");
     #endif
 
     return BPLIB_SUCCESS;

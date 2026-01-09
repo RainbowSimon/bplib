@@ -169,13 +169,11 @@ typedef struct
  */
 typedef struct
 {
-    uint32_t EgressID;    /** \brief For egressing bundles, ID of channel/contact to send to */
-    size_t   TotalBytes;  /** \brief Size of this bundle in bytes */
-    bool     IsCustodial; /** \brief Tracks whether or not the bund has a CTEB */
-    uint32_t RetransmitTime;    /** \brief Retransmit time for custodial bundles */
-
-    /* Additional metadata will likely get added here */
-
+    uint32_t EgressID;       /** \brief For egressing bundles, ID of channel/contact to send to */
+    uint32_t IngressID;      /** \brief For associating bundle with the channel/contact they came in on */
+    size_t   TotalBytes;     /** \brief Size of this bundle in bytes */
+    bool     IsCustodial;    /** \brief Tracks whether or not the bund has a CTEB */
+    uint32_t RetransmitTime; /** \brief Retransmit time for custodial bundles */
 } BPLib_BundleMetaData_t;
 
 /**

@@ -389,8 +389,25 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_
                 return BPLIB_CBOR_DEC_CANON_ADMIN_REC_EXIT_ARR_ERR;
             }
 
-            /* Shove the administrative record into the bundle's user data */
-            BPLib_ARP_ProcessCcs(&AdminRecord, bundle);
+            switch (AdminRecord.AdminRecordType)
+            {
+                case BPLib_CT_BsrRecordTypeCode:
+                    /* TODO: Process BSR */
+                    break;
+
+                case BPLib_CT_CrsRecordTypeCode:
+                    /* TODO: Process CRS */
+                    break;
+
+                case BPLib_CT_CcsRecordTypeCode:
+                    /* Shove the administrative record into the bundle's user data */
+                    BPLib_ARP_ProcessNewCcs(&AdminRecord, bundle);
+                    break;
+
+                default:
+                    Status = BPLIB_CBOR_DEC_TYPES_ADMIN_REC_INV_REC_TYPE;
+                    break;
+            }
         }
     }
     else
