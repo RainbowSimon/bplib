@@ -410,7 +410,10 @@ void Test_BPLib_CBOR_EncodePayload_Ccs(void)
                        1            + /* AdminRecord.AdminRecordType */
                        1            + /* Open definite map initial byte for CCS */
                        1            + /* AdminRecord.DispositionCode */
-                       1            + /* Open definite array initial byte for sequence range */
+                       1            + /* Open definite array initial byte for bundle sequence collection */
+                       1            + /* Bundle sequence ID */
+                       1            + /* Bundle first sequence number */
+                       1            + /* Initial byte for bundle sequence range array */
                        SeqRangeSize + /* Sequence range values */
                        1            + /* Byte string initial byte for CRC */ 
                        4;             /* ATTN: Assumes CRC is type BPLib_CRC_Type_CRC32C */

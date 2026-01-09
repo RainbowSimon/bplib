@@ -602,7 +602,6 @@ void Test_BPLib_CLA_ContactStop_Nominal(void)
     BPLib_Status_t   Status;
     uint32_t         ContactId;
     BPLib_Instance_t Inst;
-    uint8_t          OpenCcsCtrl;
 
     /* Assign a valid contact ID */
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
