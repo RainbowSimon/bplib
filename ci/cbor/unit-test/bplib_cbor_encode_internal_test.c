@@ -408,6 +408,7 @@ void Test_BPLib_CBOR_EncodePayload_Ccs(void)
                        1            + /* Bundle.blocks.PayloadHeader.BlockNum */
                        1            + /* Bundle.blocks.PayloadHeader.BlockProcFlags */
                        1            + /* Bundle.blocks.PayloadHeader.CrcType */
+                       1            + /* Initial byte for byte string that encapsulates admin record */
                        1            + /* Open definite array initial byte for admin record */
                        1            + /* AdminRecord.AdminRecordType */
                        1            + /* Open definite map initial byte for CCS */
