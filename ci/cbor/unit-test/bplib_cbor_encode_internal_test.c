@@ -367,7 +367,7 @@ void Test_BPLib_CBOR_EncodePayload_Ccs(void)
     BPLib_Status_t          Status;
     BPLib_ARP_AdminRecord_t AdminRecord;
     BPLib_Bundle_t          Bundle;
-    uint8_t                 OutputBuffer[512];
+    uint8_t                 OutputBuffer[BPLIB_MAX_PAYLOAD_SIZE];
     size_t                  NumBytesCopied;
     BPLib_MEM_Block_t       BundleBlob;
     size_t                  TotalBytesCopied;
@@ -386,6 +386,7 @@ void Test_BPLib_CBOR_EncodePayload_Ccs(void)
     AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[1]     = 2;
     AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[2]     = 3;
 
+    memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
     Bundle.blocks.PayloadHeader.BlockType      = BPLib_BlockType_Payload;
     Bundle.blocks.PayloadHeader.BlockNum       = 0;
     Bundle.blocks.PayloadHeader.BlockProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
