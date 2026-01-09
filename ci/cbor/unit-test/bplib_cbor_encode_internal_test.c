@@ -389,8 +389,9 @@ void Test_BPLib_CBOR_EncodePayload_Ccs(void)
     memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
     Bundle.blocks.PayloadHeader.BlockType      = BPLib_BlockType_Payload;
     Bundle.blocks.PayloadHeader.BlockNum       = 0;
-    Bundle.blocks.PayloadHeader.BlockProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
     Bundle.blocks.PayloadHeader.CrcType        = BPLib_CRC_Type_CRC32C;
+
+    Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
 
     Bundle.blob = &BundleBlob;
 
