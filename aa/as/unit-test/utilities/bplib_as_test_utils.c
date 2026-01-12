@@ -132,7 +132,7 @@ void Test_BPLib_AS_SetBundleCounterValues(uint32_t SetValue)
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CRS_DELIVERED]   = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CRS_FORWARDED]   = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CRS_RECEIVED]    = SetValue;
-    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CUSTODY]         = SetValue;
+    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CCS]         = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_MAX_BSR_RATE_EXCEEDED]     = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED]     = SetValue;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_NO_FURTHER_INFO]           = SetValue;
@@ -208,7 +208,7 @@ void Test_BPLib_AS_BundleCountersValueTest(uint32_t ActualValue)
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CRS_DELIVERED]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CRS_FORWARDED]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CRS_RECEIVED]);
-    UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CUSTODY]);
+    UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CCS]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_MAX_BSR_RATE_EXCEEDED]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED]);
     UtAssert_EQ(uint32_t, ActualValue, BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_NO_FURTHER_INFO]);
