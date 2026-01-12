@@ -425,7 +425,7 @@ SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPL
     NumToDiscard = 0;
 
     /* Get DTN Time */
-   MonoTime = BPLib_TIME_GetMonotonicTime();
+    MonoTime = BPLib_TIME_GetMonotonicTime();
 
     /* Create a batch query */
     SQLStatus = sqlite3_exec(db, "BEGIN;", 0, 0, 0);
