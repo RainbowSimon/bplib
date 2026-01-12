@@ -227,13 +227,23 @@ BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId
             BPLib_NC_ReaderLock();
             memcpy(&Inst->ContCtxt[ContactId].Config, 
                 &BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId], sizeof(BPLib_CLA_ContactsSet_t));
-            BPLib_NC_ReaderUnlock();  
+            BPLib_NC_ReaderUnlock();
 
-            Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactSetup(ContactId);
-
-            if (Status == BPLIB_SUCCESS)
+            Status = BPLib_STOR_SetNewRetransmitTrigger(Inst, ContactId);            
+            if (Status != BPLIB_SUCCESS)
             {
-                (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_SETUP); /* Ignore return since pre-call run state is valid */
+                BPLib_EM_SendEvent(BPLIB_CLA_RESET_TRIGGERS_DBG_EID, BPLib_EM_EventType_DEBUG,
+                                    "Setting new retransmission triggers for stored bundles on contact %d failed, Status = %d.",
+                                    ContactId, Status);                
+            }
+            else
+            {
+                Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactSetup(ContactId);
+
+                if (Status == BPLIB_SUCCESS)
+                {
+                    (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_SETUP); /* Ignore return since pre-call run state is valid */
+                }                
             }
         }
         else if (RunState == BPLIB_CLA_SETUP)
@@ -289,19 +299,7 @@ BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId
         {
             (void) BPLib_CT_AssignSeqCounter(Inst, ContactId);
 
-            Status = BPLib_STOR_SetNewRetransmitTrigger(Inst, ContactId);
-            
-            if (Status != BPLIB_SUCCESS)
-            {
-                BPLib_EM_SendEvent(BPLIB_CLA_RESET_TRIGGERS_DBG_EID, BPLib_EM_EventType_DEBUG,
-                                    "Setting new retransmission triggers for stored bundles on contact %d failed, Status = %d.",
-                                    ContactId, Status);                
-            }
-            else
-            {
-                (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STARTED); /* Ignore return since pre-call run state is valid */
-            }
-
+            (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STARTED); /* Ignore return since pre-call run state is valid */
         }
     }
     else if (RunState == BPLIB_CLA_STARTED)
