@@ -100,7 +100,7 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
     {
         if (CandidateBundle->blocks.AdminRecordPayload != NULL)
         {
-            BPLib_ARP_ProcessCcs(CandidateBundle->blocks.AdminRecordPayload);
+            BPLib_ARP_ProcessNewCcs(CandidateBundle->blocks.AdminRecordPayload);
         }
 
         Status = BPLib_QM_CreateJob(Inst, CandidateBundle, CONTACT_IN_BI_TO_EBP, QM_PRI_NORMAL, QM_WAIT_FOREVER);

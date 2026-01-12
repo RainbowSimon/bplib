@@ -201,6 +201,14 @@ extern "C" {
  */
 #define BPLIB_CT_DB_MAX_ENTRIES                     (10000u)
 
+#define BPLIB_ADMIN_RECORD_CRC_TYPE                 BPLib_CRC_Type_CRC16
+
+#define BPLIB_ADMIN_RECORD_LIFETIME                 (3600000u)
+
+#define BPLIB_ADMIN_RECORD_AGE_BLOCK_NUM            (2u)
+
+#define BPLIB_ADMIN_RECORD_BLOCK_FLAGS              (0u)
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

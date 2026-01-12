@@ -117,10 +117,9 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t *Instance, BPLib_CT_OpenCcs
  * Generated stub function for BPLib_ARP_ProcessNewCcs()
  * ----------------------------------------------------
  */
-void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t *AdminRecord, BPLib_Bundle_t *Bundle)
+void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t *AdminRecord)
 {
     UT_GenStub_AddParam(BPLib_ARP_ProcessNewCcs, BPLib_ARP_AdminRecord_t *, AdminRecord);
-    UT_GenStub_AddParam(BPLib_ARP_ProcessNewCcs, BPLib_Bundle_t *, Bundle);
 
     UT_GenStub_Execute(BPLib_ARP_ProcessNewCcs, Basic, NULL);
 }

@@ -26,6 +26,7 @@
 #include "bplib_arp_handlers.h"
 #include "bplib_inst.h"
 #include "bplib_eid.h"
+#include "bplib_nc.h"
 
 /* ==================== */
 /* Function Definitions */
@@ -96,17 +97,9 @@ void Test_BPLib_ARP_ProcessCrs_Nominal(void)
 
 void Test_BPLib_ARP_ProcessNewCcs_Nominal(void)
 {
-    BPLib_Bundle_t          Bundle;
-    BPLib_MEM_Block_t       Block;
-    BPLib_ARP_AdminRecord_t BlobAsAdminRecord;
-    uint8_t                 BundleSeqIdx;
-    uint8_t                 SeqRangeIdx;
+    BPLib_ARP_AdminRecord_t AdminRecord;
 
-    memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
-    memset(&Block, 0, sizeof(BPLib_MEM_Block_t));
-    Bundle.blob = &Block;
-
-    BPLib_ARP_ProcessNewCcs(&AdminRecord, &Bundle);
+    BPLib_ARP_ProcessNewCcs(&AdminRecord);
 
     BPLib_ARP_Test_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD,   1, 1);
     BPLib_ARP_Test_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CCS_RECEIVED, 1, 2);
@@ -124,12 +117,14 @@ void Test_BPLib_ARP_ProcessInProgressCcs_Nominal(void)
     BPLib_ARP_AdminRecord_t BundleAdminRecord;
     BPLib_Bundle_t          AllocBundle;
     BPLib_MEM_Block_t       BundleBlob;
+    BPLib_NC_MibPerNodeConfig_t NodeMibConfigTbl;
 
     /* Set up for test */
     AllocBundle.blob = &BundleBlob;
     UT_SetHandlerFunction(UT_KEY(BPLib_MEM_BundleAlloc), UT_Handler_BPLib_MEM_BundleAlloc, &AllocBundle);
     UT_SetHandlerFunction(UT_KEY(BPLib_EID_CopyEids), UT_Handler_BPLib_EID_CopyEids, NULL);
     memset(&Instance, 0, sizeof(BPLib_Instance_t));
+    BPLib_NC_ConfigPtrs.MibPnConfigPtr = &NodeMibConfigTbl;
 
     /* Initialize in-process CCS's source admin EID to evaluate later */
 

@@ -93,7 +93,12 @@ struct BPLib_ARP_AdminRecord
 {
     BPLib_ARP_AdminRecordTypeCode_t AdminRecordType; /** \brief Administrative record type */
     BPLib_ARP_AdminRecordBody_t     AdminRecordBody; /** \brief Contents of the admin record, dependent on type of admin record */
-} ;
+};
+
+typedef struct 
+{
+    uint64_t SequenceNum;
+} BPLib_ARP_Context_t;
 
 /* =================== */
 /* Function Prototypes */
@@ -174,7 +179,7 @@ void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* 
  *
  * \return    void
  */
-void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
+void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord);
 
 /**
  * \brief     When an open CCS hits a trigger, whether it be size, time, or number
