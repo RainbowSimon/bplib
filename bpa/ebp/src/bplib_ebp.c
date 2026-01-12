@@ -89,6 +89,20 @@ BPLib_Status_t BPLib_EBP_InitializeExtensionBlocks(BPLib_Instance_t *Inst, BPLib
         CurrExtBlkIdx++;
     }
 
+    /* Initialize custody transfer block */
+    if (CurrCanonConfig->CustodyTransferBlkConfig.IncludeBlock &&
+        BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == true)
+    {
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.BlockType = BPLib_BlockType_CTEB;
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.CrcType = CurrCanonConfig->CustodyTransferBlkConfig.CrcType;
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.BlockNum = CurrCanonConfig->CustodyTransferBlkConfig.BlockNum;
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.BlockProcFlags = CurrCanonConfig->CustodyTransferBlkConfig.BlockProcFlags;          
+
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.RequiresEncode = true;
+
+        CurrExtBlkIdx++;
+    }
+
     return BPLIB_SUCCESS;
 }
 
@@ -134,6 +148,8 @@ BPLib_Status_t BPLib_EBP_UpdateExtensionBlocks(BPLib_Bundle_t *Bundle)
                                 BPLIB_EID_INSTANCE);
             Bundle->blocks.ExtBlocks[ExtBlkIdx].Header.RequiresEncode = true;
         }
+
+        /* CTEB updates are handled by CT */
     }
     
     return Status;

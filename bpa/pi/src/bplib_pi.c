@@ -122,10 +122,25 @@ BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
 
     /* Initialize configs */
     Inst->ChanCtxt[ChanId].SequenceNum = 0;
-    
+
     BPLib_NC_ReaderLock();
+
+    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == false &&
+        BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].CustodyTransferBlkConfig.IncludeBlock == true)
+    {
+        BPLib_NC_ReaderUnlock();
+
+        BPLib_EM_SendEvent(BPLIB_PI_NO_CTEB_DBG_EID, BPLib_EM_EventType_DEBUG,
+                            "Error with add-application directive, cannot include CTEBs while custody support is disabled");
+
+        return BPLIB_CT_NO_CUST_ERR;        
+    }
+
     memcpy(&Inst->ChanCtxt[ChanId].Config, 
            &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId], sizeof(BPLib_PI_Config_t));
+
+    Inst->ChanCtxt[ChanId].RegState = BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].RegState;
+
     BPLib_NC_ReaderUnlock();  
 
     /* Do any framework-specific operations */
@@ -312,7 +327,7 @@ BPLib_Status_t BPLib_PI_ValidateConfigs(void *TblData)
 {
     BPLib_PI_ChannelTable_t *TblDataPtr = (BPLib_PI_ChannelTable_t *)TblData;
     uint32_t ChanId;
-    uint32_t BlockNums[4];
+    uint32_t BlockNums[5];
     uint8_t  BlockNumsInArr;
     uint32_t i;
 
@@ -387,6 +402,7 @@ BPLib_Status_t BPLib_PI_ValidateConfigs(void *TblData)
         if (BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].PrevNodeBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
             BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].AgeBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
             BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].HopCountBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
+            BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].CustodyTransferBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
             BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].PayloadBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS)
         {
             return BPLIB_INVALID_CONFIG_ERR;

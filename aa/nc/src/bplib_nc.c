@@ -43,8 +43,7 @@ static MibConfigValidateFunc_t MibConfigValidate[] = {
     BPLib_NC_ValidParamSetMaxSequenceNum,
     BPLib_NC_ValidParamMaxPayloadLength,
     BPLib_NC_ValidParamMaxBundleLength,
-    BPLib_NC_ValidParamSetNodeDtnTime,
-    BPLib_NC_ValidParamSetBehaviorEventReporting,
+    BPLib_NC_ValidParamSupportCustody,
     BPLib_NC_ValidParamSetMaxLifetime
 };
 
@@ -204,7 +203,7 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
         Status = BPLib_CLA_GetContactRunState(ContId, &ContState);
         if (Status == BPLIB_SUCCESS && ContState != BPLIB_CLA_TORNDOWN)
         {
-            (void) BPLib_CLA_ContactStop(ContId);
+            (void) BPLib_CLA_ContactStop(Instance, ContId);
             (void) BPLib_CLA_ContactTeardown(Instance, ContId);
             (void) BPLib_CLA_SetContactRunState(ContId, BPLIB_CLA_TORNDOWN);
         }
@@ -319,8 +318,7 @@ BPLib_Status_t BPLib_NC_MIBConfigPNTblValidateFunc(void* TblData)
         !BPLib_NC_ValidParamSetMaxSequenceNum(TblDataPtr) ||
         !BPLib_NC_ValidParamMaxPayloadLength(TblDataPtr) ||
         !BPLib_NC_ValidParamMaxBundleLength(TblDataPtr) ||
-        !BPLib_NC_ValidParamSetNodeDtnTime(TblDataPtr) ||
-        !BPLib_NC_ValidParamSetBehaviorEventReporting(TblDataPtr) ||
+        !BPLib_NC_ValidParamSupportCustody(TblDataPtr) ||
         !BPLib_NC_ValidParamSetMaxLifetime(TblDataPtr))
     {
         return BPLIB_INVALID_CONFIG_ERR;

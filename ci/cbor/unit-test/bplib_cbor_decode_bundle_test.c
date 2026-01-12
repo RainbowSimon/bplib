@@ -138,13 +138,13 @@ void Test_BPLib_CBOR_DecodeBundle_NullInputErrors(void)
     BPLib_Bundle_t bundle;
 
     /* both null */
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeBundle(NULL, 0, NULL), BPLIB_NULL_PTR_ERROR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeBundle(&BplibInst, NULL, 0, NULL), BPLIB_NULL_PTR_ERROR);
     
     /* CandBundle valid and bundle null */
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeBundle(bundle_primary_and_payload_with_aa_x_20, 0, NULL), BPLIB_NULL_PTR_ERROR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeBundle(&BplibInst, bundle_primary_and_payload_with_aa_x_20, 0, NULL), BPLIB_NULL_PTR_ERROR);
     
     /* CandBundle null and bundle valid */
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeBundle(NULL, 0, &bundle), BPLIB_NULL_PTR_ERROR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeBundle(&BplibInst, NULL, 0, &bundle), BPLIB_NULL_PTR_ERROR);
 }
 
 void Test_BPLib_CBOR_DecodeBundle_LengthError(void)
@@ -152,7 +152,7 @@ void Test_BPLib_CBOR_DecodeBundle_LengthError(void)
     BPLib_Bundle_t bundle;
 
     /* CandBundleLen expected to be at least 2 */
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeBundle(bundle_primary_and_payload_with_aa_x_20, 2, &bundle),
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeBundle(&BplibInst, bundle_primary_and_payload_with_aa_x_20, 2, &bundle),
         BPLIB_CBOR_DEC_BUNDLE_TOO_SHORT_ERR);
 }
 
@@ -163,7 +163,7 @@ void Test_BPLib_CBOR_DecodeBundle_DecodeError(void)
     memset(&bundle, 0, sizeof(bundle));
     bundle.blob = NULL;
 
-    ReturnStatus = BPLib_CBOR_DecodeBundle(bad_bundle,
+    ReturnStatus = BPLib_CBOR_DecodeBundle(&BplibInst, bad_bundle,
                                            sizeof(bad_bundle),
                                            &bundle);
 
@@ -182,7 +182,7 @@ void Test_BPLib_CBOR_DecodeBundle_PrimaryAndPayload(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xB19);
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xc68f);
 
-    ReturnStatus = BPLib_CBOR_DecodeBundle(bundle_primary_and_payload_with_aa_x_20,
+    ReturnStatus = BPLib_CBOR_DecodeBundle(&BplibInst, bundle_primary_and_payload_with_aa_x_20,
                                            sizeof(bundle_primary_and_payload_with_aa_x_20),
                                            &bundle);
 
@@ -235,7 +235,7 @@ void Test_BPLib_CBOR_DecodeBundle_MaxCanonicalBlockError(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x25C7);
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x66CE);
 
-    ReturnStatus = BPLib_CBOR_DecodeBundle(bundle_with_too_many_canonical_blocks,
+    ReturnStatus = BPLib_CBOR_DecodeBundle(&BplibInst, bundle_with_too_many_canonical_blocks,
                                            sizeof(bundle_with_too_many_canonical_blocks),
                                            &bundle);
     
@@ -290,7 +290,7 @@ void Test_BPLib_CBOR_DecodeBundle_CrcNone(void)
 
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xB19);
 
-    ReturnStatus = BPLib_CBOR_DecodeBundle(primary_and_payload_with_crc_none,
+    ReturnStatus = BPLib_CBOR_DecodeBundle(&BplibInst, primary_and_payload_with_crc_none,
                                            sizeof(primary_and_payload_with_crc_none),
                                            &bundle);
 
@@ -379,7 +379,7 @@ void Test_BPLib_CBOR_DecodeBundle_Crc32(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x65315CD);
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x3C30C058);
 
-    ReturnStatus = BPLib_CBOR_DecodeBundle(primary_and_payload_with_crc_32,
+    ReturnStatus = BPLib_CBOR_DecodeBundle(&BplibInst, primary_and_payload_with_crc_32,
                                            sizeof(primary_and_payload_with_crc_32),
                                            &bundle);
 
@@ -461,7 +461,7 @@ void Test_BPLib_CBOR_DecodeBundle_DtnNone(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xb19);
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xc68f);
 
-    ReturnStatus = BPLib_CBOR_DecodeBundle(bundle_primary_and_payload_with_dtn_none,
+    ReturnStatus = BPLib_CBOR_DecodeBundle(&BplibInst, bundle_primary_and_payload_with_dtn_none,
                                            sizeof(bundle_primary_and_payload_with_dtn_none),
                                            &bundle);
 
@@ -511,7 +511,7 @@ void Test_BPLib_CBOR_DecodeBundle_TooBig(void)
 
     TestMibConfigPnTbl.Configs[PARAM_SET_MAX_BUNDLE_LENGTH] = 10;
 
-    Status = BPLib_CBOR_DecodeBundle(bundle_with_too_many_canonical_blocks, BundleLength, &Bundle);
+    Status = BPLib_CBOR_DecodeBundle(&BplibInst, bundle_with_too_many_canonical_blocks, BundleLength, &Bundle);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_CBOR_DEC_BUNDLE_TOO_LONG_DEC_ERR);
 }

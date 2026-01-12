@@ -136,8 +136,8 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePrimary(BPLib_Bundle_t* StoredBundle,
         ** Calculate the pre-encoded primary block size
         */
         PrimaryBlockSize = StoredBundle->blocks.PrimaryBlock.BlockOffsetEnd
-                        - StoredBundle->blocks.PrimaryBlock.BlockOffsetStart
-                        + 1;
+                         - StoredBundle->blocks.PrimaryBlock.BlockOffsetStart
+                         + 1;
 
         /*
         ** Check for input errors before copying the pre-encoded Primary Block to the output buffer

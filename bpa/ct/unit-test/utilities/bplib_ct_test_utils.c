@@ -23,7 +23,7 @@
 */
 
 #include "bplib_ct_test_utils.h"
-
+#include "bplib_nc.h"
 
 /*
 ** Global Data
@@ -38,6 +38,16 @@ BPLib_Instance_t BplibInst;
 
 void BPLib_CT_Test_Setup(void)
 {
+    BPLib_CLA_ContactsTable_t ContactsTable;
+
+    /* Initialize the CCS size trigger */
+    memset(&ContactsTable, 0, sizeof(BPLib_CLA_ContactsTable_t));
+    ContactsTable.ContactSet[0].CSSizeTrigger = 40;
+    ContactsTable.ContactSet[1].CSSizeTrigger = 30;
+    ContactsTable.ContactSet[2].CSSizeTrigger = 20;
+
+    BPLib_NC_ConfigPtrs.ContactsConfigPtr = &ContactsTable;
+
     /* Initialize test environment to default state for every test */
     UT_ResetState(0);
 

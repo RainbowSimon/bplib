@@ -25,6 +25,7 @@
 #include "bplib_bblocks.h"
 #include "bplib_api_types.h"
 #include "bplib_ct.h"
+#include "bplib_arp.h"
 
 #include <pthread.h>
 
@@ -82,8 +83,9 @@ typedef uint8_t BPLib_MEM_BigData_t[BPLIB_MEM_BIG_BLK_DATA_SIZE];
 typedef union
 {
     /* Structs associated with the big memory block */
-    BPLib_MEM_BigData_t   BigData;
-    BPLib_Bundle_t        Bundle;
+    BPLib_MEM_BigData_t     BigData;
+    BPLib_Bundle_t          Bundle;
+    BPLib_ARP_AdminRecord_t AdminRecord;
 
     /* Structs associated with the small memory block */
     BPLib_MEM_SmallData_t SmallData;

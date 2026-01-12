@@ -824,11 +824,11 @@ void BPLib_NC_ContactStart(BPLib_Instance_t *Inst, const BPLib_ContactStart_Payl
     }
 }
 
-void BPLib_NC_ContactStop(const BPLib_ContactStop_Payload_t Payload)
+void BPLib_NC_ContactStop(BPLib_Instance_t* Inst, const BPLib_ContactStop_Payload_t Payload)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_CLA_ContactStop(Payload.ContactId);
+    Status = BPLib_CLA_ContactStop(Inst, Payload.ContactId);
 
     if (Status == BPLIB_SUCCESS)
     {

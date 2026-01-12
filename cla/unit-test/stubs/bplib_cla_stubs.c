@@ -66,10 +66,11 @@ BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId
  * Generated stub function for BPLib_CLA_ContactStop()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t *Instance, uint32_t ContactId)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_CLA_ContactStop, BPLib_Status_t);
 
+    UT_GenStub_AddParam(BPLib_CLA_ContactStop, BPLib_Instance_t *, Instance);
     UT_GenStub_AddParam(BPLib_CLA_ContactStop, uint32_t, ContactId);
 
     UT_GenStub_Execute(BPLib_CLA_ContactStop, Basic, NULL);

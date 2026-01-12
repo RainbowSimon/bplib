@@ -93,18 +93,10 @@ bool BPLib_NC_ValidParamMaxBundleLength(BPLib_NC_MibPerNodeConfig_t *TblDataPtr)
            (TblDataPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH] < TblDataPtr->Configs[PARAM_SET_MAX_BUNDLE_LENGTH]);
 }
 
-/* Validation function for PARAM_SET_NODE_DTN_TIME */
-bool BPLib_NC_ValidParamSetNodeDtnTime(BPLib_NC_MibPerNodeConfig_t *TblDataPtr)
+bool BPLib_NC_ValidParamSupportCustody(BPLib_NC_MibPerNodeConfig_t *TblDataPtr)
 {
-    /* All values accepted PARAM_SET_BEHAVIOR_EVENT_REPORTING */
-    return true;
-}
-
-/* Validation function for PARAM_SET_BEHAVIOR_EVENT_REPORTING */
-bool BPLib_NC_ValidParamSetBehaviorEventReporting(BPLib_NC_MibPerNodeConfig_t *TblDataPtr)
-{
-    /* All values accepted */
-    return true;
+    return ((TblDataPtr->Configs[PARAM_SUPPORT_CUSTODY] == 0) || 
+            (TblDataPtr->Configs[PARAM_SUPPORT_CUSTODY] == 1));
 }
 
 /* Validation function for PARAM_SET_MAX_LIFETIME */

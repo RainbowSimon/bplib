@@ -24,6 +24,9 @@
 
 #include "bplib_arp.h"
 #include "bplib_as.h"
+#include "bplib_inst.h"
+#include "bplib_nc.h"
+#include "bplib_eid.h"
 
 /* ==================== */
 /* Function Definitions */
@@ -69,11 +72,128 @@ void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* 
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
 }
 
-void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle)
+void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord)
 {
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_ADMIN_RECORD, 1);
-    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
+    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CCS_RECEIVED, 1);
+}
 
-    /* As of right now, administrative records are 264 bytes; < 512 bytes for user_data */
-    memcpy((void*) &(Bundle->blob->user_data), AdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
+void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* InProgressCcs)
+{
+    BPLib_ARP_AdminRecord_t     CcsAdminRecord;
+    BPLib_CT_DeserializedCcs_t* AdminRecordCcs;
+    BPLib_Bundle_t*             Bundle;
+    BPLib_Status_t              Status;
+    uint8_t                     DispCodeIdx;
+
+    /* Set the Administrative Record type */
+    CcsAdminRecord.AdminRecordType = BPLib_CT_CcsRecordTypeCode;
+
+    /* === Build the Administrative Record's CCS === */
+
+    AdminRecordCcs = &(CcsAdminRecord.AdminRecordBody.CCS);
+
+    /* Shove the bundle sequence collections into the CCS */
+    AdminRecordCcs->NumBundleSeqCollections = 0;
+    for (DispCodeIdx = 0; DispCodeIdx < BPLIB_CT_MAX_SEQ_COLLECTIONS; DispCodeIdx++)
+    {
+        if (InProgressCcs->BundleSeqCollections[DispCodeIdx].SeqRangeLen != 0)
+        { /* Only encode bundle sequence collections with at least 1 sequence range element */
+            memcpy(&(AdminRecordCcs->BundleSeqCollections[AdminRecordCcs->NumBundleSeqCollections++]),
+                    &(InProgressCcs->BundleSeqCollections[DispCodeIdx]),
+                    sizeof(BPLib_CT_BundleSeqCollection_t));
+        }
+    }
+
+    /* === Generate the bundle with a CCS Administrative Record as the payload === */
+
+    Bundle = BPLib_MEM_BundleAlloc(&(Instance->pool), &CcsAdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
+    if (Bundle != NULL)
+    { /* Configure the bundle for egressing */
+        /* === Set up the primary block === */
+        Bundle->blocks.PrimaryBlock.RequiresEncode = true;
+
+        /* Set primary block fields */
+        Bundle->blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+        Bundle->blocks.PrimaryBlock.CrcType = BPLIB_ADMIN_RECORD_CRC_TYPE;
+        Bundle->blocks.PrimaryBlock.Lifetime = BPLIB_ADMIN_RECORD_LIFETIME;
+
+        /* Set routing destination of bundle */
+        BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.DestEID),
+                            InProgressCcs->SourceAdminEid);
+
+        /* Identify source node of CCS */
+        BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.SrcEID),
+                            BPLIB_EID_INSTANCE);
+
+        BPLib_EID_CopyEids(&(Bundle->blocks.PrimaryBlock.ReportToEID),
+                            BPLIB_EID_IPN_NONE_2D);
+
+        /* Set timestamp for bundle creation */
+        Bundle->blocks.PrimaryBlock.MonoTime.Time        = BPLib_TIME_GetMonotonicTime();
+        Bundle->blocks.PrimaryBlock.MonoTime.BootEra     = BPLib_TIME_GetBootEra();
+        Bundle->blocks.PrimaryBlock.Timestamp.CreateTime = BPLib_TIME_GetDtnTime(Bundle->blocks.PrimaryBlock.MonoTime);
+        Bundle->blocks.PrimaryBlock.Timestamp.SequenceNumber = Instance->Arp.SequenceNum++;
+
+        BPLib_NC_ReaderLock();
+        if (Instance->Arp.SequenceNum > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM])
+        {
+            Instance->Arp.SequenceNum = 0;
+        }
+        BPLib_NC_ReaderUnlock();
+
+        /* Add an age block if needed - no other extension blocks allowed in admin records */
+        if (Bundle->blocks.PrimaryBlock.Timestamp.CreateTime == 0)
+        {
+            Bundle->blocks.ExtBlocks[0].Header.BlockType = BPLib_BlockType_Age;
+            Bundle->blocks.ExtBlocks[0].Header.CrcType = BPLIB_ADMIN_RECORD_CRC_TYPE;
+            Bundle->blocks.ExtBlocks[0].Header.BlockNum = BPLIB_ADMIN_RECORD_AGE_BLOCK_NUM;
+            Bundle->blocks.ExtBlocks[0].Header.BlockProcFlags = BPLIB_ADMIN_RECORD_BLOCK_FLAGS;          
+
+            Bundle->blocks.ExtBlocks[0].Header.RequiresEncode = true;
+        }
+
+        /* === Set up payload === */
+        Bundle->blocks.PayloadHeader.RequiresEncode = true;
+
+        /* Configure payload block header */
+        Bundle->blocks.PayloadHeader.BlockType       = BPLib_BlockType_Payload;
+        Bundle->blocks.PayloadHeader.BlockNum        = 1;
+        Bundle->blocks.PayloadHeader.BlockProcFlags  = BPLIB_ADMIN_RECORD_BLOCK_FLAGS;
+        Bundle->blocks.PayloadHeader.CrcType         = BPLIB_ADMIN_RECORD_CRC_TYPE;
+
+        /* Set payload size for CRC operations */
+        Bundle->blocks.PayloadHeader.BlockOffsetStart = 0;
+        Bundle->blocks.PayloadHeader.BlockOffsetEnd   = sizeof(BPLib_ARP_AdminRecord_t) - 1;
+
+        /* === Put the constructed bundle on the job queue === */
+
+        Status = BPLib_QM_CreateJob(Instance, Bundle, CHANNEL_IN_PI_TO_EBP, QM_PRI_NORMAL, QM_WAIT_FOREVER);
+        if (Status != BPLIB_SUCCESS)
+        { /* If something failed, cease bundle processing and free memory */
+            BPLib_MEM_BundleFree(&(Instance->pool), Bundle);
+
+            BPLib_EM_SendEvent(BPLIB_ARP_CREATE_JOB_ERR,
+                                BPLib_EM_EventType_INFORMATION,
+                                "Error putting an in-progress CCS on the job queue, RC = %d",
+                                Status);
+
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+        }
+        else
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_CCS, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_CUSTODY_SIGNAL, 
+                                                                InProgressCcs->BundlesInCcs);
+        }
+    }
+    else
+    { /* BPLib_MEM_BundleAlloc returned NULL */
+        BPLib_EM_SendEvent(BPLIB_ARP_NULL_BUNDLE_ERR,
+                            BPLib_EM_EventType_ERROR,
+                            "Could not be allocated a bundle while processing an in-progress CCS");
+    }
+
+    return;
 }
