@@ -183,7 +183,9 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
         }
         else
         {
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_CUSTODY, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_CCS, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_CUSTODY_SIGNAL, 
+                                                                InProgressCcs->BundlesInCcs);
         }
     }
     else

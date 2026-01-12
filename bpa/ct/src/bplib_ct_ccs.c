@@ -52,6 +52,7 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     OpenCcs->InProgress          = false;
     OpenCcs->Size                = 0;
     OpenCcs->CollectionStartTime = 0;
+    OpenCcs->BundlesInCcs        = 0;
 
     return;
 }
@@ -124,6 +125,8 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
             OpenCcs->Size += 2;
         }
     }
+
+    OpenCcs->BundlesInCcs++;
 
     /* Trigger CCS generation based on size */
     if (OpenCcs->Size >= OpenCcs->MaxSize)

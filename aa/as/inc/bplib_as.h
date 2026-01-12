@@ -120,7 +120,7 @@ typedef enum
     BUNDLE_COUNT_GENERATED_CRS_DELIVERED   = 62, /** \brief Number of delivered bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
     BUNDLE_COUNT_GENERATED_CRS_FORWARDED   = 63, /** \brief Number of forwarded bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
     BUNDLE_COUNT_GENERATED_CRS_RECEIVED    = 64, /** \brief Number of received bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
-    BUNDLE_COUNT_GENERATED_CUSTODY         = 65, /** \brief Number of Custody Signal Bundles generated since the last counter reset */
+    BUNDLE_COUNT_GENERATED_CCS             = 65, /** \brief Number of Custody Signal Bundles generated since the last counter reset */
     BUNDLE_COUNT_IN_CUSTODY                = 66, /** \brief Number of bundles in custody */
     BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED     = 67, /** \brief Number of CRS bundles not sent because sending would exceed a maximum rate. */
     BUNDLE_COUNT_RECEIVED_CRS              = 68, /** \brief Number of Compressed Reporting Signals (CRSs) received since last counter reset. */
