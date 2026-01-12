@@ -45,6 +45,13 @@
 /* =========== */
 
 extern BPLib_NC_MibPerNodeConfig_t TestMibConfigPnTbl;
+extern BPLib_Instance_t BplibInst;
+
+/* ======== */
+/* Handlers */
+/* ======== */
+
+void UT_Handler_BPLib_MEM_CopyOutFromOffset(void *UserObj, UT_EntryKey_t FuncKey, const UT_StubContext_t *Context);
 
 /* ==================== */
 /* Function Definitions */

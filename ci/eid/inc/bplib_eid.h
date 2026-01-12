@@ -103,8 +103,8 @@ typedef struct
 /* =========== */
 
 extern const BPLib_EID_t BPLIB_EID_DTN_NONE;
-extern const BPLib_EID_t BPLIB_EID_IPN_2D_NONE;
-extern const BPLib_EID_t BPLIB_EID_IPN_3D_NONE;
+extern const BPLib_EID_t BPLIB_EID_IPN_NONE_2D;
+extern const BPLib_EID_t BPLIB_EID_IPN_NONE_3D;
 extern       BPLib_EID_t BPLIB_EID_INSTANCE;
 
 /* =================== */
@@ -159,13 +159,13 @@ bool BPLib_EID_IsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID_Ref
 bool BPLib_EID_NodeIsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID_Reference);
 
 /**
- * \brief     Copy one EID's values to another EID
- * \details   This function assumes the reference EID is value
- * \param[in] EID_Actual (BPLib_EID_t *) EID that is being copied into
- * \param[in] EID_Reference (BPLib_EID_t) EID that is providing the values to copy
- * \ref       BPLib_EID_t
+ * \brief      Copy one EID's values to another EID
+ * \details    This function assumes the reference EID is value
+ * \param[out] EID_Destination EID pointer that is being copied into
+ * \param[in]  EID_Source      EID that is providing the values to copy
+ * \ref        BPLib_EID_t
  */
-void BPLib_EID_CopyEids(BPLib_EID_t *EID_Actual, BPLib_EID_t EID_Reference);
+void BPLib_EID_CopyEids(BPLib_EID_t *EID_Destination, BPLib_EID_t EID_Source);
 
 void BPLib_EID_CopyEidPatterns(BPLib_EID_Pattern_t *EID_Actual, BPLib_EID_Pattern_t EID_Reference);
 

@@ -31,7 +31,10 @@
 #include "bplib_pdb.h"
 #include "bplib_as.h"
 #include "bplib_em.h"
+#include "bplib_arp.h"
 #include "bplib_stor.h"
+#include "bplib_nc.h"
+#include "bplib_inst.h"
 
 /*
 ** Function Definitions
@@ -46,58 +49,75 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
         OpenCcs->BundleSeqCollections[i].SeqRangeLen = 0;
     }
 
-    OpenCcs->InProgress = false;
-    OpenCcs->Size = 0;
+    OpenCcs->InProgress          = false;
+    OpenCcs->Size                = 0;
+    OpenCcs->CollectionStartTime = 0;
+    OpenCcs->BundlesInCcs        = 0;
 
     return;
 }
 
-BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t SequenceNum,
-                          uint64_t SequenceId, BPLib_CT_DispositionCode_t DispositionCode)
+BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsIdx,
+                                        uint32_t ContactId,
+                                        BPLib_CustodyBlockData_t* CtebPtr,
+                                        BPLib_CT_DispositionCode_t DispositionCode)
 {
     BPLib_CT_BundleSeqCollection_t *Collection;
+    BPLib_CT_SeqCollectionIdx_t     DispCodeIdx;
+    BPLib_CT_OpenCcs_t*             OpenCcs;
 
-    if (DispositionCode == BPLib_CT_CustodyAccepted)
-    {
-        Collection = &(OpenCcs->BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx]);
-    }
-    else
-    {
-        Collection = &(OpenCcs->BundleSeqCollections[BPLib_CT_CustodyRefused_Idx]);
-    }
+    OpenCcs     = &(Instance->Ct.OpenCcss[OpenCcsIdx]);
+    DispCodeIdx = BPLib_ARP_GetDispCodeIdx(DispositionCode);
+    Collection  = &(OpenCcs->BundleSeqCollections[DispCodeIdx]);
 
     /* Sanity checks */
     if ((Collection->SeqRangeLen != 0 && Collection->SeqRangeLen % 2 != 1) ||
         Collection->SeqRangeLen >= (BPLIB_CT_MAX_SEQ_RANGE_LEN - 1) ||
-        SequenceNum < Collection->LastSeqNumAdded)
+        CtebPtr->BundleSeqNum < Collection->LastSeqNumAdded)
     {
         BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
                 "Open CCS data failed sanity checks, check for memory corruption.");
+
         return BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 
     /* If OpenCcs is empty, add first sequence number */
     if (Collection->SeqRangeLen == 0)
     {
-        Collection->SeqId = SequenceId;
-        Collection->FirstSeqNum = SequenceNum;
+        Collection->SeqId       = CtebPtr->BundleSeqId;
+        Collection->FirstSeqNum = CtebPtr->BundleSeqNum;
         Collection->SeqRange[0] = 1;
         Collection->SeqRangeLen = 1;
 
         /* Update full CCS size accordingly */
         OpenCcs->Size += 1;
+
+        /* Set the collection start time for a time trigger */
+        OpenCcs->CollectionStartTime = BPLib_TIME_GetMonotonicTime();
+
+        /* Set the disposition code of the new bundle sequence collection */
+        OpenCcs->BundleSeqCollections[DispCodeIdx].DispositionCode = DispositionCode;
+
+        /* Store the contact ID for expiration checking */
+        OpenCcs->ContactId = ContactId;
+
+        /* Set the maximum collection size for a size trigger */
+        BPLib_NC_ReaderLock();
+        OpenCcs->MaxSize = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].CSSizeTrigger;
+        OpenCcs->MaxTime = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].CSTimeTrigger;
+        BPLib_NC_ReaderUnlock();
     }
     else
     {
         /* If we received the previous sequence number, increment the relevant sequence range value */
-        if (SequenceNum == (Collection->LastSeqNumAdded + 1))
+        if (CtebPtr->BundleSeqNum == (Collection->LastSeqNumAdded + 1))
         {
             Collection->SeqRange[Collection->SeqRangeLen - 1]++;
         }
         /* If a gap in sequence numbers is detected, record missing sequence length */
         else
         {
-            Collection->SeqRange[Collection->SeqRangeLen] = SequenceNum - (Collection->LastSeqNumAdded + 1);
+            Collection->SeqRange[Collection->SeqRangeLen] = CtebPtr->BundleSeqNum - (Collection->LastSeqNumAdded + 1);
             Collection->SeqRange[Collection->SeqRangeLen + 1] = 1;
             Collection->SeqRangeLen += 2;
 
@@ -106,18 +126,30 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs, uint64_t Seque
         }
     }
 
-    Collection->LastSeqNumAdded = SequenceNum;
+    OpenCcs->BundlesInCcs++;
+
+    /* Trigger CCS generation based on size */
+    if (OpenCcs->Size >= OpenCcs->MaxSize)
+    {
+        BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
+    }
+
+    Collection->LastSeqNumAdded = CtebPtr->BundleSeqNum;
 
     return BPLIB_SUCCESS;
 }
 
-size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAdminEID, uint64_t SequenceId)
+size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdminEID,
+                                uint64_t SequenceId)
 {
-    size_t OpenCcsIdx;
-    size_t FirstUnusedCcs = BPLIB_CT_MAX_OPEN_CCS;
-    size_t MaxCcsSize = 0;
-    size_t LargestCcsIdx = BPLIB_CT_MAX_OPEN_CCS;
-    size_t RetCcsIdx;
+    size_t              OpenCcsIdx;
+    size_t              FirstUnusedCcs = BPLIB_CT_MAX_OPEN_CCS;
+    size_t              MaxCcsSize     = 0;
+    size_t              LargestCcsIdx  = BPLIB_CT_MAX_OPEN_CCS;
+    size_t              RetCcsIdx;
+    BPLib_CT_Context_t* Context;
+
+    Context = &(Instance->Ct);
 
     for (OpenCcsIdx = 0; OpenCcsIdx < BPLIB_CT_MAX_OPEN_CCS; OpenCcsIdx++)
     {
@@ -151,32 +183,31 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_CT_Context_t *Context, BPLib_EID_t *SourceAd
     else if (FirstUnusedCcs != BPLIB_CT_MAX_OPEN_CCS)
     {
         Context->OpenCcss[FirstUnusedCcs].InProgress = true;
-        BPLib_EID_CopyEids(SourceAdminEID, Context->OpenCcss[FirstUnusedCcs].SourceAdminEid);
+        BPLib_EID_CopyEids(&(Context->OpenCcss[FirstUnusedCcs].SourceAdminEid), *SourceAdminEID);
 
         RetCcsIdx = FirstUnusedCcs;
     }
     /* No CCSs were available, send the largest one and wipe it to use */
     else
     {
-        BPLib_CT_BuildAndSendOpenCcs(&(Context->OpenCcss[LargestCcsIdx]));
-
+        BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, &(Context->OpenCcss[LargestCcsIdx]));
         RetCcsIdx = LargestCcsIdx;
     }
 
     return RetCcsIdx;
 }
 
-void BPLib_CT_BuildAndSendOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
+void BPLib_CT_BuildAndSendOpenCcs_Impl(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs)
 {
-    /* Have ARP build CCS and send it TODO */
-
+    /* Have ARP build CCS and send the open CCS */
+    BPLib_ARP_ProcessInProgressCcs(Instance, OpenCcs);
     BPLib_CT_ResetOpenCcs(OpenCcs);
 
     return;
 }
 
 BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
-                                        BPLib_CT_BundleSeqCollection_t *SeqCollection)
+                                                    BPLib_CT_BundleSeqCollection_t *SeqCollection)
 {
     size_t SeqRangeIdx;
     size_t CurrSeqNum;
@@ -199,7 +230,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             {
                 BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_ERR_EID, BPLib_EM_EventType_ERROR,
                     "Error, bundle sequence number %ld with sequence ID %ld does not exist in CTDB.",
-                    SeqCollection->SeqId, NextSeqNum);
+                    NextSeqNum, SeqCollection->SeqId);
             }
 
             /* Even sequence range numbers indicate sequences that are *included* */
@@ -237,6 +268,8 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REJECTED, 1);
                 }
+
+                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
             }
             /* Odd sequence range numbers indicate sequences that are *excluded* */
             else

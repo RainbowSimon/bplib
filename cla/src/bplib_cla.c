@@ -204,7 +204,7 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData)
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     /*
     1) Checks if path is available for assignment
@@ -221,7 +221,14 @@ BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
         (void) BPLib_CLA_GetContactRunState(ContactId, &RunState); /* Ignore return since ContactId is already valid */
 
         if (RunState == BPLIB_CLA_TORNDOWN)
-        { /* Contact has been not been setup if the state is anything other than torn down */
+        { 
+            /* Contact has been not been setup if the state is anything other than torn down */
+            
+            BPLib_NC_ReaderLock();
+            memcpy(&Inst->ContCtxt[ContactId].Config, 
+                &BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId], sizeof(BPLib_CLA_ContactsSet_t));
+            BPLib_NC_ReaderUnlock();  
+
             Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactSetup(ContactId);
 
             if (Status == BPLIB_SUCCESS)
@@ -317,10 +324,11 @@ BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId
     return Status;
 }
 
-BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t* Instance, uint32_t ContactId)
 {
     BPLib_Status_t              Status;
     BPLib_CLA_ContactRunState_t RunState;
+    uint8_t                     OpenCcsCtrl;
 
     if (ContactId < BPLIB_MAX_NUM_CONTACTS)
     {
@@ -330,6 +338,16 @@ BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId)
             Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactStop(ContactId);
             if (Status == BPLIB_SUCCESS)
             {
+                /* Send all remaining open CCSs */
+                for (OpenCcsCtrl = 0; OpenCcsCtrl < BPLIB_CT_MAX_OPEN_CCS; OpenCcsCtrl++)
+                {
+                    if (Instance->Ct.OpenCcss[OpenCcsCtrl].InProgress &&
+                        Instance->Ct.OpenCcss[OpenCcsCtrl].ContactId == ContactId)
+                    {
+                        BPLib_CT_BuildAndSendOpenCcs(Instance, &(Instance->Ct.OpenCcss[OpenCcsCtrl]));
+                    }
+                }
+
                 (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STOPPED); /* Ignore return since pre-call run state is valid */
             }
         }

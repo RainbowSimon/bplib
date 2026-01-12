@@ -43,27 +43,34 @@ static BPLib_QM_JobState_t ContactIn_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
+    BPLib_QM_JobState_t JobState = CONTACT_IN_CT_TO_STOR;
 
+    BPLib_NC_ReaderLock();
+
+    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == false)
+    {
+        /* Don't do any custody operations, just pass bundles through */
+        BPLib_NC_ReaderUnlock();
+    }
     /* Check whether the bundle is an administrative record destined for this node */
-    if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&
+    else if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&
         BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
     {
-        BPLib_ARP_AdminRecord_t BundleAdminRecord;
-
-        /* Recover the admin record from the bundle */
-        memcpy((void*) &BundleAdminRecord, (void*) (Bundle->blob->user_data.BigData), sizeof(BPLib_ARP_AdminRecord_t));
+        BPLib_NC_ReaderUnlock();
 
         /* Send the deserialized CCS off to CT */
-        (void) BPLib_CT_ProcessCcs(Inst, &BundleAdminRecord.AdminRecordBody.CCS);
-
+        (void) BPLib_CT_ProcessCcs(Inst, &(Bundle->blocks.AdminRecordPayload->AdminRecordBody.CCS));
+                    
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);        
         BPLib_MEM_BundleFree(&Inst->pool, Bundle);
         
-        return NO_NEXT_STATE;
+        JobState = NO_NEXT_STATE;
     }
     else
     {
+        BPLib_NC_ReaderUnlock();
+
         Status = BPLib_CT_ProcessNewBundle(Inst, Bundle);
 
         if (Status != BPLIB_SUCCESS)
@@ -72,37 +79,51 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
 
-            return NO_NEXT_STATE;
+            JobState = NO_NEXT_STATE;
         }
     }
     
-    return CONTACT_IN_CT_TO_STOR;
+    return JobState;
 }
 
 static BPLib_QM_JobState_t ContactOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
+    BPLib_QM_JobState_t JobState = CONTACT_OUT_CT_TO_EBP;
 
-    Status = BPLib_CT_UpdateBundle(Inst, Bundle);
+    BPLib_NC_ReaderLock();
 
-    if (Status != BPLIB_SUCCESS)
+    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == false)
     {
-        BPLib_MEM_BundleFree(&Inst->pool, Bundle);
-        return NO_NEXT_STATE;
+        BPLib_NC_ReaderUnlock();
+
+        /* Don't do any custody operations, just pass bundles through */
+    }
+    else
+    {
+        BPLib_NC_ReaderUnlock();
+
+        Status = BPLib_CT_UpdateBundle(Inst, Bundle);
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+            JobState = NO_NEXT_STATE;
+        }
     }
 
-    return CONTACT_OUT_CT_TO_EBP;
+    return JobState;
 }
 
 static BPLib_QM_JobState_t ContactOut_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
-    
+
     Status = BPLib_EBP_UpdateExtensionBlocks(Bundle);
 
     if (Status != BPLIB_SUCCESS)
     {
-        BPLib_EM_SendEvent(BPLIB_QM_EBP_OUT_ERR_EID, BPLib_EM_EventType_ERROR, 
+        BPLib_EM_SendEvent(BPLIB_QM_EBP_OUT_ERR_EID, BPLib_EM_EventType_ERROR,
                 "Error updating extension blocks, Status = %d.", Status);
     }
 
@@ -130,7 +151,7 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
         BPLib_MEM_BundleFree(&Inst->pool, Bundle);
         return NO_NEXT_STATE;
     }
-    
+
     return CHANNEL_IN_CT_TO_STOR;
 }
 
@@ -164,22 +185,19 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
     ** - If the bundle is for an available contact, deliver without storing
     ** - If the bundle if for an un-available contact or channel, store
     */
-    BPLib_NC_ReaderLock();
     DestEID = &Bundle->blocks.PrimaryBlock.DestEID;
     if (BPLib_EID_NodeIsMatch(DestEID, &BPLIB_EID_INSTANCE))
     {
         /* Go through each channel and find a match */
         for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
         {
-            if (BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[i].LocalServiceNumber == DestEID->Service)
+            if (Inst->ChanCtxt[i].Config.LocalServiceNumber == DestEID->Service)
             {
                 if (BPLib_PI_GetRegistrationState(Inst, i) == BPLIB_PI_PASSIVE_ABANDON)
                 {
                     BPLib_MEM_BundleFree(&Inst->pool, Bundle);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
-
-                    BPLib_NC_ReaderUnlock();
                     
                     return NO_NEXT_STATE;
                 }
@@ -188,7 +206,6 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                 {
                     /* We have a channel we can deliver to: forward without storing */
                     Bundle->Meta.EgressID = i;
-                    BPLib_NC_ReaderUnlock();
                     BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
 
                     return NO_NEXT_STATE;
@@ -207,7 +224,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
             {
                 for (j = 0; j < BPLIB_MAX_CONTACT_DEST_EIDS; j++)
                 {
-                    if (BPLib_EID_PatternIsMatch(DestEID, &BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[i].DestEIDs[j]))
+                    if (BPLib_EID_PatternIsMatch(DestEID, &Inst->ContCtxt[i].Config.DestEIDs[j]))
                     {
                         /* We have a contact we can deliver to: forward without storing */
                         Bundle->Meta.EgressID = i;
@@ -215,13 +232,11 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                         /* Custodial bundles still need to be stored, even during a loopback */
                         if (Bundle->Meta.IsCustodial)
                         {
-                            Bundle->Meta.RetransmitTime = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[i].RetransmitTimeout;
-                            BPLib_NC_ReaderUnlock();
+                            Bundle->Meta.RetransmitTime = Inst->ContCtxt[i].Config.RetransmitTimeout;
                             BPLib_STOR_StoreBundle(Inst, Bundle);
                         }
                         else
                         {
-                            BPLib_NC_ReaderUnlock();
                             BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
                         }
 
@@ -231,8 +246,6 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
             }
         }
     }
-
-    BPLib_NC_ReaderUnlock();
 
     /* Either no egress path was found or the bundle was custodial and must be stored */
     BPLib_STOR_StoreBundle(Inst, Bundle);

@@ -162,6 +162,8 @@ void BPLib_AS_InitializeReportsHkTlm(BPLib_Instance_t *Inst)
 
     BPLib_AS_NodeReportsPayload.BundleAgentAvailableStorage = BPLIB_MAX_STORED_BUNDLE_BYTES / 1000;
 
+    BPLib_AS_NodeReportsPayload.BundleAgentCtdbSize = BPLIB_CT_DB_MAX_ENTRIES * BPLIB_MEM_SMALL_BLK_SIZE;
+
     strncpy(BPLib_AS_NodeReportsPayload.SystemNodeName, 
                                 BPLIB_SYSTEM_NODE_NAME, BPLIB_MAX_STR_LENGTH);
     strncpy(BPLib_AS_NodeReportsPayload.SystemNodeOwner, 

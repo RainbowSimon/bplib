@@ -50,6 +50,8 @@ extern BPLib_ARP_AdminRecord_t AdminRecord;
 /* =================== */
 
 void BPLib_ARP_Test_VerifyIncrement(BPLib_EID_t EID, BPLib_AS_Counter_t Counter, uint32_t Amount, int16_t CallNum);
+void BPLib_ARP_Test_EIDs_EQ(BPLib_EID_t* Actual, BPLib_EID_t* Reference);
+void BPLIB_ARP_Test_BundleSequenceCollections_EQ(BPLib_CT_BundleSeqCollection_t* Actual, BPLib_CT_BundleSeqCollection_t* Reference);
 
 void BPLib_ARP_Test_Setup(void);
 void BPLib_ARP_Test_Teardown(void);

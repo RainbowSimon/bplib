@@ -48,8 +48,10 @@ extern BPLib_ChannelContactStatHkTlm_Payload_t BPLib_NC_ChannelContactStatsPaylo
  * \par Description
  *      Update the contact telemetry values to new contact configuration values
  *
+ * \param[in] Inst Pointer to bplib instance
+ * 
  */
-void BPLib_NC_UpdateContactHkTlm(void);
+void BPLib_NC_UpdateContactHkTlm(BPLib_Instance_t *Inst);
 
 /**
  * \brief Update channel telemetry
@@ -107,7 +109,7 @@ bool BPLib_NC_ValidParamMaxPayloadLength(BPLib_NC_MibPerNodeConfig_t *TblDataPtr
 bool BPLib_NC_ValidParamMaxBundleLength(BPLib_NC_MibPerNodeConfig_t *TblDataPtr);
 
 /**
- * \brief Validate PARAM_SET_NODE_DTN_TIME
+ * \brief Validate PARAM_SUPPORT_CUSTODY
  *
  * \param[in] TblDataPtr Pointer to Node MIB configuration
  *
@@ -115,18 +117,7 @@ bool BPLib_NC_ValidParamMaxBundleLength(BPLib_NC_MibPerNodeConfig_t *TblDataPtr)
  * \retval True MIB item is valid
  * \retval False MIB item is not valid
  */
-bool BPLib_NC_ValidParamSetNodeDtnTime(BPLib_NC_MibPerNodeConfig_t *TblDataPtr);
-
-/**
- * \brief Validate PARAM_SET_BEHAVIOR_EVENT_REPORTING
- *
- * \param[in] TblDataPtr Pointer to Node MIB configuration
- *
- * \return Execution status
- * \retval True MIB item is valid
- * \retval False MIB item is not valid
- */
-bool BPLib_NC_ValidParamSetBehaviorEventReporting(BPLib_NC_MibPerNodeConfig_t *TblDataPtr);
+bool BPLib_NC_ValidParamSupportCustody(BPLib_NC_MibPerNodeConfig_t *TblDataPtr);
 
 /**
  * \brief Validate PARAM_SET_MAX_LIFETIME

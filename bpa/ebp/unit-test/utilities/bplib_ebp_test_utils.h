@@ -33,13 +33,14 @@
 #include "bplib_ebp.h"
 #include "bplib_pi.h"
 #include "bplib_nc.h"
+#include "bplib_inst.h"
 
 
 /*
 ** Global Data
 */
 
-extern BPLib_PI_ChannelTable_t TestChanConfigPtr;
+extern BPLib_Instance_t Inst;
 
 
 /*

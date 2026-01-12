@@ -434,6 +434,7 @@ void Test_BPLib_CLA_ContactSetup_Nominal(void)
 {
     BPLib_Status_t Status;
     uint32_t       ContactId;
+    BPLib_Instance_t Inst;
 
     /* Set the ContactId to a valid value */
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
@@ -445,7 +446,7 @@ void Test_BPLib_CLA_ContactSetup_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_CLAP_ContactSetup), BPLIB_SUCCESS);
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactSetup(ContactId);
+    Status = BPLib_CLA_ContactSetup(&Inst, ContactId);
 
     /* Verify that Status is success */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -458,12 +459,13 @@ void Test_BPLib_CLA_ContactSetup_InvalidContactId(void)
 {
     BPLib_Status_t          Status;
     uint32_t                ContactId;
+    BPLib_Instance_t Inst;
 
     /* Set the ContactId to an invalid value */
     ContactId = BPLIB_MAX_NUM_CONTACTS + 1;
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactSetup(ContactId);
+    Status = BPLib_CLA_ContactSetup(&Inst, ContactId);
 
     /* Verify that Status is as expected */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_INVALID_CONT_ID_ERR);
@@ -479,6 +481,7 @@ void Test_BPLib_CLA_ContactSetup_InvalidRunState(void)
 {
     BPLib_Status_t Status;
     uint32_t       ContactId;
+    BPLib_Instance_t Inst;
 
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
 
@@ -486,7 +489,7 @@ void Test_BPLib_CLA_ContactSetup_InvalidRunState(void)
     BPLib_CLA_ContactRunStates[ContactId] = BPLIB_CLA_STARTED;
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactSetup(ContactId);
+    Status = BPLib_CLA_ContactSetup(&Inst, ContactId);
 
     /* Verify the execution status */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_CLA_INCORRECT_STATE);
@@ -505,6 +508,7 @@ void Test_BPLib_CLA_ContactSetup_CallbackError(void)
 {
     BPLib_Status_t          Status;
     uint32_t                ContactId;
+    BPLib_Instance_t Inst;
 
     /* Set the ContactId to a valid value */
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
@@ -516,7 +520,7 @@ void Test_BPLib_CLA_ContactSetup_CallbackError(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_CLAP_ContactSetup), BPLIB_CLA_IO_ERROR);
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactSetup(ContactId);
+    Status = BPLib_CLA_ContactSetup(&Inst, ContactId);
 
     /* Verify that Status is as expected */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_CLA_IO_ERROR);
@@ -599,35 +603,48 @@ void Test_BPLib_CLA_ContactStart_InvalidRunState(void)
 
 void Test_BPLib_CLA_ContactStop_Nominal(void)
 {
-    BPLib_Status_t Status;
-    uint32_t       ContactId;
+    BPLib_Status_t   Status;
+    uint32_t         ContactId;
+    BPLib_Instance_t Inst;
 
     /* Assign a valid contact ID */
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
+
+    /* Make some CCSs open */
+    memset(Inst.Ct.OpenCcss, 0, sizeof(BPLib_CT_OpenCcs_t) * BPLIB_CT_MAX_OPEN_CCS);
+    Inst.Ct.OpenCcss[0].InProgress = true;
+    Inst.Ct.OpenCcss[1].InProgress = true;
+
+    Inst.Ct.OpenCcss[0].ContactId = ContactId;
+    Inst.Ct.OpenCcss[1].ContactId = ContactId;
 
     /* Put the contact in a valid run state */
     BPLib_CLA_ContactRunStates[ContactId] = BPLIB_CLA_STARTED;
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactStop(ContactId);
+    Status = BPLib_CLA_ContactStop(&Inst, ContactId);
 
     /* Show that the contact was started successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
 
     /* Show that the run state transitioned */
     UtAssert_EQ(BPLib_CLA_ContactRunState_t, BPLib_CLA_ContactRunStates[ContactId], BPLIB_CLA_STOPPED);
+
+    /* Show that the 2 in-progress CCSs were sent */
+    UtAssert_STUB_COUNT(BPLib_CT_BuildAndSendOpenCcs, 2);
 }
 
 void Test_BPLib_CLA_ContactStop_InvalidContactId(void)
 {
-    BPLib_Status_t Status;
-    uint32_t ContactId;
+    BPLib_Status_t   Status;
+    uint32_t         ContactId;
+    BPLib_Instance_t Instance;
 
     /* Create an invalid contact ID */
     ContactId = BPLIB_MAX_NUM_CONTACTS + 1;
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactStop(ContactId);
+    Status = BPLib_CLA_ContactStop(&Instance, ContactId);
 
     /* Show that the function failed */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_INVALID_CONT_ID_ERR);
@@ -641,8 +658,9 @@ void Test_BPLib_CLA_ContactStop_InvalidContactId(void)
 
 void Test_BPLib_CLA_ContactStop_InvalidRunState(void)
 {
-    BPLib_Status_t Status;
-    uint32_t       ContactId;
+    BPLib_Status_t   Status;
+    uint32_t         ContactId;
+    BPLib_Instance_t Instance;
 
     /* Create a valid contact ID */
     ContactId = BPLIB_MAX_NUM_CONTACTS - 1;
@@ -651,7 +669,7 @@ void Test_BPLib_CLA_ContactStop_InvalidRunState(void)
     BPLib_CLA_ContactRunStates[ContactId] = BPLIB_CLA_TORNDOWN;
 
     /* Run the function under test */
-    Status = BPLib_CLA_ContactStop(ContactId);
+    Status = BPLib_CLA_ContactStop(&Instance, ContactId);
 
     /* Show that the function failed */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_CLA_INCORRECT_STATE);

@@ -209,8 +209,6 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     }
 
     /* Determine which channel or contact's batch we're examining */
-    BPLib_NC_ReaderLock();
-
     CacheInst = &Inst->BundleStorage;
 
     if (LocalDelivery)
@@ -218,8 +216,8 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
         LoadBatch           = &(CacheInst->ChannelLoadBatches[EgressID]);
         LocalEID.MaxNode    = BPLIB_EID_INSTANCE.Node;
         LocalEID.MinNode    = BPLIB_EID_INSTANCE.Node;
-        LocalEID.MaxService = BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[EgressID].LocalServiceNumber;
-        LocalEID.MinService = BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[EgressID].LocalServiceNumber;
+        LocalEID.MaxService = Inst->ChanCtxt[EgressID].Config.LocalServiceNumber;
+        LocalEID.MinService = Inst->ChanCtxt[EgressID].Config.LocalServiceNumber;
         DestEIDs            = &LocalEID;
         NumEIDs             = 1;
         EgressQueue         = &(Inst->ChannelEgressJobs[EgressID]);
@@ -227,12 +225,10 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     else
     {
         LoadBatch   = &(CacheInst->ContactLoadBatches[EgressID]);
-        DestEIDs    = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[EgressID].DestEIDs;
+        DestEIDs    = Inst->ContCtxt[EgressID].Config.DestEIDs;
         NumEIDs     = BPLIB_MAX_CONTACT_DEST_EIDS;
         EgressQueue = &(Inst->ContactEgressJobs[EgressID]);
     }
-
-    BPLib_NC_ReaderUnlock();
 
     pthread_mutex_lock(&CacheInst->lock);
     
@@ -614,15 +610,11 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
     }
 
     pthread_mutex_lock(&(Inst->BundleStorage.lock));
-    BPLib_NC_ReaderLock();
 
     Status = BPLib_SQL_SetNewRetransmitTrigger(Inst, ContactId,
-                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].DestEIDs,
-                BPLIB_MAX_CONTACT_DEST_EIDS, 
-                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].RetransmitTimeout,
-                &NumUpdated);
+                Inst->ContCtxt[ContactId].Config.DestEIDs, BPLIB_MAX_CONTACT_DEST_EIDS, 
+                Inst->ContCtxt[ContactId].Config.RetransmitTimeout, &NumUpdated);
 
-    BPLib_NC_ReaderUnlock();
     pthread_mutex_unlock(&(Inst->BundleStorage.lock));
 
     if (Status == BPLIB_SUCCESS)

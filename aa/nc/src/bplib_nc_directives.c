@@ -771,11 +771,11 @@ void BPLib_NC_RemoveLatency(const BPLib_RemoveLatency_Payload_t Payload)
     */
 }
 
-void BPLib_NC_ContactSetup(const BPLib_ContactSetup_Payload_t Payload)
+void BPLib_NC_ContactSetup(BPLib_Instance_t *Inst, const BPLib_ContactSetup_Payload_t Payload)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_CLA_ContactSetup(Payload.ContactId);
+    Status = BPLib_CLA_ContactSetup(Inst, Payload.ContactId);
 
     if (Status == BPLIB_SUCCESS)
     {
@@ -824,11 +824,11 @@ void BPLib_NC_ContactStart(BPLib_Instance_t *Inst, const BPLib_ContactStart_Payl
     }
 }
 
-void BPLib_NC_ContactStop(const BPLib_ContactStop_Payload_t Payload)
+void BPLib_NC_ContactStop(BPLib_Instance_t* Inst, const BPLib_ContactStop_Payload_t Payload)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_CLA_ContactStop(Payload.ContactId);
+    Status = BPLib_CLA_ContactStop(Inst, Payload.ContactId);
 
     if (Status == BPLIB_SUCCESS)
     {
@@ -1184,6 +1184,7 @@ void BPLib_NC_SendChannelContactStatHk(BPLib_Instance_t *Inst)
     }
 
     BPLib_NC_UpdateChannelHkTlm(Inst);
+    BPLib_NC_UpdateContactHkTlm(Inst);
 
     Status = BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendChannelContactPkt(&BPLib_NC_ChannelContactStatsPayload);
 
