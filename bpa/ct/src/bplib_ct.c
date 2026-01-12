@@ -91,6 +91,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     BPLib_CustodyBlockData_t *CtebPtr;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     BPLib_CT_DispositionCode_t DispCode;
+    char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
 
     if (Bundle == NULL || Inst == NULL)
     {
@@ -100,12 +101,15 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Set bundle ID for both custodial and non-custodial bundles */
     (void) BPLib_CT_SetBundleId(Bundle);
 
+    BPLib_BI_GetBundleInfo(Bundle, BundleInfo, BPLIB_MAX_BUNDLE_INFO_STR_LENGTH);
+
     /* Check if there's storage left */
     if ((Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
         BPLib_EM_SendEvent(BPLIB_CT_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
-                            "Cannot accept %ld byte bundle, not enough storage remaining (%ld bytes).",
-                            Bundle->Meta.TotalBytes, Inst->BundleStorage.BytesStorageInUse);
+                            "Cannot accept %ld byte bundle, not enough storage remaining (%ld bytes). %s.",
+                            Bundle->Meta.TotalBytes, Inst->BundleStorage.BytesStorageInUse,
+                            BundleInfo);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, 1);
 
         /* Additional counters handled by QM job */
@@ -145,7 +149,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     else if (Inst->Ct.CurrDbSize >= BPLIB_CT_DB_MAX_ENTRIES)
     {
         BPLib_EM_SendEvent(BPLIB_CT_NO_MEM_ERR_EID, BPLib_EM_EventType_ERROR,
-                            "Cannot accept bundle, CTDB is full.");
+                            "Cannot accept bundle, CTDB is full. %s", BundleInfo);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
 
     }
@@ -173,6 +177,8 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     if (DispCode == BPLib_CT_CustodyRefused)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
+        BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG, 
+                            "Bundle custody rejected. %s.", BundleInfo);
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 

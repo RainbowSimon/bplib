@@ -214,5 +214,6 @@
 #define BPLIB_CT_INV_EGRESS_ID_ERR_EID                  (755u)
 #define BPLIB_CT_NO_STOR_ERR_EID                        (756u)
 #define BPLIB_CT_NO_MEM_ERR_EID                         (757u)
+#define BPLIB_CT_REJECTED_DEBG_EID                      (758u)
 
 #endif /* BPLIB_EVENTIDS_H */
