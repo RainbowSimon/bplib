@@ -139,8 +139,6 @@ BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
     memcpy(&Inst->ChanCtxt[ChanId].Config, 
            &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId], sizeof(BPLib_PI_Config_t));
 
-    Inst->ChanCtxt[ChanId].RegState = BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].RegState;
-
     BPLib_NC_ReaderUnlock();  
 
     /* Do any framework-specific operations */
