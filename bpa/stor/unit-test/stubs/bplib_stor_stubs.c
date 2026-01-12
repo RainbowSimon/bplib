@@ -143,6 +143,34 @@ BPLib_Status_t BPLib_STOR_Init(BPLib_Instance_t *Inst)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_STOR_IsIngressEgressActive()
+ * ----------------------------------------------------
+ */
+bool BPLib_STOR_IsIngressEgressActive(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_STOR_IsIngressEgressActive, bool);
+
+    UT_GenStub_AddParam(BPLib_STOR_IsIngressEgressActive, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_STOR_IsIngressEgressActive, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_STOR_IsIngressEgressActive, bool);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_STOR_SetLastActiveTime()
+ * ----------------------------------------------------
+ */
+void BPLib_STOR_SetLastActiveTime(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_AddParam(BPLib_STOR_SetLastActiveTime, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_STOR_SetLastActiveTime, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_STOR_SetNewRetransmitTrigger()
  * ----------------------------------------------------
  */

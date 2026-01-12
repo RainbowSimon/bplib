@@ -338,10 +338,11 @@ void BPLib_NC_ContactStart(BPLib_Instance_t *Inst, const BPLib_ContactStart_Payl
   * \brief     Stop transferring bundles, stop requesting BI for output queue bundles, and notify BI of incomplete actions
   * \details   Node Configuration Contact Stop command
   * \note      This command is currently unimplemented and only returns BPLIB_SUCCESS
+  * \param[in] Inst Pointer to BPLib instance that contains open CCSs to close
   * \param[in] Payload BPLib_ContactStop_Payload_t type found in bplib_nc_payloads.h
   * \return    void
   */
-void BPLib_NC_ContactStop(const BPLib_ContactStop_Payload_t Payload);
+void BPLib_NC_ContactStop(BPLib_Instance_t* Inst, const BPLib_ContactStop_Payload_t Payload);
 
 /**
   * \brief     Disestablish CLA, free all CLA resources, discard output queue, and delete custody timers

@@ -46,6 +46,48 @@ BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t Contac
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_BuildAndSendOpenCcs()
+ * ----------------------------------------------------
+ */
+void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t *Instance, BPLib_CT_OpenCcs_t *OpenCcs)
+{
+    UT_GenStub_AddParam(BPLib_CT_BuildAndSendOpenCcs, BPLib_Instance_t *, Instance);
+    UT_GenStub_AddParam(BPLib_CT_BuildAndSendOpenCcs, BPLib_CT_OpenCcs_t *, OpenCcs);
+
+    UT_GenStub_Execute(BPLib_CT_BuildAndSendOpenCcs, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_CheckCcsTimeout()
+ * ----------------------------------------------------
+ */
+void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t *Instance)
+{
+    UT_GenStub_AddParam(BPLib_CT_CheckCcsTimeout, BPLib_Instance_t *, Instance);
+
+    UT_GenStub_Execute(BPLib_CT_CheckCcsTimeout, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_DeleteBundleFromCtdb()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_DeleteBundleFromCtdb, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CT_DeleteBundleFromCtdb, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_CT_DeleteBundleFromCtdb, uint32_t, BundleId);
+
+    UT_GenStub_Execute(BPLib_CT_DeleteBundleFromCtdb, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_DeleteBundleFromCtdb, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_CT_Init()
  * ----------------------------------------------------
  */

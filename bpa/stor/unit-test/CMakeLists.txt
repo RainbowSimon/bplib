@@ -84,6 +84,7 @@ target_link_libraries(coverage-bplib_stor-testrunner PUBLIC
    bplib_mem_stubs
    bplib_time_stubs
    bplib_cla_stubs
+   bplib_ct_stubs
    -lsqlite3
 )
 

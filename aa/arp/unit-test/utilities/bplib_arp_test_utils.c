@@ -55,11 +55,40 @@ void BPLib_ARP_Test_VerifyIncrement(BPLib_EID_t EID, BPLib_AS_Counter_t Counter,
     }
 }
 
+void BPLib_ARP_Test_EIDs_EQ(BPLib_EID_t* Actual, BPLib_EID_t* Reference)
+{
+    UtAssert_EQ(uint64_t , Actual->Scheme, Reference->Scheme);
+    UtAssert_EQ(uint64_t , Actual->IpnSspFormat, Reference->IpnSspFormat);
+    UtAssert_EQ(uint64_t , Actual->Allocator, Reference->Allocator);
+    UtAssert_EQ(uint64_t , Actual->Node, Reference->Node);
+    UtAssert_EQ(uint64_t , Actual->Service, Reference->Service);
+}
+
+void BPLIB_ARP_Test_BundleSequenceCollections_EQ(BPLib_CT_BundleSeqCollection_t* Actual, BPLib_CT_BundleSeqCollection_t* Reference)
+{
+    uint8_t SeqRangeEntry;
+
+    UtAssert_EQ(uint64_t, Actual->SeqId, Reference->SeqId);
+    UtAssert_EQ(uint64_t, Actual->FirstSeqNum, Reference->FirstSeqNum);
+    UtAssert_EQ(size_t, Actual->SeqRangeLen, Reference->SeqRangeLen);
+
+    for (SeqRangeEntry = 0; SeqRangeEntry < Reference->SeqRangeLen; SeqRangeEntry++)
+    {
+        UtAssert_EQ(uint64_t,
+                    Actual->SeqRange[SeqRangeEntry],
+                    Reference->SeqRange[SeqRangeEntry]);
+    }
+
+    UtAssert_EQ(size_t, Actual->LastSeqNumAdded, Reference->LastSeqNumAdded);
+    UtAssert_EQ(BPLib_CT_DispositionCode_t, Actual->DispositionCode, Reference->DispositionCode);
+}
+
 void BPLib_ARP_Test_Setup(void)
 {
     /* Initialize test environment to default state for every test */
     UT_ResetState(0);
 
+    /* Initialize the CCS Administrative Record */
     AdminRecord.AdminRecordType = BPLib_CT_CcsRecordTypeCode;
 
     AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqId           = 1;

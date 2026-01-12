@@ -233,18 +233,18 @@ bool BPLib_EID_NodeIsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID
             EID_Actual->Node         == EID_Reference->Node);
 }
 
-void BPLib_EID_CopyEids(BPLib_EID_t *EID_Actual, BPLib_EID_t EID_Reference)
+void BPLib_EID_CopyEids(BPLib_EID_t *EID_Destination, BPLib_EID_t EID_Source)
 {
-    if (EID_Actual == NULL)
+    if (EID_Destination == NULL)
     {
         return;
     }
 
-    EID_Actual->Allocator = EID_Reference.Allocator;
-    EID_Actual->IpnSspFormat = EID_Reference.IpnSspFormat;
-    EID_Actual->Node = EID_Reference.Node;
-    EID_Actual->Scheme = EID_Reference.Scheme;
-    EID_Actual->Service = EID_Reference.Service;
+    EID_Destination->Allocator    = EID_Source.Allocator;
+    EID_Destination->IpnSspFormat = EID_Source.IpnSspFormat;
+    EID_Destination->Node         = EID_Source.Node;
+    EID_Destination->Scheme       = EID_Source.Scheme;
+    EID_Destination->Service      = EID_Source.Service;
 }
 
 void BPLib_EID_CopyEidPatterns(BPLib_EID_Pattern_t *EID_Actual, BPLib_EID_Pattern_t EID_Reference)

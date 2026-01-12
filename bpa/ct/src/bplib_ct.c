@@ -30,7 +30,7 @@
 #include "bplib_pdb.h"
 #include "bplib_as.h"
 #include "bplib_inst.h"
-
+#include "bplib_nc.h"
 
 /*
 ** Function Definitions
@@ -45,8 +45,8 @@ BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
 
     memset(&(Inst->Ct), 0, sizeof(BPLib_CT_Context_t));
 
-    pthread_mutex_init(&Inst->Ct.DbLock, NULL);
- 
+    pthread_mutex_init(&Inst->Ct.Lock, NULL);
+
     BPLib_RBT_InitRoot(&(Inst->Ct.SeqTreeRoot));
     BPLib_RBT_InitRoot(&(Inst->Ct.IdTreeRoot));
 
@@ -134,7 +134,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Default to refused custody */
     DispCode = BPLib_CT_CustodyRefused;
 
-    pthread_mutex_lock(&Inst->Ct.DbLock);
+    pthread_mutex_lock(&Inst->Ct.Lock);
 
     /* Reject custody due to lack of storage */
     if (Status == BPLIB_NO_STOR_ERR)
@@ -150,7 +150,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
 
     }
     /* Reject duplicate bundles */
-    else if (BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+    else if (BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
                     Bundle->blocks.PrimaryBlock.BundleId, &DbEntry) == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REDUNDANT, 1);
@@ -164,10 +164,11 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Else PDB rejected custody */
 
     /* Add to an open CCS to confirm either acceptance or rejection */
-    OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(&(Inst->Ct), &(CtebPtr->BlockSrcAdminEID),
-                                            CtebPtr->BundleSeqId);
-    Status = BPLib_CT_AddToOpenCcs(&(Inst->Ct.OpenCcss[OpenCcsIdx]), CtebPtr->BundleSeqNum, 
-                        CtebPtr->BundleSeqId, DispCode);
+    OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(Inst, &(CtebPtr->BlockSrcAdminEID),
+                                        CtebPtr->BundleSeqId);
+
+    Status = BPLib_CT_AddToOpenCcs(Inst, OpenCcsIdx, Bundle->Meta.IngressID,
+                                    CtebPtr, DispCode);
 
     if (DispCode == BPLib_CT_CustodyRefused)
     {
@@ -175,16 +176,16 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 
-    pthread_mutex_unlock(&Inst->Ct.DbLock);
+    pthread_mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
 
 BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle)
 {
-    BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_Status_t            Status = BPLIB_SUCCESS;
     BPLib_CustodyBlockData_t *CtebPtr;
-    uint8_t ExtBlockIdx;
+    uint8_t                   ExtBlockIdx;
     uint64_t SeqId;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
 
@@ -209,10 +210,10 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         /* Update CTEB fields */
         if (Bundle->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
         {
-            pthread_mutex_lock(&Inst->Ct.DbLock);
+            pthread_mutex_lock(&Inst->Ct.Lock);
 
             /* Check if this is a bundle retransmission from storage or a new bundle */
-            Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+            Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
                                 Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
 
             if (Status == BPLIB_SUCCESS)
@@ -243,7 +244,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
                     "Bundle has an invalid egress ID %d, check for memory corruption.", Bundle->Meta.EgressID);
         }
 
-        pthread_mutex_unlock(&Inst->Ct.DbLock);
+        pthread_mutex_unlock(&Inst->Ct.Lock);
 
     }
 
@@ -269,7 +270,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
 
     /* Validate CCS here? TODO */
 
-    pthread_mutex_lock(&Inst->Ct.DbLock);
+    pthread_mutex_lock(&Inst->Ct.Lock);
 
     for (SeqCollectIdx = 0; SeqCollectIdx < Ccs->NumBundleSeqCollections; SeqCollectIdx++)
     {
@@ -282,7 +283,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
         Status = BPLib_CT_ProcessBundleSeqCollection(Inst, &(Ccs->BundleSeqCollections[SeqCollectIdx]));
     }
 
-    pthread_mutex_unlock(&Inst->Ct.DbLock);
+    pthread_mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
@@ -304,4 +305,60 @@ BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t Contac
     Inst->Ct.CurrActiveSeqIds[ContactId] = Inst->Ct.LastSeqCounterId;
 
     return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
+{
+    BPLib_CT_DbEntry_t *DbEntry = NULL;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), BundleId, &DbEntry);
+    if (Status == BPLIB_SUCCESS)
+    {
+        Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
+    }
+
+    return Status;
+}
+
+void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs)
+{
+    pthread_mutex_lock(&Instance->Ct.Lock);
+    BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
+    pthread_mutex_unlock(&Instance->Ct.Lock);
+}
+
+void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance)
+{
+    BPLib_CT_Context_t* Context;
+    size_t              OpenCcsIdx;
+    int64_t             TimeOpen;
+    BPLib_CT_OpenCcs_t* OpenCcs;
+
+    pthread_mutex_lock(&Instance->Ct.Lock);
+
+    Context = &(Instance->Ct);
+    for (OpenCcsIdx = 0; OpenCcsIdx < BPLIB_CT_MAX_OPEN_CCS; OpenCcsIdx++)
+    {
+        OpenCcs = &(Context->OpenCcss[OpenCcsIdx]);
+
+        /* Check whether in progress CCSs exceed the time trigger */
+        if (OpenCcs->InProgress == true && OpenCcs->CollectionStartTime != 0)
+        {
+            TimeOpen = BPLib_TIME_GetMonotonicTime() - OpenCcs->CollectionStartTime;
+
+            /* Check if the open CCS is due to be sent */
+            if (TimeOpen > OpenCcs->MaxTime)
+            {
+                BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
+            }
+        }
+    }
+
+    pthread_mutex_unlock(&Instance->Ct.Lock);
 }

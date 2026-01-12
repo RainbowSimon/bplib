@@ -207,7 +207,7 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
         Status = BPLib_CLA_GetContactRunState(ContId, &ContState);
         if (Status == BPLIB_SUCCESS && ContState != BPLIB_CLA_TORNDOWN)
         {
-            (void) BPLib_CLA_ContactStop(ContId);
+            (void) BPLib_CLA_ContactStop(Instance, ContId);
             (void) BPLib_CLA_ContactTeardown(Instance, ContId);
             (void) BPLib_CLA_SetContactRunState(ContId, BPLIB_CLA_TORNDOWN);
         }

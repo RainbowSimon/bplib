@@ -115,6 +115,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     BPLib_Status_t ReturnStatus;
     BPLib_Status_t PayloadDataCopyStatus;
     QCBOREncodeContext Context;
+    QCBOREncodeContext AdminContext;
     UsefulBuf InitStorage;
     UsefulBufC FinishBuffer;
     QCBORError QcborStatus;
@@ -122,6 +123,10 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     size_t TotalBytesCopied;
     size_t BytesLeftInOutputBuffer;
     size_t ByteStringCborHeadSize;
+    size_t PayloadSize;
+    UsefulOutBuf       EncodeBuffer;
+    UsefulBuf          MirrorStorage;
+    uint8_t            MirrorBuffer[BPLIB_MAX_PAYLOAD_SIZE];
 
     if ((StoredBundle == NULL) ||
         (OutputBuffer == NULL) ||
@@ -182,12 +187,30 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
             BytesLeftInOutputBuffer -= FinishBuffer.len;
         }
 
+        /* Encode admin records additionally in separate buffer */
+        if (StoredBundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
+        {
+            /* Mirror the encoder with a UsefulOutBuf to handle errors */
+            MirrorStorage.ptr = MirrorBuffer;
+            MirrorStorage.len = OutputBufferSize;
+            QCBOREncode_Init(&AdminContext, MirrorStorage);
+            UsefulOutBuf_Init(&EncodeBuffer, MirrorStorage);
+
+            ReturnStatus = BPLib_CBOR_EncodeAdminRecord(&AdminContext, &EncodeBuffer, StoredBundle);
+
+            (void) BPLib_CBOR_EncodeGetBufferSize(&EncodeBuffer, &PayloadSize);  
+        }
+        else
+        {
+            PayloadSize = StoredBundle->blocks.PayloadHeader.DataSize;
+        }
+
         /*
         ** Jam in our own "byte string" cbor encoding head
         */
-        ByteStringCborHeadSize = BPLib_CBOR_AddByteStringHead(StoredBundle->blocks.PayloadHeader.DataSize,
-                                                              CurrentOutputBufferAddr,
-                                                              BytesLeftInOutputBuffer);
+        ByteStringCborHeadSize = BPLib_CBOR_AddByteStringHead(PayloadSize,
+                                                            CurrentOutputBufferAddr,
+                                                            BytesLeftInOutputBuffer);
         if (ByteStringCborHeadSize > 0)
         {
             CurrentOutputBufferAddr += ByteStringCborHeadSize;
@@ -200,20 +223,28 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
             return BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR;
         }
 
-        /*
-        ** Add the ADU data
-        */
-        PayloadDataCopyStatus = BPLib_MEM_CopyOutFromOffset(StoredBundle,
-            StoredBundle->blocks.PayloadHeader.DataOffsetStart,
-            StoredBundle->blocks.PayloadHeader.DataSize,
-            (void*) CurrentOutputBufferAddr,
-            BytesLeftInOutputBuffer);
+        /* Copy payload into output buffer */
+        if (StoredBundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG)
+        {
+            memcpy((void*) CurrentOutputBufferAddr, MirrorBuffer, PayloadSize);
 
+            PayloadDataCopyStatus = BPLIB_SUCCESS;
+        }
+        else
+        {
+            PayloadDataCopyStatus = BPLib_MEM_CopyOutFromOffset(StoredBundle,
+                                        StoredBundle->blocks.PayloadHeader.DataOffsetStart,
+                                        StoredBundle->blocks.PayloadHeader.DataSize,
+                                        (void*) CurrentOutputBufferAddr,
+                                        BytesLeftInOutputBuffer);
+        }
+
+        /* Verify success and update counters/pointers */
         if (PayloadDataCopyStatus == BPLIB_SUCCESS)
         {
-            CurrentOutputBufferAddr += StoredBundle->blocks.PayloadHeader.DataSize;
-            BytesLeftInOutputBuffer -= StoredBundle->blocks.PayloadHeader.DataSize;
-            TotalBytesCopied += StoredBundle->blocks.PayloadHeader.DataSize;
+            CurrentOutputBufferAddr += PayloadSize;
+            BytesLeftInOutputBuffer -= PayloadSize;
+            TotalBytesCopied += PayloadSize;
         }
         else
         {
@@ -283,7 +314,7 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePayload(BPLib_Bundle_t* StoredBundle,
                                                 NumBytesCopied);
     }
     /* Verify that the block offset values are reasonable */
-    else if (StoredBundle->blocks.PayloadHeader.BlockOffsetStart >= 
+    else if (StoredBundle->blocks.PayloadHeader.BlockOffsetStart >=
              (StoredBundle->blocks.PayloadHeader.BlockOffsetEnd + 1))
     {
         *NumBytesCopied = 0;

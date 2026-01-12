@@ -433,6 +433,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
 
     /* Indicate ADU reception */
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, ADU_COUNT_RECEIVED, 1);
+    BPLib_STOR_SetLastActiveTime(Inst);
 
     if (AduSize > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH])
     {
@@ -561,6 +562,8 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
     Status = BPLib_QM_DuctPull(Inst, ChanId, true, Timeout, &Bundle);
     if (Status == BPLIB_SUCCESS)
     {
+        BPLib_STOR_SetLastActiveTime(Inst);
+        
         /* Copy out the contents of the bundle payload to the return pointer */
         Status = BPLib_MEM_CopyOutFromOffset(Bundle,
                                 Bundle->blocks.PayloadHeader.DataOffsetStart,

@@ -675,6 +675,7 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS(void)
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, CCS_Blk), BPLIB_SUCCESS);
 
     UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 1);
+    UtAssert_STUB_COUNT(BPLib_ARP_ProcessNewCcs, 1);
 }
 
 void Test_BPLib_CBOR_DecodeCanonical_CCS_RecordTypeErr(void)
@@ -733,7 +734,7 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS_RecordTypeErr(void)
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR);
 
     UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 0);
-    UtAssert_STUB_COUNT(BPLib_ARP_ProcessCcs, 0);
+    UtAssert_STUB_COUNT(BPLib_ARP_ProcessNewCcs, 0);
 }
 
 void Test_BPLib_CBOR_DecodeCanonical_CCS_ContentErr(void)
@@ -792,7 +793,7 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS_ContentErr(void)
     UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_CONT_ERR);
 
     UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 0);
-    UtAssert_STUB_COUNT(BPLib_ARP_ProcessCcs, 0);
+    UtAssert_STUB_COUNT(BPLib_ARP_ProcessNewCcs, 0);
 }
 
 void TestBplibCborDecodeInternal_Register(void)
