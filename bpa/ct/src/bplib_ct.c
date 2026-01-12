@@ -31,6 +31,7 @@
 #include "bplib_as.h"
 #include "bplib_inst.h"
 #include "bplib_nc.h"
+#include "bplib_bi.h"
 
 /*
 ** Function Definitions

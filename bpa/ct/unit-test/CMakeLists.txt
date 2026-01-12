@@ -68,6 +68,7 @@ target_link_libraries(coverage-bplib_ct-testrunner PUBLIC
     bplib_nc_stubs
     bplib_time_stubs
     bplib_arp_stubs
+    bplib_bi_stubs
 )
 
 add_test(coverage-bplib_ct-testrunner coverage-bplib_ct-testrunner)
