@@ -52,6 +52,7 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     OpenCcs->InProgress          = false;
     OpenCcs->Size                = 0;
     OpenCcs->CollectionStartTime = 0;
+    OpenCcs->BundlesInCcs        = 0;
 
     return;
 }
@@ -124,6 +125,8 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
             OpenCcs->Size += 2;
         }
     }
+
+    OpenCcs->BundlesInCcs++;
 
     /* Trigger CCS generation based on size */
     if (OpenCcs->Size >= OpenCcs->MaxSize)
@@ -226,8 +229,8 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             if (Status != BPLIB_SUCCESS || DbEntry == NULL)
             {
                 BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_ERR_EID, BPLib_EM_EventType_ERROR,
-                    "Error, bundle sequence ID %ld with sequence number %ld does not exist in CTDB.",
-                    SeqCollection->SeqId, NextSeqNum);
+                    "Error, bundle sequence number %ld with sequence ID %ld does not exist in CTDB.",
+                    NextSeqNum, SeqCollection->SeqId);
             }
 
             /* Even sequence range numbers indicate sequences that are *included* */
@@ -265,6 +268,8 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REJECTED, 1);
                 }
+
+                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
             }
             /* Odd sequence range numbers indicate sequences that are *excluded* */
             else

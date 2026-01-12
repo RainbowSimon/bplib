@@ -69,6 +69,9 @@ struct BPLib_Instance
 
     /* Context for each channel */
     BPLib_PI_ChanCtxt_t ChanCtxt[BPLIB_MAX_NUM_CHANNELS];
+
+    /* Context for the admin record processor */
+    BPLib_ARP_Context_t Arp;
 };
 
 #endif /* BPLIB_INST_H */

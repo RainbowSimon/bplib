@@ -498,27 +498,26 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t C
 
 BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, BPLib_Bundle_t* Bundle)
 {
-    BPLib_Status_t          Status;
-    BPLib_ARP_AdminRecord_t AdminRecord;
+    BPLib_Status_t           Status;
+    BPLib_ARP_AdminRecord_t *AdminRecord;
 
     if (Context != NULL)
     {
         /*
-        ** The bundle's payload has been determined to be an admin record, so copy the
-        ** payload into an admin record struct
+        ** The bundle's payload has been determined to be a deserialized admin record
         */
-        memcpy((void*) &AdminRecord, (void*) Bundle->blob->user_data.BigData, sizeof(BPLib_ARP_AdminRecord_t));
+        AdminRecord = &(Bundle->blob->user_data.AdminRecord);
 
         /* Start an array that represents the admin record */
         Status = BPLib_CBOR_EncodeArray(Context, EncodeBuffer);
         if (Status == BPLIB_SUCCESS)
         {
             /* Encode the admin record type */
-            Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, AdminRecord.AdminRecordType);
+            Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, AdminRecord->AdminRecordType);
             if (Status == BPLIB_SUCCESS)
             {
                 /* Determine which encoding is needed by checking the admin record type */
-                switch(AdminRecord.AdminRecordType)
+                switch(AdminRecord->AdminRecordType)
                 {
                     case BPLib_CT_BsrRecordTypeCode:
                         // Status = BPLib_CBOR_EncodeBsr(&Context, &(AdminRecord.AdminRecordBody.BSR), &EncodeBuffer);
@@ -529,7 +528,7 @@ BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext* Context, UsefulO
                         break;
 
                     case BPLib_CT_CcsRecordTypeCode:
-                        Status = BPLib_CBOR_EncodeCcs(Context, &(AdminRecord.AdminRecordBody.CCS), EncodeBuffer);
+                        Status = BPLib_CBOR_EncodeCcs(Context, &(AdminRecord->AdminRecordBody.CCS), EncodeBuffer);
                         break;
 
                     default:

@@ -36,6 +36,7 @@
 /**
  * \brief     Decode a bundle
  * \details   Decode a bundle and fill in related bundle metadata
+ * \param[in] Inst (BPLib_Instance_t *) Pointer to bplib instance
  * \param[in] CandBundle (const void*) Candidate Bundle pointer
  * \param[in] CandBundleLen (size_t) length of the provided Candidate Bundle
  * \param[in] bundle (BPLib_Bundle_t*) pointer to the bundle metadata (to be filled out)
@@ -43,7 +44,8 @@
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
-BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundleLen, BPLib_Bundle_t *bundle);
+BPLib_Status_t BPLib_CBOR_DecodeBundle(BPLib_Instance_t *Inst, const void* CandBundle, 
+                                            size_t CandBundleLen, BPLib_Bundle_t *bundle);
 
 
 /**

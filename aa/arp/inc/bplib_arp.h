@@ -89,11 +89,16 @@ typedef union
  *        features of the Bundle Protocol as a response to bundle transmission
  *        requests presented by nodes' application agents.
  */
-typedef struct
+struct BPLib_ARP_AdminRecord
 {
     BPLib_ARP_AdminRecordTypeCode_t AdminRecordType; /** \brief Administrative record type */
     BPLib_ARP_AdminRecordBody_t     AdminRecordBody; /** \brief Contents of the admin record, dependent on type of admin record */
-} BPLib_ARP_AdminRecord_t;
+};
+
+typedef struct 
+{
+    uint64_t SequenceNum;
+} BPLib_ARP_Context_t;
 
 /* =================== */
 /* Function Prototypes */
@@ -171,11 +176,10 @@ void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* 
  * \brief      Count the Compressed Custody Signal then overwrite Bundle's user
  *             data with the administrative record provided
  * \param[in]  AdminRecord Decoded Compressed Custody Signal administrative record
- * \param[out] Bundle      Bundle whose user_data will be overwritten with
- *                         AdminRecord
+ *
  * \return    void
  */
-void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord, BPLib_Bundle_t* Bundle);
+void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t* AdminRecord);
 
 /**
  * \brief     When an open CCS hits a trigger, whether it be size, time, or number

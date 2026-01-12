@@ -141,7 +141,14 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
     }
+    /* Reject custody when CTDB is full */
+    else if (Inst->Ct.CurrDbSize >= BPLIB_CT_DB_MAX_ENTRIES)
+    {
+        BPLib_EM_SendEvent(BPLIB_CT_NO_MEM_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "Cannot accept bundle, CTDB is full.");
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
 
+    }
     /* Reject duplicate bundles */
     else if (BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
                     Bundle->blocks.PrimaryBlock.BundleId, &DbEntry) == BPLIB_SUCCESS)

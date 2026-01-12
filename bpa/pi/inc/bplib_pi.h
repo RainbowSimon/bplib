@@ -64,13 +64,12 @@ typedef enum {
 typedef struct
 {
     bool                    AddAutomatically;
-    bool                    RequestCustody;
     bool                    AduWrapping;
     bool                    AduUnwrapping;
     uint8_t                 RegState;
     uint8_t                 HopLimit;
     BPLib_CRC_Type_t        CrcType;
-    uint8_t                 Spare;
+    uint16_t                Spare;
     size_t                  IngressBitsPerCycle;
     size_t                  EgressBitsPerCycle;
     uint64_t                LocalServiceNumber;
@@ -81,6 +80,7 @@ typedef struct
     BPLib_PI_CanBlkConfig_t PrevNodeBlkConfig;
     BPLib_PI_CanBlkConfig_t AgeBlkConfig;
     BPLib_PI_CanBlkConfig_t HopCountBlkConfig;
+    BPLib_PI_CanBlkConfig_t CustodyTransferBlkConfig;
     BPLib_PI_CanBlkConfig_t PayloadBlkConfig;
 } BPLib_PI_Config_t;
 
