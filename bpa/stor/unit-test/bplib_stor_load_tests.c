@@ -52,8 +52,7 @@ void Test_BPLib_STOR_EgressForID_NominalChan(void)
     /** Step 1: Load all available bundles into an egress batch **/
 
     /* Select a filter for the DestEID range matching the test bundle */
-    BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[EgressID].LocalServiceNumber = 100;
-    BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[EgressID].LocalServiceNumber = 1;
+    BplibInst.ChanCtxt[EgressID].Config.LocalServiceNumber = 1;
     
     /* Verify Egress Success and Egress Count remains 0 */
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, true, &NumEgressed), BPLIB_SUCCESS);
@@ -102,10 +101,10 @@ void Test_BPLib_STOR_EgressForID_NominalCont(void)
     /** Step 1: Load all available bundles into an egress batch **/
 
     /* Select a filter for the DestEID range matching the test bundle */
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxService = 1;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinService = 1;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MaxNode = 100;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MinNode = 100;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MaxService = 1;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MinService = 1;
     
     /* Verify Egress Success and Egress Count remains 0 */
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, false, &NumEgressed), BPLIB_SUCCESS);
@@ -155,10 +154,10 @@ void Test_BPLib_STOR_EgressForID_WaitQueuePushFail(void)
     /** Step 1: Load all available bundles into an egress batch **/
 
     /* Select a filter for the DestEID range matching the test bundle */
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxService = 1;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinService = 1;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MaxNode = 100;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MinNode = 100;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MaxService = 1;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MinService = 1;
     
     /* Verify Egress Success and Egress Count remains 0 */
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, false, &NumEgressed), BPLIB_SUCCESS);

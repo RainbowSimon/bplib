@@ -185,22 +185,19 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
     ** - If the bundle is for an available contact, deliver without storing
     ** - If the bundle if for an un-available contact or channel, store
     */
-    BPLib_NC_ReaderLock();
     DestEID = &Bundle->blocks.PrimaryBlock.DestEID;
     if (BPLib_EID_NodeIsMatch(DestEID, &BPLIB_EID_INSTANCE))
     {
         /* Go through each channel and find a match */
         for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
         {
-            if (BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[i].LocalServiceNumber == DestEID->Service)
+            if (Inst->ChanCtxt[i].Config.LocalServiceNumber == DestEID->Service)
             {
                 if (BPLib_PI_GetRegistrationState(Inst, i) == BPLIB_PI_PASSIVE_ABANDON)
                 {
                     BPLib_MEM_BundleFree(&Inst->pool, Bundle);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
-
-                    BPLib_NC_ReaderUnlock();
                     
                     return NO_NEXT_STATE;
                 }
@@ -209,7 +206,6 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                 {
                     /* We have a channel we can deliver to: forward without storing */
                     Bundle->Meta.EgressID = i;
-                    BPLib_NC_ReaderUnlock();
                     BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
 
                     return NO_NEXT_STATE;
@@ -228,7 +224,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
             {
                 for (j = 0; j < BPLIB_MAX_CONTACT_DEST_EIDS; j++)
                 {
-                    if (BPLib_EID_PatternIsMatch(DestEID, &BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[i].DestEIDs[j]))
+                    if (BPLib_EID_PatternIsMatch(DestEID, &Inst->ContCtxt[i].Config.DestEIDs[j]))
                     {
                         /* We have a contact we can deliver to: forward without storing */
                         Bundle->Meta.EgressID = i;
@@ -236,13 +232,11 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                         /* Custodial bundles still need to be stored, even during a loopback */
                         if (Bundle->Meta.IsCustodial)
                         {
-                            Bundle->Meta.RetransmitTime = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[i].RetransmitTimeout;
-                            BPLib_NC_ReaderUnlock();
+                            Bundle->Meta.RetransmitTime = Inst->ContCtxt[i].Config.RetransmitTimeout;
                             BPLib_STOR_StoreBundle(Inst, Bundle);
                         }
                         else
                         {
-                            BPLib_NC_ReaderUnlock();
                             BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
                         }
 
@@ -252,8 +246,6 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
             }
         }
     }
-
-    BPLib_NC_ReaderUnlock();
 
     /* Either no egress path was found or the bundle was custodial and must be stored */
     BPLib_STOR_StoreBundle(Inst, Bundle);

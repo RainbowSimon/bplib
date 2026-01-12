@@ -70,6 +70,9 @@ struct BPLib_Instance
     /* Context for each channel */
     BPLib_PI_ChanCtxt_t ChanCtxt[BPLIB_MAX_NUM_CHANNELS];
 
+    /* Context for each contact */
+    BPLib_CLA_ContCtxt_t ContCtxt[BPLIB_MAX_NUM_CONTACTS];
+    
     /* Context for the admin record processor */
     BPLib_ARP_Context_t Arp;
 };

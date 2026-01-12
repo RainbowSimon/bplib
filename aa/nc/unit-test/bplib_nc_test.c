@@ -1442,7 +1442,7 @@ void Test_BPLib_NC_ContactSetup_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_CLA_ContactSetup), BPLIB_SUCCESS);
 
     Payload.ContactId = 0;
-    BPLib_NC_ContactSetup(Payload);
+    BPLib_NC_ContactSetup(&BplibInst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
@@ -1459,7 +1459,7 @@ void Test_BPLib_NC_ContactSetup_Error(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_CLA_ContactSetup), BPLIB_ERROR);
 
     Payload.ContactId = 0;
-    BPLib_NC_ContactSetup(Payload);
+    BPLib_NC_ContactSetup(&BplibInst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);

@@ -164,8 +164,9 @@ void BPLib_NC_ClearVolatile(void)
  * Generated stub function for BPLib_NC_ContactSetup()
  * ----------------------------------------------------
  */
-void BPLib_NC_ContactSetup(const BPLib_ContactSetup_Payload_t Payload)
+void BPLib_NC_ContactSetup(BPLib_Instance_t *Inst, const BPLib_ContactSetup_Payload_t Payload)
 {
+    UT_GenStub_AddParam(BPLib_NC_ContactSetup, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_NC_ContactSetup, const BPLib_ContactSetup_Payload_t, Payload);
 
     UT_GenStub_Execute(BPLib_NC_ContactSetup, Basic, NULL);

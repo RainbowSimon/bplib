@@ -29,7 +29,7 @@
 ** Global Data
 */
 
-BPLib_PI_ChannelTable_t TestChanConfigPtr;
+BPLib_Instance_t Inst;
 
 
 /*
@@ -43,9 +43,7 @@ void BPLib_EBP_Test_Setup(void)
 
     UT_SetHandlerFunction(UT_KEY(BPLib_TIME_GetTimeDelta), UT_Handler_BPLib_TIME_GetTimeDelta, NULL);
 
-    memset(&TestChanConfigPtr, 0, sizeof(TestChanConfigPtr));
-
-    BPLib_NC_ConfigPtrs.ChanConfigPtr = &TestChanConfigPtr;
+    memset(&Inst, 0, sizeof(Inst));
 }
 
 void BPLib_EBP_Test_Teardown(void)

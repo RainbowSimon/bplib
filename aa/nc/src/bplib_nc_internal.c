@@ -21,6 +21,7 @@
 #include "bplib_nc_internal.h"
 #include "bplib_nc.h"
 #include "bplib_eid.h"
+#include "bplib_inst.h"
 
 
 /*
@@ -37,7 +38,7 @@ BPLib_ChannelContactStatHkTlm_Payload_t BPLib_NC_ChannelContactStatsPayload;
 */
 
 /* Update the contact state telemetry with latest table values */
-void BPLib_NC_UpdateContactHkTlm(void)
+void BPLib_NC_UpdateContactHkTlm(BPLib_Instance_t *Inst)
 {
     uint32_t ContId;
     uint32_t EidIdx;
@@ -47,7 +48,7 @@ void BPLib_NC_UpdateContactHkTlm(void)
         for (EidIdx = 0; EidIdx < BPLIB_MAX_CONTACT_DEST_EIDS; EidIdx++)
         {
             BPLib_EID_CopyEidPatterns(&(BPLib_NC_ChannelContactStatsPayload.ContactStatus[ContId].DestEIDs[EidIdx]),
-                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[EidIdx]);
+                                    Inst->ContCtxt[ContId].Config.DestEIDs[EidIdx]);  
         }
     }
 }
@@ -60,7 +61,7 @@ void BPLib_NC_UpdateChannelHkTlm(BPLib_Instance_t *Inst)
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
         BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].LocalServiceNum = 
-            BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].LocalServiceNumber;
+            Inst->ChanCtxt[ChanId].Config.LocalServiceNumber;
         BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].RegistrationState = 
             BPLib_PI_GetRegistrationState(Inst, ChanId);
     }

@@ -48,8 +48,10 @@ extern BPLib_ChannelContactStatHkTlm_Payload_t BPLib_NC_ChannelContactStatsPaylo
  * \par Description
  *      Update the contact telemetry values to new contact configuration values
  *
+ * \param[in] Inst Pointer to bplib instance
+ * 
  */
-void BPLib_NC_UpdateContactHkTlm(void);
+void BPLib_NC_UpdateContactHkTlm(BPLib_Instance_t *Inst);
 
 /**
  * \brief Update channel telemetry
