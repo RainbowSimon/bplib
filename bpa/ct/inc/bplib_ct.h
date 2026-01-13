@@ -45,6 +45,9 @@
  */
 #define BPLIB_CT_MAX_SEQ_RANGE_LEN                  (11u)
 
+/**
+ * \brief Maximum sequence ID value before it rolls over
+ */
 #define BPLIB_CT_MAX_SEQ_ID                         (100u)
 
 /**

@@ -236,7 +236,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             if (Status != BPLIB_SUCCESS)
             {
                 /* 
-                ** This case probably means either the CTDB is corrupted or most likely,
+                ** This case probably means either the CTDB is corrupted or more likely,
                 ** the node was restarted with custodial bundles in storage. The CTDB
                 ** is not rebuilt on restart (yet) and this behavior is undefined but 
                 ** we do attempt to correct it here.

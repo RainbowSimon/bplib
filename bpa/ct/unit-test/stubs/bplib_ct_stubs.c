@@ -124,12 +124,13 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
  * Generated stub function for BPLib_CT_ProcessNewBundle()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle)
+BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle, bool LocalBundle)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_CT_ProcessNewBundle, BPLib_Status_t);
 
     UT_GenStub_AddParam(BPLib_CT_ProcessNewBundle, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_CT_ProcessNewBundle, BPLib_Bundle_t *, Bundle);
+    UT_GenStub_AddParam(BPLib_CT_ProcessNewBundle, bool, LocalBundle);
 
     UT_GenStub_Execute(BPLib_CT_ProcessNewBundle, Basic, NULL);
 
