@@ -68,6 +68,49 @@ int BPLib_CT_CompareDbEntries(const BPLib_RBT_Link_t *Node, void *Arg)
     return -1;
 }
 
+BPLib_Status_t BPLib_CT_InitEntry(BPLib_Instance_t *Inst, uint32_t BundleId)
+{
+    BPLib_MEM_Block_t  *DbMemBlk = NULL;
+    BPLib_CT_DbEntry_t *DbEntry  = NULL;
+
+    if (Inst->Ct.CurrDbSize == BPLIB_CT_DB_MAX_ENTRIES)
+    {
+        return BPLIB_CT_FULL_DB_ERR;
+    }
+
+    /* Get a CTDB entry to use */
+    DbMemBlk = BPLib_MEM_BlockAlloc(&Inst->pool, BPLIB_MEM_SMALL_BLK_SIZE);
+    if (DbMemBlk == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    DbEntry = &(DbMemBlk->user_data.DbEntry);
+    
+    /* Set initial CTDB entry values - the sequence ID/number will be updated later */
+    DbEntry->BundleId = BundleId;
+    DbEntry->SeqId = BPLIB_CT_MAX_SEQ_ID;
+    DbEntry->SeqNum = 0;
+
+    Inst->Ct.CurrDbSize++;
+    
+    return BPLib_RBT_InsertValueUnique(BundleId, &(Inst->Ct.IdTreeRoot), 
+                                            &(DbEntry->IdRbtLink));
+}
+
+BPLib_Status_t BPLib_CT_UpdateEntry(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_t *DbEntry, 
+                                        uint64_t SeqId, uint64_t SeqNum)
+{
+    /* Update entry sequence ID/number */
+    DbEntry->SeqId = SeqId;
+    DbEntry->SeqNum = SeqNum;
+    
+    return BPLib_RBT_InsertValueGeneric(SeqId, &(Inst->Ct.SeqTreeRoot), 
+                                        &(DbEntry->SeqRbtLink),
+                                        BPLib_CT_CompareDbEntries, &SeqNum);
+}
+
+
 BPLib_Status_t BPLib_CT_AddToCtdb(BPLib_Instance_t *Inst, uint64_t SeqId, 
                                                     uint64_t SeqNum, uint32_t BundleId)
 {

@@ -188,9 +188,8 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     }
     else if (Status == BPLIB_SUCCESS) /* and DispCode is BPLib_CT_CustodyAccepted */
     {
-        /* CTEB fields are set on first egress, set with dummy values for now */
-        Status = BPLib_CT_AddToCtdb(Inst, BPLIB_CT_MAX_SEQ_ID, 0,
-                                            Bundle->blocks.PrimaryBlock.BundleId);
+        /* Add bundle to CTDB but leave sequence ID/number undefined until egress */
+        Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
     }
 
     pthread_mutex_unlock(&Inst->Ct.Lock);
@@ -239,44 +238,47 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
                 ** This case probably means either the CTDB is corrupted or more likely,
                 ** the node was restarted with custodial bundles in storage. The CTDB
                 ** is not rebuilt on restart (yet) and this behavior is undefined but 
-                ** we do attempt to correct it here.
+                ** we attempt to correct it here.
                 */
-
-                SeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle);
-
-                CtebPtr->BundleSeqId = SeqId;
-                CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), SeqId);
-                BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
-                Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
-
-                Status = BPLib_CT_AddToCtdb(Inst, CtebPtr->BundleSeqId, CtebPtr->BundleSeqNum,
-                                            Bundle->blocks.PrimaryBlock.BundleId);
-
                 BPLib_EM_SendEvent(BPLIB_CT_UNKNOWN_BUNDLE_WRN_EID, BPLib_EM_EventType_WARNING,
                         "Transmitting a custodial bundle that does not exist in CTDB.");
+
+                Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
+
+                if (Status == BPLIB_SUCCESS)
+                {
+                    Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
+                                Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
+                }
             }
-            /* Bundle CTEB fields have not been updated yet, assign new values */
-            else if (DbEntry->SeqId == BPLIB_CT_MAX_SEQ_ID)
+
+            if (Status == BPLIB_SUCCESS)
             {
-                SeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle);
+                /* Bundle CTEB fields have not been updated yet, assign new values */
+                if (DbEntry->SeqId == BPLIB_CT_MAX_SEQ_ID)
+                {
+                    SeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle);
 
-                CtebPtr->BundleSeqId = SeqId;
-                CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), SeqId);
-                BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
-                Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
+                    CtebPtr->BundleSeqId = SeqId;
+                    CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), SeqId);
+                    BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
+                    Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
 
-                DbEntry->SeqId = CtebPtr->BundleSeqId;
-                DbEntry->SeqNum = CtebPtr->BundleSeqNum;
+                    Status = BPLib_CT_UpdateEntry(Inst, DbEntry, CtebPtr->BundleSeqId,
+                                                                    CtebPtr->BundleSeqNum);
+                }
+                /* Bundle CTEB fields have been set, this is a retransmission */
+                else
+                {
+                    CtebPtr->BundleSeqId = DbEntry->SeqId;
+                    CtebPtr->BundleSeqNum = DbEntry->SeqNum;
+                    BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
+
+                    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
+                }
             }
-            /* Bundle CTEB fields have been set, this is a retransmission */
-            else
-            {
-                CtebPtr->BundleSeqId = DbEntry->SeqId;
-                CtebPtr->BundleSeqNum = DbEntry->SeqNum;
-                BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
 
-                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
-            }
+            pthread_mutex_unlock(&Inst->Ct.Lock);
         }
         else
         {
@@ -284,8 +286,6 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
                     "Bundle has an invalid egress ID %d, check for memory corruption.", Bundle->Meta.EgressID);
         }
-
-        pthread_mutex_unlock(&Inst->Ct.Lock);
 
     }
 
