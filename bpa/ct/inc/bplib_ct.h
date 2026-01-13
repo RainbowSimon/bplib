@@ -45,6 +45,8 @@
  */
 #define BPLIB_CT_MAX_SEQ_RANGE_LEN                  (11u)
 
+#define BPLIB_CT_MAX_SEQ_ID                         (100u)
+
 /**
  * \brief Maximum number of open CCSs at any given time
  */
@@ -255,13 +257,15 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle);
  * 
  *  \param[in] Bundle Pointer to the bundle
  *  \param[in] Inst Pointer to the BPLib instance
+ *  \param[in] LocalBundle Whether a bundle was locally created or not
  *
  *  \return Execution status
  *  \retval BPLIB_SUCCESS Operation was successful
  *  \retval BPLIB_NO_STOR_ERR Bundle could not be accepted due to a lack of storage
  *  \retval BPLIB_CT_CUSTODY_REFUSED_ERR Bundle custody could not be accepted
  */
-BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle);
+BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle,
+                                            bool LocalBundle);
 
 /**
  * \brief Update a bundle on egress

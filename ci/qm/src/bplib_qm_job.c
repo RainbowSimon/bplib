@@ -43,21 +43,23 @@ static BPLib_QM_JobState_t ContactIn_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
-    BPLib_QM_JobState_t JobState = CONTACT_IN_CT_TO_STOR;
+    BPLib_QM_JobState_t JobState;
+    bool DoCustody;
 
     BPLib_NC_ReaderLock();
+    DoCustody = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY];
+    BPLib_NC_ReaderUnlock();
 
-    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == false)
+    if (DoCustody == false)
     {
         /* Don't do any custody operations, just pass bundles through */
-        BPLib_NC_ReaderUnlock();
+        JobState = CONTACT_IN_CT_TO_STOR;
+        
     }
     /* Check whether the bundle is an administrative record destined for this node */
     else if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&
         BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
     {
-        BPLib_NC_ReaderUnlock();
-
         /* Send the deserialized CCS off to CT */
         (void) BPLib_CT_ProcessCcs(Inst, &(Bundle->blocks.AdminRecordPayload->AdminRecordBody.CCS));
                     
@@ -69,9 +71,7 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
     }
     else
     {
-        BPLib_NC_ReaderUnlock();
-
-        Status = BPLib_CT_ProcessNewBundle(Inst, Bundle);
+        Status = BPLib_CT_ProcessNewBundle(Inst, Bundle, false);
 
         if (Status != BPLIB_SUCCESS)
         {
@@ -80,6 +80,10 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
 
             JobState = NO_NEXT_STATE;
+        }
+        else
+        {
+            JobState = CONTACT_IN_CT_TO_STOR;
         }
     }
     
@@ -90,27 +94,26 @@ static BPLib_QM_JobState_t ContactOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 {
     BPLib_Status_t Status;
     BPLib_QM_JobState_t JobState = CONTACT_OUT_CT_TO_EBP;
+    bool DoCustody;
 
     BPLib_NC_ReaderLock();
+    DoCustody = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY];
+    BPLib_NC_ReaderUnlock();
 
-    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == false)
+    if (DoCustody == true)
     {
-        BPLib_NC_ReaderUnlock();
-
-        /* Don't do any custody operations, just pass bundles through */
-    }
-    else
-    {
-        BPLib_NC_ReaderUnlock();
-
         Status = BPLib_CT_UpdateBundle(Inst, Bundle);
 
         if (Status != BPLIB_SUCCESS)
         {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+
             JobState = NO_NEXT_STATE;
         }
     }
+    /* Else, don't do any custody operations, just pass bundles through */
 
     return JobState;
 }
@@ -143,16 +146,37 @@ static BPLib_QM_JobState_t ChannelIn_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
+    BPLib_QM_JobState_t JobState;
+    bool DoCustody;
 
-    Status = BPLib_CT_SetBundleId(Bundle);
+    BPLib_NC_ReaderLock();
+    DoCustody = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY];
+    BPLib_NC_ReaderUnlock();
 
-    if (Status != BPLIB_SUCCESS)
+    if (DoCustody == false)
     {
-        BPLib_MEM_BundleFree(&Inst->pool, Bundle);
-        return NO_NEXT_STATE;
+        /* Don't do any custody operations, just pass bundles through */
+        JobState = CHANNEL_IN_CT_TO_STOR;
+    }
+    else
+    {
+        Status = BPLib_CT_ProcessNewBundle(Inst, Bundle, true);
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
+            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+
+            JobState = NO_NEXT_STATE;
+        }
+        else
+        {
+            JobState = CHANNEL_IN_CT_TO_STOR;
+        }
     }
 
-    return CHANNEL_IN_CT_TO_STOR;
+    return JobState;
 }
 
 static BPLib_QM_JobState_t ChannelOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
