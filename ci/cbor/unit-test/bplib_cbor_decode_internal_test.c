@@ -198,7 +198,7 @@ void Test_BPLib_CBOR_DecodeCanonical_InvalidCrc(void)
     /* Set CRC calculation to return different CRC from what's in the primary block */
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xbeef);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CandPayload), BPLIB_INVALID_CRC_ERROR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, CandPayload), BPLIB_INVALID_CRC_ERROR);
 }
 
 /* Test an invalid block number in a payload block */
@@ -223,7 +223,7 @@ void Test_BPLib_CBOR_DecodeCanonical_BadBlockNum(void)
 
     memset(&Bundle, 0, sizeof(Bundle));
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, BadPayload), BPLIB_CBOR_DEC_CANON_BLOCK_NUM_DEC_ERR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, BadPayload), BPLIB_CBOR_DEC_CANON_BLOCK_NUM_DEC_ERR);
 }
 
 /* Test an invalid CRC type in a payload block */
@@ -248,7 +248,7 @@ void Test_BPLib_CBOR_DecodeCanonical_BadCrcType(void)
 
     memset(&Bundle, 0, sizeof(Bundle));
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, BadPayload), BPLIB_CBOR_DEC_CANON_CRC_TYPE_DEC_ERR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, BadPayload), BPLIB_CBOR_DEC_CANON_CRC_TYPE_DEC_ERR);
 }
 
 /* Test a valid age block */
@@ -288,7 +288,7 @@ void Test_BPLib_CBOR_DecodeCanonical_AgeBlk(void)
     /* Set CRC calculation to return same CRC as block CRC */
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x3129);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodAgeBlk), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, GoodAgeBlk), BPLIB_SUCCESS);
 }
 
 /* Test an age block with a bad block number */
@@ -325,7 +325,7 @@ void Test_BPLib_CBOR_DecodeCanonical_InvBlkNum(void)
     UBufC.len = sizeof(AgeBlk);
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, AgeBlk), BPLIB_CBOR_DEC_CANON_BLOCK_NUM_DEC_ERR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, AgeBlk), BPLIB_CBOR_DEC_CANON_BLOCK_NUM_DEC_ERR);
 }
 
 /* Test a valid prev node block */
@@ -364,7 +364,7 @@ void Test_BPLib_CBOR_DecodeCanonical_PrevNodeBlk(void)
     /* Set CRC calculation to return same CRC as block CRC */
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x25d4);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodPrevNodeBlk), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, GoodPrevNodeBlk), BPLIB_SUCCESS);
 }
 
 /* Test a valid hop count block */
@@ -405,7 +405,7 @@ void Test_BPLib_CBOR_DecodeCanonical_HopCountBlk(void)
     /* Set CRC calculation to return same CRC as block CRC */
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xb5ee);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodHopCountBlk), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, GoodHopCountBlk), BPLIB_SUCCESS);
 }
 
 /* Test a hop count block with a limit that is too small */
@@ -443,7 +443,7 @@ void Test_BPLib_CBOR_DecodeCanonical_LimitTooSmall(void)
     UBufC.len = sizeof(GoodHopCountBlk);
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodHopCountBlk), BPLIB_CBOR_DEC_HOP_BLOCK_INVALID_DEC_ERR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, GoodHopCountBlk), BPLIB_CBOR_DEC_HOP_BLOCK_INVALID_DEC_ERR);
 }
 
 /* Test a hop count block with a limit that is too small */
@@ -481,7 +481,7 @@ void Test_BPLib_CBOR_DecodeCanonical_PastLimit(void)
     UBufC.len = sizeof(GoodHopCountBlk);
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodHopCountBlk), BPLIB_CBOR_DEC_HOP_BLOCK_EXCEEDED_ERR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, GoodHopCountBlk), BPLIB_CBOR_DEC_HOP_BLOCK_EXCEEDED_ERR);
 }
 
 /* Test a valid custody transfer block */
@@ -524,7 +524,7 @@ void Test_BPLib_CBOR_DecodeCanonical_CustodyBlk(void)
     /* Set CRC calculation to return same CRC as block CRC */
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0x4C2A);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, GoodCustodyBlk), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, GoodCustodyBlk), BPLIB_SUCCESS);
 }
 
 /* Test an unknown block type that will be deleted */
@@ -551,7 +551,7 @@ void Test_BPLib_CBOR_DecodeCanonical_UnknownDel(void)
     UBufC.len = sizeof(UnknownBlk);
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, UnknownBlk), BPLIB_CBOR_DEC_UNKNOWN_BLOCK_DEC_ERR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, UnknownBlk), BPLIB_CBOR_DEC_UNKNOWN_BLOCK_DEC_ERR);
 }
 
 /* Test an unknown block type that will be discarded */
@@ -581,7 +581,7 @@ void Test_BPLib_CBOR_DecodeCanonical_UnknownDisc(void)
     /* Set CRC calculation to return same CRC as block CRC */
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xb5ee);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, UnknownBlk), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, UnknownBlk), BPLIB_SUCCESS);
     UtAssert_BOOL_TRUE(Bundle.blocks.ExtBlocks[0].Header.RequiresDiscard);
 }
 
@@ -612,7 +612,7 @@ void Test_BPLib_CBOR_DecodeCanonical_UnknownKeep(void)
     /* Set CRC calculation to return same CRC as block CRC */
     UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xb5ee);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, UnknownBlk), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, UnknownBlk), BPLIB_SUCCESS);
     UtAssert_BOOL_FALSE(Bundle.blocks.ExtBlocks[0].Header.RequiresDiscard);
 }
 
@@ -657,6 +657,7 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS(void)
     BPLib_Bundle_t     Bundle;
     QCBORDecodeContext ctx;
     UsefulBufC         UBufC;
+    BPLib_MEM_Block_t  MemBlk;
 
     /* Initialize QCBOR context */
     UBufC.ptr = (const void*)(CCS_Blk);
@@ -666,14 +667,14 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS(void)
     /* Force FUT to take the admin record branch */
     Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_BlockAlloc), (UT_IntReturn_t) &MemBlk);
 
     /* Pass the CRC test */
     UT_SetDefaultReturnValue(UT_KEY(BPLib_CRC_Calculate), 0x580A);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CCS_Blk), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, CCS_Blk), BPLIB_SUCCESS);
 
     UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 1);
-    UtAssert_STUB_COUNT(BPLib_ARP_ProcessCcs, 1);
 }
 
 void Test_BPLib_CBOR_DecodeCanonical_CCS_RecordTypeErr(void)
@@ -717,6 +718,7 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS_RecordTypeErr(void)
     BPLib_Bundle_t     Bundle;
     QCBORDecodeContext ctx;
     UsefulBufC         UBufC;
+    BPLib_MEM_Block_t  MemBlk;
 
     /* Initialize QCBOR context */
     UBufC.ptr = (const void*)(CCS_Blk);
@@ -726,11 +728,12 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS_RecordTypeErr(void)
     /* Force FUT to take the admin record branch */
     Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_BlockAlloc), (UT_IntReturn_t) &MemBlk);
 
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR);
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_REC_TYPE_ERR);
 
     UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 0);
-    UtAssert_STUB_COUNT(BPLib_ARP_ProcessCcs, 0);
+    UtAssert_STUB_COUNT(BPLib_ARP_ProcessNewCcs, 0);
 }
 
 void Test_BPLib_CBOR_DecodeCanonical_CCS_ContentErr(void)
@@ -774,7 +777,8 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS_ContentErr(void)
     BPLib_Bundle_t     Bundle;
     QCBORDecodeContext ctx;
     UsefulBufC         UBufC;
-
+    BPLib_MEM_Block_t  MemBlk;
+    
     /* Initialize QCBOR context */
     UBufC.ptr = (const void*)(CCS_Blk);
     UBufC.len = sizeof(CCS_Blk);
@@ -783,11 +787,12 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS_ContentErr(void)
     /* Force FUT to take the admin record branch */
     Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
-
-    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_CONT_ERR);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_BlockAlloc), (UT_IntReturn_t) &MemBlk);
+    
+    UtAssert_INT32_EQ(BPLib_CBOR_DecodeCanonical(&BplibInst, &ctx, &Bundle, 0, CCS_Blk), BPLIB_CBOR_DEC_CANON_ADMIN_REC_CONT_ERR);
 
     UtAssert_STUB_COUNT(BPLib_CRC_Calculate, 0);
-    UtAssert_STUB_COUNT(BPLib_ARP_ProcessCcs, 0);
+    UtAssert_STUB_COUNT(BPLib_ARP_ProcessNewCcs, 0);
 }
 
 void TestBplibCborDecodeInternal_Register(void)

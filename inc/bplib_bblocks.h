@@ -159,9 +159,10 @@ typedef struct
  */
 typedef struct
 {
-    BPLib_PrimaryBlock_t   PrimaryBlock;
-    BPLib_ExtensionBlock_t ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS];
-    BPLib_CanBlockHeader_t PayloadHeader;
+    BPLib_PrimaryBlock_t     PrimaryBlock;
+    BPLib_ExtensionBlock_t   ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS];
+    BPLib_CanBlockHeader_t   PayloadHeader;
+    BPLib_ARP_AdminRecord_t *AdminRecordPayload;     /** \brief If a bundle is an admin record, this gets populated with the data, otherwise it stays NULL */
 } BPLib_BBlocks_t;
 
 /**
@@ -169,13 +170,11 @@ typedef struct
  */
 typedef struct
 {
-    uint32_t EgressID;    /** \brief For egressing bundles, ID of channel/contact to send to */
-    size_t   TotalBytes;  /** \brief Size of this bundle in bytes */
-    bool     IsCustodial; /** \brief Tracks whether or not the bund has a CTEB */
-    uint32_t RetransmitTime;    /** \brief Retransmit time for custodial bundles */
-
-    /* Additional metadata will likely get added here */
-
+    uint32_t EgressID;       /** \brief For egressing bundles, ID of channel/contact to send to */
+    uint32_t IngressID;      /** \brief For associating bundle with the channel/contact they came in on */
+    size_t   TotalBytes;     /** \brief Size of this bundle in bytes */
+    bool     IsCustodial;    /** \brief Tracks whether or not the bund has a CTEB */
+    uint32_t RetransmitTime; /** \brief Retransmit time for custodial bundles */
 } BPLib_BundleMetaData_t;
 
 /**

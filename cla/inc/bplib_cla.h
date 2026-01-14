@@ -100,6 +100,14 @@ typedef struct
     BPLib_CLA_ContactsSet_t ContactSet[BPLIB_MAX_NUM_CONTACTS];
 } BPLib_CLA_ContactsTable_t;
 
+/**
+** \brief Context information for each contact
+*/
+typedef struct 
+{
+    BPLib_CLA_ContactsSet_t Config;
+} BPLib_CLA_ContCtxt_t;
+
 /* =================== */
 /* Function Prototypes */
 /* =================== */
@@ -170,6 +178,7 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData);
 /**
  * \brief     Find the requested contact ID in the Contacts Configuration and pass that information to the
  *            CLA proxy to configure the CLA with
+ * \param[in] Inst Pointer to bplib instance
  * \param[in] ContactId (uint32_t) Contact ID from the Contacts Configuration to setup
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
@@ -177,7 +186,7 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData);
  * \retval    BPLIB_CLA_CONTACTS_MAX_REACHED: Setting up contact would exceed maximum simultaneous
  *                                            contacts allowed
  */
-BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId);
+BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId);
 
 /**
  * \brief     Pass Contact ID to start, on to CLA proxy
@@ -195,7 +204,8 @@ BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId
 
 /**
  * \brief     Pass Contact ID to stop, on to CLA proxy
- * \param[in] ContactId (uint32_t) Contact ID from the Contacts Configuration to stop
+ * \param[in] Instance  Instance that hold CT context of all open CCSs
+ * \param[in] ContactId Contact ID from the Contacts Configuration to stop
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_CLA_UNKNOWN_CONTACT: Provided contact ID does not match a contact ID in
@@ -204,7 +214,7 @@ BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId
  *                                       successful operation
  * \retval    BPLIB_INVALID_CONT_ID_ERR: Provided contact ID is invalid
  */
-BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId);
+BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t* Instance, uint32_t ContactId);
 
 /**
  * \brief     If the contact has been stopped, deconfigure the CLA via BI, CT, EBP, and CLA

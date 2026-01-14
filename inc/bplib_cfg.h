@@ -36,6 +36,7 @@ extern "C" {
 
 #define BPLIB_MAX_IP_LENGTH                 16  /* Maximum length of an IP address string */
 #define BPLIB_MAX_STR_LENGTH                32  /* Maximum length for a generic string */
+#define BPLIB_MAX_BUNDLE_INFO_STR_LENGTH    64  /* Maximum length of a bundle information string */
 
 /**
  * \brief Configuration array constraints
@@ -185,7 +186,7 @@ extern "C" {
 /**
  *  \brief Maximum number of bundle bytes allowed in storage at any given time
  */
-#define BPLIB_MAX_STORED_BUNDLE_BYTES            ((size_t) 4000000000)     /* 4 gigabytes */
+#define BPLIB_MAX_STORED_BUNDLE_BYTES            ((size_t) 4000000000)  /* 4 gigabytes */
 
 /**
  *  \brief Whether to allow duplicate bundles in storage. This flag is recommended
@@ -194,6 +195,19 @@ extern "C" {
  *         and creation time.
  */
 #define BPLIB_ALLOW_DUPLICATE_BUNDLES            false
+
+/**
+ * \brief Maximum number of entries allowed in the Custody Transfer Database (CTDB)
+ */
+#define BPLIB_CT_DB_MAX_ENTRIES                     (10000u)
+
+#define BPLIB_ADMIN_RECORD_CRC_TYPE                 BPLib_CRC_Type_CRC16
+
+#define BPLIB_ADMIN_RECORD_LIFETIME                 (3600000u)
+
+#define BPLIB_ADMIN_RECORD_AGE_BLOCK_NUM            (2u)
+
+#define BPLIB_ADMIN_RECORD_BLOCK_FLAGS              (0u)
 
 #ifdef __cplusplus
 } // extern "C"

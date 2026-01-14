@@ -843,26 +843,26 @@ void Test_BPLib_PI_SetRegistrationState_BadParam(void)
 
 void Test_BPLib_PI_SetRegistrationState_Nominal(void)
 {
-    BplibInst.ChanCtxt[0].RegState = BPLIB_PI_ACTIVE;
+    BplibInst.ChanCtxt[0].Config.RegState = BPLIB_PI_ACTIVE;
 
     UtAssert_INT32_EQ(BPLIB_SUCCESS, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLIB_PI_PASSIVE_DEFER));
-    UtAssert_INT32_EQ(BplibInst.ChanCtxt[0].RegState, BPLIB_PI_PASSIVE_DEFER);
+    UtAssert_INT32_EQ(BplibInst.ChanCtxt[0].Config.RegState, BPLIB_PI_PASSIVE_DEFER);
 }
 
 void Test_BPLib_PI_SetRegistrationState_Abandon(void)
 {
-    BplibInst.ChanCtxt[0].RegState = BPLIB_PI_ACTIVE;
+    BplibInst.ChanCtxt[0].Config.RegState = BPLIB_PI_ACTIVE;
 
     UT_SetDeferredRetcode(UT_KEY(BPLib_QM_WaitQueueTryPull), 1, true);
 
     UtAssert_INT32_EQ(BPLIB_SUCCESS, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLIB_PI_PASSIVE_ABANDON));
-    UtAssert_INT32_EQ(BplibInst.ChanCtxt[0].RegState, BPLIB_PI_PASSIVE_ABANDON);
+    UtAssert_INT32_EQ(BplibInst.ChanCtxt[0].Config.RegState, BPLIB_PI_PASSIVE_ABANDON);
     UtAssert_STUB_COUNT(BPLib_MEM_BundleFree, 1);
 }
 
 void Test_BPLib_PI_GetRegistrationState_Nominal(void)
 {
-    BplibInst.ChanCtxt[0].RegState = BPLIB_PI_ACTIVE;
+    BplibInst.ChanCtxt[0].Config.RegState = BPLIB_PI_ACTIVE;
     UtAssert_INT32_EQ(BPLIB_PI_ACTIVE, BPLib_PI_GetRegistrationState(&BplibInst, 0));
 }
 

@@ -122,8 +122,25 @@ BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
 
     /* Initialize configs */
     Inst->ChanCtxt[ChanId].SequenceNum = 0;
-    Inst->ChanCtxt[ChanId].RegState = BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].RegState;
-    
+
+    BPLib_NC_ReaderLock();
+
+    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == false &&
+        BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].CustodyTransferBlkConfig.IncludeBlock == true)
+    {
+        BPLib_NC_ReaderUnlock();
+
+        BPLib_EM_SendEvent(BPLIB_PI_NO_CTEB_DBG_EID, BPLib_EM_EventType_DEBUG,
+                            "Error with add-application directive, cannot include CTEBs while custody support is disabled");
+
+        return BPLIB_CT_NO_CUST_ERR;        
+    }
+
+    memcpy(&Inst->ChanCtxt[ChanId].Config, 
+           &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId], sizeof(BPLib_PI_Config_t));
+
+    BPLib_NC_ReaderUnlock();  
+
     /* Do any framework-specific operations */
     Status = BPLib_FWP_ProxyCallbacks.BPA_ADUP_AddApplication(ChanId);
     if (Status == BPLIB_SUCCESS)
@@ -308,7 +325,7 @@ BPLib_Status_t BPLib_PI_ValidateConfigs(void *TblData)
 {
     BPLib_PI_ChannelTable_t *TblDataPtr = (BPLib_PI_ChannelTable_t *)TblData;
     uint32_t ChanId;
-    uint32_t BlockNums[4];
+    uint32_t BlockNums[5];
     uint8_t  BlockNumsInArr;
     uint32_t i;
 
@@ -383,6 +400,7 @@ BPLib_Status_t BPLib_PI_ValidateConfigs(void *TblData)
         if (BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].PrevNodeBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
             BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].AgeBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
             BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].HopCountBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
+            BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].CustodyTransferBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
             BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].PayloadBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS)
         {
             return BPLIB_INVALID_CONFIG_ERR;
@@ -451,7 +469,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         /* Mark the primary block as "dirty" */
         NewBundle->blocks.PrimaryBlock.RequiresEncode = true;
 
-        CurrCanonConfig = &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId];
+        CurrCanonConfig = &Inst->ChanCtxt[ChanId].Config;
 
         /* Set primary block based on channel table configurations */
         BPLib_EID_CopyEids(&(NewBundle->blocks.PrimaryBlock.DestEID), CurrCanonConfig->DestEID);
@@ -492,7 +510,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         NewBundle->blocks.PayloadHeader.DataSize = AduSize;
 
         /* Initialize the extension block data - parameters have been validated, ignore return code */
-        (void) BPLib_EBP_InitializeExtensionBlocks(NewBundle, ChanId);
+        (void) BPLib_EBP_InitializeExtensionBlocks(Inst, NewBundle, ChanId);
 
         Status = BPLib_QM_CreateJob(Inst, NewBundle, CHANNEL_IN_PI_TO_EBP, QM_PRI_NORMAL, QM_WAIT_FOREVER);
     }
@@ -600,7 +618,7 @@ BPLib_Status_t BPLib_PI_SetRegistrationState(BPLib_Instance_t *Inst, uint32_t Ch
         return BPLIB_INV_REG_STATE;
     }
 
-    Inst->ChanCtxt[ChanId].RegState = RegState;
+    Inst->ChanCtxt[ChanId].Config.RegState = RegState;
 
     if (RegState == BPLIB_PI_PASSIVE_ABANDON)
     {
@@ -624,5 +642,5 @@ BPLib_PI_RegistrationState_t BPLib_PI_GetRegistrationState(BPLib_Instance_t *Ins
         return BPLIB_PI_PASSIVE_ABANDON;
     }
 
-    return Inst->ChanCtxt[ChanId].RegState;
+    return Inst->ChanCtxt[ChanId].Config.RegState;
 }

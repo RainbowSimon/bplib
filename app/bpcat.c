@@ -251,7 +251,7 @@ void BPCat_Main()
     }
 
     /* Enable Contacts */
-    if (BPLib_CLA_ContactSetup(0) != BPLIB_SUCCESS || 
+    if (BPLib_CLA_ContactSetup(&AppData.BPLibInst, 0) != BPLIB_SUCCESS || 
         BPLib_CLA_ContactStart(&AppData.BPLibInst, 0) != BPLIB_SUCCESS)
     {
         fprintf(stderr, "Failed to setup and start contact 0\n");

@@ -18,40 +18,27 @@
  *
  */
 
-/*
-** Include
-*/
+/* ======== */
+/* Includes */
+/* ======== */
 
-#include "bplib_ebp_test_utils.h"
-#include "bplib_time_handlers.h"
+#include "utstubs.h"
+#include "bplib_mem.h"
 
-/*
-** Global Data
-*/
+/* ==================== */
+/* Function Definitions */
+/* ==================== */
 
-BPLib_Instance_t Inst;
+/**
+ * \brief Make BPLib_MEM_BundleAlloc return a bundle that can be evaluated in a
+ *        unit test
+ */
+void UT_Handler_BPLib_MEM_BundleAlloc(void *UserObj, UT_EntryKey_t FuncKey, 
+                                        const UT_StubContext_t *Context);
 
-
-/*
-** Function Definitions
-*/
-
-void BPLib_EBP_Test_Setup(void)
-{
-    /* Initialize test environment to default state for every test */
-    UT_ResetState(0);
-
-    UT_SetHandlerFunction(UT_KEY(BPLib_TIME_GetTimeDelta), UT_Handler_BPLib_TIME_GetTimeDelta, NULL);
-
-    memset(&Inst, 0, sizeof(Inst));
-}
-
-void BPLib_EBP_Test_Teardown(void)
-{
-    /* Clean up test environment */
-}
-
-void UtTest_Setup(void)
-{
-    TestBplibEbp_Register();
-}
+/**
+ * \brief Actually copy EIDs so the unit tests can evaluate that the bundle has
+ *        the admin record in the payload
+ */
+void UT_Handler_BPLib_EID_CopyEids(void *UserObj, UT_EntryKey_t FuncKey,
+                                        const UT_StubContext_t *Context);

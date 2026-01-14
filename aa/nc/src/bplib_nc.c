@@ -43,8 +43,7 @@ static MibConfigValidateFunc_t MibConfigValidate[] = {
     BPLib_NC_ValidParamSetMaxSequenceNum,
     BPLib_NC_ValidParamMaxPayloadLength,
     BPLib_NC_ValidParamMaxBundleLength,
-    BPLib_NC_ValidParamSetNodeDtnTime,
-    BPLib_NC_ValidParamSetBehaviorEventReporting,
+    BPLib_NC_ValidParamSupportCustody,
     BPLib_NC_ValidParamSetMaxLifetime
 };
 
@@ -106,10 +105,6 @@ BPLib_Status_t BPLib_NC_InitImpl(BPLib_Instance_t *Inst, BPLib_NC_ConfigPtrs_t* 
             /* Set telemetry values */
             memcpy(&(BPLib_NC_NodeMibConfigPayload.Values), BPLib_NC_ConfigPtrs.MibPnConfigPtr, 
                                                                 sizeof(BPLib_NC_MibPerNodeConfig_t));
-
-            /* Initialize contact/channel status telemetry with table values */
-            BPLib_NC_UpdateContactHkTlm();
-            BPLib_NC_UpdateChannelHkTlm(Inst);
         }
     }
 
@@ -208,7 +203,7 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
         Status = BPLib_CLA_GetContactRunState(ContId, &ContState);
         if (Status == BPLIB_SUCCESS && ContState != BPLIB_CLA_TORNDOWN)
         {
-            (void) BPLib_CLA_ContactStop(ContId);
+            (void) BPLib_CLA_ContactStop(Instance, ContId);
             (void) BPLib_CLA_ContactTeardown(Instance, ContId);
             (void) BPLib_CLA_SetContactRunState(ContId, BPLIB_CLA_TORNDOWN);
         }
@@ -323,8 +318,7 @@ BPLib_Status_t BPLib_NC_MIBConfigPNTblValidateFunc(void* TblData)
         !BPLib_NC_ValidParamSetMaxSequenceNum(TblDataPtr) ||
         !BPLib_NC_ValidParamMaxPayloadLength(TblDataPtr) ||
         !BPLib_NC_ValidParamMaxBundleLength(TblDataPtr) ||
-        !BPLib_NC_ValidParamSetNodeDtnTime(TblDataPtr) ||
-        !BPLib_NC_ValidParamSetBehaviorEventReporting(TblDataPtr) ||
+        !BPLib_NC_ValidParamSupportCustody(TblDataPtr) ||
         !BPLib_NC_ValidParamSetMaxLifetime(TblDataPtr))
     {
         return BPLIB_INVALID_CONFIG_ERR;
@@ -394,9 +388,6 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(BPLib_Instance_t *Inst)
         else
         */
         {
-            /* Update channel telemetry with new table values */
-            BPLib_NC_UpdateChannelHkTlm(Inst);
-
             BPLib_EM_SendEvent(BPLIB_NC_TBL_UPDATE_INF_EID,
                                 BPLib_EM_EventType_INFORMATION,
                                 "Updated Channel configuration");
@@ -427,9 +418,6 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(BPLib_Instance_t *Inst)
         else
         */
         {
-            /* Update contact telemetry with new table values */
-            BPLib_NC_UpdateContactHkTlm();
-            
             BPLib_EM_SendEvent(BPLIB_NC_TBL_UPDATE_INF_EID,
                                 BPLib_EM_EventType_INFORMATION,
                                 "Updated Contacts configuration");

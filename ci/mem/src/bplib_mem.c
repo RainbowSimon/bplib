@@ -224,6 +224,9 @@ BPLib_Bundle_t* BPLib_MEM_BundleAlloc(BPLib_MEM_Pool_t* pool, const void* blob_d
     /* Save the total size of the bundle in bytes */
     bundle->Meta.TotalBytes = bytes_copied;
 
+    /* Initialize admin record payload to null (most bundles will not use this) */
+    bundle->blocks.AdminRecordPayload = NULL;
+
     return bundle;
 }
 
@@ -241,6 +244,12 @@ void BPLib_MEM_BundleFree(BPLib_MEM_Pool_t* pool, BPLib_Bundle_t* bundle)
     ** is undefined behavior, and is noted in the docstring.
     */
     BPLib_MEM_BlockListFree(pool, bundle->blob);
+
+    if (bundle->blocks.AdminRecordPayload != NULL)
+    {
+        BPLib_MEM_BlockFree(pool, BPLib_MEM_GetBlockFromUserData(bundle->blocks.AdminRecordPayload));
+    }
+
     BPLib_MEM_BlockFree(pool, BPLib_MEM_GetBlockFromUserData(bundle));
 }
 

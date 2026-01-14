@@ -74,6 +74,8 @@ typedef struct BPLib_BundleCache BPLib_BundleCache_t;
 
 typedef struct BPLib_MEM_Block BPLib_MEM_Block_t;
 
+typedef struct BPLib_ARP_AdminRecord BPLib_ARP_AdminRecord_t;
+
 typedef enum
 {
     BPLIB_BUNDLE_PROC_FRAG_FLAG         = 0x0000001, /** \brief Bundle is a fragment flag */
@@ -317,8 +319,9 @@ typedef enum
 #define BPLIB_CBOR_DEC_TYPES_ENTER_INDEF_ARRAY_ERR     ((BPLib_Status_t) -202) /* CBOR decode types error: enter indef array error */
 
 #define BPLIB_CBOR_DEC_TYPES_ADMIN_REC_INV_REC_TYPE    ((BPLib_Status_t) -203) /* CBOR decode types error: admin record invalid record type */
+#define BPLIB_CBOR_DEC_ADMIN_RECORD_NULL_ERR           ((BPLib_Status_t) -204) /* CBOR decode error: could not allocate an admin record block */
+
 /*
-#define BPLIB_CBOR_DEC_GENERIC_ERR_204                 ((BPLib_Status_t) -204) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_205                 ((BPLib_Status_t) -205) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_206                 ((BPLib_Status_t) -206) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_207                 ((BPLib_Status_t) -207) // CBOR decode error
@@ -337,27 +340,35 @@ typedef enum
 */
 
 /* CBOR Encode Errors */
-#define BPLIB_CBOR_ENC_EXT_SIZES_CRRPTD_ERR            ((BPLib_Status_t) -220) /* BPLib_CBOR_EncodeExtensionBlock: Block Sizes Corrupted Error */
-#define BPLIB_CBOR_ENC_PAYL_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -221) /* BPLib_CBOR_CopyOrEncodePayload: Block Sizes Corrupted Error */
-#define BPLIB_CBOR_ENC_PRIM_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -222) /* BPLib_CBOR_CopyOrEncodePrimary: Block Sizes Corrupted Error */
-#define BPLIB_CBOR_ENC_PRIM_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -223) /* BPLib_CBOR_CopyOrEncodePrimary: Copy Size Error */
-#define BPLIB_CBOR_ENC_PAYL_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -224) /* BPLib_CBOR_CopyOrEncodePayload: Copy Size Error */
-#define BPLIB_CBOR_ENC_PRIM_QCBOR_FINISH_ERR           ((BPLib_Status_t) -225) /* BPLib_CBOR_EncodePrimary: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_EXT_INPUT_BLOCK_INDEX_ERR       ((BPLib_Status_t) -226) /* BPLib_CBOR_EncodeExtensionBlock: Ext Block Index Error */
-#define BPLIB_CBOR_ENC_EXT_QCBOR_FINISH_ERR            ((BPLib_Status_t) -227) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_HEAD_ERR      ((BPLib_Status_t) -228) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR      ((BPLib_Status_t) -229) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR      ((BPLib_Status_t) -230) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_QCBOR_FINISH_TAIL_ERR           ((BPLib_Status_t) -220) /* QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_ARRAY_ERR                       ((BPLib_Status_t) -220) /* Error while attempting to encode array */
+#define BPLIB_CBOR_ENC_MAP_ERR                         ((BPLib_Status_t) -220) /* Error while attempting to encode map */
+#define BPLIB_CBOR_ENC_UINT_ERR                        ((BPLib_Status_t) -220) /* Error while attempting to encode unsigned integer */
+#define BPLIB_CBOR_ENC_GET_BUFF_SIZE_ERR               ((BPLib_Status_t) -220) /* Error while attempting to get the size of the encoded data thusfar */
+#define BPLIB_CBOR_ENC_ADU_ERR                         ((BPLib_Status_t) -220) /* Error while attempting to encode ADU */
+#define BPLIB_CBOR_ENC_CRC_ERR                         ((BPLib_Status_t) -220) /* Error while attempting to encode CRC */
+#define BPLIB_CBOR_ENC_ADMIN_RECORD_ERR                ((BPLib_Status_t) -220) /* Error while attempting to encode administrative record */
+#define BPLIB_CBOR_ENC_CCS_ERR                         ((BPLib_Status_t) -220) /* Error while attempting to encode CCS */
+#define BPLIB_CBOR_ENC_EXT_SIZES_CRRPTD_ERR            ((BPLib_Status_t) -221) /* BPLib_CBOR_EncodeExtensionBlock: Block Sizes Corrupted Error */
+#define BPLIB_CBOR_ENC_EXT_INPUT_BLOCK_INDEX_ERR       ((BPLib_Status_t) -222) /* BPLib_CBOR_EncodeExtensionBlock: Ext Block Index Error */
+#define BPLIB_CBOR_ENC_EXT_QCBOR_FINISH_ERR            ((BPLib_Status_t) -223) /* BPLib_CBOR_EncodeExtensionBlock: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_PRIM_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -224) /* BPLib_CBOR_CopyOrEncodePrimary: Block Sizes Corrupted Error */
+#define BPLIB_CBOR_ENC_PRIM_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -225) /* BPLib_CBOR_CopyOrEncodePrimary: Copy Size Error */
+#define BPLIB_CBOR_ENC_PRIM_QCBOR_FINISH_ERR           ((BPLib_Status_t) -226) /* BPLib_CBOR_EncodePrimary: QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_PAYL_COPY_SIZE_GT_OUTPUT_ERR    ((BPLib_Status_t) -227) /* BPLib_CBOR_CopyOrEncodePayload: Copy Size Error */
+#define BPLIB_CBOR_ENC_PAYL_SIZES_CRRPTD_ERR           ((BPLib_Status_t) -228) /* BPLib_CBOR_CopyOrEncodePayload: Block Sizes Corrupted Error */
+#define BPLIB_CBOR_ENC_PAYL_HEADER_ERR                 ((BPLib_Status_t) -229) /* BPLib_CBOR_EncodePayload: Error while encoding payload header */
+#define BPLIB_CBOR_ENC_PAYL_ERR                        ((BPLib_Status_t) -230) /* BPLib_CBOR_EncodePayload: Error while encoding bundle's actual payload */
+#define BPLIB_CBOR_ENC_PAYL_CRC_ERR                    ((BPLib_Status_t) -231) /* BPLib_CBOR_EncodePayload: Error while encoding payload's CRC value */
 
-#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_1_ERR     ((BPLib_Status_t) -231) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 1) */
-#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_2_ERR     ((BPLib_Status_t) -232) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 2) */
-#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_3_ERR     ((BPLib_Status_t) -233) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 3) */
-#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_4_ERR     ((BPLib_Status_t) -234) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 4) */
+#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_1_ERR     ((BPLib_Status_t) -232) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 1) */
+#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_2_ERR     ((BPLib_Status_t) -233) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 2) */
+#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_3_ERR     ((BPLib_Status_t) -234) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 3) */
+#define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_4_ERR     ((BPLib_Status_t) -235) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 4) */
+#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_HEAD_ERR      ((BPLib_Status_t) -236) /* BPLib_CBOR_EncodePayload: Error encoding payload header */
+#define BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR      ((BPLib_Status_t) -237) /* BPLib_CBOR_EncodePayload: Error adding payload bytestring head */
+#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR      ((BPLib_Status_t) -238) /* BPLib_CBOR_EncoePayload: Error ending payload block */
 /*
-#define BPLIB_CBOR_ENC_GENERIC_ERR_235                 ((BPLib_Status_t) -235) // CBOR encode error
-#define BPLIB_CBOR_ENC_GENERIC_ERR_236                 ((BPLib_Status_t) -236) // CBOR encode error
-#define BPLIB_CBOR_ENC_GENERIC_ERR_237                 ((BPLib_Status_t) -237) // CBOR encode error
-#define BPLIB_CBOR_ENC_GENERIC_ERR_238                 ((BPLib_Status_t) -238) // CBOR encode error
 #define BPLIB_CBOR_ENC_GENERIC_ERR_239                 ((BPLib_Status_t) -239) // CBOR encode error
 #define BPLIB_CBOR_ENC_GENERIC_ERR_240                 ((BPLib_Status_t) -240) // CBOR encode error
 #define BPLIB_CBOR_ENC_GENERIC_ERR_241                 ((BPLib_Status_t) -241) // CBOR encode error
@@ -495,8 +506,9 @@ typedef enum
 /* Custody Transfer Errors */
 #define BPLIB_CT_CUSTODY_REFUSED_ERR                   ((BPLib_Status_t) -350)
 #define BPLIB_CT_FULL_DB_ERR                           ((BPLib_Status_t) -351)
+#define BPLIB_CT_NO_CUST_ERR                           ((BPLib_Status_t) -352)
+
 /*
-#define BPLIB_CT_GENERIC_ERR_352                       ((BPLib_Status_t) -352) // CT error
 #define BPLIB_CT_GENERIC_ERR_353                       ((BPLib_Status_t) -353) // CT error
 #define BPLIB_CT_GENERIC_ERR_354                       ((BPLib_Status_t) -354) // CT error
 #define BPLIB_CT_GENERIC_ERR_355                       ((BPLib_Status_t) -355) // CT error
@@ -514,6 +526,30 @@ typedef enum
 #define BPLIB_CT_GENERIC_ERR_367                       ((BPLib_Status_t) -367) // CT error
 #define BPLIB_CT_GENERIC_ERR_368                       ((BPLib_Status_t) -368) // CT error
 #define BPLIB_CT_GENERIC_ERR_369                       ((BPLib_Status_t) -369) // CT error
+*/
+
+/* Administrative Record Processor Errors */
+#define BPLIB_ARP_UNK_REC_TYPE_ERR                     ((BPLib_Status_t) -370)
+#define BPLIB_ARP_CREATE_JOB_ERR                       ((BPLib_Status_t) -371)
+#define BPLIB_ARP_NULL_BUNDLE_ERR                      ((BPLib_Status_t) -372)
+/*
+#define BPLIB_ARP_GENERIC_ERR_373                      ((BPLib_Status_t) -373)
+#define BPLIB_ARP_GENERIC_ERR_374                      ((BPLib_Status_t) -374)
+#define BPLIB_ARP_GENERIC_ERR_375                      ((BPLib_Status_t) -375)
+#define BPLIB_ARP_GENERIC_ERR_376                      ((BPLib_Status_t) -376)
+#define BPLIB_ARP_GENERIC_ERR_377                      ((BPLib_Status_t) -377)
+#define BPLIB_ARP_GENERIC_ERR_378                      ((BPLib_Status_t) -378)
+#define BPLIB_ARP_GENERIC_ERR_379                      ((BPLib_Status_t) -379)
+#define BPLIB_ARP_GENERIC_ERR_380                      ((BPLib_Status_t) -380)
+#define BPLIB_ARP_GENERIC_ERR_381                      ((BPLib_Status_t) -381)
+#define BPLIB_ARP_GENERIC_ERR_382                      ((BPLib_Status_t) -382)
+#define BPLIB_ARP_GENERIC_ERR_383                      ((BPLib_Status_t) -383)
+#define BPLIB_ARP_GENERIC_ERR_384                      ((BPLib_Status_t) -384)
+#define BPLIB_ARP_GENERIC_ERR_385                      ((BPLib_Status_t) -385)
+#define BPLIB_ARP_GENERIC_ERR_386                      ((BPLib_Status_t) -386)
+#define BPLIB_ARP_GENERIC_ERR_387                      ((BPLib_Status_t) -387)
+#define BPLIB_ARP_GENERIC_ERR_388                      ((BPLib_Status_t) -388)
+#define BPLIB_ARP_GENERIC_ERR_389                      ((BPLib_Status_t) -389)
 */
 
 /** @} */

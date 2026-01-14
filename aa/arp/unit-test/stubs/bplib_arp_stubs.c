@@ -88,19 +88,6 @@ void BPLib_ARP_ProcessBsr(BPLib_ARP_AdminRecord_t *AdminRecord, BPLib_Bundle_t *
 
 /*
  * ----------------------------------------------------
- * Generated stub function for BPLib_ARP_ProcessCcs()
- * ----------------------------------------------------
- */
-void BPLib_ARP_ProcessCcs(BPLib_ARP_AdminRecord_t *AdminRecord, BPLib_Bundle_t *Bundle)
-{
-    UT_GenStub_AddParam(BPLib_ARP_ProcessCcs, BPLib_ARP_AdminRecord_t *, AdminRecord);
-    UT_GenStub_AddParam(BPLib_ARP_ProcessCcs, BPLib_Bundle_t *, Bundle);
-
-    UT_GenStub_Execute(BPLib_ARP_ProcessCcs, Basic, NULL);
-}
-
-/*
- * ----------------------------------------------------
  * Generated stub function for BPLib_ARP_ProcessCrs()
  * ----------------------------------------------------
  */
@@ -110,4 +97,29 @@ void BPLib_ARP_ProcessCrs(BPLib_ARP_AdminRecord_t *AdminRecord, BPLib_Bundle_t *
     UT_GenStub_AddParam(BPLib_ARP_ProcessCrs, BPLib_Bundle_t *, Bundle);
 
     UT_GenStub_Execute(BPLib_ARP_ProcessCrs, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_ARP_ProcessInProgressCcs()
+ * ----------------------------------------------------
+ */
+void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t *Instance, BPLib_CT_OpenCcs_t *InProgressCcs)
+{
+    UT_GenStub_AddParam(BPLib_ARP_ProcessInProgressCcs, BPLib_Instance_t *, Instance);
+    UT_GenStub_AddParam(BPLib_ARP_ProcessInProgressCcs, BPLib_CT_OpenCcs_t *, InProgressCcs);
+
+    UT_GenStub_Execute(BPLib_ARP_ProcessInProgressCcs, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_ARP_ProcessNewCcs()
+ * ----------------------------------------------------
+ */
+void BPLib_ARP_ProcessNewCcs(BPLib_ARP_AdminRecord_t *AdminRecord)
+{
+    UT_GenStub_AddParam(BPLib_ARP_ProcessNewCcs, BPLib_ARP_AdminRecord_t *, AdminRecord);
+
+    UT_GenStub_Execute(BPLib_ARP_ProcessNewCcs, Basic, NULL);
 }

@@ -231,10 +231,10 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
     UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, NumBundles - BundlesPerOp);
 
     /* Try to egress all bundles marked for retransmission */
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxService = 1;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinService = 1;
+    BplibInst.ContCtxt[0].Config.DestEIDs[0].MaxNode = 100;
+    BplibInst.ContCtxt[0].Config.DestEIDs[0].MinNode = 100;
+    BplibInst.ContCtxt[0].Config.DestEIDs[0].MaxService = 1;
+    BplibInst.ContCtxt[0].Config.DestEIDs[0].MinService = 1;
     UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), RetransmissionTime);
 
     UtAssert_EQ(BPLib_Status_t, BPLib_STOR_EgressForID(&BplibInst, 0, false, &NumEgressed), BPLIB_SUCCESS);
