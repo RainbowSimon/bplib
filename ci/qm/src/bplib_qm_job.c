@@ -54,7 +54,6 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
     {
         /* Don't do any custody operations, just pass bundles through */
         JobState = CONTACT_IN_CT_TO_STOR;
-        
     }
     /* Check whether the bundle is an administrative record destined for this node */
     else if ((Bundle->blocks.PrimaryBlock.BundleProcFlags & BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG) &&

@@ -274,26 +274,26 @@ void Test_BPLib_CT_UpdateBundle_Custodial(void)
     Bundle.Meta.EgressID = 0;
 
     /* Set up counter context */
-    BplibInst.Ct.CurrActiveSeqIds[0] = 56;
-    BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS] = 69;
+    BplibInst.Ct.SeqCounters[0].Id = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1;
+    BplibInst.Ct.SeqCounters[0].Counter = 69;
 
     /* Set up CTDB context */
     BplibInst.Ct.CurrDbSize = 10;
     DbEntry = &NonPtrEntry;
     NonPtrEntry.BundleId = 0xdead;
-    NonPtrEntry.SeqId = BPLIB_CT_MAX_SEQ_ID;
+    NonPtrEntry.SeqId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE;
     UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(DbEntry->IdRbtLink));
     
     UtAssert_INT32_EQ(BPLib_CT_UpdateBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
     
-    UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqId, 56);
+    UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqId, BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1);
     UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqNum, 69);
     UtAssert_STUB_COUNT(BPLib_EID_CopyEids, 1);
     UtAssert_EQ(uint32_t, DbEntry->BundleId, 0xdead);
-    UtAssert_EQ(uint64_t, DbEntry->SeqId, 56);
+    UtAssert_EQ(uint64_t, DbEntry->SeqId, BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1);
     UtAssert_EQ(uint64_t, DbEntry->SeqNum, 69);
     UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, 10);
-    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS], 70);
+    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[0].Counter, 70);
 }
 
 void Test_BPLib_CT_UpdateBundle_Noncustodial(void)
@@ -341,8 +341,8 @@ void Test_BPLib_CT_UpdateBundle_Retransmit(void)
     Bundle.Meta.EgressID = 0;
 
     /* Set up counter context */
-    BplibInst.Ct.CurrActiveSeqIds[0] = 56;
-    BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS] = 69;
+    BplibInst.Ct.SeqCounters[0].Id = 56;
+    BplibInst.Ct.SeqCounters[0].Counter = 69;
 
     /* Set up CTDB context */
     UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BlockAlloc), 1, (UT_IntReturn_t) &MemBlk);
@@ -370,16 +370,15 @@ void Test_BPLib_CT_AssignSeqCounter_Nominal(void)
     uint32_t ContId = 0;
 
     /* Set up counter context */
-    BplibInst.Ct.CurrActiveSeqIds[0] = BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS - 1;
-    BplibInst.Ct.LastSeqCounterId = BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS - 1;
-    BplibInst.Ct.SeqCounters[0] = 69;
-
+    BplibInst.Ct.SeqCounters[0].Id = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1;
+    BplibInst.Ct.LastSeqCounterId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1;
+    BplibInst.Ct.SeqCounters[0].Counter = 69;
 
     UtAssert_INT32_EQ(BPLib_CT_AssignSeqCounter(&BplibInst, ContId), BPLIB_SUCCESS);
 
-    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[0], 0);
-    UtAssert_EQ(uint64_t, BplibInst.Ct.LastSeqCounterId, BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS);
-    UtAssert_EQ(uint64_t, BplibInst.Ct.CurrActiveSeqIds[0], BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS);
+    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[0].Counter, 0);
+    UtAssert_EQ(uint64_t, BplibInst.Ct.LastSeqCounterId, 1);
+    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[0].Id, 1);
 }
 
 void Test_BPLib_CT_AssignSeqCounter_InputErr(void)

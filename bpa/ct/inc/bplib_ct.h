@@ -46,9 +46,9 @@
 #define BPLIB_CT_MAX_SEQ_RANGE_LEN                  (11u)
 
 /**
- * \brief Maximum sequence ID value before it rolls over
+ * \brief Sequence ID value when it will automatically roll over to 1
  */
-#define BPLIB_CT_MAX_SEQ_ID                         (100u)
+#define BPLIB_CT_SEQ_ID_ROLLOVER_VALUE              (100u)
 
 /**
  * \brief Maximum number of open CCSs at any given time
@@ -67,13 +67,6 @@
  *        another node.
  */
 #define BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS          (5u)
-
-/**
- * \brief Maximum number of independent sequence counters. Should be greater than or 
- *        equal to the \ref BPLIB_MAX_NUM_CONTACTS, since each open contact will have its
- *        own assigned sequence counter.
- */
-#define BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS           (BPLIB_MAX_NUM_CONTACTS * 3)
 
 /**
  * \brief Size of a full CCS batch operation
@@ -186,6 +179,7 @@ typedef struct
  */
 typedef struct
 {
+    uint64_t Id;
     uint64_t Counter;
 } BPLib_SeqCounter_t;
 
@@ -196,8 +190,7 @@ typedef struct
 {
     BPLib_CT_OpenCcs_t OpenCcss[BPLIB_CT_MAX_OPEN_CCS];         /** \brief All CCSs that are currently being constructed */
 
-    uint64_t SeqCounters[BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS];    /** \brief All currently open sequence counters */
-    uint64_t CurrActiveSeqIds[BPLIB_MAX_NUM_CONTACTS];          /** \brief Last assigned sequence counter IDs for each contact */
+    BPLib_SeqCounter_t SeqCounters[BPLIB_MAX_NUM_CONTACTS];     /** \brief Currently active sequence counters */
     uint64_t LastSeqCounterId;                                  /** \brief Last sequence counter ID assigned to a contact */
 
     size_t CurrDbSize;                                          /** \brief Number of entries in CTDB */

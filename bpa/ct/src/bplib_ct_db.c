@@ -89,7 +89,7 @@ BPLib_Status_t BPLib_CT_InitEntry(BPLib_Instance_t *Inst, uint32_t BundleId)
     
     /* Set initial CTDB entry values - the sequence ID/number will be updated later */
     DbEntry->BundleId = BundleId;
-    DbEntry->SeqId = BPLIB_CT_MAX_SEQ_ID;
+    DbEntry->SeqId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE;
     DbEntry->SeqNum = 0;
 
     Inst->Ct.CurrDbSize++;
@@ -205,12 +205,12 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_
     return Status;
 }
 
-uint64_t BPLib_CT_GetSequenceId(BPLib_CT_Context_t *Context, BPLib_Bundle_t *Bundle)
+uint64_t BPLib_CT_GetSequenceId(BPLib_CT_Context_t *Context, uint32_t ContactId)
 {
-    return Context->CurrActiveSeqIds[Bundle->Meta.EgressID];
+    return Context->SeqCounters[ContactId].Id;
 }
 
-uint64_t BPLib_CT_GetNextSequenceNum(BPLib_CT_Context_t *Context, uint64_t SeqId)
+uint64_t BPLib_CT_GetNextSequenceNum(BPLib_CT_Context_t *Context, uint32_t ContactId)
 {
-    return Context->SeqCounters[SeqId % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS]++;
+    return Context->SeqCounters[ContactId].Counter++;
 }

@@ -202,8 +202,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
     BPLib_Status_t            Status = BPLIB_SUCCESS;
     BPLib_CustodyBlockData_t *CtebPtr;
     uint8_t                   ExtBlockIdx;
-    uint64_t SeqId;
-    BPLib_CT_DbEntry_t *DbEntry = NULL;
+    BPLib_CT_DbEntry_t       *DbEntry = NULL;
 
     if (Inst == NULL || Bundle == NULL)
     {
@@ -255,14 +254,10 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             if (Status == BPLIB_SUCCESS)
             {
                 /* Bundle CTEB fields have not been updated yet, assign new values */
-                if (DbEntry->SeqId == BPLIB_CT_MAX_SEQ_ID)
+                if (DbEntry->SeqId == BPLIB_CT_SEQ_ID_ROLLOVER_VALUE)
                 {
-                    SeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle);
-
-                    CtebPtr->BundleSeqId = SeqId;
-                    CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), SeqId);
-                    BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
-                    Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
+                    CtebPtr->BundleSeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle->Meta.EgressID);;
+                    CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), Bundle->Meta.EgressID);
 
                     Status = BPLib_CT_UpdateEntry(Inst, DbEntry, CtebPtr->BundleSeqId,
                                                                     CtebPtr->BundleSeqNum);
@@ -272,10 +267,12 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
                 {
                     CtebPtr->BundleSeqId = DbEntry->SeqId;
                     CtebPtr->BundleSeqNum = DbEntry->SeqNum;
-                    BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
                 }
+
+                BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
+                Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
             }
 
             pthread_mutex_unlock(&Inst->Ct.Lock);
@@ -341,9 +338,16 @@ BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t Contac
         return BPLIB_INVALID_CONT_ID_ERR;
     }
 
-    Inst->Ct.LastSeqCounterId = (Inst->Ct.LastSeqCounterId + 1) % BPLIB_CT_MAX_SEQ_ID;
-    Inst->Ct.SeqCounters[Inst->Ct.LastSeqCounterId % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS] = 0;
-    Inst->Ct.CurrActiveSeqIds[ContactId] = Inst->Ct.LastSeqCounterId;
+    Inst->Ct.LastSeqCounterId++;
+
+    if (Inst->Ct.LastSeqCounterId == BPLIB_CT_SEQ_ID_ROLLOVER_VALUE)
+    {
+        /* Sequence ID of 0 is reserved */
+        Inst->Ct.LastSeqCounterId = 1;
+    }
+
+    Inst->Ct.SeqCounters[ContactId].Id = Inst->Ct.LastSeqCounterId;
+    Inst->Ct.SeqCounters[ContactId].Counter = 0;
 
     return BPLIB_SUCCESS;
 }
