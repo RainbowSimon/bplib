@@ -198,6 +198,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     BPLib_MEM_BundleFree(&Inst->pool, Bundle);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
+                    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ABANDONED, 1);
                     
                     return NO_NEXT_STATE;
                 }
