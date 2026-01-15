@@ -140,6 +140,7 @@ extern "C" {
  */
 #define BPLIB_MAX_LIFETIME_ALLOWED              0xfffffffe
 
+
 /**
  *  \brief This is the maximum retransmit timeout allowed in the contacts configuration
  */

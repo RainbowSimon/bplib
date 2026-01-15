@@ -158,9 +158,9 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
         return SQLStatus;
     }
 
-    /* Bind retransmit_time to current time plus retransmit trigger */
+    /* Bind retransmit_time to automatically trigger retransmission */
     SQLStatus = sqlite3_bind_int64(SetRetransmitAllStmt, BindIndex++, 
-                                    BPLib_TIME_GetMonotonicTime() + RetransmitTrigger);
+                                            BPLib_TIME_GetMonotonicTime());
     if (SQLStatus != SQLITE_OK)
     {
         fprintf(stderr, "Failed to bind retransmit_time: %s\n", sqlite3_errmsg(db));

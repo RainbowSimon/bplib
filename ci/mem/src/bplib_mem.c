@@ -109,6 +109,7 @@ BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_
     BPLib_MEM_Block_t* head;
     BPLib_MEM_Block_t* curr_tail;
     BPLib_MEM_Block_t* new_block;
+    size_t BlockDataSize;
 
     if (pool == NULL || byte_len == 0)
     {
@@ -119,6 +120,8 @@ BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_
     {
         return NULL;
     }
+
+    BlockDataSize = BlockSize - BPLIB_MEM_META_DATA_SIZE;
 
     head = NULL;
     bytes_alloc = 0;
@@ -132,7 +135,7 @@ BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_
             return NULL;
         }
         blocks_alloc++;
-        bytes_alloc += BlockSize;
+        bytes_alloc += BlockDataSize;
 
         if (head == NULL)
         {

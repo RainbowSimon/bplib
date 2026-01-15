@@ -71,13 +71,17 @@ void Test_BPLib_CT_ProcessNewBundle_Null(void)
 {
     BPLib_Bundle_t Bundle;
 
-    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(NULL, &Bundle), BPLIB_NULL_PTR_ERROR);
-    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, NULL), BPLIB_NULL_PTR_ERROR);
+    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(NULL, &Bundle, false), BPLIB_NULL_PTR_ERROR);
+    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, NULL, false), BPLIB_NULL_PTR_ERROR);
 }
 
 void Test_BPLib_CT_ProcessNewBundle_AcceptCustody(void)
 {
     BPLib_Bundle_t Bundle;
+    BPLib_MEM_Block_t  DbMemBlk;
+
+    /* Allocate new CTDB entry for bundle */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_BlockAlloc), (UT_IntReturn_t) &DbMemBlk);
 
     /* Set up custodial bundle */
     memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
@@ -110,7 +114,7 @@ void Test_BPLib_CT_ProcessNewBundle_AcceptCustody(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_PDB_AcceptCustody), BPLIB_SUCCESS);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyAccepted_Idx);
 
-    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle, false), BPLIB_SUCCESS);
     UtAssert_EQ(size_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen, 5);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqId, 12);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[0], 2);
@@ -146,7 +150,7 @@ void Test_BPLib_CT_ProcessNewBundle_RejectCustody(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_PDB_AcceptCustody), BPLIB_ERROR);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyRefused_Idx);
 
-    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle), BPLIB_CT_CUSTODY_REFUSED_ERR);
+    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle, false), BPLIB_CT_CUSTODY_REFUSED_ERR);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqId, 12);
     UtAssert_EQ(size_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRangeLen, 1);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRange[0], 1);
@@ -163,7 +167,7 @@ void Test_BPLib_CT_ProcessNewBundle_Noncustodial(void)
     memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
 
 
-    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle, false), BPLIB_SUCCESS);
     UtAssert_STUB_COUNT(BPLib_PDB_AcceptCustody, 0);
 }
 
@@ -192,14 +196,14 @@ void Test_BPLib_CT_ProcessNewBundle_StorFull(void)
     **  [1]
     */
 
-    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle), BPLIB_CT_CUSTODY_REFUSED_ERR);
+    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle, false), BPLIB_CT_CUSTODY_REFUSED_ERR);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqId, 12);
     UtAssert_EQ(size_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRangeLen, 1);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRange[0], 1);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].FirstSeqNum, 33);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].LastSeqNumAdded, 33);
     UtAssert_EQ(bool, BplibInst.Ct.OpenCcss[0].InProgress, true);
-    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 2);
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED_NO_STORAGE, 
                                             Context_BPLib_AS_Increment[0].Counter);
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_CUSTODY_REQUEST, 
@@ -234,7 +238,7 @@ void Test_BPLib_CT_ProcessNewBundle_Dupl(void)
     **  [1]
     */
 
-    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle), BPLIB_CT_CUSTODY_REFUSED_ERR);
+    UtAssert_INT32_EQ(BPLib_CT_ProcessNewBundle(&BplibInst, &Bundle, false), BPLIB_CT_CUSTODY_REFUSED_ERR);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqId, 12);
     UtAssert_EQ(size_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRangeLen, 1);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRange[0], 1);
@@ -258,8 +262,8 @@ void Test_BPLib_CT_UpdateBundle_Null(void)
 void Test_BPLib_CT_UpdateBundle_Custodial(void)
 {
     BPLib_Bundle_t Bundle;
-    BPLib_MEM_Block_t MemBlk;
-    BPLib_CT_DbEntry_t *NewDbEntry;
+    BPLib_CT_DbEntry_t *DbEntry;
+    BPLib_CT_DbEntry_t NonPtrEntry;
 
     /* Set up custodial bundle */
     memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
@@ -270,24 +274,26 @@ void Test_BPLib_CT_UpdateBundle_Custodial(void)
     Bundle.Meta.EgressID = 0;
 
     /* Set up counter context */
-    BplibInst.Ct.CurrActiveSeqIds[0] = 56;
-    BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS] = 69;
+    BplibInst.Ct.SeqCounters[0].Id = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1;
+    BplibInst.Ct.SeqCounters[0].Counter = 69;
 
     /* Set up CTDB context */
-    UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BlockAlloc), 1, (UT_IntReturn_t) &MemBlk);
-    NewDbEntry = &MemBlk.user_data.DbEntry;
     BplibInst.Ct.CurrDbSize = 10;
+    DbEntry = &NonPtrEntry;
+    NonPtrEntry.BundleId = 0xdead;
+    NonPtrEntry.SeqId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(DbEntry->IdRbtLink));
     
     UtAssert_INT32_EQ(BPLib_CT_UpdateBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
     
-    UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqId, 56);
+    UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqId, BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1);
     UtAssert_EQ(uint64_t, Bundle.blocks.ExtBlocks[0].BlockData.CustodyBlockData.BundleSeqNum, 69);
     UtAssert_STUB_COUNT(BPLib_EID_CopyEids, 1);
-    UtAssert_EQ(uint32_t, NewDbEntry->BundleId, 0xdead);
-    UtAssert_EQ(uint64_t, NewDbEntry->SeqId, 56);
-    UtAssert_EQ(uint64_t, NewDbEntry->SeqNum, 69);
-    UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, 11);
-    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS], 70);
+    UtAssert_EQ(uint32_t, DbEntry->BundleId, 0xdead);
+    UtAssert_EQ(uint64_t, DbEntry->SeqId, BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1);
+    UtAssert_EQ(uint64_t, DbEntry->SeqNum, 69);
+    UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, 10);
+    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[0].Counter, 70);
 }
 
 void Test_BPLib_CT_UpdateBundle_Noncustodial(void)
@@ -335,8 +341,8 @@ void Test_BPLib_CT_UpdateBundle_Retransmit(void)
     Bundle.Meta.EgressID = 0;
 
     /* Set up counter context */
-    BplibInst.Ct.CurrActiveSeqIds[0] = 56;
-    BplibInst.Ct.SeqCounters[56 % BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS] = 69;
+    BplibInst.Ct.SeqCounters[0].Id = 56;
+    BplibInst.Ct.SeqCounters[0].Counter = 69;
 
     /* Set up CTDB context */
     UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BlockAlloc), 1, (UT_IntReturn_t) &MemBlk);
@@ -364,16 +370,15 @@ void Test_BPLib_CT_AssignSeqCounter_Nominal(void)
     uint32_t ContId = 0;
 
     /* Set up counter context */
-    BplibInst.Ct.CurrActiveSeqIds[0] = BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS - 1;
-    BplibInst.Ct.LastSeqCounterId = BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS - 1;
-    BplibInst.Ct.SeqCounters[0] = 69;
-
+    BplibInst.Ct.SeqCounters[0].Id = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1;
+    BplibInst.Ct.LastSeqCounterId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE - 1;
+    BplibInst.Ct.SeqCounters[0].Counter = 69;
 
     UtAssert_INT32_EQ(BPLib_CT_AssignSeqCounter(&BplibInst, ContId), BPLIB_SUCCESS);
 
-    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[0], 0);
-    UtAssert_EQ(uint64_t, BplibInst.Ct.LastSeqCounterId, BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS);
-    UtAssert_EQ(uint64_t, BplibInst.Ct.CurrActiveSeqIds[0], BPLIB_CT_DB_MAX_SEQUENCE_COUNTERS);
+    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[0].Counter, 0);
+    UtAssert_EQ(uint64_t, BplibInst.Ct.LastSeqCounterId, 1);
+    UtAssert_EQ(uint64_t, BplibInst.Ct.SeqCounters[0].Id, 1);
 }
 
 void Test_BPLib_CT_AssignSeqCounter_InputErr(void)

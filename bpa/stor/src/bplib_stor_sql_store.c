@@ -84,21 +84,32 @@ static int BPLib_SQL_PrintTbl(void* data, int argc, char** argv, char** azColNam
 SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t* BundleCache)
 {
     SQL_Status_t         SQLStatus;
-    BPLib_PrimaryBlock_t PrimaryBlock;
+    BPLib_PrimaryBlock_t *PrimaryBlock;
     uint64_t             AgeBlockTime;
     uint64_t             ExpirationTime;
     uint64_t             MonoTimeAge;
     uint64_t             MonoTimeRemaining;
     uint16_t             ExtensionBlockIdx;
+    uint64_t             EffectiveLifetime;
 
-    PrimaryBlock   = Bundle->blocks.PrimaryBlock;
+    PrimaryBlock   = &(Bundle->blocks.PrimaryBlock);
     ExpirationTime = 0;
 
+    /* Ensure the lifetime is less than or equal to the max allowed lifetime */
+    BPLib_NC_ReaderLock();
+    EffectiveLifetime = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_LIFETIME];
+    BPLib_NC_ReaderUnlock();
+
+    if (EffectiveLifetime > PrimaryBlock->Lifetime)
+    {
+        EffectiveLifetime = PrimaryBlock->Lifetime;
+    }
+    
     sqlite3_reset(InsertMetadataStmt);
 
     /* Bind bundle_id to InsertMetadataStmt */
     SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 1, 
-                                    (int64_t)Bundle->blocks.PrimaryBlock.BundleId);
+                                    (int64_t)PrimaryBlock->BundleId);
 
     if (SQLStatus != SQLITE_OK)
     {
@@ -108,17 +119,17 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     {
         /* Add the value of the timestamp used as an indicator for some action to the InsertMetadataStmt variable (action_timestamp) */
         
-        if (PrimaryBlock.Timestamp.CreateTime != 0)
+        if (PrimaryBlock->Timestamp.CreateTime != 0)
         { /* Bundle has a valid creation time */
             if (BPLib_TIME_GetCurrentDtnTime() != 0)
             { /* DTN time is valid */
-                MonoTimeAge       = BPLib_TIME_GetCurrentDtnTime() - PrimaryBlock.Timestamp.CreateTime;
-                MonoTimeRemaining = PrimaryBlock.Lifetime          - MonoTimeAge;
+                MonoTimeAge       = BPLib_TIME_GetCurrentDtnTime() - PrimaryBlock->Timestamp.CreateTime;
+                MonoTimeRemaining = EffectiveLifetime - MonoTimeAge;
                 ExpirationTime    = BPLib_TIME_GetMonotonicTime()  + MonoTimeRemaining;
             }
             else
             { /* DTN time is invalid */
-                ExpirationTime = PrimaryBlock.MonoTime.Time + PrimaryBlock.Lifetime;
+                ExpirationTime = PrimaryBlock->MonoTime.Time + EffectiveLifetime;
             }
         }
         else
@@ -127,7 +138,7 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
             {
                 if (Bundle->blocks.ExtBlocks[ExtensionBlockIdx].Header.BlockType == BPLib_BlockType_Age)
                 {
-                    MonoTimeAge    = PrimaryBlock.MonoTime.Time + PrimaryBlock.Lifetime;
+                    MonoTimeAge    = PrimaryBlock->MonoTime.Time + EffectiveLifetime;
                     AgeBlockTime   = Bundle->blocks.ExtBlocks[ExtensionBlockIdx].BlockData.AgeBlockData.Age;
                     ExpirationTime = MonoTimeAge - AgeBlockTime;
 
@@ -167,7 +178,7 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     {
         /* Add the destination node into the InsertMetadataStmt variable */
         SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 5, 
-                                (int64_t)Bundle->blocks.PrimaryBlock.DestEID.Node);
+                                (int64_t)PrimaryBlock->DestEID.Node);
     }
 
     if (SQLStatus != SQLITE_OK)
@@ -178,7 +189,7 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     {
         /* Add the destination service into the InsertMetadataStmt variable */
         SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 6, 
-                                (int64_t)Bundle->blocks.PrimaryBlock.DestEID.Service);
+                                (int64_t)PrimaryBlock->DestEID.Service);
     }
 
     if (SQLStatus != SQLITE_OK)
