@@ -505,7 +505,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, CacheInst->InsertBatchSize);
 
         BPLib_EM_SendEvent(BPLIB_STOR_DB_FULL_INF_EID,
-                            BPLib_EM_EventType_INFORMATION,
+                            BPLib_EM_EventType_ERROR,
                             "SQLite database is full, dropping %d bundles",
                             CacheInst->InsertBatchSize);
     }
