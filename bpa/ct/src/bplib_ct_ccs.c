@@ -295,7 +295,10 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     }
 
     /* Do remaining batch of storage operations */
-    Status = BPLib_STOR_UpdateCustodialBundles(Inst, &CcsStorBatch);
+    if (CcsStorBatch.Size > 0)
+    {
+        Status = BPLib_STOR_UpdateCustodialBundles(Inst, &CcsStorBatch);
+    }
 
     return Status;
 }

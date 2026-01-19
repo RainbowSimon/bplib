@@ -579,6 +579,11 @@ BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_C
         return BPLIB_NULL_PTR_ERROR;
     }
 
+    if (Batch->Size == 0)
+    {
+        return BPLIB_SUCCESS;
+    }
+
     pthread_mutex_lock(&(Inst->BundleStorage.lock));
 
     Status = BPLib_SQL_UpdateCustodialBundles(Inst, Batch);
