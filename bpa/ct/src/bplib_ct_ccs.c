@@ -57,6 +57,69 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     return;
 }
 
+void BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collection, 
+                                                                    uint64_t BundleSeqNum)
+{
+    // uint64_t LastIncludeRangeNum;
+    // uint64_t PrevMissingRangeNum;
+    // int64_t InsertionIdx = BPLIB_CT_MAX_SEQ_RANGE_LEN;
+    // uint64_t OldSeqRange[BPLIB_CT_MAX_SEQ_RANGE_LEN];
+    // size_t OrigRangeIdx = 0;
+    // size_t NewRangeIdx = 0;
+    // bool InsertionComplete = false;
+
+    // memcpy(OldSeqRange, Collection->SeqRange, sizeof(Collection->SeqRange));
+
+    // LastIncludeRangeNum = Collection->FirstSeqNum + OldSeqRange[0];
+    // PrevMissingRangeNum = 0;
+
+    // /* If new bundle sequence number predates first sequence number entirely */
+    // if (BundleSeqNum < Collection->FirstSeqNum)
+    // {
+    //     if (BundleSeqNum == (Collection->FirstSeqNum - 1))
+    //     {
+    //         Collection->SeqRange[NewRangeIdx++]++;
+    //     }
+    //     else
+    //     {
+    //         Collection->SeqRange[NewRangeIdx++] = 1;
+    //         Collection->SeqRange[NewRangeIdx++] = (Collection->FirstSeqNum - BundleSeqNum);
+    //         Collection->SeqRange[NewRangeIdx++] = OldSeqRange[0];
+    //     }
+
+    //     Collection->FirstSeqNum = BundleSeqNum;
+    //     InsertionComplete = true;
+    // }
+    // else
+    // {
+    //     Collection->SeqRange[0] = OldSeqRange[0];
+    // }
+
+    // for (OrigRangeIdx = 1; OrigRangeIdx < Collection->SeqRangeLen; OrigRangeIdx += 2)
+    // {
+    //     if (InsertionComplete == false && BundleSeqNum < (LastIncludeRangeNum + OldSeqRange[OrigRangeIdx]))
+    //     {
+    //         if (BundleSeqNum == (LastIncludeRangeNum + 1))
+    //         {
+    //             Collection->SeqRange[NewRangeIdx - 1]++;
+    //             Collection->SeqRange[NewRangeIdx]--;
+    //         }
+    //     }
+    //     else
+    //     {
+    //         Collection->SeqRange[NewRangeIdx++] = OldSeqRange[OrigRangeIdx];
+    //         Collection->SeqRange[NewRangeIdx++] = OldSeqRange[OrigRangeIdx + 1];
+    //     }
+
+    //     /* Jump to next "include" range */
+    //     PrevMissingRangeNum += OldSeqRange[OrigRangeIdx] + 1;
+    //     CurrIncludeRangeNum += OldSeqRange[OrigRangeIdx];
+    //     CurrIncludeRangeNum += OldSeqRange[OrigRangeIdx + 1];
+    // }
+
+    // return;
+}
+
 BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsIdx,
                                         uint32_t ContactId,
                                         BPLib_CustodyBlockData_t* CtebPtr,
@@ -72,8 +135,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
 
     /* Sanity checks */
     if ((Collection->SeqRangeLen != 0 && Collection->SeqRangeLen % 2 != 1) ||
-        Collection->SeqRangeLen >= (BPLIB_CT_MAX_SEQ_RANGE_LEN - 1) ||
-        CtebPtr->BundleSeqNum < Collection->LastSeqNumAdded)
+        Collection->SeqRangeLen >= (BPLIB_CT_MAX_SEQ_RANGE_LEN - 1))
     {
         BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
                 "Open CCS data failed sanity checks, check for memory corruption.");
@@ -107,6 +169,12 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
         OpenCcs->MaxTime = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].CSTimeTrigger;
         BPLib_NC_ReaderUnlock();
     }
+    /* Older bundle was received, gotta update older CCS records */
+    else if (CtebPtr->BundleSeqNum < Collection->LastSeqNumAdded)
+    {
+        BPLib_CT_InsertOldSeqNumToOpenCcs(Collection, CtebPtr->BundleSeqNum);
+    }
+    /* Sequence number comes after last sequence number received */
     else
     {
         /* If we received the previous sequence number, increment the relevant sequence range value */
