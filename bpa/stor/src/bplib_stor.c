@@ -177,6 +177,8 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     size_t                  EgressCnt;
     int64_t                 CurrBundleID;
     size_t                  NumEIDs;
+    uint8_t OpType = 0;
+    int64_t StartTime;
 
     Status     = BPLIB_SUCCESS;
     CurrBundle = NULL;
@@ -231,8 +233,10 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     }
 
     pthread_mutex_lock(&CacheInst->lock);
+
+    StartTime = BPLib_TIME_GetMonotonicTime();
     
-    /* If the load batch is empty, try to read more from storage */
+    /* If the load batch is empty and the queue is empty, try to read more from storage */
     if (BPLib_STOR_LoadBatch_IsEmpty(LoadBatch))
     {
         /* Ask SQL to load egressable bundles from the specified Destination EID */
@@ -244,6 +248,8 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
                                 "BPLib_SQL_FindForEIDs failed to load bundle. RC=%d",
                                 Status);
         }
+
+        OpType = 1;
     }
     else if (BPLib_STOR_LoadBatch_IsConsumed(LoadBatch))
     { /* All of the bundles for this batch have been egressed */
@@ -252,6 +258,8 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
 
         /* Clear the batch */
         (void) BPLib_STOR_LoadBatch_Reset(LoadBatch);
+
+        OpType = 2;
     }
     else
     { /* There are bundles in the current batch that need to be egressed */
@@ -262,11 +270,12 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
             if (Status == BPLIB_SUCCESS)
             {
                 CurrBundle->Meta.EgressID = EgressID;
-                if (BPLib_QM_WaitQueueTryPush(EgressQueue, &CurrBundle, QM_NO_WAIT) == false)
+                if (BPLib_QM_WaitQueueTryPush(EgressQueue, &CurrBundle, 100) == false)
                 {
                     /* If QM couldn't accept the bundle, free it. It will be reloaded
                     ** next time.
                     */
+                    printf("unable to push to q\n");
                     BPLib_MEM_BundleFree(&Inst->pool, CurrBundle);
 
                     break;
@@ -287,7 +296,11 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
                 break;
             }
         }
+        OpType = 3;
     }
+
+    printf("Loaded %ld bundles, optype %d, elapsed time is %ld\n", 
+                    EgressCnt, OpType, BPLib_TIME_GetMonotonicTime() - StartTime);
 
     pthread_mutex_unlock(&CacheInst->lock);
 
@@ -627,4 +640,42 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
     /* Error event handled upstream */
     
     return Status;    
+}
+
+BPLib_Status_t BPLib_STOR_Egress(BPLib_Instance_t *Instance, size_t MaxBundles)
+{
+    BPLib_Status_t Status;
+    uint32_t ChanId, ContId;
+    size_t NumLoaded;
+    BPLib_CLA_ContactRunState_t ConState;
+
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
+    {
+        if (BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_STARTED &&
+            BPLib_QM_WaitQueueIsEmpty(&Instance->ChannelEgressJobs[ChanId]))
+        {
+            Status = BPLib_STOR_EgressForID(Instance, ChanId, true, &NumLoaded);
+            if (Status != BPLIB_SUCCESS || NumLoaded > MaxBundles)
+            {
+                return Status;
+            }
+        }
+    }
+
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
+    {
+        (void) BPLib_CLA_GetContactRunState(ContId, &ConState);
+
+        if (ConState == BPLIB_CLA_STARTED && 
+            BPLib_QM_WaitQueueIsEmpty(&Instance->ContactEgressJobs[ChanId]))
+        {
+            Status = BPLib_STOR_EgressForID(Instance, ContId, false, &NumLoaded);
+            if (Status != BPLIB_SUCCESS || NumLoaded > MaxBundles)
+            {
+                return Status;
+            }
+        }
+    }
+
+    return BPLIB_SUCCESS;
 }

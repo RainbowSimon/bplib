@@ -181,4 +181,6 @@ void BPLib_STOR_SetLastActiveTime(BPLib_Instance_t* Inst);
 
 bool BPLib_STOR_IsIngressEgressActive(BPLib_Instance_t* Inst);
 
+BPLib_Status_t BPLib_STOR_Egress(BPLib_Instance_t *Instance, size_t MaxBundles);
+
 #endif /* BPLIB_STOR_H */

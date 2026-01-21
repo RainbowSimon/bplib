@@ -712,6 +712,11 @@ BPLib_Status_t BPLib_SQL_GetDestEidWhereClause(BPLib_EID_Pattern_t* DestEIDs, si
 
     for (i = 0; i < NumEIDs; i++)
     {
+        if (DestEIDs[i].MaxNode == 0 && DestEIDs[i].MaxService == 0)
+        {
+            /* dtn:none detected, skip this */
+            break;
+        }
         /* If maxNode == minNode, do an exact query, otherwise do a range query */
         if (DestEIDs[i].MaxNode == DestEIDs[i].MinNode)
         {
@@ -759,7 +764,7 @@ BPLib_Status_t BPLib_SQL_GetDestEidWhereClause(BPLib_EID_Pattern_t* DestEIDs, si
         }
 
         /* Link multiple EID queries with an OR, unless this is the last EID */
-        if (i != (NumEIDs - 1))
+        if (i != (NumEIDs - 1) && !(DestEIDs[i + 1].MaxNode == 0 && DestEIDs[i + 1].MaxService == 0))
         {
             if (CurrWhereLen + strlen(" OR ") >= MaxWhereLen)
             {
