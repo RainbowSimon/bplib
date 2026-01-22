@@ -149,6 +149,7 @@ typedef struct
     BPLib_EID_t                    SourceAdminEid;
     BPLib_CT_BundleSeqCollection_t BundleSeqCollections[BPLIB_CT_MAX_SEQ_COLLECTIONS];
     int64_t                        CollectionStartTime;
+    uint32_t                       ContactId;
 } BPLib_CT_OpenCcs_t;
 
 /**

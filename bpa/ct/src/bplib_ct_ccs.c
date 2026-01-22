@@ -225,6 +225,9 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
         /* Set the disposition code of the new bundle sequence collection */
         OpenCcs->BundleSeqCollections[DispCodeIdx].DispositionCode = DispositionCode;
 
+        /* Set the contact ID to track for contact-stop operations */
+        OpenCcs->ContactId = ContactId;
+
         /* Set the trigger values */
         BPLib_NC_ReaderLock();
         OpenCcs->MaxSize = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId].CSSizeTrigger;
