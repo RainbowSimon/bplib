@@ -65,4 +65,5 @@ void BPLib_CT_Test_Teardown(void)
 void UtTest_Setup(void)
 {
     TestBplibCt_Register();
+    TestBplibCtInternal_Register();
 }
