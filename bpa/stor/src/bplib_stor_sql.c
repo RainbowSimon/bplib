@@ -115,6 +115,7 @@ const char* CreateTableSQL =
 "    dest_service,\n"
 "    egress_attempted,\n"
 "    action_timestamp,\n"
+"    is_custodial,\n"
 "    id\n"
 ");\n"
 "\n"
