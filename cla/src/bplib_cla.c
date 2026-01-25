@@ -56,8 +56,6 @@ BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t* Inst, uint32_t ContId, const 
         return BPLIB_INVALID_CONT_ID_ERR;
     }
 
-    BPLib_STOR_SetLastActiveTime(Inst);
-
     /* Not a RFC 9171 bundle. Can be a control message or junk*/
     if (BPLib_CLA_IsAControlMsg((const uint8_t*)Bundle, Size))
     {
@@ -112,8 +110,6 @@ BPLib_Status_t BPLib_CLA_Egress(BPLib_Instance_t* Inst, uint32_t ContId, void *B
     Status = BPLib_QM_DuctPull(Inst, ContId, false, Timeout, &Bundle);
     if (Status == BPLIB_SUCCESS)
     {
-        BPLib_STOR_SetLastActiveTime(Inst);
-        
         /* Copy the bundle to the CLA buffer */
         Status = BPLib_BI_BlobCopyOut(Bundle, BundleOut, BufLen, Size);
         if (Status == BPLIB_SUCCESS)

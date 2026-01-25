@@ -29,8 +29,15 @@
 #define QM_WAIT_FOREVER    -1L /**< Constant representing an indefinite wait */
 #define QM_MAX_GEN_WORKERS  8L /**< Constant representing maximum allowed generic workers */
 
+/*
+** This is one of the key configs that will affect performance -> the higher this value is,
+** the more bundles that can sit in memory for the Out task to egress while the maintenance
+** task focuses on loading bundles from storage into memory. The combination of this value,
+** BPLIB_STOR_LOADBATCHSIZE, and the total memory pool size will determine the egress
+** from storage performance.
+*/
 #ifndef BPLIB_QM_TX_QUEUE_DEPTH
-#define BPLIB_QM_TX_QUEUE_DEPTH 2048
+#define BPLIB_QM_TX_QUEUE_DEPTH 16384
 #endif
 
 typedef struct BPLib_QM_WorkerState

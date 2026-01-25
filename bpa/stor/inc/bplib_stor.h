@@ -68,6 +68,7 @@ struct BPLib_BundleCache
     BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
     BPLib_STOR_LoadBatch_t ContactLoadBatches[BPLIB_MAX_NUM_CONTACTS];
     int64_t                LastActiveTime;
+    size_t                 BundleCountNotEgressed;  /* Number of bundles in storage that have not been marked as egressed */
 
     /* Storage-related MIB reports */
     uint32_t BundleCountStored;

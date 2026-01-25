@@ -38,6 +38,7 @@
 /* SQL query statements */
 
 sqlite3_stmt* GetNumBundlesStmt;
+sqlite3_stmt* GetNumEgressedStmt;
 sqlite3_stmt* TotalBytesStmt;
 sqlite3_stmt* DiscardEgressedStmt;
 sqlite3_stmt* EgressedBytesStmt;
@@ -125,6 +126,11 @@ const char* CreateTableSQL =
 
 const char* GetNumBundlesSQL =
 "SELECT COUNT(*) FROM bundle_data;";
+
+const char* GetNumEgressedSQL =
+"SELECT SUM(egress_attempted) "
+"As NumEgressed "
+"FROM bundle_data;";
 
 const char* TotalBytesSQL =
 "SELECT SUM(bundle_bytes) "
@@ -238,9 +244,11 @@ SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst)
     SQL_Status_t SQLStatus;
     uint32_t     NumStoredBundles;
     uint64_t     TotalBundleBytes;
+    size_t       NumEgressed;
 
     NumStoredBundles = 0;
     TotalBundleBytes = 0;
+    NumEgressed      = 0;
 
     /* Create the table if it doesn't already exist */
     SQLStatus = sqlite3_exec(Inst->BundleStorage.db, CreateTableSQL, 0, 0, NULL);
@@ -250,12 +258,21 @@ SQL_Status_t BPLib_SQL_InitTable(BPLib_Instance_t* Inst)
     }
 
     /* Determine how many bundles are presently in storage, and set the stored counter to this value */
-    if (BPLib_SQL_GetNumStoredBundles(Inst->BundleStorage.db, &NumStoredBundles) != SQLITE_OK)
+    SQLStatus = BPLib_SQL_GetNumStoredBundles(Inst->BundleStorage.db, &NumStoredBundles);
+    if (SQLStatus != SQLITE_OK)
     {
         return SQLStatus;
     }
     
     Inst->BundleStorage.BundleCountStored = NumStoredBundles;
+
+    SQLStatus = BPLib_SQL_GetNumEgressed(Inst->BundleStorage.db, &NumEgressed);
+    if (SQLStatus != SQLITE_OK)
+    {
+        return SQLStatus;
+    }
+
+    Inst->BundleStorage.BundleCountNotEgressed = NumStoredBundles - NumEgressed;
 
     /* Find the total number of bytes of bundles stored */
     SQLStatus = BPLib_SQL_GetTotalBundleBytes(Inst->BundleStorage.db, &TotalBundleBytes);
@@ -309,6 +326,30 @@ SQL_Status_t BPLib_SQL_GetNumStoredBundles(sqlite3 *db, uint32_t *BundleCnt)
 
     sqlite3_finalize(GetNumBundlesStmt);
 
+    return SQLITE_OK;
+}
+
+SQL_Status_t BPLib_SQL_GetNumEgressed(sqlite3* db, size_t *EgressCnt)
+{
+    SQL_Status_t SQLStatus;
+
+    SQLStatus = sqlite3_prepare_v2(db, GetNumEgressedSQL, -1, &GetNumEgressedStmt, NULL);
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+        return SQLStatus;
+    }
+
+    SQLStatus = sqlite3_step(GetNumEgressedStmt);
+    if (SQLStatus != SQLITE_ROW)
+    {
+        return SQLStatus;
+    }
+
+    *EgressCnt = sqlite3_column_int(GetNumEgressedStmt, 0);
+
+    sqlite3_finalize(GetNumEgressedStmt);
+    
     return SQLITE_OK;
 }
 
