@@ -64,8 +64,6 @@ BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_
         return Status;
     }
 
-    printf("WhereClause: %s\n", WhereClause);
-
     /* 
     ** Build the final query. Note that "INDEXED BY idx_egress_id" is necessary to force
     ** sqlite to use the right index, otherwise it will try to use the much slower
