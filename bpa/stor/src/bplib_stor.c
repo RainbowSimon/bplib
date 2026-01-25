@@ -238,9 +238,7 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
 
     pthread_mutex_lock(&CacheInst->lock);
 
-    BPLib_STOR_SetLastActiveTime(Inst);
-
-    /* If the load batch is empty and the queue is empty, try to read more from storage */
+    /* If the load batch is empty, try to read more from storage */
     if (BPLib_STOR_LoadBatch_IsEmpty(LoadBatch))
     {
         /* Ask SQL to load egressable bundles from the specified Destination EID */
@@ -297,6 +295,11 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
                 break;
             }
         }
+    }
+
+    if (EgressCnt != 0)
+    {
+        BPLib_STOR_SetLastActiveTime(Inst);
     }
 
     pthread_mutex_unlock(&CacheInst->lock);
@@ -646,11 +649,10 @@ BPLib_Status_t BPLib_STOR_Egress(BPLib_Instance_t *Instance, size_t MaxBundles)
 
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        if (BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_STARTED &&
-            BPLib_QM_WaitQueueIsEmpty(&Instance->ChannelEgressJobs[ChanId]))
+        if (BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_STARTED)
         {
             Status = BPLib_STOR_EgressForID(Instance, ChanId, true, &NumLoaded);
-            if (Status != BPLIB_SUCCESS || NumLoaded > MaxBundles)
+            if (Status != BPLIB_SUCCESS || NumLoaded >= MaxBundles)
             {
                 return Status;
             }
@@ -660,12 +662,10 @@ BPLib_Status_t BPLib_STOR_Egress(BPLib_Instance_t *Instance, size_t MaxBundles)
     for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
     {
         (void) BPLib_CLA_GetContactRunState(ContId, &ConState);
-
-        if (ConState == BPLIB_CLA_STARTED && 
-            BPLib_QM_WaitQueueIsEmpty(&Instance->ContactEgressJobs[ChanId]))
+        if (ConState == BPLIB_CLA_STARTED)
         {
             Status = BPLib_STOR_EgressForID(Instance, ContId, false, &NumLoaded);
-            if (Status != BPLIB_SUCCESS || NumLoaded > MaxBundles)
+            if (Status != BPLIB_SUCCESS || NumLoaded >= MaxBundles)
             {
                 return Status;
             }

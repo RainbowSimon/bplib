@@ -305,8 +305,6 @@ BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool
     BPLib_QM_JobState_t CurrState;
     BPLib_QM_JobFunc_t JobFunc;
     BPLib_QM_WaitQueue_t* DuctQueue;
-    // BPLib_Status_t Status = BPLIB_SUCCESS;
-    // size_t NumStoredEgressed = 0;
 
     if ((Inst == NULL) || (RetBundle == NULL))
     {
@@ -333,23 +331,6 @@ BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool
         CurrState = CONTACT_OUT_STOR_TO_CT;
         DuctQueue = &(Inst->ContactEgressJobs[EgressID]);
     }
-
-    /* If the duct is idle, try to load more from storage */
-    // if (BPLib_QM_IsDuctActive(Inst, EgressID, LocalDelivery) == false)
-    // {
-    //     Status = BPLib_STOR_EgressForID(Inst, EgressID, LocalDelivery, &NumStoredEgressed);
-    //     if (Status == BPLIB_SUCCESS)
-    //     {
-    //         /* 
-    //         ** This should break the calling task's current wakeup cycle, this way some
-    //         ** wakeups are dedicated to loading batches from storage, others just to 
-    //         ** egressing loaded bundles from the queues 
-    //         */
-    //         Status = BPLIB_TIMEOUT;
-    //     }
-
-    //     return Status;
-    // }
 
     /* Pull the bundle from the queue and push it to the 'edge' of BPA 
     ** Note: There's no check for DuctActive here to support the case where bundles
