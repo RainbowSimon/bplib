@@ -126,6 +126,7 @@ typedef struct BPLib_MEM_Pool
 {
     BPLib_MEM_PoolImpl_t impl; /**< The pool implementation (details hidden) */
     pthread_mutex_t lock; /**< Mutex for synchronizing access to the pool */
+    size_t         HighWaterMark;   /** \brief Highwater memory mark */
 } BPLib_MEM_Pool_t;
 
 
@@ -292,5 +293,17 @@ size_t BPLib_MEM_GetBytesFree(BPLib_MEM_Pool_t *Pool);
  * @return Pointer to a memory block
  */
 BPLib_MEM_Block_t *BPLib_MEM_GetBlockFromUserData(void *UserData);
+
+/**
+ * @brief Get memory highwater mark
+ * 
+ * This function returns the highest point of memory usage so far. It is only reset
+ * on a node restart
+ * 
+ * @param[in] Pool Pointer to memory pool
+ * 
+ * @return Highwater mark size in bytes
+ */
+size_t BPLib_MEM_GetHighwaterMark(BPLib_MEM_Pool_t *Pool);
 
 #endif /* BPLIB_MEM_H */

@@ -81,13 +81,22 @@ BPLib_MEM_Block_t* BPLib_MEM_BlockAlloc(BPLib_MEM_Pool_t* pool, size_t Size)
     }
 
     pthread_mutex_lock(&pool->lock);
+    
     block = (BPLib_MEM_Block_t*)(BPLib_MEM_PoolImplAlloc(&pool->impl, Size));
-    pthread_mutex_unlock(&pool->lock);
+
     if (block != NULL)
     {
         block->used_len = 0;
         block->next = NULL;
+
+        if (BPLib_MEM_GetBytesInUse(pool) > pool->HighWaterMark)
+        {
+            pool->HighWaterMark = BPLib_MEM_GetBytesInUse(pool);
+        }
     }
+
+    pthread_mutex_unlock(&pool->lock);
+
     return block;
 }
 
@@ -382,6 +391,11 @@ size_t BPLib_MEM_GetBytesInUse(BPLib_MEM_Pool_t *Pool)
 size_t BPLib_MEM_GetBytesFree(BPLib_MEM_Pool_t *Pool)
 {
     return BPLib_MEM_GetBytesFreeImpl(&Pool->impl);
+}
+
+size_t BPLib_MEM_GetHighwaterMark(BPLib_MEM_Pool_t *Pool)
+{
+    return Pool->HighWaterMark;
 }
 
 BPLib_MEM_Block_t *BPLib_MEM_GetBlockFromUserData(void *UserData)

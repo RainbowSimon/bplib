@@ -200,3 +200,19 @@ bool BPLib_QM_WaitQueueIsEmpty(BPLib_QM_WaitQueue_t* q)
 
     return IsEmpty;
 }
+
+bool BPLib_QM_WaitQueueIsFull(BPLib_QM_WaitQueue_t* q)
+{
+    bool IsFull;
+
+    if (q == NULL)
+    {
+        return false;
+    }
+
+    pthread_mutex_lock(&q->lock);
+    IsFull = (q->size == q->capacity);
+    pthread_mutex_unlock(&q->lock);
+
+    return IsFull;
+}

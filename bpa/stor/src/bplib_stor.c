@@ -263,7 +263,8 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     }
     else
     { /* There are bundles in the current batch that need to be egressed */
-        while (BPLib_STOR_LoadBatch_PeekNextID(LoadBatch, &CurrBundleID) == BPLIB_SUCCESS)
+        while (BPLib_STOR_LoadBatch_PeekNextID(LoadBatch, &CurrBundleID) == BPLIB_SUCCESS &&
+                !BPLib_QM_WaitQueueIsFull(EgressQueue))
         {
             /* Set the metadata EID */
             Status = BPLib_SQL_LoadBundle(Inst, CurrBundleID, &CurrBundle);
@@ -288,6 +289,15 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
             {
                 /* Bundle ID belongs to a bundle that is now invalid, discard it but keep going */
                 (void) BPLib_STOR_LoadBatch_AdvanceReader(LoadBatch);
+            }
+            else if (Status == BPLIB_STOR_NO_MEM_ERR)
+            {
+                BPLib_EM_SendEvent(BPLIB_STOR_NO_MEM_ERR_EID, BPLib_EM_EventType_DEBUG,
+                            "Ran out of memory when trying to load a bundle from storage, try again next time. Bytes in use = %ld\n",
+                            BPLib_MEM_GetBytesInUse(&Inst->pool));
+                Status = BPLIB_SUCCESS;
+
+                break;
             }
             else
             {
@@ -455,11 +465,8 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
     /* Update the memory in use*/
     BPLib_STOR_StoragePayload.BytesMemInUse = BPLib_MEM_GetBytesInUse(&Inst->pool);
 
-    /* Update the highwater mark if needed */
-    if (BPLib_STOR_StoragePayload.BytesMemInUse > BPLib_STOR_StoragePayload.BytesMemHighWater)
-    {
-        BPLib_STOR_StoragePayload.BytesMemHighWater = BPLib_STOR_StoragePayload.BytesMemInUse;
-    }
+    /* Update the highwater mark */
+    BPLib_STOR_StoragePayload.BytesMemHighWater = BPLib_MEM_GetHighwaterMark(&Inst->pool);
 
     /* Update the free memory */
     BPLib_STOR_StoragePayload.BytesMemFree = BPLib_MEM_GetBytesFree(&Inst->pool);

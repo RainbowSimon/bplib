@@ -37,7 +37,7 @@
 ** from storage performance.
 */
 #ifndef BPLIB_QM_TX_QUEUE_DEPTH
-#define BPLIB_QM_TX_QUEUE_DEPTH 16384
+#define BPLIB_QM_TX_QUEUE_DEPTH 2048
 #endif
 
 typedef struct BPLib_QM_WorkerState
