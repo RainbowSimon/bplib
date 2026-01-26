@@ -210,6 +210,34 @@ extern "C" {
 
 #define BPLIB_ADMIN_RECORD_BLOCK_FLAGS              (0u)
 
+/** 
+ * \brief Egress queue depth
+ *
+ * This is one of the key configs that will affect performance -> the higher this value is,
+ * the more bundles that can sit in memory for the Out task to egress while the maintenance
+ * task focuses on loading bundles from storage into memory. The combination of this value,
+ * BPLIB_STOR_LOADBATCHSIZE, and the total memory pool size provided by the user will 
+ * determine the egress from storage performance.
+**/
+#ifndef BPLIB_QM_TX_QUEUE_DEPTH
+#define BPLIB_QM_TX_QUEUE_DEPTH 2048
+#endif
+
+/** 
+ * \brief Storage load batch size
+ * 
+ *  Important Note:
+ * Load batch loads integers into memory. It does not load bundle blobs. You can
+ * set this number north of 50k and everything works fine. The tradeoff is how much
+ * system memory the array of integers takes up. For performance analysis, I reccommend setting
+ * this to a higher value using a CMake variable.  In general, nothing can keep up with how
+ * fast we egress (good problem to have right now). To perform rate limiting, BPNode or other
+ * callee application needs to manage how fast it calls CLA/Channel Egress API.
+**/
+#ifndef BPLIB_STOR_LOADBATCHSIZE
+#define BPLIB_STOR_LOADBATCHSIZE 60000
+#endif
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

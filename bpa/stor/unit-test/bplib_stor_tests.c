@@ -145,6 +145,7 @@ void Test_BPLib_STOR_UpdateHkPkt_Nominal(void)
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_GetBytesInUse), ExpectedBytesMemInUse);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_GetBytesFree), ExpectedBytesMemFree);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_GetHighwaterMark), ExpectedBytesMemHighWater);
 
     BPLib_STOR_UpdateHkPkt(&BplibInst);
 
