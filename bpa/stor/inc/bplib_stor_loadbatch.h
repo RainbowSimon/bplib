@@ -22,17 +22,7 @@
 
 #include "bplib_api_types.h"
 
-/* Important Note:
-** Load batch loads integers into memory. It does not load bundle blobs. You can
-** set this number north of 50k and everything works fine. The tradeoff is how much
-** system memory the array of integers takes up. For performance analysis, I reccommend setting
-** this to a higher value using a CMake variable.  In general, nothing can keep up with how
-** fast we egress (good problem to have right now). To perform rate limiting, BPNode or other
-** callee application needs to manage how fast it calls CLA/Channel Egress API.
-*/
-#ifndef BPLIB_STOR_LOADBATCHSIZE
-#define BPLIB_STOR_LOADBATCHSIZE 60000
-#endif
+
 
 typedef struct
 {
