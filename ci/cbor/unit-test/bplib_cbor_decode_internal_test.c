@@ -626,7 +626,7 @@ void Test_BPLib_CBOR_DecodeCanonical_CCS(void)
             0x01, /* CRC Type */
             0x53, /* Byte string, 19 bytes follow */
                 0x82, /* Array, 2 bytes follow */
-                    0x04, /* Compressed Custody Signal Record Type */
+                    0x0D, /* Compressed Custody Signal Record Type */
 
                     /* === CCS Data === */
 
