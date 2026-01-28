@@ -265,7 +265,7 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Err(void)
     BPLib_CT_CcsUpdateBatch_t Batch;
 
     BplibInst.BundleStorage.db = NULL;
-    Batch.Size = 0;
+    Batch.Size = 1;
 
     UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, &Batch), BPLIB_SQL_CUSTODY_UPDATE_ERR);
     UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 1);

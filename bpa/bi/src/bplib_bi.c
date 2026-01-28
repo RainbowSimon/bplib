@@ -98,6 +98,8 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
     /* If decode and validation were successful, create the job to ingress bundle */
     if (Status == BPLIB_SUCCESS)
     {
+        CandidateBundle->Meta.IngressID = ContId;
+        
         if (CandidateBundle->blocks.AdminRecordPayload != NULL)
         {
             BPLib_ARP_ProcessNewCcs(CandidateBundle->blocks.AdminRecordPayload);

@@ -244,7 +244,28 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
         {
             /* Contact ID is valid here, so we can ignore the error status of the function */
             (void) BPLib_CLA_GetContactRunState(i, &ContactState);
-            if (ContactState == BPLIB_CLA_STARTED)
+
+            // Custodial bundles
+            if (Bundle->Meta.IsCustodial && ContactState != BPLIB_CLA_TORNDOWN)
+            {
+                for (j = 0; j < BPLIB_MAX_CONTACT_DEST_EIDS; j++)
+                {
+                    /* Retransmission triggers get applied in all cases except contact torndown */
+                    if (BPLib_EID_PatternIsMatch(DestEID, &Inst->ContCtxt[i].Config.DestEIDs[j]))
+                    {
+                        if (ContactState == BPLIB_CLA_STARTED)
+                        {
+                            Bundle->Meta.EgressID = i;
+                        }
+                        
+                        Bundle->Meta.RetransmitTime = Inst->ContCtxt[i].Config.RetransmitTimeout;
+                        
+                        break;
+                    }
+                }
+            }
+            // Noncustodial bundles
+            else if (Bundle->Meta.IsCustodial == false && ContactState == BPLIB_CLA_STARTED)
             {
                 for (j = 0; j < BPLIB_MAX_CONTACT_DEST_EIDS; j++)
                 {
@@ -252,19 +273,10 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     {
                         /* We have a contact we can deliver to: forward without storing */
                         Bundle->Meta.EgressID = i;
+                        BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), 
+                                                                &Bundle, QM_WAIT_FOREVER);
                         
-                        /* Custodial bundles still need to be stored, even during a loopback */
-                        if (Bundle->Meta.IsCustodial)
-                        {
-                            Bundle->Meta.RetransmitTime = Inst->ContCtxt[i].Config.RetransmitTimeout;
-                            BPLib_STOR_StoreBundle(Inst, Bundle);
-                        }
-                        else
-                        {
-                            BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
-                        }
-
-                        return NO_NEXT_STATE;                        
+                        return NO_NEXT_STATE;
                     }
                 }
             }
