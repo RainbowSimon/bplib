@@ -94,6 +94,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     BPLib_CT_DispositionCode_t DispCode;
     char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
+    bool IsDuplicate = false;
 
     if (Bundle == NULL || Inst == NULL)
     {
@@ -155,11 +156,13 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
 
     }
-    /* Reject duplicate bundles */
+    /* Duplicate bundles are accepted but discarded */
     else if (BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
                     Bundle->blocks.PrimaryBlock.BundleId, &DbEntry) == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REDUNDANT, 1);
+        DispCode = BPLib_CT_CustodyAccepted;
+        IsDuplicate = true;    
     }
 
     /* Custody accepted! */
@@ -185,6 +188,11 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG, 
                             "Bundle custody rejected. %s.", BundleInfo);
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
+    }
+    /* If duplicate, do not add it to the CTDB and return an error to mark deletion */
+    else if (IsDuplicate)
+    {
+        Status = BPLIB_CT_DUPLICATE_ERR;
     }
     else if (Status == BPLIB_SUCCESS) /* and DispCode is BPLib_CT_CustodyAccepted */
     {
