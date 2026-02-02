@@ -68,6 +68,7 @@ struct BPLib_BundleCache
     BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
     BPLib_STOR_LoadBatch_t ContactLoadBatches[BPLIB_MAX_NUM_CONTACTS];
     int64_t                LastActiveTime;
+    size_t                 BundleCountNotEgressed;  /* Number of bundles in storage that have not been marked as egressed */
 
     /* Storage-related MIB reports */
     uint32_t BundleCountStored;
@@ -180,5 +181,24 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
 void BPLib_STOR_SetLastActiveTime(BPLib_Instance_t* Inst);
 
 bool BPLib_STOR_IsIngressEgressActive(BPLib_Instance_t* Inst);
+
+
+/**
+ * \brief Egress bundles from storage and into the relevant egress queue in node 
+ *        memory. This is a multi-step operation that expects this function to be 
+ *        called at a regular wakeup cadence, and different operations are performed
+ *        each time. The operations are:
+ *            - Load a batch of bundle IDs that match a viable contact/channel into memory
+ *            - Load the bundle ID's full bundle into memory and place it on the relevant
+ *              queue. 
+ *            - Once a load batch has been fully loaded into memory, mark the bundles
+ *              in storage as egressed for future deletion
+ * \param[in] Inst Instance variable that represents the current system
+ * \param[in] MaxBundles Maximum number of bundles that can be egressed per call
+ *
+ * \return Execution status
+ * \retval BPLIB_SUCCESS Validation was successful
+ */
+BPLib_Status_t BPLib_STOR_Egress(BPLib_Instance_t *Instance, size_t MaxBundles);
 
 #endif /* BPLIB_STOR_H */

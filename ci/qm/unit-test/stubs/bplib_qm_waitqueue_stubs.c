@@ -59,6 +59,38 @@ bool BPLib_QM_WaitQueueInit(BPLib_QM_WaitQueue_t *q, size_t el_size, size_t capa
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_QM_WaitQueueIsEmpty()
+ * ----------------------------------------------------
+ */
+bool BPLib_QM_WaitQueueIsEmpty(BPLib_QM_WaitQueue_t *q)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_QM_WaitQueueIsEmpty, bool);
+
+    UT_GenStub_AddParam(BPLib_QM_WaitQueueIsEmpty, BPLib_QM_WaitQueue_t *, q);
+
+    UT_GenStub_Execute(BPLib_QM_WaitQueueIsEmpty, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_QM_WaitQueueIsEmpty, bool);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_QM_WaitQueueIsFull()
+ * ----------------------------------------------------
+ */
+bool BPLib_QM_WaitQueueIsFull(BPLib_QM_WaitQueue_t *q)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_QM_WaitQueueIsFull, bool);
+
+    UT_GenStub_AddParam(BPLib_QM_WaitQueueIsFull, BPLib_QM_WaitQueue_t *, q);
+
+    UT_GenStub_Execute(BPLib_QM_WaitQueueIsFull, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_QM_WaitQueueIsFull, bool);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_QM_WaitQueueTryPull()
  * ----------------------------------------------------
  */

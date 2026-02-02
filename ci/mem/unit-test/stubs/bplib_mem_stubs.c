@@ -209,6 +209,22 @@ size_t BPLib_MEM_GetBytesInUse(BPLib_MEM_Pool_t *Pool)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_MEM_GetHighwaterMark()
+ * ----------------------------------------------------
+ */
+size_t BPLib_MEM_GetHighwaterMark(BPLib_MEM_Pool_t *Pool)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_MEM_GetHighwaterMark, size_t);
+
+    UT_GenStub_AddParam(BPLib_MEM_GetHighwaterMark, BPLib_MEM_Pool_t *, Pool);
+
+    UT_GenStub_Execute(BPLib_MEM_GetHighwaterMark, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_MEM_GetHighwaterMark, size_t);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_MEM_PoolDestroy()
  * ----------------------------------------------------
  */

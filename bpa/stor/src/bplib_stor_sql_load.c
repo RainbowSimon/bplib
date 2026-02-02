@@ -143,6 +143,11 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
     /* Bind destination EID query */
     for (i = 0; i < NumEIDs; i++)
     {
+        if (DestEIDs[i].MaxNode == 0 && DestEIDs[i].MaxNode == 0)
+        {
+            break;
+        }
+
         SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, DestEIDs[i].MinNode);
         if (SQLStatus != SQLITE_OK)
         {

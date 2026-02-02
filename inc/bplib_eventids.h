@@ -159,6 +159,7 @@
 #define BPLIB_STOR_AUTO_CLEAN_START_INF_EID             (619u)
 #define BPLIB_STOR_AUTO_CLEAN_END_INF_EID               (620u)
 #define BPLIB_STOR_AUTO_CLEAN_ERR_EID                   (621u)
+#define BPLIB_STOR_NO_MEM_ERR_EID                       (622u)
 
 /* ============ */
 /* BI event IDs */

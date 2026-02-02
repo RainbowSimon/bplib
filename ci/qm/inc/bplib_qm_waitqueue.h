@@ -115,4 +115,6 @@ bool BPLib_QM_WaitQueueTryPull(BPLib_QM_WaitQueue_t* q, void* ret_item, int time
  */
 bool BPLib_QM_WaitQueueIsEmpty(BPLib_QM_WaitQueue_t* q);
 
+bool BPLib_QM_WaitQueueIsFull(BPLib_QM_WaitQueue_t* q);
+
 #endif /* BPLIB_QM_WAITQUEUE_H */

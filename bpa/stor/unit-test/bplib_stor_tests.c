@@ -82,7 +82,6 @@ void Test_BPLib_STOR_GarbageCollect_NominalExpired(void)
     UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, 1);
 
     BplibInst.BundleStorage.LastActiveTime = 0;
-    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, BPLIB_STOR_MAX_IDLE_TIME + 1);
 
     /* Nothing should be discarded if current time is before bundle expiration time */
     UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, 797186475264); /* 797186475264 is creation time for TestBundle */
@@ -117,6 +116,7 @@ void Test_BPLib_STOR_GarbageCollect_SQLFail(void)
     /* Force sql statements to fail by passing a NULL instance */
     BplibInst.BundleStorage.db = NULL;
     BplibInst.BundleStorage.LastActiveTime = 0;
+    BplibInst.BundleStorage.BundleCountStored = 10;
 
     UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, BPLIB_STOR_MAX_IDLE_TIME + 1);
 
@@ -145,6 +145,7 @@ void Test_BPLib_STOR_UpdateHkPkt_Nominal(void)
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_GetBytesInUse), ExpectedBytesMemInUse);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_GetBytesFree), ExpectedBytesMemFree);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_GetHighwaterMark), ExpectedBytesMemHighWater);
 
     BPLib_STOR_UpdateHkPkt(&BplibInst);
 
@@ -300,11 +301,11 @@ void Test_BPLib_STOR_SetNewRetransmitTrigger_Nominal(void)
     ** Run test: Perform the following batch operations on the database and then
     ** test that the expected updates took effect
     */
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[0].MaxNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[0].MinNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[0].MaxService = 1;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[0].MinService = 1;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].RetransmitTimeout = NewTrigger;
+    BplibInst.ContCtxt[ContId].Config.DestEIDs[0].MaxNode = 100;
+    BplibInst.ContCtxt[ContId].Config.DestEIDs[0].MinNode = 100;
+    BplibInst.ContCtxt[ContId].Config.DestEIDs[0].MaxService = 1;
+    BplibInst.ContCtxt[ContId].Config.DestEIDs[0].MinService = 1;
+    BplibInst.ContCtxt[ContId].Config.RetransmitTimeout = NewTrigger;
     UtAssert_EQ(BPLib_Status_t, BPLib_STOR_SetNewRetransmitTrigger(&BplibInst, ContId), BPLIB_SUCCESS);
 
     /*

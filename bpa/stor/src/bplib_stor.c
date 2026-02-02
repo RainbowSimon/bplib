@@ -123,6 +123,8 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
 
     pthread_mutex_lock(&CacheInst->lock);
 
+    BPLib_STOR_SetLastActiveTime(Inst);
+
     /* Add to the next batch */
     CacheInst->InsertBatch[CacheInst->InsertBatchSize++] = Bundle;
     if (CacheInst->InsertBatchSize == BPLIB_STOR_INSERTBATCHSIZE)
@@ -197,12 +199,16 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
         return BPLIB_STOR_PARAM_ERR;
     }
 
-    if (BPLib_QM_IsIngressIdle(Inst) == false)
+    if (BPLib_QM_IsIngressIdle(Inst) == false || Inst->BundleStorage.BundleCountNotEgressed == 0)
     {
-        /* Avoid searching the DB if the unsorted jobs queue (which is the ingress queue) isn't empty.
+        /* 
+        ** Avoid searching the DB if the unsorted jobs queue (which is the ingress queue) isn't empty.
         ** Note: this is a pretty critical performance optimization that allows bplib
         ** to use all of its CPU resources for ingress.
+        ** We also skip searching the DB if we already know that there are no bundles
+        ** remaining in storage that have not been egressed
         */
+
         *NumEgressed = 0;
 
         return BPLIB_SUCCESS;
@@ -231,7 +237,7 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     }
 
     pthread_mutex_lock(&CacheInst->lock);
-    
+
     /* If the load batch is empty, try to read more from storage */
     if (BPLib_STOR_LoadBatch_IsEmpty(LoadBatch))
     {
@@ -250,18 +256,21 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
         /* Mark the batch as egressed */
         Status = BPLib_SQL_MarkBatchEgressed(Inst, LoadBatch);
 
+        Inst->BundleStorage.BundleCountNotEgressed -= LoadBatch->Size;
+
         /* Clear the batch */
         (void) BPLib_STOR_LoadBatch_Reset(LoadBatch);
     }
     else
     { /* There are bundles in the current batch that need to be egressed */
-        while (BPLib_STOR_LoadBatch_PeekNextID(LoadBatch, &CurrBundleID) == BPLIB_SUCCESS)
+        while (BPLib_STOR_LoadBatch_PeekNextID(LoadBatch, &CurrBundleID) == BPLIB_SUCCESS &&
+                !BPLib_QM_WaitQueueIsFull(EgressQueue))
         {
             /* Set the metadata EID */
             Status = BPLib_SQL_LoadBundle(Inst, CurrBundleID, &CurrBundle);
             if (Status == BPLIB_SUCCESS)
             {
-                CurrBundle->Meta.EgressID = EgressID;
+                CurrBundle->Meta.EgressID = EgressID;                
                 if (BPLib_QM_WaitQueueTryPush(EgressQueue, &CurrBundle, QM_NO_WAIT) == false)
                 {
                     /* If QM couldn't accept the bundle, free it. It will be reloaded
@@ -281,12 +290,26 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
                 /* Bundle ID belongs to a bundle that is now invalid, discard it but keep going */
                 (void) BPLib_STOR_LoadBatch_AdvanceReader(LoadBatch);
             }
+            else if (Status == BPLIB_STOR_NO_MEM_ERR)
+            {
+                BPLib_EM_SendEvent(BPLIB_STOR_NO_MEM_ERR_EID, BPLib_EM_EventType_DEBUG,
+                            "Ran out of memory when trying to load a bundle from storage, try again next time. Bytes in use = %ld\n",
+                            BPLib_MEM_GetBytesInUse(&Inst->pool));
+                Status = BPLIB_SUCCESS;
+
+                break;
+            }
             else
             {
                 /* If LoadBundle Failed, don't keep trying. */
                 break;
             }
         }
+    }
+
+    if (EgressCnt != 0)
+    {
+        BPLib_STOR_SetLastActiveTime(Inst);
     }
 
     pthread_mutex_unlock(&CacheInst->lock);
@@ -302,11 +325,7 @@ void BPLib_STOR_SetLastActiveTime(BPLib_Instance_t* Inst)
         return;
     }
 
-    pthread_mutex_lock(&Inst->BundleStorage.lock);
-
     Inst->BundleStorage.LastActiveTime = BPLib_TIME_GetMonotonicTime();
-
-    pthread_mutex_unlock(&Inst->BundleStorage.lock);
 }
 
 bool BPLib_STOR_IsIngressEgressActive(BPLib_Instance_t* Inst)
@@ -346,7 +365,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
 
     pthread_mutex_lock(&CacheInst->lock);    
 
-    if (BPLib_STOR_IsIngressEgressActive(Inst) == false)
+    if (BPLib_STOR_IsIngressEgressActive(Inst) == false && CacheInst->BundleCountStored != 0)
     {
         /* 
         ** Avoid searching the DB if any of the ingress/egress queues are not empty or
@@ -370,6 +389,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, NumExpired);
 
             CacheInst->BundleCountStored -= NumExpired;
+            CacheInst->BundleCountNotEgressed -= NumExpired;
 
             BPLib_EM_SendEvent(BPLIB_STOR_EXPIRE_DBG_EID,
                                 BPLib_EM_EventType_DEBUG,
@@ -445,11 +465,8 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
     /* Update the memory in use*/
     BPLib_STOR_StoragePayload.BytesMemInUse = BPLib_MEM_GetBytesInUse(&Inst->pool);
 
-    /* Update the highwater mark if needed */
-    if (BPLib_STOR_StoragePayload.BytesMemInUse > BPLib_STOR_StoragePayload.BytesMemHighWater)
-    {
-        BPLib_STOR_StoragePayload.BytesMemHighWater = BPLib_STOR_StoragePayload.BytesMemInUse;
-    }
+    /* Update the highwater mark */
+    BPLib_STOR_StoragePayload.BytesMemHighWater = BPLib_MEM_GetHighwaterMark(&Inst->pool);
 
     /* Update the free memory */
     BPLib_STOR_StoragePayload.BytesMemFree = BPLib_MEM_GetBytesFree(&Inst->pool);
@@ -486,6 +503,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 
         CacheInst->BytesStorageInUse += TotalBytesStored;
         CacheInst->BundleCountStored += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
+        CacheInst->BundleCountNotEgressed += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
 
         if (DuplicateBundlesIgnored > 0)
         {
@@ -632,4 +650,39 @@ BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32
     /* Error event handled upstream */
     
     return Status;    
+}
+
+BPLib_Status_t BPLib_STOR_Egress(BPLib_Instance_t *Instance, size_t MaxBundles)
+{
+    BPLib_Status_t Status;
+    uint32_t ChanId, ContId;
+    size_t NumLoaded;
+    BPLib_CLA_ContactRunState_t ConState;
+
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
+    {
+        if (BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_STARTED)
+        {
+            Status = BPLib_STOR_EgressForID(Instance, ChanId, true, &NumLoaded);
+            if (Status != BPLIB_SUCCESS || NumLoaded >= MaxBundles)
+            {
+                return Status;
+            }
+        }
+    }
+
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
+    {
+        (void) BPLib_CLA_GetContactRunState(ContId, &ConState);
+        if (ConState == BPLIB_CLA_STARTED)
+        {
+            Status = BPLib_STOR_EgressForID(Instance, ContId, false, &NumLoaded);
+            if (Status != BPLIB_SUCCESS || NumLoaded >= MaxBundles)
+            {
+                return Status;
+            }
+        }
+    }
+
+    return BPLIB_SUCCESS;
 }
