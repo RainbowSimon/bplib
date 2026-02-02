@@ -76,4 +76,16 @@ void BPLib_CT_BuildAndSendOpenCcs_Impl(BPLib_Instance_t* Instance, BPLib_CT_Open
 
 BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst, BPLib_CT_BundleSeqCollection_t *SeqCollection);
 
+/**
+ * \brief     If a bundle is received with an old, out-of-order sequence number,
+ *            insert its sequence number to the open CCS and modify the CCS
+ *            accordingly
+ * \param[in] Collection Bundle sequence collection to insert number into
+ * \param[in] BundleSeqNum Sequence number to insert
+ * \param[in] CcsSizePtr Pointer to overall CCS size to update
+ * \return    void
+ */
+void BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collection, 
+                                            uint64_t BundleSeqNum, size_t *CcsSizePtr);
+
 #endif /* BPLIB_CT_CCS_H */

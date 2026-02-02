@@ -61,7 +61,7 @@ typedef enum
     BPLib_CT_BsrRecordTypeCode = 1,
     /* BPLib_CT_???RecordTypeCode = 2, */
     BPLib_CT_CrsRecordTypeCode = 3,
-    BPLib_CT_CcsRecordTypeCode = 4,
+    BPLib_CT_CcsRecordTypeCode = 13,
 
     /* Others here when applicable */
 } BPLib_ARP_AdminRecordTypeCode_t;

@@ -64,5 +64,6 @@ void BPLib_CT_Test_Setup(void);
 void BPLib_CT_Test_Teardown(void);
 
 void TestBplibCt_Register(void);
+void TestBplibCtInternal_Register(void);
 
 #endif /* BPLIB_CT_TEST_UTILS_H */

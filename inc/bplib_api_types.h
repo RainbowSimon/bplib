@@ -53,7 +53,7 @@ enum BPLib_BlockType
     BPLib_BlockType_PrevNode = 6,
     BPLib_BlockType_Age = 7,
     BPLib_BlockType_HopCount = 10,
-    BPLib_BlockType_CTEB = 15,
+    BPLib_BlockType_CTEB = 13,
     BPLib_BlockType_CREB = 16,
     BPLib_BlockType_UNKNOWN = 255
 };
