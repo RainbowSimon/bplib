@@ -174,6 +174,7 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
     size_t i;
     size_t NumEgressed;
     uint64_t RetransmissionTime = 12345;
+    size_t NumTransferred = 0;
 
     /*
     ** Test setup: Put a bunch of unique bundles into storage
@@ -193,6 +194,7 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
         if (i < BundlesPerOp)
         {
             Batch.Ops[i] = BPLIB_CT_MARK_DELETE;
+            NumTransferred++;
         }
         else if (i < (BundlesPerOp * 2))
         {
@@ -219,7 +221,7 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
     /* Garbage collect all bundles marked for expiration */
     UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), BPLIB_STOR_MAX_IDLE_TIME + 1);
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
-    UtAssert_INT32_EQ(NumBundles, BplibInst.BundleStorage.BundleCountInCustody);
+    UtAssert_INT32_EQ(NumBundles - NumTransferred, BplibInst.BundleStorage.BundleCountInCustody);
 
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DISCARDED, 
                                                 Context_BPLib_AS_Increment[0].Counter);

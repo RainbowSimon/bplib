@@ -36,6 +36,6 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
 
 BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT_CcsUpdateBatch_t *Batch);
 
-SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdateBatch_t *Batch);
+SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(BPLib_Instance_t *Inst, sqlite3* db, BPLib_CT_CcsUpdateBatch_t *Batch);
 
 #endif
