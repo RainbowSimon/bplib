@@ -496,13 +496,9 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 
     if (Status == BPLIB_SUCCESS)
     {
-        if (CustodialBundlesStored > 0)
-        {
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_IN_CUSTODY, CustodialBundlesStored);
-        }
-
-        CacheInst->BytesStorageInUse += TotalBytesStored;
-        CacheInst->BundleCountStored += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
+        CacheInst->BundleCountInCustody   += CustodialBundlesStored;
+        CacheInst->BytesStorageInUse      += TotalBytesStored;
+        CacheInst->BundleCountStored      += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
         CacheInst->BundleCountNotEgressed += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
 
         if (DuplicateBundlesIgnored > 0)

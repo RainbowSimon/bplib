@@ -37,7 +37,7 @@
 /* Macros */
 /* ====== */
 
-#define BPLIB_AS_NUM_NODE_CNTRS      (69u)                    /** \brief Number of node counters (also total number of counters) */
+#define BPLIB_AS_NUM_NODE_CNTRS      (68u)                    /** \brief Number of node counters (also total number of counters) */
 #define BPLIB_AS_NUM_SOURCE_CNTRS    (51u)                    /** \brief Number of source counters */
 #define BPLIB_AS_NODE_CNTR_INDICATOR (BPLIB_MAX_NUM_MIB_SETS) /** \brief Indicates that only the node counter passed in should be modified, not the source counter */
 #define BPLIB_AS_NUM_RATES_TO_REPORT (10u)                    /** \brief Number of rate calculations to report */
@@ -82,7 +82,7 @@ typedef enum
     BUNDLE_COUNT_GENERATED_REJECTED        = 26, /** \brief Number of Rejected Bundle Transmission Requests */
     BUNDLE_COUNT_MAX_BSR_RATE_EXCEEDED     = 27, /** \brief Number of BSR bundles not sent because sending would exceed a maximum rate. */
     BUNDLE_COUNT_NO_CONTACT                = 28, /** \brief Number of bundles for which rejected Custody Signals generated indicating the Destination is not reachable before the Bundle expires */
-    BUNDLE_COUNT_NO_FURTHER_INFO           = 29, /** \brief Number of bundles for which successful Custody Signals generated with No Further Information */
+    BUNDLE_COUNT_ACCEPTED_CUSTODY          = 29, /** \brief Number of bundles for which accepted Custody Signals generated with No Further Information */
     BUNDLE_COUNT_NO_ROUTE                  = 30, /** \brief Number of bundles for which rejected Custody Signals generated indicating the Destination is not reachable */
     BUNDLE_COUNT_REASSEMBLED               = 31, /** \brief Total number of Bundles delivered that were fragments and needed to be reassembled */
     BUNDLE_COUNT_RECEIVED                  = 32, /** \brief Number of Bundles Received from another DTN Node */
@@ -121,9 +121,8 @@ typedef enum
     BUNDLE_COUNT_GENERATED_CRS_FORWARDED   = 63, /** \brief Number of forwarded bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
     BUNDLE_COUNT_GENERATED_CRS_RECEIVED    = 64, /** \brief Number of received bundle reports included in each generated Compressed Reporting Signal (CRS) since the last counter reset */
     BUNDLE_COUNT_GENERATED_CCS             = 65, /** \brief Number of Custody Signal Bundles generated since the last counter reset */
-    BUNDLE_COUNT_IN_CUSTODY                = 66, /** \brief Number of bundles in custody */
-    BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED     = 67, /** \brief Number of CRS bundles not sent because sending would exceed a maximum rate. */
-    BUNDLE_COUNT_RECEIVED_CRS              = 68, /** \brief Number of Compressed Reporting Signals (CRSs) received since last counter reset. */
+    BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED     = 66, /** \brief Number of CRS bundles not sent because sending would exceed a maximum rate. */
+    BUNDLE_COUNT_RECEIVED_CRS              = 67, /** \brief Number of Compressed Reporting Signals (CRSs) received since last counter reset. */
 } BPLib_AS_Counter_t;
 
 /**
@@ -157,8 +156,6 @@ typedef struct
       * \ref   BPLib_AS_Counter_t
       */
     uint32_t NodeCounters[BPLIB_AS_NUM_NODE_CNTRS];
-
-    uint32_t Spare;
 
     int64_t  MonotonicTime;     /** \brief Monotonic Time Counter */
     int64_t  CorrelationFactor; /** \brief Time Correlation Factor */
@@ -216,17 +213,17 @@ typedef struct
     char     ParamSupportedCLAs[BPLIB_MAX_STR_LENGTH];          /** \brief Supported CLAs */
     char     NodeActiveEndpoints[BPLIB_MAX_STR_LENGTH];         /** \brief List of active endpoints on the Node */
 
-    uint32_t SystemNodeUpTime;                                  /** \brief The time in seconds since this node has been reinitialized */
-    uint32_t BundleAgentAvailableStorage;                       /** \brief Total amount of memory allocated for bundle storage for the node  */
-    uint32_t KbytesCountStorageAvailable;                       /** \brief Kilobytes free space left to store additional Bundles */
-    uint32_t BundleCountStored;                                 /** \brief Number of bundles currently in storage */
-
     uint64_t Rates[BPLIB_AS_NUM_RATES_TO_REPORT];               /** \brief Array of different rates to track */
 
     uint64_t BundleAgentCtdbSize;                               /** \brief Size in bytes of the CTDB */
 
-    uint32_t Spare;
+    uint32_t SystemNodeUpTime;                                  /** \brief The time in seconds since this node has been reinitialized */
+    uint32_t BundleAgentAvailableStorage;                       /** \brief Total amount of memory allocated for bundle storage for the node  */
+    uint32_t KbytesCountStorageAvailable;                       /** \brief Kilobytes free space left to store additional Bundles */
+    uint32_t BundleCountStored;                                 /** \brief Number of bundles currently in storage */
+    uint32_t BundleCountInCustody;                              /** \brief Number of bundles currently in custody */
     uint32_t NodeStartupCounter;                                /** \brief Node startup counter */
+
     int64_t  MonotonicTime;                                     /** \brief Monotonic Time Counter */
     int64_t  CorrelationFactor;                                 /** \brief Time Correlation Factor */
 

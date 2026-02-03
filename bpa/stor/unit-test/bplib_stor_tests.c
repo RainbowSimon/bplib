@@ -219,16 +219,14 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
     /* Garbage collect all bundles marked for expiration */
     UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), BPLIB_STOR_MAX_IDLE_TIME + 1);
     UtAssert_INT32_EQ(BPLib_STOR_GarbageCollect(&BplibInst), BPLIB_SUCCESS);
-    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_IN_CUSTODY, 
-                                                Context_BPLib_AS_Increment[0].Counter);
-    UtAssert_INT32_EQ(NumBundles, Context_BPLib_AS_Increment[0].Amount);
+    UtAssert_INT32_EQ(NumBundles, BplibInst.BundleStorage.BundleCountInCustody);
 
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DISCARDED, 
+                                                Context_BPLib_AS_Increment[0].Counter);
+    UtAssert_INT32_EQ(BundlesPerOp, Context_BPLib_AS_Increment[0].Amount);
+    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED, 
                                                 Context_BPLib_AS_Increment[1].Counter);
     UtAssert_INT32_EQ(BundlesPerOp, Context_BPLib_AS_Increment[1].Amount);
-    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED, 
-                                                Context_BPLib_AS_Increment[2].Counter);
-    UtAssert_INT32_EQ(BundlesPerOp, Context_BPLib_AS_Increment[2].Amount);
     UtAssert_EQ(uint32_t, BplibInst.BundleStorage.BundleCountStored, NumBundles - BundlesPerOp);
 
     /* Try to egress all bundles marked for retransmission */

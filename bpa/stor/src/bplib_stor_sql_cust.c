@@ -320,6 +320,8 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdat
                 fprintf(stderr, "Mark for Deletion Failed: %s\n", sqlite3_errstr(SQLStatus));
                 break;
             }
+
+            Inst->BundleStorage.BundleCountInCustody--;
         }
     }
 
