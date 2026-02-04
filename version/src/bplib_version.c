@@ -28,7 +28,7 @@
 *************************************************************************/
 #include "bplib_api_types.h"
 #include "bplib_version.h"
-#include "osapi.h" /* for OS_Printf() */
+/* #include "osapi.h" removed, for OS_Printf() */
 #include <stdio.h> /* for "snprintf()" */
 
 /*************************************************************************
@@ -44,15 +44,12 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 int BPLib_PrintVersion(void)
 {
-    char VersionString[BPLIB_CFG_MAX_VERSION_STR_LEN];
-
-    (void) snprintf(VersionString, BPLIB_CFG_MAX_VERSION_STR_LEN, "v%u.%u.%u-sprint-%u",
+    /* Print the version using printf, which should be provided by RIOT */
+    (void) printf("BPLib Version: v%u.%u.%u-sprint-%u\n",
         BPLIB_MAJOR_VERSION,
         BPLIB_MINOR_VERSION,
         BPLIB_REVISION,
         BPLIB_BUILD_NUMBER);
-
-    OS_printf("BPLib Version: %s\n", VersionString);
 
     return BPLIB_SUCCESS;
 }

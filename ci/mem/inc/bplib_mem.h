@@ -24,7 +24,7 @@
 #include "bplib_ben_allocator.h"
 #include "bplib_bblocks.h"
 
-#include <pthread.h>
+#include "mutex.h"
 
 /**
  ** \brief Defines the size of a memory block user data if used as a bytearray
@@ -78,7 +78,7 @@ struct BPLib_MEM_Block
 typedef struct BPLib_MEM_Pool
 {
     BPLib_MEM_PoolImpl_t impl; /**< The pool implementation (details hidden) */
-    pthread_mutex_t lock; /**< Mutex for synchronizing access to the pool */
+    mutex_t lock; /**< Mutex for synchronizing access to the pool */
 } BPLib_MEM_Pool_t;
 
 /**

@@ -6,12 +6,11 @@
 #
 ##################################################################
 
+# We dont want to compile the storage in bplib, that has to be provided by the using application.
+# However the general buildsystem breaks if the library is not an OBJECT, so I add some c file that
+# provides a throwaway function which does nothing and should not get linked.
 add_library(bplib_stor OBJECT
-    src/bplib_stor.c
-    src/bplib_stor_sql.c
-    src/bplib_stor_sql_store.c
-    src/bplib_stor_sql_load.c
-    src/bplib_stor_loadbatch.c
+    src/bplib_stor_cmake.c
 )
 
 target_include_directories(bplib_stor PUBLIC

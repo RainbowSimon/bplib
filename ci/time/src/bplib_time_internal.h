@@ -33,7 +33,6 @@
 
 #include "bplib_time.h"
 #include "bplib_fwp.h"
-#include "osapi.h"
 
 
 /*
@@ -89,7 +88,7 @@ typedef struct
 {
     int64_t   CurrentCf;                /**< \brief Most recent CF */
     int64_t   EpochOffset;              /**< \brief Offset between host and DTN epochs */
-    osal_id_t FileHandle;               /**< \brief OSAL handle for time data file */
+    /* FileHandle was removed, is now function local*/
     BPLib_TIME_InitState_t InitState;   /**< \brief Initialization state of TIME */
     BPLib_TIME_FileData_t TimeData;     /**< \brief Local copy of time file data */
 } BPLib_TIME_GlobalData_t;

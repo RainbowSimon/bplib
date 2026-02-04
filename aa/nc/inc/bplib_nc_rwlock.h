@@ -22,7 +22,8 @@
 
 #include "bplib_api_types.h"
 
-#include <pthread.h>
+#include "mutex.h"
+#include "cond.h"
 
 /**
  * \brief Definition of the read-write lock structure.
@@ -32,9 +33,9 @@
  * for readers and writers, and counters for the number of readers and writers.
  */
 typedef struct BPLib_NC_RWLock {
-    pthread_mutex_t Lock;          /**< Mutex to protect shared data */
-    pthread_cond_t ReadCond;       /**< Condition variable for readers */
-    pthread_cond_t WriteCond;      /**< Condition variable for writers */
+    mutex_t Lock;          /**< Mutex to protect shared data */
+    cond_t ReadCond;       /**< Condition variable for readers */
+    cond_t WriteCond;      /**< Condition variable for writers */
     int ReaderCnt;                 /**< Number of active readers */
     int WriterCnt;               /**< Number of active writers */
 } BPLib_NC_RWLock_t;
