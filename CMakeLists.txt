@@ -102,6 +102,8 @@ list(APPEND BPLIB_COMPONENTS
   bplib_crc bplib_version bplib_qm bplib_eid bplib_rbt
 )
 
+separate_arguments(RIOT_INCLUDES)
+
 foreach(COMPONENT ${BPLIB_COMPONENTS})
   list(APPEND BPLIB_SRC 
     $<TARGET_OBJECTS:${COMPONENT}>
@@ -111,6 +113,10 @@ foreach(COMPONENT ${BPLIB_COMPONENTS})
     $<TARGET_PROPERTY:${COMPONENT},INTERFACE_INCLUDE_DIRECTORIES>
   )
 
+  # RIOT includes
+  target_include_directories(${COMPONENT} SYSTEM PRIVATE
+      ${RIOT_INCLUDES}
+  )
 endforeach()
 
 # If building as part of CFE/CFS, then the "IS_CFS_ARCH_BUILD" should be set
@@ -176,8 +182,8 @@ else()
 
   endif()
 
-  # Build bpcat always
-  add_subdirectory(app)
+  # Build bpcat always, just not for RIOT :D
+  # add_subdirectory(app)
 
 endif()
 
@@ -230,5 +236,5 @@ if (BPLIB_ENABLE_UNIT_TESTS)
 endif (BPLIB_ENABLE_UNIT_TESTS)
 
 # Prepare the BPLib Doxygen build.
-set(BPLIB_API_INCLUDE_DIRECTORIES ${BPLIB_COMPONENT_INCLUDE_DIRS})
-add_subdirectory(docs/doc-src)
+# set(BPLIB_API_INCLUDE_DIRECTORIES ${BPLIB_COMPONENT_INCLUDE_DIRS})
+# add_subdirectory(docs/doc-src)

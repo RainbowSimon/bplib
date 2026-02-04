@@ -27,19 +27,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-static void ms_to_abstimeout(uint32_t ms, struct timespec *ts)
-{
-    if (ts == NULL)
-    {
-        return;
-    }
-
-    clock_gettime(CLOCK_REALTIME, ts);
-    ts->tv_sec += ms / 1000;
-    ts->tv_nsec += (ms % 1000 * 1000000);
-    ts->tv_sec += ts->tv_nsec / 1000000000;
-    ts->tv_nsec %= 1000000000;
-}
+#include "ztimer.h"
 
 /*******************************************************************************
 * Exported Functions
@@ -65,9 +53,9 @@ bool BPLib_QM_WaitQueueInit(BPLib_QM_WaitQueue_t* q, size_t el_size, size_t capa
     }
 
     // TODO: move to bplib_OS module
-    pthread_mutex_init(&q->lock, NULL);
-    pthread_cond_init(&q->cv_push, NULL);
-    pthread_cond_init(&q->cv_pull, NULL);
+    mutex_init(&q->lock);
+    sema_create(&q->s_slots, capacity);
+    sema_create(&q->s_items, 0);
     return true;
 }
 
@@ -87,14 +75,13 @@ void BPLib_QM_WaitQueueDestroy(BPLib_QM_WaitQueue_t* q)
     q->size = 0;
 
     // TODO: move to bplib_OS module
-    pthread_mutex_destroy(&q->lock);
-    pthread_cond_destroy(&q->cv_push);
-    pthread_cond_destroy(&q->cv_pull);
+    // No mutex cleanup in RIOT
+    sema_destroy(&q->s_slots);
+    sema_destroy(&q->s_items);
 }
 
 bool BPLib_QM_WaitQueueTryPush(BPLib_QM_WaitQueue_t* q, const void* item, int timeout_ms)
 {
-    struct timespec deadline;
     int rc;
 
     if ((q == NULL) || (item == NULL))
@@ -102,78 +89,63 @@ bool BPLib_QM_WaitQueueTryPush(BPLib_QM_WaitQueue_t* q, const void* item, int ti
         return false;
     }
 
-    ms_to_abstimeout((uint32_t)(timeout_ms), &deadline);
-    pthread_mutex_lock(&q->lock);
-    /**** Critical Section Begin ****/
-
     /* Wait for queue to be non-full */
-    while (q->size == q->capacity)
-    {
-        rc = pthread_cond_timedwait(&q->cv_push, &q->lock, &deadline);
-        if (rc != 0)
-        {
-            if (rc != ETIMEDOUT)
-            {
-                printf(" BPLib_QM_WaitQueueTryPush NON-TIMEOUT ERROR: %s\n", strerror(rc));
-            }
-            pthread_mutex_unlock(&q->lock);
-            return false;
+    rc = sema_wait_timed_ztimer(&q->s_slots, ZTIMER_MSEC, timeout_ms);
+    if (rc != 0) {
+        if (rc != -ETIMEDOUT) {
+            printf(" BPLib_QM_WaitQueueTryPush NON-TIMEOUT ERROR: %s\n", strerror(rc));
         }
+        return false;
     }
+
+    mutex_lock(&q->lock);
+    /**** Critical Section Begin ****/
 
     /* Push an item */
     q->rear = (q->rear  + 1) % q->capacity;
     memcpy((void*)(((char *)q->storage) + (q->rear*q->el_size)), item, q->el_size);
     q->size++;
 
-    /* Notify other pulling threads that an item can be pulled. */
-    pthread_cond_signal(&q->cv_pull);
-
     /**** Critical Section End ****/
-    pthread_mutex_unlock(&q->lock);
+    mutex_unlock(&q->lock);
+
+    /* Notify other pulling threads that an item can be pulled. */
+    sema_post(&q->s_items);
 
     return true;
 }
 
 bool BPLib_QM_WaitQueueTryPull(BPLib_QM_WaitQueue_t* q, void* ret_item, int timeout_ms)
 {
-    struct timespec deadline;
     int rc;
 
     if ((q == NULL) || (ret_item == NULL))
     {
         return false;
     }
-
-    ms_to_abstimeout((uint32_t)(timeout_ms), &deadline);
-    pthread_mutex_lock(&q->lock);
-    /**** Critical Section Begin ****/
  
     /* Wait for queue to be non-empty */
-    while (q->size == 0)
-    {
-        rc = pthread_cond_timedwait(&q->cv_pull, &q->lock, &deadline);
-        if (rc != 0)
-        {
-            if (rc != ETIMEDOUT)
-            {
-                printf(" BPLib_QM_WaitQueueTryPull NON-TIMEOUT ERROR: %s\n", strerror(rc));
-            }
-            pthread_mutex_unlock(&q->lock);
-            return false;
+    rc = sema_wait_timed_ztimer(&q->s_items, ZTIMER_MSEC, timeout_ms);
+    if (rc != 0) {
+        if (rc != -ETIMEDOUT) {
+            printf(" BPLib_QM_WaitQueueTryPull NON-TIMEOUT ERROR: %s\n", strerror(rc));
         }
+        return false;
     }
+
+    mutex_lock(&q->lock);
+    /**** Critical Section Begin ****/
 
     /* Pull an item */
     memcpy(ret_item, (void*)(((char *)q->storage) + (q->front*q->el_size)), q->el_size);
     q->size--;
     q->front = (q->front + 1) % (q->capacity); 
 
-    /* Notify other pushing threads that an item can be pushed */
-    pthread_cond_signal(&q->cv_push);
-
     /**** Critical Section End ****/
-    pthread_mutex_unlock(&q->lock);
+    mutex_unlock(&q->lock);
+
+    /* Notify other pushing threads that an item can be pushed */
+    sema_post(&q->s_slots);
 
     return true;
 }
@@ -187,9 +159,9 @@ bool BPLib_QM_WaitQueueIsEmpty(BPLib_QM_WaitQueue_t* q)
         return false;
     }
 
-    pthread_mutex_lock(&q->lock);
+    mutex_lock(&q->lock);
     IsEmpty = (q->size == 0);
-    pthread_mutex_unlock(&q->lock);
+    mutex_unlock(&q->lock);
 
     return IsEmpty;
 }

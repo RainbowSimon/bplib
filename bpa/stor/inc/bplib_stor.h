@@ -29,9 +29,6 @@
 #include "bplib_cfg.h"
 #include "bplib_eid.h"
 #include "bplib_mem.h"
-#include "bplib_stor_loadbatch.h"
-
-#include <sqlite3.h>
 
 #ifndef BPLIB_STOR_INSERTBATCHSIZE
 #define BPLIB_STOR_INSERTBATCHSIZE 100
@@ -43,12 +40,13 @@
 
 struct BPLib_BundleCache
 {
-    pthread_mutex_t lock;
-    sqlite3* db;
+    mutex_t lock;
     BPLib_Bundle_t* InsertBatch[BPLIB_STOR_INSERTBATCHSIZE];
     size_t InsertBatchSize;
-    BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
-    BPLib_STOR_LoadBatch_t ContactLoadBatches[BPLIB_MAX_NUM_CONTACTS];
+    /* The load batches are removed for RIOT because they are very implementation dependent
+     * Loading the numbers (which iirc were the row numbers in the blob table) does not really
+     * help if the actual storage implementation uses some other indexing / storage medium.
+    **/
 
     /* Storage-related MIB reports */
     uint32_t BundleCountStored;

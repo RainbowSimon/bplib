@@ -39,7 +39,7 @@ BPLib_Status_t BPLib_MEM_PoolInit(BPLib_MEM_Pool_t* pool, void* init_mem, size_t
     }
 
     memset(pool, 0, sizeof(BPLib_MEM_Pool_t));
-    pthread_mutex_init(&pool->lock, NULL);
+    mutex_init(&pool->lock);
     return BPLib_MEM_PoolImplInit(&pool->impl, init_mem, init_size,
         sizeof(BPLib_MEM_Block_t));
 }
@@ -51,7 +51,6 @@ void BPLib_MEM_PoolDestroy(BPLib_MEM_Pool_t* pool)
         return;
     }
 
-    pthread_mutex_destroy(&pool->lock);
     BPLib_MEM_PoolImplDestroy(&pool->impl);
     memset(pool, 0, sizeof(BPLib_MEM_Pool_t));
 }
@@ -65,9 +64,9 @@ BPLib_MEM_Block_t* BPLib_MEM_BlockAlloc(BPLib_MEM_Pool_t* pool)
         return NULL;
     }
 
-    pthread_mutex_lock(&pool->lock);
+    mutex_lock(&pool->lock);
     block = (BPLib_MEM_Block_t*)(BPLib_MEM_PoolImplAlloc(&pool->impl));
-    pthread_mutex_unlock(&pool->lock);
+    mutex_unlock(&pool->lock);
     if (block != NULL)
     {
         block->used_len = 0;
@@ -83,9 +82,9 @@ void BPLib_MEM_BlockFree(BPLib_MEM_Pool_t* pool, BPLib_MEM_Block_t* block)
         return;
     }
 
-    pthread_mutex_lock(&pool->lock);
+    mutex_lock(&pool->lock);
     BPLib_MEM_PoolImplFree(&pool->impl, (void*)block);
-    pthread_mutex_unlock(&pool->lock);
+    mutex_unlock(&pool->lock);
 }
 
 BPLib_MEM_Block_t* BPLib_MEM_BlockListAlloc(BPLib_MEM_Pool_t* pool, size_t byte_len)

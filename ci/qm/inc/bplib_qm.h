@@ -28,6 +28,8 @@
 #include "bplib_cfg.h"
 #include "bplib_stor.h"
 
+#include "mutex.h"
+
 #define QM_NO_WAIT          0L  /**< Constant representing no wait */
 #define QM_WAIT_FOREVER    -1L /**< Constant representing an indefinite wait */
 #define QM_MAX_GEN_WORKERS  8L /**< Constant representing maximum allowed generic workers */
@@ -53,7 +55,7 @@ struct BPLib_Instance
     BPLib_MEM_Pool_t pool; /**< Memory pool for this BPLib Instance */
 
     /* Worker Management */
-    pthread_mutex_t RegisteredWorkersLock; // Move to bplib_os
+    mutex_t RegisteredWorkersLock; // Move to bplib_os
     BPLib_QM_WorkerState_t RegisteredWorkers[QM_MAX_GEN_WORKERS];
     size_t NumWorkers;
 
