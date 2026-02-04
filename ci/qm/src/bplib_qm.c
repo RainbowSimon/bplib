@@ -42,10 +42,7 @@ BPLib_Status_t BPLib_QM_QueueTableInit(BPLib_Instance_t* inst, size_t MaxJobs)
     }
 
     /* Initialize worker registration state */
-    if (pthread_mutex_init(&inst->RegisteredWorkersLock, NULL) != 0)
-    {
-        return BPLIB_QM_INIT_ERROR;
-    }
+    mutex_init(&inst->RegisteredWorkersLock);
 
     /* Init Cache */
     Status = BPLib_STOR_Init(inst);
@@ -112,7 +109,6 @@ void BPLib_QM_QueueTableDestroy(BPLib_Instance_t* inst)
     }
 
     /* Worker State Cleanup */
-    pthread_mutex_destroy(&inst->RegisteredWorkersLock);
     inst->NumWorkers = 0;
 
     /* Queue Cleanup */
@@ -143,7 +139,7 @@ BPLib_Status_t BPLib_QM_RegisterWorker(BPLib_Instance_t* inst, int32_t* WorkerID
         return BPLIB_NULL_PTR_ERROR;
     }
 
-    pthread_mutex_lock(&inst->RegisteredWorkersLock);
+    mutex_lock(&inst->RegisteredWorkersLock);
     if (inst->NumWorkers == QM_MAX_GEN_WORKERS)
     {
         *WorkerID = -1;
@@ -156,7 +152,7 @@ BPLib_Status_t BPLib_QM_RegisterWorker(BPLib_Instance_t* inst, int32_t* WorkerID
         *WorkerID = NewWorkerID;
         Status = BPLIB_SUCCESS;
     }
-    pthread_mutex_unlock(&inst->RegisteredWorkersLock);
+    mutex_unlock(&inst->RegisteredWorkersLock);
 
     return Status;
 }

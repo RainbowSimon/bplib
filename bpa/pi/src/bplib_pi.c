@@ -299,7 +299,7 @@ BPLib_Status_t BPLib_PI_RemoveApplication(BPLib_Instance_t *Inst, uint32_t ChanI
     }
 
     /* Clear relevant load batch. Ignore return code since we've already done a null check */
-    (void) BPLib_STOR_LoadBatch_Reset(&Inst->BundleStorage.ChannelLoadBatches[ChanId]);
+    //(void) BPLib_STOR_LoadBatch_Reset(&Inst->BundleStorage.ChannelLoadBatches[ChanId]);
 
     /* Reset sequence number */
     Inst->ChanCtxt[ChanId].SequenceNum = 0;

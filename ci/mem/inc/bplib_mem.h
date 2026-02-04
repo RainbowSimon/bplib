@@ -27,7 +27,7 @@
 #include "bplib_ct.h"
 #include "bplib_arp.h"
 
-#include <pthread.h>
+#include "mutex.h"
 
 
 /*
@@ -125,8 +125,8 @@ struct BPLib_MEM_Block
 typedef struct BPLib_MEM_Pool
 {
     BPLib_MEM_PoolImpl_t impl; /**< The pool implementation (details hidden) */
-    pthread_mutex_t lock; /**< Mutex for synchronizing access to the pool */
-    size_t         HighWaterMark;   /** \brief Highwater memory mark */
+    mutex_t lock; /**< Mutex for synchronizing access to the pool */
+    size_t HighWaterMark;   /** \brief Highwater memory mark */
 } BPLib_MEM_Pool_t;
 
 

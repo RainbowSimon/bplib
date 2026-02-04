@@ -27,23 +27,9 @@ BPLib_Status_t BPLib_NC_RWLock_Init(BPLib_NC_RWLock_t *RWLock)
         return BPLIB_NULL_PTR_ERROR;
     }
 
-    if (pthread_mutex_init(&RWLock->Lock, NULL) != 0)
-    {
-        return BPLIB_OS_ERROR;
-    }
-
-    if (pthread_cond_init(&RWLock->ReadCond, NULL) != 0)
-    {
-        pthread_mutex_destroy(&RWLock->Lock);
-        return BPLIB_OS_ERROR;
-    }
-
-    if (pthread_cond_init(&RWLock->WriteCond, NULL) != 0)
-    {
-        pthread_mutex_destroy(&RWLock->Lock);
-        pthread_cond_destroy(&RWLock->ReadCond);
-        return BPLIB_OS_ERROR;
-    }
+    mutex_init(&RWLock->Lock);
+    cond_init(&RWLock->ReadCond);
+    cond_init(&RWLock->WriteCond);
 
     RWLock->ReaderCnt = 0;
     RWLock->WriterCnt = 0;
@@ -53,14 +39,8 @@ BPLib_Status_t BPLib_NC_RWLock_Init(BPLib_NC_RWLock_t *RWLock)
 
 void BPLib_NC_RWLock_Destroy(BPLib_NC_RWLock_t *RWLock)
 {
-    if (RWLock == NULL)
-    {
-        return;
-    }
-
-    pthread_mutex_destroy(&RWLock->Lock);
-    pthread_cond_destroy(&RWLock->ReadCond);
-    pthread_cond_destroy(&RWLock->WriteCond);
+    // No mutex cleanup in RIOT
+    return;
 }
 
 void BPLib_NC_RWLock_RLock(BPLib_NC_RWLock_t *RWLock)
@@ -70,16 +50,16 @@ void BPLib_NC_RWLock_RLock(BPLib_NC_RWLock_t *RWLock)
         return;
     }
 
-    pthread_mutex_lock(&RWLock->Lock);
+    mutex_lock(&RWLock->Lock);
 
     while (RWLock->WriterCnt > 0)
     {
-        pthread_cond_wait(&RWLock->ReadCond, &RWLock->Lock);
+        cond_wait(&RWLock->ReadCond, &RWLock->Lock);
     }
 
     RWLock->ReaderCnt++;
 
-    pthread_mutex_unlock(&RWLock->Lock);
+    mutex_unlock(&RWLock->Lock);
 }
 
 void BPLib_NC_RWLock_RUnlock(BPLib_NC_RWLock_t *RWLock)
@@ -89,16 +69,16 @@ void BPLib_NC_RWLock_RUnlock(BPLib_NC_RWLock_t *RWLock)
         return;
     }
 
-    pthread_mutex_lock(&RWLock->Lock);
+    mutex_lock(&RWLock->Lock);
 
     RWLock->ReaderCnt--;
 
     if (RWLock->ReaderCnt == 0)
     {
-        pthread_cond_signal(&RWLock->WriteCond);
+        cond_signal(&RWLock->WriteCond);
     }
 
-    pthread_mutex_unlock(&RWLock->Lock);
+    mutex_unlock(&RWLock->Lock);
 }
 
 void BPLib_NC_RWLock_WLock(BPLib_NC_RWLock_t *RWLock)
@@ -108,16 +88,16 @@ void BPLib_NC_RWLock_WLock(BPLib_NC_RWLock_t *RWLock)
         return;
     }
 
-    pthread_mutex_lock(&RWLock->Lock);
+    mutex_lock(&RWLock->Lock);
 
     while (RWLock->ReaderCnt > 0 || RWLock->WriterCnt > 0)
     {
-        pthread_cond_wait(&RWLock->WriteCond, &RWLock->Lock);
+        cond_wait(&RWLock->WriteCond, &RWLock->Lock);
     }
 
     RWLock->WriterCnt++;
 
-    pthread_mutex_unlock(&RWLock->Lock);
+    mutex_unlock(&RWLock->Lock);
 }
 
 void BPLib_NC_RWLock_WUnlock(BPLib_NC_RWLock_t *RWLock)
@@ -127,12 +107,12 @@ void BPLib_NC_RWLock_WUnlock(BPLib_NC_RWLock_t *RWLock)
         return;
     }
 
-    pthread_mutex_lock(&RWLock->Lock);
+    mutex_lock(&RWLock->Lock);
 
     RWLock->WriterCnt--;
 
-    pthread_cond_broadcast(&RWLock->ReadCond);
-    pthread_cond_signal(&RWLock->WriteCond);
+    cond_broadcast(&RWLock->ReadCond);
+    cond_signal(&RWLock->WriteCond);
 
-    pthread_mutex_unlock(&RWLock->Lock);
+    mutex_unlock(&RWLock->Lock);
 }

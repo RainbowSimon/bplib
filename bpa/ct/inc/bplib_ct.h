@@ -28,7 +28,7 @@
 #include "bplib_api_types.h"
 #include "bplib_rbt.h"
 #include "bplib_bblocks.h"
-#include <pthread.h>
+#include "mutex.h"
 #include "bplib_cfg.h"
 
 /*
@@ -215,7 +215,7 @@ typedef struct
     BPLib_RBT_Root_t SeqTreeRoot;                               /** \brief An RBT that allows for CTDB queries based on sequence ID/number */
     BPLib_RBT_Root_t IdTreeRoot;                                /** \brief An RBT that allows for CTDB queries based on bundle ID */
 
-    pthread_mutex_t Lock;                                     /** \brief Read/write lock on CTDB and open CCSs */
+    mutex_t Lock;                                               /** \brief Read/write lock on CTDB and open CCSs */
 } BPLib_CT_Context_t;
 
 /*

@@ -27,11 +27,13 @@
 /*
 ** Include
 */
+#include <errno.h>
 
 #include "bplib_time.h"
 #include "bplib_time_internal.h"
 #include "bplib_fwp.h"
 
+#include "vfs_util.h"
 
 /*
 ** Function Definitions
@@ -152,61 +154,33 @@ void BPLib_TIME_SetDtnTimeInBuffer(uint64_t DtnTime, uint32_t BootEra)
 /* Read current time data from file */
 BPLib_Status_t BPLib_TIME_ReadTimeDataFromFile(void)
 {
-    BPLib_Status_t Status = BPLIB_SUCCESS;
-    int32 OsalStatus;
-    
-    /* Try opening existing file or creating new file */
-    OsalStatus = OS_OpenCreate(&BPLib_TIME_GlobalData.FileHandle, BPLIB_TIME_FILE_NAME, 
-                                    OS_FILE_FLAG_CREATE, OS_READ_WRITE);
-    if (OsalStatus == OS_SUCCESS)
-    {
-        /* Read time data from file */
-        OsalStatus = OS_read(BPLib_TIME_GlobalData.FileHandle, (void *) &BPLib_TIME_GlobalData.TimeData, 
+    int res = vfs_file_to_buffer(BPLIB_TIME_FILE_NAME, (void *) &BPLib_TIME_GlobalData.TimeData, 
                                             sizeof(BPLib_TIME_FileData_t));
-
-        /* OSAL should return either 0 (file was just created) or the expected file size */
-        if (OsalStatus != 0 && OsalStatus != sizeof(BPLib_TIME_FileData_t))
-        {
-            Status = BPLIB_TIME_READ_ERROR;
+    if (res != sizeof(BPLib_TIME_FileData_t)) {
+        if (res == -ENOENT) {
+            /* If file not exists try to create it. Reading the just created file back
+             * is not necessary then. */
+            if (BPLib_TIME_WriteTimeDataToFile() == BPLIB_SUCCESS) {
+                return BPLIB_SUCCESS;
+            }
         }
 
-        (void) OS_close(BPLib_TIME_GlobalData.FileHandle);
-    }
-    else 
-    {
-        Status = BPLIB_TIME_READ_ERROR;
+        return BPLIB_TIME_READ_ERROR;
     }
 
-    return Status;
+    return BPLIB_SUCCESS;
 }
 
 /* Write current time data to file */
 BPLib_Status_t BPLib_TIME_WriteTimeDataToFile(void)
 {
-    BPLib_Status_t Status = BPLIB_SUCCESS;
-    int32 OsalStatus;
-
-    /* Try opening existing file or creating new file */
-    OsalStatus = OS_OpenCreate(&BPLib_TIME_GlobalData.FileHandle, BPLIB_TIME_FILE_NAME, 
-                                    OS_FILE_FLAG_CREATE, OS_READ_WRITE);
-    if (OsalStatus == OS_SUCCESS)
-    {
-        /* Dump current time data to file */
-        OsalStatus = OS_write(BPLib_TIME_GlobalData.FileHandle, 
-                (void *) &BPLib_TIME_GlobalData.TimeData, sizeof(BPLib_TIME_FileData_t));
-        if (OsalStatus != sizeof(BPLib_TIME_FileData_t))
-        {
-            Status = BPLIB_TIME_WRITE_ERROR;
-        }
-
-        (void) OS_close(BPLib_TIME_GlobalData.FileHandle);
-    }
-    else 
-    {
-        Status = BPLIB_TIME_WRITE_ERROR;
+    int res = vfs_file_from_buffer(BPLIB_TIME_FILE_NAME, (void *) &BPLib_TIME_GlobalData.TimeData, 
+                                            sizeof(BPLib_TIME_FileData_t));
+    if (res != sizeof(BPLib_TIME_FileData_t)) {
+        return BPLIB_TIME_READ_ERROR;
     }
 
-    return Status;
+    return BPLIB_SUCCESS;
 }
 
 /* Get estimated DTN time */
@@ -251,7 +225,7 @@ uint64_t BPLib_TIME_GetEstimatedDtnTime(BPLib_TIME_MonotonicTime_t MonotonicTime
 int64_t BPLib_TIME_SafeOffset(int64_t HostEpoch, int64_t DtnEpoch, int64_t Multiplier)
 {
     int64_t Offset;
-    int8 Sign;
+    int Sign;
 
     if (HostEpoch < DtnEpoch)
     {

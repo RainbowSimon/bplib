@@ -28,7 +28,7 @@
 #define QM_STANDARD_WAIT    100L /**< Standard wait of 100msec */
 #define QM_NO_WAIT          0L   /**< Constant representing no wait */
 #define QM_WAIT_FOREVER    -1L   /**< Constant representing an indefinite wait */
-#define QM_MAX_GEN_WORKERS  8L   /**< Constant representing maximum allowed generic workers */
+#define QM_MAX_GEN_WORKERS  1L   /**< Constant representing maximum allowed generic workers */
 
 typedef struct BPLib_QM_WorkerState
 {

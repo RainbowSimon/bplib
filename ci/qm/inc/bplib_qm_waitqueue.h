@@ -29,7 +29,8 @@
 #include <stddef.h>
 
 // TODO: Use bplib_os
-#include <pthread.h>
+#include "mutex.h"
+#include "sema.h"
 
 /**
  * @struct BPLib_QM_WaitQueue
@@ -48,9 +49,9 @@ typedef struct BPLib_QM_WaitQueue
     int rear; /**< Index of the rear of the queue */
     size_t size; /**< Current number of elements in the queue */
     
-    pthread_mutex_t lock; /**< Mutex for thread synchronization */
-    pthread_cond_t cv_pull; /**< Condition variable for waiting on pulls */
-    pthread_cond_t cv_push; /**< Condition variable for waiting on pushes */
+    mutex_t lock; /**< Mutex for thread synchronization */
+    sema_t s_items; /**< Condition variable for waiting on pulls -> now a sema of queue items */
+    sema_t s_slots; /**< Condition variable for waiting on pushes -> now a sema of free capacity */
 } BPLib_QM_WaitQueue_t;
 
 /**

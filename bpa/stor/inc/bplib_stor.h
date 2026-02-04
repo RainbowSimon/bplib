@@ -29,8 +29,6 @@
 #include "bplib_cfg.h"
 #include "bplib_eid.h"
 #include "bplib_mem.h"
-#include "bplib_stor_loadbatch.h"
-#include "bplib_stor_sql.h"
 #include "bplib_ct.h"
 
 /* ====== */
@@ -42,7 +40,7 @@
 #endif
 
 #ifndef BPLIB_STOR_DISCARDBATCHSIZE
-#define BPLIB_STOR_DISCARDBATCHSIZE 25000
+#define BPLIB_STOR_DISCARDBATCHSIZE 64
 #endif
 
 /* We conditionally allow this to be defined by a compile time variable
@@ -76,13 +74,13 @@ typedef struct
 
 struct BPLib_BundleCache
 {
-    pthread_mutex_t        lock;
-    sqlite3*               db;
+    mutex_t lock;
     int64_t                BundleRowsToDelete[BPLIB_STOR_DISCARDBATCHSIZE];
     BPLib_Bundle_t*        InsertBatch[BPLIB_STOR_INSERTBATCHSIZE];
     size_t                 InsertBatchSize;
-    BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
-    BPLib_STOR_LoadBatch_t ContactLoadBatches[BPLIB_MAX_NUM_CONTACTS];
+    /* The load batches are removed for RIOT because they are very implementation dependent.
+     * Loading the numbers (which iirc were the row numbers in the blob table) does not really
+     * help if the actual storage implementation uses some other indexing / storage medium. */
     BPLib_STOR_CtUpdateBatch_t CustodyUpdateBatch;
     int64_t                LastActiveTime;
     size_t                 BundleCountNotEgressed;  /* Number of bundles in storage that have not been marked as egressed */

@@ -389,7 +389,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     ** locks at the same time introduces the potential for deadlocks. Each thread should
     ** only ever have one of each lock at a time.
     */
-    pthread_mutex_lock(&Inst->Ct.Lock);
+    mutex_lock(&Inst->Ct.Lock);
 
     for (SeqRangeIdx = 0; SeqRangeIdx < SeqCollection->SeqRangeLen; SeqRangeIdx++)
     {
@@ -431,9 +431,9 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                     DbEntry->State = BPLib_CT_Transferred;
 
                     /* Request bundle deletion from storage */
-                    pthread_mutex_unlock(&Inst->Ct.Lock);
+                    mutex_unlock(&Inst->Ct.Lock);
                     BPLib_STOR_AddToCustodialUpdateBatch(Inst, BundleId, BPLIB_CT_MARK_DELETE);
-                    pthread_mutex_lock(&Inst->Ct.Lock);
+                    mutex_lock(&Inst->Ct.Lock);
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
                 }
@@ -441,9 +441,9 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 else
                 {
                     /* Request storage turn retransmit timer off */
-                    pthread_mutex_unlock(&Inst->Ct.Lock);
+                    mutex_unlock(&Inst->Ct.Lock);
                     BPLib_STOR_AddToCustodialUpdateBatch(Inst, BundleId, BPLIB_CT_STOP_RETRANSMIT);
-                    pthread_mutex_lock(&Inst->Ct.Lock);
+                    mutex_lock(&Inst->Ct.Lock);
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REJECTED, 1);
                 }
@@ -454,9 +454,9 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 BundleId = DbEntry->BundleId;
 
                 /* Request bundle retransmission from storage */
-                pthread_mutex_unlock(&Inst->Ct.Lock);
+                mutex_unlock(&Inst->Ct.Lock);
                 BPLib_STOR_AddToCustodialUpdateBatch(Inst, BundleId, BPLIB_CT_START_RETRANSMIT);
-                pthread_mutex_lock(&Inst->Ct.Lock);
+                mutex_lock(&Inst->Ct.Lock);
             }
         }
 
@@ -488,7 +488,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
         CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];
     }
 
-    pthread_mutex_unlock(&Inst->Ct.Lock);
+    mutex_unlock(&Inst->Ct.Lock);
 
     /* Do remaining batch of storage operations */
     BPLib_STOR_UpdateCustodialBundles(Inst);

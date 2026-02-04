@@ -28,7 +28,7 @@
 #include "bplib_api_types.h"
 #include "bplib_as.h"
 #include "bplib_eventids.h"
-#include "osapi.h"
+#include "mutex.h" /* use RIOT mutex directly */
 #include "bplib_eid.h"
 
 /* ======= */
@@ -47,8 +47,8 @@ extern BPLib_NodeMibReportsHkTlm_Payload_t     BPLib_AS_NodeReportsPayload;     
 /* =============== */
 /* Mutex Variables */
 /* =============== */
-extern osal_id_t MutexId;
-extern char      MutexName[BPLIB_AS_MAX_MUTEX_NAME_SIZE];
+/* I dont think this name as a global is very good, so I prefixed it */
+extern mutex_t  BPLib_AS_Mutex;
 
 /* =================== */
 /* Function Prototypes */

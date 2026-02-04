@@ -147,14 +147,13 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
     /* Without modifying the TIME module, this was unable to work in BPCat. The
     ** TIME and AS module's use of OSAL needs to be abstracted because no data is
     ** being put into BPLib by BPCat */
-    #ifdef CFS_BUILD
-        /* Initialize time */
-        Status = BPLib_TIME_Init();
-        if (Status != BPLIB_SUCCESS)
-        { /* Failed initialization of TIME */
-            return BPLIB_NC_TIME_INIT_ERR;
-        }
-    #endif
+    /* This should work on RIOT */
+    /* Initialize time */
+    Status = BPLib_TIME_Init();
+    if (Status != BPLIB_SUCCESS)
+    { /* Failed initialization of TIME */
+        return BPLIB_NC_TIME_INIT_ERR;
+    }
 
     /* Initialize NC */
     Status = BPLib_NC_InitImpl(Instance, ConfigPtrs);

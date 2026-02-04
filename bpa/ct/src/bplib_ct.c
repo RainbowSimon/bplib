@@ -127,7 +127,7 @@ BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
 
     memset(&(Inst->Ct), 0, sizeof(BPLib_CT_Context_t));
 
-    pthread_mutex_init(&Inst->Ct.Lock, NULL);
+    mutex_init(&Inst->Ct.Lock);
 
     BPLib_RBT_InitRoot(&(Inst->Ct.SeqTreeRoot));
     BPLib_RBT_InitRoot(&(Inst->Ct.IdTreeRoot));
@@ -197,7 +197,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* Default to refused custody */
     DispCode = BPLib_CT_CustodyRefused;
 
-    pthread_mutex_lock(&Inst->Ct.Lock);
+    mutex_lock(&Inst->Ct.Lock);
 
     /* Reject custody due to lack of storage */
     /* Check if there's storage left (TotalBytes includes the deserialized bundle) */
@@ -257,7 +257,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         (void) BPLib_CT_SignalCustodyImpl(Inst, Bundle, DispCode, StoreBundle, ExtBlockIdx);
     }    
     
-    pthread_mutex_unlock(&Inst->Ct.Lock);
+    mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
@@ -280,10 +280,10 @@ BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bu
         return BPLIB_SUCCESS;
     }
 
-    pthread_mutex_lock(&Inst->Ct.Lock);
+    mutex_lock(&Inst->Ct.Lock);
     Status = BPLib_CT_SignalCustodyImpl(Inst, Bundle, DispCode, StoreBundle, ExtBlockIdx);
 
-    pthread_mutex_unlock(&Inst->Ct.Lock);
+    mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
@@ -317,7 +317,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
 
     CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 
-    pthread_mutex_lock(&Inst->Ct.Lock);
+    mutex_lock(&Inst->Ct.Lock);
     
     Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
                         Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
@@ -382,7 +382,7 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
     }
 
-    pthread_mutex_unlock(&Inst->Ct.Lock);
+    mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
@@ -422,7 +422,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
         }
     }
 
-    pthread_mutex_unlock(&Inst->Ct.Lock);
+    mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
@@ -463,7 +463,7 @@ void BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
         return;
     }
 
-    pthread_mutex_lock(&Inst->Ct.Lock);
+    mutex_lock(&Inst->Ct.Lock);
 
     Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), BundleId, &DbEntry);
     if (Status == BPLIB_SUCCESS)
@@ -478,14 +478,14 @@ void BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
                     BundleId, Status);
     }
 
-    pthread_mutex_unlock(&Inst->Ct.Lock);
+    mutex_unlock(&Inst->Ct.Lock);
 }
 
 void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs)
 {
-    pthread_mutex_lock(&Instance->Ct.Lock);
+    mutex_lock(&Instance->Ct.Lock);
     BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
-    pthread_mutex_unlock(&Instance->Ct.Lock);
+    mutex_unlock(&Instance->Ct.Lock);
 }
 
 void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance)
@@ -495,7 +495,7 @@ void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance)
     int64_t             TimeOpen;
     BPLib_CT_OpenCcs_t* OpenCcs;
 
-    pthread_mutex_lock(&Instance->Ct.Lock);
+    mutex_lock(&Instance->Ct.Lock);
 
     Context = &(Instance->Ct);
     for (OpenCcsIdx = 0; OpenCcsIdx < BPLIB_CT_MAX_OPEN_CCS; OpenCcsIdx++)
@@ -515,7 +515,7 @@ void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance)
         }
     }
 
-    pthread_mutex_unlock(&Instance->Ct.Lock);
+    mutex_unlock(&Instance->Ct.Lock);
 }
 
 BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle)
@@ -536,7 +536,7 @@ BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t 
         return BPLIB_SUCCESS;
     }
 
-    pthread_mutex_lock(&Inst->Ct.Lock);
+    mutex_lock(&Inst->Ct.Lock);
 
     /* Mark bundle as transferred */
     Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
@@ -561,7 +561,7 @@ BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t 
         Status = BPLIB_SUCCESS;
     }
 
-    pthread_mutex_unlock(&Inst->Ct.Lock);
+    mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
@@ -573,7 +573,7 @@ bool BPLib_CT_TriggerCustodialGarbageCollection(BPLib_Instance_t *Inst)
     
     if (Inst != NULL)
     {
-        pthread_mutex_lock(&Inst->Ct.Lock);
+        mutex_lock(&Inst->Ct.Lock);
 
         if (Inst->Ct.CurrDbSize == 0)
         {
@@ -586,7 +586,7 @@ bool BPLib_CT_TriggerCustodialGarbageCollection(BPLib_Instance_t *Inst)
             TriggerGC = (BPLIB_CT_DB_MAX_PERCENT_NONCUSTODIAL_ENTRIES <= (uint32_t)(DecimalVal * 100));
         }
 
-        pthread_mutex_unlock(&Inst->Ct.Lock);
+        mutex_unlock(&Inst->Ct.Lock);
     }
 
     return TriggerGC;

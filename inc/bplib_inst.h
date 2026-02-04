@@ -30,6 +30,7 @@
 #include "bplib_stor.h"
 #include "bplib_pi.h"
 
+#include "mutex.h"
 
 /*
 ** Types
@@ -48,7 +49,7 @@ struct BPLib_Instance
     BPLib_MEM_Pool_t pool; /**< Memory pool for this BPLib Instance */
 
     /* Worker Management */
-    pthread_mutex_t RegisteredWorkersLock; // Move to bplib_os
+    mutex_t RegisteredWorkersLock; // Move to bplib_os
     BPLib_QM_WorkerState_t RegisteredWorkers[QM_MAX_GEN_WORKERS];
     size_t NumWorkers;
 
