@@ -189,12 +189,18 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
                             "Bundle custody rejected. %s.", BundleInfo);
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
+    else
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ACCEPTED_CUSTODY, 1);
+    }
+
     /* If duplicate, do not add it to the CTDB and return an error to mark deletion */
-    else if (IsDuplicate)
+    if (IsDuplicate)
     {
         Status = BPLIB_CT_DUPLICATE_ERR;
     }
-    else if (Status == BPLIB_SUCCESS) /* and DispCode is BPLib_CT_CustodyAccepted */
+    
+    if (Status == BPLIB_SUCCESS)
     {
         /* Add bundle to CTDB but leave sequence ID/number undefined until egress */
         Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
@@ -378,7 +384,7 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
 
     if (Status != BPLIB_SUCCESS)
     {
-        BPLib_EM_SendEvent(0, BPLib_EM_EventType_ERROR,
+        BPLib_EM_SendEvent(BPLIB_CT_DB_DELETE_ERR_EID, BPLib_EM_EventType_ERROR,
                     "Error, could not delete bundle ID 0x%x from CTDB. Status = %d.",
                     BundleId, Status);
     }

@@ -32,7 +32,7 @@ char SetNewRetransmitTriggerSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 const char* SetNewRetransmitTriggerBaseSQL =
 "WITH to_update AS (\n"
     "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) \n"
-    "AND is_custodial = 1 AND egress_attempted = 0\n"
+    "AND bundle_type = 2 AND egress_attempted = 0\n"
 ")\n"
 "UPDATE bundle_data SET retransmit_trigger = ?, retransmit_timestamp = ? \n"
 "WHERE id IN (SELECT id FROM to_update);";
@@ -320,8 +320,6 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(BPLib_Instance_t *Inst, sqlite
                 fprintf(stderr, "Mark for Deletion Failed: %s\n", sqlite3_errstr(SQLStatus));
                 break;
             }
-
-            Inst->BundleStorage.BundleCountInCustody--;
         }
     }
 

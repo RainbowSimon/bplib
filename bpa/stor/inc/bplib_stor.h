@@ -54,6 +54,16 @@
 
 #define BPLIB_STOR_MAX_IDLE_TIME        (4000u)
 
+/**
+ * \brief Bundle types in storage. Correspond to bundle_type in sqlite queries
+ */
+typedef enum
+{
+    BPLIB_NON_CUSTODIAL_BUNDLE     = 0,     /** \brief The bundle is not custodial */
+    BPLIB_LOCAL_CUSTODIAL_BUNDLE   = 1,     /** \brief The bundle is custodial and destined for local delivery */
+    BPLIB_FOREIGN_CUSTODIAL_BUNDLE = 2,     /** \brief The bundle is custodial and destined for another node */
+} BPLib_STOR_BundleType_t;
+
 /* ======== */
 /* Typedefs */
 /* ======== */
@@ -62,7 +72,7 @@ struct BPLib_BundleCache
 {
     pthread_mutex_t        lock;
     sqlite3*               db;
-    int64_t                BundleRowsToExpire[BPLIB_STOR_DISCARDBATCHSIZE];
+    int64_t                BundleRowsToDelete[BPLIB_STOR_DISCARDBATCHSIZE];
     BPLib_Bundle_t*        InsertBatch[BPLIB_STOR_INSERTBATCHSIZE];
     size_t                 InsertBatchSize;
     BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];

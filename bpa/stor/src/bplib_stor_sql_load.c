@@ -47,15 +47,15 @@ char FindForEgressIdSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 char FindForEgressIdRetransmitSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 
 const char* MarkEgressedSQL =
-"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ? AND is_custodial = 0);";
+"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ? AND bundle_type != 2);";
 
 const char* ResetRetransmitTriggerSQL =
-"UPDATE bundle_data SET retransmit_timestamp = retransmit_trigger + ? WHERE (id = ? AND is_custodial = 1);";
+"UPDATE bundle_data SET retransmit_timestamp = retransmit_trigger + ? WHERE (id = ? AND bundle_type = 2);";
 
 const char *FindForEgressIdBaseSQL =
 "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND "
-            "((is_custodial = 0 AND egress_attempted = 0) OR "
-            "(is_custodial = 1 AND retransmit_trigger != ? AND retransmit_timestamp <= ?)) "
+            "((bundle_type != 2 AND egress_attempted = 0) OR "
+            "(bundle_type = 2 AND retransmit_trigger != ? AND retransmit_timestamp <= ?)) "
             "ORDER BY action_timestamp ASC LIMIT ?;";
 
 /* ==================== */
