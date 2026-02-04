@@ -142,21 +142,37 @@ extern "C" {
 
 
 /**
- *  \brief This is the maximum retransmit timeout allowed in the contacts configuration
+ *  \brief This is the maximum retransmit time allowed in the contacts configuration (msec)
  */
-#define BPLIB_MAX_RETRANSMIT_ALLOWED            86000
+#define BPLIB_MAX_RETRANSMIT_ALLOWED            600000
 
 /**
- *  \brief This is the maximum CS time trigger allowed in the contacts configuration. 
- *         TODO revisit value in 7.1
+ *  \brief This is the minimum retransmit time allowed in the contacts configuration (msec)
  */
-#define BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED       86000
+#define BPLIB_MIN_RETRANSMIT_ALLOWED            1000
 
 /**
- *  \brief This is the maximum CS size trigger allowed in the contacts configuration. 
- *         TODO revisit value in 7.1 
+ *  \brief This is the maximum CS time trigger allowed in the contacts configuration (msec)
  */
-#define BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED       86000
+#define BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED       600000
+
+/**
+ *  \brief This is the minimum CS time trigger allowed in the contacts configuration (msec)
+ */
+#define BPLIB_MIN_CS_TIME_TRIGGER_ALLOWED       1000
+
+/**
+ *  \brief This is the maximum CS size trigger allowed in the contacts configuration (bytes)
+ * 
+ * By default, we can only have a maximum of two bundle sequence collections per CCS and 
+ * the length of their sequence range arrays is the upper limit on how big a CCS can get
+ */
+#define BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED       BPLIB_MINIMUM_ENCODED_CCS_LEN + (BPLIB_CT_MAX_SEQ_RANGE_LEN * BPLIB_CT_MAX_SEQ_COLLECTIONS)
+
+/**
+ *  \brief This is the minimum CS size trigger allowed in the contacts configuration (bytes)
+ */
+#define BPLIB_MIN_CS_SIZE_TRIGGER_ALLOWED       BPLIB_MINIMUM_ENCODED_CCS_LEN
 
 /**
  *  \brief Name of this entity. This should  unambiguously identify the node within 

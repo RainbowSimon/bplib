@@ -164,19 +164,28 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData)
         }
 
         /* Validate retransmit timeout */
-        if (TblDataPtr->ContactSet[ContId].RetransmitTimeout > BPLIB_MAX_RETRANSMIT_ALLOWED)
+        if (TblDataPtr->ContactSet[ContId].RetransmitTimeout > BPLIB_MAX_RETRANSMIT_ALLOWED ||
+            TblDataPtr->ContactSet[ContId].RetransmitTimeout < BPLIB_MIN_RETRANSMIT_ALLOWED)
         {
             return BPLIB_INVALID_CONFIG_ERR;
         }
 
         /* Validate CS time trigger */
-        if (TblDataPtr->ContactSet[ContId].CSTimeTrigger > BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED)
+        if (TblDataPtr->ContactSet[ContId].CSTimeTrigger > BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED ||
+            TblDataPtr->ContactSet[ContId].CSTimeTrigger < BPLIB_MIN_CS_TIME_TRIGGER_ALLOWED)
         {
             return BPLIB_INVALID_CONFIG_ERR;
         }
 
         /* Validate CS size trigger */
-        if (TblDataPtr->ContactSet[ContId].CSSizeTrigger > BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED)
+        if (TblDataPtr->ContactSet[ContId].CSSizeTrigger > BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED ||
+            TblDataPtr->ContactSet[ContId].CSSizeTrigger < BPLIB_MIN_CS_SIZE_TRIGGER_ALLOWED)
+        {
+            return BPLIB_INVALID_CONFIG_ERR;
+        }
+
+        /* Custody signals must be generated at a faster rate than retransmissions */
+        if (TblDataPtr->ContactSet[ContId].CSTimeTrigger > TblDataPtr->ContactSet[ContId].RetransmitTimeout)
         {
             return BPLIB_INVALID_CONFIG_ERR;
         }

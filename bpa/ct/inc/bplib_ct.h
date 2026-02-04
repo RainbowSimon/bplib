@@ -73,6 +73,14 @@
  */
 #define BPLIB_CT_BATCH_SIZE                         (100u)
 
+/**
+ * \brief Minimum length of an encoded Compressed Custody Signal bundle in bytes
+ * 
+ * This is the length of a CCS acknowledging custody of a single bundle, with an age 
+ * block added in case time is invalid. TODO VERIFY ME
+ */
+#define BPLIB_MINIMUM_ENCODED_CCS_LEN               (63u)
+
 /*
 ** Type Definitions
 */
