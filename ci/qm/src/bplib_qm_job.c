@@ -180,6 +180,30 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
 
 static BPLib_QM_JobState_t ChannelOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
+    uint8_t ExtBlockIdx;
+    bool    DoCustody;
+
+    BPLib_NC_ReaderLock();
+    DoCustody = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY];
+    BPLib_NC_ReaderUnlock();
+
+    if (DoCustody)
+    {
+        for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
+        {
+            if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
+            {
+                break;
+            }
+        }
+
+        /* Remove custodial bundle from CTDB, it's being delivered */
+        if (ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS)
+        {
+            BPLib_CT_DeleteBundleFromCtdb(Inst, Bundle->blocks.PrimaryBlock.BundleId);
+        }
+    }
+
     return CHANNEL_OUT_CT_TO_EBP;
 }
 

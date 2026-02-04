@@ -376,6 +376,13 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
         Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
     }
 
+    if (Status != BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(0, BPLib_EM_EventType_ERROR,
+                    "Error, could not delete bundle ID 0x%x from CTDB. Status = %d.",
+                    BundleId, Status);
+    }
+
     return Status;
 }
 
