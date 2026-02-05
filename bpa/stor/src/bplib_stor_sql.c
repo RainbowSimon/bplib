@@ -685,7 +685,7 @@ SQL_Status_t BPLib_SQL_DiscardEgressedImpl(BPLib_Instance_t *Inst, size_t* NumDi
         SQLStatus = sqlite3_step(DeleteBundleStmt);
         if (SQLStatus != SQLITE_DONE)
         {
-            fprintf(stderr, "Failed to delete expired bundle: %s\n", sqlite3_errmsg(db));
+            fprintf(stderr, "Failed to delete egressed bundle: %s\n", sqlite3_errmsg(db));
             return SQLStatus;            
         }
     }

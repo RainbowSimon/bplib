@@ -327,6 +327,9 @@ void Test_BPLib_STOR_SetNewRetransmitTrigger_Err(void)
 {
     BplibInst.BundleStorage.db = NULL;
 
+    BplibInst.ContCtxt[0].Config.DestEIDs[0].MaxNode = 10;
+    BplibInst.ContCtxt[0].Config.DestEIDs[0].MaxService = 10;
+    
     UtAssert_INT32_EQ(BPLib_STOR_SetNewRetransmitTrigger(&BplibInst, 0), BPLIB_STOR_SQL_NEW_RETRANSMIT_ERR);
 }
 
