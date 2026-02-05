@@ -511,7 +511,8 @@ SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPL
         CurrBundleId = sqlite3_column_int64(GetExpiredStmt, 2);
         BundleType = sqlite3_column_int64(GetExpiredStmt, 3);
 
-        if (BundleType != BPLIB_NON_CUSTODIAL_BUNDLE)
+        if (BundleType != BPLIB_NON_CUSTODIAL_BUNDLE  &&
+            Inst->BundleStorage.BundleCountInCustody != 0)
         {
             Inst->BundleStorage.BundleCountInCustody--;
             BPLib_CT_DeleteBundleFromCtdb(Inst, CurrBundleId);
@@ -657,7 +658,8 @@ SQL_Status_t BPLib_SQL_DiscardEgressedImpl(BPLib_Instance_t *Inst, size_t* NumDi
         EgressedBytes += sqlite3_column_int64(GetEgressedStmt, 1);
         BundleType = sqlite3_column_int64(GetEgressedStmt, 2);
 
-        if (BundleType != BPLIB_NON_CUSTODIAL_BUNDLE)
+        if (BundleType != BPLIB_NON_CUSTODIAL_BUNDLE && 
+            Inst->BundleStorage.BundleCountInCustody != 0)
         {
             Inst->BundleStorage.BundleCountInCustody--;
         }
