@@ -59,7 +59,7 @@ BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_
     db          = Inst->BundleStorage.db;
 
     /* Destination EIDs are set to dtn:none, don't bother searching database */
-    if (DestEIDs[0].MaxNode == 0 && DestEIDs[0].MaxNode == 0)
+    if (DestEIDs[0].MaxNode == 0 && DestEIDs[0].MaxService == 0)
     {
         return BPLIB_SUCCESS;
     }
