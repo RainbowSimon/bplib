@@ -40,8 +40,6 @@
 sqlite3_stmt* GetNumBundlesStmt;
 sqlite3_stmt* GetNumEgressedStmt;
 sqlite3_stmt* TotalBytesStmt;
-sqlite3_stmt* DiscardEgressedStmt;
-sqlite3_stmt* EgressedBytesStmt;
 sqlite3_stmt* GetExpiredStmt;
 sqlite3_stmt* DeleteBundleStmt;
 sqlite3_stmt* GetEgressedStmt;
@@ -149,26 +147,6 @@ const char* DeleteBundleSQL =
 const char* GetEgressedSQL = 
 "SELECT id, bundle_bytes, bundle_type FROM bundle_data "
 "WHERE egress_attempted = 1 LIMIT ?;";
-
-const char* DiscardEgressedSQL =
-"WITH to_delete AS ("
-"    SELECT id FROM bundle_data "
-"    WHERE egress_attempted = 1 "
-"    LIMIT ?"
-") "
-"DELETE FROM bundle_data "
-"WHERE id IN (SELECT id FROM to_delete);";
-
-const char* EgressedBytesSQL =
-"WITH egressed_bytes AS (\n"
-"   SELECT id, bundle_bytes FROM bundle_data\n"
-"   WHERE egress_attempted = 1\n"
-"   LIMIT ?)\n"
-"SELECT SUM(bundle_bytes)\n"
-"AS bytes_deleted\n"
-"FROM bundle_data\n"
-"WHERE id IN (SELECT id FROM egressed_bytes);\n";
-
 
 /* ==================== */
 /* Function Definitions */

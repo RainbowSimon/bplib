@@ -220,7 +220,7 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT
         return BPLIB_SQL_CUSTODY_UPDATE_ERR;
     }
 
-    SQLStatus = BPLib_SQL_UpdateCustodialBundlesImpl(Inst, db, Batch);
+    SQLStatus = BPLib_SQL_UpdateCustodialBundlesImpl(db, Batch);
 
     sqlite3_finalize(MarkForDeletionStmt);
     sqlite3_finalize(StopRetransmitStmt);
@@ -235,7 +235,7 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT
     return BPLIB_SUCCESS;
 }
 
-SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(BPLib_Instance_t *Inst, sqlite3* db, BPLib_CT_CcsUpdateBatch_t *Batch)
+SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdateBatch_t *Batch)
 {
     SQL_Status_t SQLStatus;
     size_t       i;
