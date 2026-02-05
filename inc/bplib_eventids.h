@@ -122,6 +122,7 @@
 
 #define BPLIB_NC_STOR_CLEANUP_INF_EID                   (584u)
 #define BPLIB_NC_STOR_CLEANUP_ERR_EID                   (585u)
+#define BPLIB_NC_MAINT_ERR_EID                          (586u)
 
 /* ============ */
 /* AS event IDs */

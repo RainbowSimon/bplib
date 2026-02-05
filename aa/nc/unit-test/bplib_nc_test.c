@@ -2314,6 +2314,13 @@ void Test_BPLib_NC_TableUpdate_Error_Nominal(void)
     BPNode_Test_TABLEP_TableUpdate(10, BPLIB_STORAGE);
 }
 
+void Test_BPLib_NC_RunMaintenanceActivities_Nominal(void)
+{
+    BPLib_Instance_t Inst;
+
+    UtAssert_VOIDCALL(BPLib_NC_RunMaintenanceActivities(&Inst));
+}
+
 void TestBplibNc_Register(void)
 {
     ADD_TEST(Test_BPLib_NC_Init_Impl_Nominal);
@@ -2452,4 +2459,6 @@ void TestBplibNc_Register(void)
     ADD_TEST(Test_BPLib_NC_TableUpdate_Success_Nominal);
     ADD_TEST(Test_BPLib_NC_TableUpdate_Update_Nominal);
     ADD_TEST(Test_BPLib_NC_TableUpdate_Error_Nominal);
+
+    ADD_TEST(Test_BPLib_NC_RunMaintenanceActivities_Nominal);
 }
