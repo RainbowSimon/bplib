@@ -189,9 +189,14 @@ BPLib_Status_t BPLib_CT_GetEntryFromCtdbWithId(BPLib_CT_Context_t *Context,
 
 BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_t *DbEntry)
 {
-    BPLib_Status_t Status;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
 
-    Status = BPLib_RBT_ExtractNode(&(Inst->Ct.SeqTreeRoot), &DbEntry->SeqRbtLink);
+    /* The sequence ID/num RBT node may or may not be initialized */
+    if (DbEntry->SeqId != BPLIB_CT_SEQ_ID_ROLLOVER_VALUE)
+    {
+        Status = BPLib_RBT_ExtractNode(&(Inst->Ct.SeqTreeRoot), &DbEntry->SeqRbtLink);
+    }
+
     if (Status == BPLIB_SUCCESS)
     {
         Status = BPLib_RBT_ExtractNode(&(Inst->Ct.IdTreeRoot), &DbEntry->IdRbtLink);

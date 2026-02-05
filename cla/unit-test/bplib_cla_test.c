@@ -308,9 +308,17 @@ void Test_BPLib_CLA_ContactsTblValidateFunc_Nominal(void)
 {
     BPLib_Status_t ReturnStatus;
     BPLib_CLA_ContactsTable_t TestTblData;
+    uint32_t ContId;
 
     /* Set input table to all valid values */
     memset(&TestTblData, 0, sizeof(TestTblData));
+
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
+    {
+        TestTblData.ContactSet[ContId].CSSizeTrigger = BPLIB_MIN_CS_SIZE_TRIGGER_ALLOWED;
+        TestTblData.ContactSet[ContId].CSTimeTrigger = BPLIB_MIN_CS_TIME_TRIGGER_ALLOWED;
+        TestTblData.ContactSet[ContId].RetransmitTimeout = BPLIB_MIN_RETRANSMIT_ALLOWED + 1;
+    }
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_PatternIsValid), true);
 
@@ -412,9 +420,17 @@ void Test_BPLib_CLA_ContactsTblValidateFunc_DuplEids(void)
 {
     BPLib_Status_t ReturnStatus;
     BPLib_CLA_ContactsTable_t TestTblData;
+    uint32_t ContId;
 
     /* Set input table to all valid values */
     memset(&TestTblData, 0, sizeof(TestTblData));
+
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
+    {
+        TestTblData.ContactSet[ContId].CSSizeTrigger = BPLIB_MIN_CS_SIZE_TRIGGER_ALLOWED;
+        TestTblData.ContactSet[ContId].CSTimeTrigger = BPLIB_MIN_CS_TIME_TRIGGER_ALLOWED;
+        TestTblData.ContactSet[ContId].RetransmitTimeout = BPLIB_MIN_RETRANSMIT_ALLOWED + 1;
+    }
 
     TestTblData.ContactSet[0].DestEIDs[0].Scheme = BPLIB_EID_SCHEME_IPN;
     TestTblData.ContactSet[0].DestEIDs[1].Scheme = BPLIB_EID_SCHEME_IPN;

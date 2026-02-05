@@ -94,6 +94,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     BPLib_CT_DispositionCode_t DispCode;
     char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
+    bool IsDuplicate = false;
 
     if (Bundle == NULL || Inst == NULL)
     {
@@ -155,11 +156,13 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
 
     }
-    /* Reject duplicate bundles */
+    /* Duplicate bundles are accepted but discarded */
     else if (BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
                     Bundle->blocks.PrimaryBlock.BundleId, &DbEntry) == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REDUNDANT, 1);
+        DispCode = BPLib_CT_CustodyAccepted;
+        IsDuplicate = true;    
     }
 
     /* Custody accepted! */
@@ -186,7 +189,18 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
                             "Bundle custody rejected. %s.", BundleInfo);
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
-    else if (Status == BPLIB_SUCCESS) /* and DispCode is BPLib_CT_CustodyAccepted */
+    else
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ACCEPTED_CUSTODY, 1);
+    }
+
+    /* If duplicate, do not add it to the CTDB and return an error to mark deletion */
+    if (IsDuplicate)
+    {
+        Status = BPLIB_CT_DUPLICATE_ERR;
+    }
+    
+    if (Status == BPLIB_SUCCESS)
     {
         /* Add bundle to CTDB but leave sequence ID/number undefined until egress */
         Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
@@ -366,6 +380,13 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
     if (Status == BPLIB_SUCCESS)
     {
         Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
+    }
+
+    if (Status != BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_CT_DB_DELETE_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "Error, could not delete bundle ID 0x%x from CTDB. Status = %d.",
+                    BundleId, Status);
     }
 
     return Status;

@@ -47,15 +47,15 @@ char FindForEgressIdSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 char FindForEgressIdRetransmitSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 
 const char* MarkEgressedSQL =
-"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ? AND is_custodial = 0);";
+"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ? AND bundle_type != 2);";
 
 const char* ResetRetransmitTriggerSQL =
-"UPDATE bundle_data SET retransmit_timestamp = retransmit_trigger + ? WHERE (id = ? AND is_custodial = 1);";
+"UPDATE bundle_data SET retransmit_timestamp = retransmit_trigger + ? WHERE (id = ? AND bundle_type = 2);";
 
 const char *FindForEgressIdBaseSQL =
 "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND "
-            "((is_custodial = 0 AND egress_attempted = 0) OR "
-            "(is_custodial = 1 AND retransmit_trigger != ? AND retransmit_timestamp <= ?)) "
+            "((bundle_type != 2 AND egress_attempted = 0) OR "
+            "(bundle_type = 2 AND retransmit_trigger != ? AND retransmit_timestamp <= ?)) "
             "ORDER BY action_timestamp ASC LIMIT ?;";
 
 /* ==================== */
@@ -81,6 +81,12 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     if ((NumEIDs == 0) || (NumEIDs > BPLIB_MAX_CONTACT_DEST_EIDS))
     {
         return BPLIB_STOR_PARAM_ERR;
+    }
+    
+    /* Destination EIDs are set to dtn:none, don't bother searching database */
+    if (DestEIDs[0].MaxNode == 0 && DestEIDs[0].MaxNode == 0)
+    {
+        return BPLIB_SUCCESS;
     }
 
     Status = BPLib_SQL_GetDestEidWhereClause(DestEIDs, NumEIDs, WhereClause);

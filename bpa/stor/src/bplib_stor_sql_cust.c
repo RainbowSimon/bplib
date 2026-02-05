@@ -32,7 +32,7 @@ char SetNewRetransmitTriggerSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 const char* SetNewRetransmitTriggerBaseSQL =
 "WITH to_update AS (\n"
     "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) \n"
-    "AND is_custodial = 1 AND egress_attempted = 0\n"
+    "AND bundle_type = 2 AND egress_attempted = 0\n"
 ")\n"
 "UPDATE bundle_data SET retransmit_trigger = ?, retransmit_timestamp = ? \n"
 "WHERE id IN (SELECT id FROM to_update);";
@@ -57,6 +57,12 @@ BPLib_Status_t BPLib_SQL_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_
     char           WhereClause[BPLIB_SQL_MAX_STRLEN] = {0};
 
     db          = Inst->BundleStorage.db;
+
+    /* Destination EIDs are set to dtn:none, don't bother searching database */
+    if (DestEIDs[0].MaxNode == 0 && DestEIDs[0].MaxNode == 0)
+    {
+        return BPLIB_SUCCESS;
+    }
 
     Status = BPLib_SQL_GetDestEidWhereClause(DestEIDs, NumEIDs, WhereClause);
     if (Status != BPLIB_SUCCESS)

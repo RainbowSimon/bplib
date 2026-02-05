@@ -217,5 +217,6 @@
 #define BPLIB_CT_NO_MEM_ERR_EID                         (757u)
 #define BPLIB_CT_REJECTED_DEBG_EID                      (758u)
 #define BPLIB_CT_UNKNOWN_BUNDLE_WRN_EID                 (759u)
+#define BPLIB_CT_DB_DELETE_ERR_EID                      (760u)
 
 #endif /* BPLIB_EVENTIDS_H */

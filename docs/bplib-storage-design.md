@@ -11,7 +11,7 @@ BPLib storage uses two sqlite tables:
     - egress_attempted: whether or not the bundle has been egressed from storage
     - dest_node: the destination EID node number
     - dest_service: the destination EID service number
-    - is_custodial: whether or not a bundle is custodial
+    - bundle_type: there are three different types of bundles with associated integer values - non-custodial bundles (0), custodial bundles that are being delivered to this node (1), and custodial bundles that are being forwarded to another node (2). A bundle's type determines what operations apply to it
     - bundle_bytes: size of the encoded bundle in bytes
 - bundle_blobs: contains the full bundle data with the following columns
     - id: primary key assigned by sqlite to index into bundle_blobs
@@ -43,15 +43,15 @@ Once received bundles end up at Storage, they are kept in local memory until eit
 - retransmit_timestamp: Monotonic time at which the next retransmission will occur. When storing a bundle for the first time, it is set to the current time plus retransmit_trigger.
 - dest_node: Based on the destination EID node number in the primary block
 - dest_service: Based on the destination EID service number in the primary block
-- is_custodial: 1 if a bundle contains a CTEB, otherwise 0
+- bundle_type: 0 if the bundle is not custodial, 1 if the bundle is custodial and its destination EID node number matches this node, or 2 if the bundle is custodial and its destination EID node number does not match this node
 - bundle_bytes: size of the encoded bundle in bytes
 
 ## Bundle Forwarding
 
 When a contact/channel is started, if there are bundles in storage with corresponding destination EIDs, the contact out/channel out thread will start to request bundles from storage. Bundles are loaded by searching for the id's in bundle_data using the idx_egress_id index with the following criteria:
 - dest_node and dest_service are either within the range provided by the contact's destination EIDs or match an exact EID value (for all destination EIDs corresponding to a particular contact or channel)
-- egress_attempted is 0 and is_custodial is false
-- if is_custodial is true, the retransmit_timestamp is less than the current monotonic time
+- egress_attempted is 0 and bundle_type is not 2 (2 = foreign custodial)
+- if bundle_type is 2, the retransmit_timestamp is less than the current monotonic time
 - selections are ordered in ascending order by action_timestamp and limited to no more than `BPLIB_STOR_LOADBATCHSIZE`.
 
 The id's are then loaded into memory in what is called a load batch. These id's allow the contact out thread to then index into the bundle_blobs table for the entries where the bundle_row matches the provided id and load the bundle_blob's blob_data into memory. Once a load batch of ids has been consumed and all bundles have been loaded into memory, the egress_attempted field of those bundles is set to 1, unless the bundle is custodial. Custodial bundles are only marked for deletion when a CCS is received confirming their successful transfer
