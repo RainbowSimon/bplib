@@ -304,6 +304,7 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
     SQL_Status_t SQLStatus;
     sqlite3*     db;
     size_t       i;
+    size_t       NumEgressed;
 
     db = Inst->BundleStorage.db;
 
@@ -334,7 +335,13 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
             fprintf(stderr, "Mark Egressed Failed: %s\n", sqlite3_errstr(SQLStatus));
             break;
         }
+    }
+    
+    NumEgressed = sqlite3_changes(db);
 
+    /* Go through the load batch and reset the retransmit triggers */
+    for (i = 0; i < Batch->Size; i++)
+    {
         /* Reset retransmission trigger for custodial bundles */
         sqlite3_reset(ResetRetransmitStmt);
 
@@ -378,6 +385,10 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
         {
             fprintf(stderr, "Failed to rollback transaction, RC=%d\n", SQLStatus);
         }
+    }
+    else
+    {
+        Inst->BundleStorage.BundleCountNotEgressed -= NumEgressed;
     }
 
     /* Expecting SQLITE_OK */

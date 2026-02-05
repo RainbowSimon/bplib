@@ -256,8 +256,6 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
         /* Mark the batch as egressed */
         Status = BPLib_SQL_MarkBatchEgressed(Inst, LoadBatch);
 
-        Inst->BundleStorage.BundleCountNotEgressed -= LoadBatch->Size;
-
         /* Clear the batch */
         (void) BPLib_STOR_LoadBatch_Reset(LoadBatch);
     }
