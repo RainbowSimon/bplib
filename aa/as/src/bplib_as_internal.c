@@ -209,6 +209,6 @@ void BPLib_AS_UpdateReportsHkTlm(BPLib_Instance_t *Inst)
 
     BPLib_AS_NodeReportsPayload.SystemNodeUpTime = CurrTime - InitTime.Time;
     BPLib_AS_NodeReportsPayload.BundleCountStored = Inst->BundleStorage.BundleCountStored;
-    BPLib_AS_NodeReportsPayload.BundleCountInCustody = Inst->BundleStorage.BundleCountInCustody;
+    BPLib_AS_NodeReportsPayload.BundleCountInCustody = Inst->Ct.CurrDbSize;
     BPLib_AS_NodeReportsPayload.KbytesCountStorageAvailable = (BPLIB_MAX_STORED_BUNDLE_BYTES - Inst->BundleStorage.BytesStorageInUse) / 1000;
 }

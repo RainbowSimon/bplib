@@ -254,7 +254,8 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
                 ** we attempt to correct it here.
                 */
                 BPLib_EM_SendEvent(BPLIB_CT_UNKNOWN_BUNDLE_WRN_EID, BPLib_EM_EventType_WARNING,
-                        "Transmitting a custodial bundle that does not exist in CTDB.");
+                        "Transmitting a custodial bundle that does not exist in CTDB, bundle ID = %d.",
+                        Bundle->blocks.PrimaryBlock.BundleId);
 
                 Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
 
@@ -376,6 +377,8 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
         return BPLIB_NULL_PTR_ERROR;
     }
 
+    pthread_mutex_lock(&Inst->Ct.Lock);
+
     Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), BundleId, &DbEntry);
     if (Status == BPLIB_SUCCESS)
     {
@@ -388,6 +391,8 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
                     "Error, could not delete bundle ID 0x%x from CTDB. Status = %d.",
                     BundleId, Status);
     }
+
+    pthread_mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }

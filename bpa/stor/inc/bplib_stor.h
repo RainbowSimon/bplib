@@ -72,7 +72,6 @@ struct BPLib_BundleCache
 
     /* Storage-related MIB reports */
     uint32_t BundleCountStored;
-    uint32_t BundleCountInCustody;
     size_t   BytesStorageInUse;
     size_t   StorageSize;
 };

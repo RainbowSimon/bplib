@@ -57,7 +57,7 @@ const char* ResetRetransmitTriggerSQL =
 
 const char *FindForEgressIdBaseSQL =
 "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND "
-            "((is_custodial = 0 AND egress_attempted = 0) OR "
+            "(egress_attempted = 0) AND ((is_custodial = 0) OR "
             "(is_custodial = 1 AND retransmit_trigger != ? AND retransmit_timestamp <= ?)) "
             "ORDER BY action_timestamp ASC LIMIT ?;";
 

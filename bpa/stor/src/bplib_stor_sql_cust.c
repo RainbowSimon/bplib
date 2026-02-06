@@ -38,10 +38,10 @@ const char* SetNewRetransmitTriggerBaseSQL =
 "WHERE id IN (SELECT id FROM to_update);";
 
 const char* TriggerRetransmitSQL =
-"UPDATE bundle_data SET retransmit_timestamp = ? WHERE bundle_id = ?;";
+"UPDATE bundle_data SET retransmit_timestamp = ? WHERE (bundle_id = ? AND egress_attempted = 0);";
 
 const char* StopRetransmitSQL =
-"UPDATE bundle_data SET retransmit_trigger = ? WHERE bundle_id = ?;";
+"UPDATE bundle_data SET retransmit_trigger = ? WHERE (bundle_id = ? AND egress_attempted = 0);";
 
 const char* MarkForDeletionSQL =
 "UPDATE bundle_data SET egress_attempted = 1 WHERE bundle_id = ?;";

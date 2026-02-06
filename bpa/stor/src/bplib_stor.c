@@ -494,7 +494,6 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 
     if (Status == BPLIB_SUCCESS)
     {
-        CacheInst->BundleCountInCustody   += CustodialBundlesStored;
         CacheInst->BytesStorageInUse      += TotalBytesStored;
         CacheInst->BundleCountStored      += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
         CacheInst->BundleCountNotEgressed += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
@@ -508,7 +507,6 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
                                 "Ignored %ld duplicate bundles in store batch.",
                                 DuplicateBundlesIgnored);
         }
-
     }
     else if (Status == BPLIB_STOR_DB_FULL_ERR)
     {
@@ -538,18 +536,33 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     */
     for (i = 0; i < CacheInst->InsertBatchSize; i++)
     {
-        /* Custodial bundles with an egress path should get sent out instead of freed */
-        if (CacheInst->InsertBatch[i]->Meta.IsCustodial && 
-            CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
+        if (CacheInst->InsertBatch[i]->Meta.IsCustodial)
         {
-            (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
-
-            if (ConState == BPLIB_CLA_STARTED)
+            /* If bundles weren't stored, make sure to remove them from the CTDB */
+            if (Status != BPLIB_SUCCESS)
             {
-                BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CacheInst->InsertBatch[i]->Meta.EgressID]), 
-                                            &CacheInst->InsertBatch[i], QM_WAIT_FOREVER);
+                BPLib_CT_DeleteBundleFromCtdb(Inst, CacheInst->InsertBatch[i]->Meta.IsCustodial);
+                BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
+            }
+            else
+            {
+                /* Custodial bundles with an egress path should get sent out instead of freed */
+                (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
+
+                if (CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS &&
+                    ConState == BPLIB_CLA_STARTED)
+                {
+                    BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CacheInst->InsertBatch[i]->Meta.EgressID]), 
+                                                &CacheInst->InsertBatch[i], QM_WAIT_FOREVER);
+                }
+                /* The egress path disappeared, free the bundle */
+                else
+                {
+                    BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
+                }
             }
         }
+        /* Noncustodial bundles are all freed */
         else
         {
             BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
