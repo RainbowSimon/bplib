@@ -484,6 +484,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     size_t               DuplicateBundlesIgnored;
     size_t               CustodialBundlesStored;
     BPLib_CLA_ContactRunState_t ConState;
+    BPLib_CT_DispositionCode_t  DispCode;
 
     CacheInst               = &Inst->BundleStorage;
     TotalBytesStored        = 0;
@@ -494,6 +495,8 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 
     if (Status == BPLIB_SUCCESS)
     {
+        DispCode = BPLib_CT_CustodyAccepted;
+
         CacheInst->BytesStorageInUse      += TotalBytesStored;
         CacheInst->BundleCountStored      += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
         CacheInst->BundleCountNotEgressed += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
@@ -510,6 +513,8 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     }
     else if (Status == BPLIB_STOR_DB_FULL_ERR)
     {
+        DispCode = BPLib_CT_CustodyRefused;
+
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, CacheInst->InsertBatchSize);
@@ -521,6 +526,8 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     }
     else
     {
+        DispCode = BPLib_CT_CustodyRefused;
+
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
 
@@ -531,35 +538,29 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 
     }
 
-    /* Free the bundles, as they're now persistent
+    /* 
+    ** Free the bundles, as they're now persistent
     ** Note: even if the storage fails, we free everything to avoid a leak.
     */
     for (i = 0; i < CacheInst->InsertBatchSize; i++)
-    {
+    {        
         if (CacheInst->InsertBatch[i]->Meta.IsCustodial)
         {
-            /* If bundles weren't stored, make sure to remove them from the CTDB */
-            if (Status != BPLIB_SUCCESS)
+            /* Finalize custodial transfer for custodial bundles */
+            (void) BPLib_CT_SignalCustody(Inst, CacheInst->InsertBatch[i], DispCode);
+
+            /* Custodial bundles with an egress path should get sent out instead of freed */
+            (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
+            if (CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS &&
+                ConState == BPLIB_CLA_STARTED)
             {
-                BPLib_CT_DeleteBundleFromCtdb(Inst, CacheInst->InsertBatch[i]->Meta.IsCustodial);
-                BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
+                BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CacheInst->InsertBatch[i]->Meta.EgressID]), 
+                                            &CacheInst->InsertBatch[i], QM_WAIT_FOREVER);
             }
+            /* The egress path disappeared, free the bundle */
             else
             {
-                /* Custodial bundles with an egress path should get sent out instead of freed */
-                (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
-
-                if (CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS &&
-                    ConState == BPLIB_CLA_STARTED)
-                {
-                    BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CacheInst->InsertBatch[i]->Meta.EgressID]), 
-                                                &CacheInst->InsertBatch[i], QM_WAIT_FOREVER);
-                }
-                /* The egress path disappeared, free the bundle */
-                else
-                {
-                    BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
-                }
+                BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
             }
         }
         /* Noncustodial bundles are all freed */

@@ -70,7 +70,7 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
     }
     else
     {
-        Status = BPLib_CT_ProcessNewBundle(Inst, Bundle, false);
+        Status = BPLib_CT_ProcessNewBundle(Inst, Bundle);
 
         if (Status != BPLIB_SUCCESS)
         {
@@ -159,7 +159,7 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
     }
     else
     {
-        Status = BPLib_CT_ProcessNewBundle(Inst, Bundle, true);
+        Status = BPLib_CT_ProcessNewBundle(Inst, Bundle);
 
         if (Status != BPLIB_SUCCESS)
         {

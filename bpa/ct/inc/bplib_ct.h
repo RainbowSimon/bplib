@@ -202,6 +202,7 @@ typedef struct
     uint64_t LastSeqCounterId;                                  /** \brief Last sequence counter ID assigned to a contact */
 
     size_t CurrDbSize;                                          /** \brief Number of entries in CTDB */
+    size_t BundleCountInCustody;                                /** \brief Number of bundles in custody. Bundles may be in the CTDB but until they are stored they are not actually in custody */
     BPLib_RBT_Root_t SeqTreeRoot;                               /** \brief An RBT that allows for CTDB queries based on sequence ID/number */
     BPLib_RBT_Root_t IdTreeRoot;                                /** \brief An RBT that allows for CTDB queries based on bundle ID */
 
@@ -253,23 +254,49 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle);
  *
  *  \par Description
  *       Sets the bundle ID and if a bundle is custodial, check if PDB can accept
- *       custody and if so, mark it as custody accepted in the relevant open CCS, 
- *       and if not, mark it as custody refused in the relevant open CCS.
+ *       custody, if its a duplicate, and if there's storage space available for it. If 
+ *       the bundle is a duplicate, accept it but return an error to mark it for
+ *       deletion. If the bundle is rejected, add it to a custody refused CCS. If the
+ *       bundle is not a duplicate and it is accepted, add it to the CTDB. It will
+ *       not be added to a custody accepted CCS until the bundle is successfully
+ *       stored.
  *
  *  \par Assumptions, External Events, and Notes:
  *       None
  * 
  *  \param[in] Bundle Pointer to the bundle
  *  \param[in] Inst Pointer to the BPLib instance
- *  \param[in] LocalBundle Whether a bundle was locally created or not
  *
  *  \return Execution status
  *  \retval BPLIB_SUCCESS Operation was successful
  *  \retval BPLIB_NO_STOR_ERR Bundle could not be accepted due to a lack of storage
  *  \retval BPLIB_CT_CUSTODY_REFUSED_ERR Bundle custody could not be accepted
+ *  \retval BPLIB_CT_DUPLICATE_ERR Bundle is a duplicate of an existing custodial bundle
  */
-BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle,
-                                            bool LocalBundle);
+BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle);
+
+/**
+ * \brief Signal custody
+ *
+ *  \par Description
+ *       If a bundle is custodial and was not created locally, add it to its 
+ *       corresponding CCS. Otherwise, do nothing. If this is a custody rejection signal, 
+ *       it is also removed from the CTBD (if it is in there). All relevant counters are 
+ *       incremented.
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       None
+ * 
+ *  \param[in] Bundle Pointer to the bundle
+ *  \param[in] Inst Pointer to the BPLib instance
+ *  \param[in] DispCode Disposition code of the custody signal
+ *
+ *  \return Execution status
+ *  \retval BPLIB_SUCCESS Operation was successful
+ *  \retval BPLIB_CT_CUSTODY_REFUSED_ERR Bundle custody could not be accepted
+ */
+BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
+                                        BPLib_CT_DispositionCode_t DispCode);
 
 /**
  * \brief Update a bundle on egress
@@ -325,7 +352,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
  */
 BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t ContactId);
 
-BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId);
+void BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId);
 
 /**
  * \brief     Wrapper to make BPLib_CT_BuildAndSendOpenCcs_Impl publicly callable

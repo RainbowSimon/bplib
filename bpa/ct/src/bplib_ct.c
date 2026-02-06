@@ -84,17 +84,13 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle,
-                                                                        bool LocalBundle)
+BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bundle)
 {
     BPLib_Status_t Status = BPLIB_SUCCESS;
-    size_t OpenCcsIdx;
     uint8_t ExtBlockIdx;
-    BPLib_CustodyBlockData_t *CtebPtr;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     BPLib_CT_DispositionCode_t DispCode;
     char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
-    bool IsDuplicate = false;
 
     if (Bundle == NULL || Inst == NULL)
     {
@@ -136,7 +132,6 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
 
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REQUEST, 1);
     Bundle->Meta.IsCustodial = true;
-    CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 
     /* Default to refused custody */
     DispCode = BPLib_CT_CustodyRefused;
@@ -147,6 +142,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     if (Status == BPLIB_NO_STOR_ERR)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
+        Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
     /* Reject custody when CTDB is full */
     else if (Inst->Ct.CurrDbSize >= BPLIB_CT_DB_MAX_ENTRIES)
@@ -154,7 +150,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         BPLib_EM_SendEvent(BPLIB_CT_NO_MEM_ERR_EID, BPLib_EM_EventType_ERROR,
                             "Cannot accept bundle, CTDB is full. %s", BundleInfo);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
-
+        Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
     /* Duplicate bundles are accepted but discarded */
     else if (BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
@@ -162,7 +158,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REDUNDANT, 1);
         DispCode = BPLib_CT_CustodyAccepted;
-        IsDuplicate = true;    
+        Status = BPLIB_CT_DUPLICATE_ERR;
     }
 
     /* Custody accepted! */
@@ -170,10 +166,66 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     {
         DispCode = BPLib_CT_CustodyAccepted;
     }
-    /* Else PDB rejected custody */
+    else
+    {
+        Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
+    }
+
+    pthread_mutex_unlock(&Inst->Ct.Lock);
+
+    if (Status != BPLIB_SUCCESS)
+    {
+        /*
+        ** Signal custody for rejected bundles or duplicate bundles, otherwise wait
+        ** until a bundle is successfully stored to formally accept it
+        */
+        (void) BPLib_CT_SignalCustody(Inst, Bundle, DispCode);
+    }
+    else
+    {
+        /* Add bundle to CTDB but leave sequence ID/number undefined until egress */
+        pthread_mutex_lock(&Inst->Ct.Lock);
+        Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
+        pthread_mutex_unlock(&Inst->Ct.Lock);
+    }
+    
+    return Status;
+}
+
+BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
+                                        BPLib_CT_DispositionCode_t DispCode)
+{
+    size_t OpenCcsIdx;
+    uint8_t ExtBlockIdx;
+    BPLib_CustodyBlockData_t *CtebPtr;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_CT_DbEntry_t *DbEntry = NULL;
+    char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
+
+    if (Bundle == NULL || Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
+    {
+        if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
+        {
+            break;
+        }
+    }
+    /* Bundle is not custodial, do nothing */
+    if (ExtBlockIdx >= BPLIB_MAX_NUM_EXTENSION_BLOCKS)
+    {
+        return BPLIB_SUCCESS;
+    }
+
+    CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
+
+    pthread_mutex_lock(&Inst->Ct.Lock);
 
     /* For foreign bundles, need to accept/reject custody with previous node via CCS */
-    if (LocalBundle == false)
+    if (Bundle->Meta.LocalBundle == false)
     {
         OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(Inst, &(CtebPtr->BlockSrcAdminEID),
                                             CtebPtr->BundleSeqId);
@@ -182,28 +234,28 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
                                         CtebPtr, DispCode);
     }
 
-    if (DispCode == BPLib_CT_CustodyRefused)
+    if (DispCode == BPLib_CT_CustodyAccepted)
     {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
-        BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG, 
-                            "Bundle custody rejected. %s.", BundleInfo);
-        Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
+        Inst->Ct.BundleCountInCustody++;
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ACCEPTED_CUSTODY, 1);
     }
     else
     {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ACCEPTED_CUSTODY, 1);
-    }
+        BPLib_BI_GetBundleInfo(Bundle, BundleInfo, BPLIB_MAX_BUNDLE_INFO_STR_LENGTH);
 
-    /* If duplicate, do not add it to the CTDB and return an error to mark deletion */
-    if (IsDuplicate)
-    {
-        Status = BPLIB_CT_DUPLICATE_ERR;
-    }
-    
-    if (Status == BPLIB_SUCCESS)
-    {
-        /* Add bundle to CTDB but leave sequence ID/number undefined until egress */
-        Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
+        BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG, 
+                            "Bundle custody rejected. %s.", BundleInfo);
+
+        /* Make sure any CTDB entries that might exist with this bundle are removed */
+        Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+                                    Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
+        if (Status == BPLIB_SUCCESS)
+        {
+            Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
+        }
+
+        Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 
     pthread_mutex_unlock(&Inst->Ct.Lock);
@@ -367,14 +419,14 @@ BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t Contac
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
+void BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
 {
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     BPLib_Status_t Status = BPLIB_SUCCESS;
 
     if (Inst == NULL)
     {
-        return BPLIB_NULL_PTR_ERROR;
+        return;
     }
 
     pthread_mutex_lock(&Inst->Ct.Lock);
@@ -391,10 +443,12 @@ BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t Bu
                     "Error, could not delete bundle ID 0x%x from CTDB. Status = %d.",
                     BundleId, Status);
     }
+    else
+    {
+        Inst->Ct.BundleCountInCustody--;
+    }
 
     pthread_mutex_unlock(&Inst->Ct.Lock);
-
-    return Status;
 }
 
 void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs)

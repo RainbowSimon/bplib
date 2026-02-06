@@ -508,6 +508,8 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         NewBundle->blocks.PayloadHeader.DataOffsetStart = 0;
         NewBundle->blocks.PayloadHeader.DataSize = AduSize;
 
+        NewBundle->Meta.LocalBundle = true;
+
         /* Initialize the extension block data - parameters have been validated, ignore return code */
         (void) BPLib_EBP_InitializeExtensionBlocks(Inst, NewBundle, ChanId);
 

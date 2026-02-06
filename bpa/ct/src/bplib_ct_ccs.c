@@ -47,6 +47,7 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     for (i = 0; i < BPLIB_CT_MAX_SEQ_COLLECTIONS; i++)
     {
         OpenCcs->BundleSeqCollections[i].SeqRangeLen = 0;
+        OpenCcs->BundleSeqCollections[i].SeqId = 0;
     }
 
     OpenCcs->InProgress          = false;
@@ -224,6 +225,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
 
         /* Set the disposition code of the new bundle sequence collection */
         OpenCcs->BundleSeqCollections[DispCodeIdx].DispositionCode = DispositionCode;
+        OpenCcs->BundleSeqCollections[0].SeqId = CtebPtr->BundleSeqId;
 
         /* Set the contact ID to track for contact-stop operations */
         OpenCcs->ContactId = ContactId;
@@ -288,7 +290,7 @@ size_t BPLib_CT_GetOpenCcsIdx(BPLib_Instance_t* Instance, BPLib_EID_t *SourceAdm
     {
         /* See if there's already an in progress CCS with the right EID */
         if (Context->OpenCcss[OpenCcsIdx].InProgress == true &&
-            Context->OpenCcss[OpenCcsIdx].BundleSeqCollections->SeqId == SequenceId &&
+            Context->OpenCcss[OpenCcsIdx].BundleSeqCollections[0].SeqId == SequenceId &&
             BPLib_EID_IsMatch(&(Context->OpenCcss[OpenCcsIdx].SourceAdminEid), SourceAdminEID))
         {
             break;
@@ -387,6 +389,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                         CcsStorBatch.Size++;
 
                         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
+                        Inst->Ct.BundleCountInCustody--;
                     }                                
                     else
                     {
