@@ -90,7 +90,7 @@ const char* CreateTableSQL =
 "    egress_attempted INTEGER DEFAULT 0,\n"
 "    dest_node INTEGER,\n"
 "    dest_service INTEGER,\n"
-"    bundle_type INTEGER,\n"
+"    is_custodial INTEGER,\n"
 "    bundle_bytes INTEGER\n"
 ");\n"
 "\n"
@@ -115,7 +115,7 @@ const char* CreateTableSQL =
 "    dest_service,\n"
 "    egress_attempted,\n"
 "    action_timestamp,\n"
-"    bundle_type,\n"
+"    is_custodial,\n"
 "    id\n"
 ");\n"
 "\n"
@@ -137,7 +137,7 @@ const char* TotalBytesSQL =
 "FROM bundle_data;";
 
 const char* GetExpiredSQL = 
-"SELECT id, bundle_bytes, bundle_id, bundle_type FROM bundle_data "
+"SELECT id, bundle_bytes, bundle_id, is_custodial FROM bundle_data "
 "WHERE (action_timestamp < ?) AND (egress_attempted = 0) "
 "LIMIT ?;";
 
@@ -145,7 +145,7 @@ const char* DeleteBundleSQL =
 "DELETE FROM bundle_data WHERE id = ?;";
 
 const char* GetEgressedSQL = 
-"SELECT id, bundle_bytes, bundle_type FROM bundle_data "
+"SELECT id, bundle_bytes, is_custodial FROM bundle_data "
 "WHERE egress_attempted = 1 LIMIT ?;";
 
 /* ==================== */
@@ -442,7 +442,7 @@ SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPL
     size_t       ExpiredBytes;
     uint32_t     CurrBundleId;
     int64_t      BundleRow;
-    int64_t      BundleType;
+    bool         IsCustodial;
     size_t       NumToDiscard;
 
    *NumDiscarded = 0;
@@ -487,10 +487,9 @@ SQL_Status_t BPLib_SQL_DiscardExpiredImpl(sqlite3* db, size_t* NumDiscarded, BPL
         Inst->BundleStorage.BundleRowsToDelete[NumToDiscard] = sqlite3_column_int64(GetExpiredStmt, 0);
         ExpiredBytes += sqlite3_column_int64(GetExpiredStmt, 1);
         CurrBundleId = sqlite3_column_int64(GetExpiredStmt, 2);
-        BundleType = sqlite3_column_int64(GetExpiredStmt, 3);
+        IsCustodial = sqlite3_column_int64(GetExpiredStmt, 3);
 
-        if (BundleType != BPLIB_NON_CUSTODIAL_BUNDLE  &&
-            Inst->BundleStorage.BundleCountInCustody != 0)
+        if (IsCustodial && Inst->BundleStorage.BundleCountInCustody != 0)
         {
             Inst->BundleStorage.BundleCountInCustody--;
             BPLib_CT_DeleteBundleFromCtdb(Inst, CurrBundleId);
@@ -596,7 +595,7 @@ SQL_Status_t BPLib_SQL_DiscardEgressedImpl(BPLib_Instance_t *Inst, size_t* NumDi
     SQL_Status_t SQLStatus;
     size_t       EgressedBytes;
     int64_t      BundleRow;
-    BPLib_STOR_BundleType_t BundleType;
+    bool         IsCustodial;
     size_t       NumToDiscard;
     sqlite3*     db;
 
@@ -634,12 +633,13 @@ SQL_Status_t BPLib_SQL_DiscardEgressedImpl(BPLib_Instance_t *Inst, size_t* NumDi
         /* Get information about bundle to delete */
         Inst->BundleStorage.BundleRowsToDelete[NumToDiscard] = sqlite3_column_int64(GetEgressedStmt, 0);
         EgressedBytes += sqlite3_column_int64(GetEgressedStmt, 1);
-        BundleType = sqlite3_column_int64(GetEgressedStmt, 2);
+        IsCustodial = sqlite3_column_int64(GetEgressedStmt, 2);
 
-        if (BundleType != BPLIB_NON_CUSTODIAL_BUNDLE && 
-            Inst->BundleStorage.BundleCountInCustody != 0)
+        if (IsCustodial && Inst->BundleStorage.BundleCountInCustody != 0)
         {
             Inst->BundleStorage.BundleCountInCustody--;
+            
+            /* Egressed custodial bundles are removed from CTDB elsewhere */
         }
 
         SQLStatus = sqlite3_step(GetEgressedStmt);

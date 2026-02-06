@@ -48,7 +48,7 @@ const char* InsertBlobSQL =
 /* Insert Bundle Metadata (duplicate bundle_id entries are ignored) */
 const char* InsertMetadataSQL =
 "INSERT INTO bundle_data (bundle_id, action_timestamp, retransmit_timestamp, \n"
-"retransmit_trigger, dest_node, dest_service, bundle_type, bundle_bytes) \n"
+"retransmit_trigger, dest_node, dest_service, is_custodial, bundle_bytes) \n"
 "VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
 /* ================ */
@@ -91,7 +91,6 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     uint64_t             MonoTimeRemaining;
     uint16_t             ExtensionBlockIdx;
     uint64_t             EffectiveLifetime;
-    BPLib_STOR_BundleType_t BundleType;
 
     PrimaryBlock   = &(Bundle->blocks.PrimaryBlock);
     ExpirationTime = 0;
@@ -104,24 +103,6 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     if (EffectiveLifetime > PrimaryBlock->Lifetime)
     {
         EffectiveLifetime = PrimaryBlock->Lifetime;
-    }
-
-    /* Determine bundle type */
-    if (Bundle->Meta.IsCustodial)
-    {
-        if (BPLib_EID_NodeIsMatch(&Bundle->blocks.PrimaryBlock.DestEID, &BPLIB_EID_INSTANCE))
-        {
-            BundleType = BPLIB_LOCAL_CUSTODIAL_BUNDLE;
-        }
-        else
-        {
-            BundleType = BPLIB_FOREIGN_CUSTODIAL_BUNDLE;
-        }
-
-    }
-    else
-    {
-        BundleType = BPLIB_NON_CUSTODIAL_BUNDLE;
     }
 
     sqlite3_reset(InsertMetadataStmt);
@@ -218,12 +199,12 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     else
     {
         /* Add the bundle type to the InsertMetadataStmt variable */
-        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 7, (int64_t)BundleType);
+        SQLStatus = sqlite3_bind_int64(InsertMetadataStmt, 7, (int64_t)Bundle->Meta.IsCustodial);
     }
 
     if (SQLStatus != SQLITE_OK)
     {
-        fprintf(stderr, "Failed to bind bundle_type in store_meta\n");
+        fprintf(stderr, "Failed to bind is_custodial in store_meta\n");
     }
     else
     {

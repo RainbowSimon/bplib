@@ -38,7 +38,6 @@ BPLib_Status_t BPLib_STOR_LoadBatch_Reset(BPLib_STOR_LoadBatch_t* Batch)
 
     Batch->Size = 0;
     Batch->ReadIndex = 0;
-    Batch->EgressOpInProgress = false;
     return BPLIB_SUCCESS;
 }
 

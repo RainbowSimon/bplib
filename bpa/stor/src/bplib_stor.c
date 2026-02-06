@@ -242,7 +242,7 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     if (BPLib_STOR_LoadBatch_IsEmpty(LoadBatch))
     {
         /* Ask SQL to load egressable bundles from the specified Destination EID */
-        Status = BPLib_SQL_FindForEIDs(Inst, LoadBatch, DestEIDs, NumEIDs);
+        Status = BPLib_SQL_FindForEIDs(Inst, LoadBatch, DestEIDs, NumEIDs, LocalDelivery);
         if (Status != BPLIB_SUCCESS)
         {
             BPLib_EM_SendEvent(BPLIB_STOR_SQL_LOAD_ERR_EID,
@@ -254,7 +254,7 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     else if (BPLib_STOR_LoadBatch_IsConsumed(LoadBatch))
     { /* All of the bundles for this batch have been egressed */
         /* Mark the batch as egressed */
-        Status = BPLib_SQL_MarkBatchEgressed(Inst, LoadBatch);
+        Status = BPLib_SQL_MarkBatchEgressed(Inst, LoadBatch, LocalDelivery);
 
         /* Clear the batch */
         (void) BPLib_STOR_LoadBatch_Reset(LoadBatch);
