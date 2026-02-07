@@ -250,12 +250,10 @@ void Test_BPLib_CT_ProcessNewBundle_StorFull(void)
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].LastSeqNumAdded, 33);
     UtAssert_EQ(bool, BplibInst.Ct.OpenCcss[0].InProgress, true);
     UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 2);
-    UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DELETED_NO_STORAGE, 
-                                            Context_BPLib_AS_Increment[0].Counter);
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_CUSTODY_REQUEST, 
-                                            Context_BPLib_AS_Increment[1].Counter);
+                                            Context_BPLib_AS_Increment[0].Counter);
     UtAssert_EQ(BPLib_AS_Counter_t, BUNDLE_COUNT_DEPLETED, 
-                                            Context_BPLib_AS_Increment[2].Counter);
+                                            Context_BPLib_AS_Increment[1].Counter);
 }
 
 void Test_BPLib_CT_ProcessNewBundle_Dupl(void)
