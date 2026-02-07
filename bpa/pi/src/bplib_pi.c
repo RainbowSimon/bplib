@@ -288,10 +288,6 @@ BPLib_Status_t BPLib_PI_RemoveApplication(BPLib_Instance_t *Inst, uint32_t ChanI
                                 "Error with remove-application directive pushing a bundle back to storage, Status=%d for ChanId=%d",
                                 Status, ChanId);
 
-            /* Bundle is effectively getting dropped */
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
-
             /* This is still considered a successful directive just with some bundle loss */
             Status = BPLIB_SUCCESS;
         }

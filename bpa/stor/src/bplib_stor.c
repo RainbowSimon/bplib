@@ -123,13 +123,29 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
 
     pthread_mutex_lock(&CacheInst->lock);
 
-    BPLib_STOR_SetLastActiveTime(Inst);
-
-    /* Add to the next batch */
-    CacheInst->InsertBatch[CacheInst->InsertBatchSize++] = Bundle;
-    if (CacheInst->InsertBatchSize == BPLIB_STOR_INSERTBATCHSIZE)
+    if ((Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
-        Status = BPLib_STOR_FlushPendingUnlocked(Inst);
+        BPLib_EM_SendEvent(BPLIB_CT_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "Cannot accept %ld byte bundle, not enough storage remaining (%ld bytes).",
+                            Bundle->Meta.TotalBytes, Inst->BundleStorage.BytesStorageInUse);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, 1);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
+
+        BPLib_MEM_BundleFree(&(Inst->pool), Bundle);
+
+        Status = BPLIB_NO_STOR_ERR;
+    }
+    else
+    {
+        BPLib_STOR_SetLastActiveTime(Inst);
+
+        /* Add to the next batch */
+        CacheInst->InsertBatch[CacheInst->InsertBatchSize++] = Bundle;
+        if (CacheInst->InsertBatchSize == BPLIB_STOR_INSERTBATCHSIZE)
+        {
+            Status = BPLib_STOR_FlushPendingUnlocked(Inst);
+        }
     }
 
     pthread_mutex_unlock(&CacheInst->lock);
@@ -552,7 +568,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
             /* Custodial bundles with an egress path should get sent out instead of freed */
             (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
             if (CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS &&
-                ConState == BPLIB_CLA_STARTED)
+                ConState == BPLIB_CLA_STARTED && Status == BPLIB_SUCCESS)
             {
                 BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CacheInst->InsertBatch[i]->Meta.EgressID]), 
                                             &CacheInst->InsertBatch[i], QM_WAIT_FOREVER);

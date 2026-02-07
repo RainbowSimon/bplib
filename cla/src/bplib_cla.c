@@ -433,10 +433,6 @@ BPLib_Status_t BPLib_CLA_ContactTeardown(BPLib_Instance_t *Inst, uint32_t Contac
                                 "Contact with ID #%d failed to push a bundle back to storage, Status = %d",
                                 ContactId, Status);
 
-            /* Bundle is effectively getting dropped */
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
-
             /* This is still considered a successful contact-teardown, just with some bundle loss */
         }
     }

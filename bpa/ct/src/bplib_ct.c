@@ -102,20 +102,6 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
 
     BPLib_BI_GetBundleInfo(Bundle, BundleInfo, BPLIB_MAX_BUNDLE_INFO_STR_LENGTH);
 
-    /* Check if there's storage left */
-    if ((Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
-    {
-        BPLib_EM_SendEvent(BPLIB_CT_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
-                            "Cannot accept %ld byte bundle, not enough storage remaining (%ld bytes). %s.",
-                            Bundle->Meta.TotalBytes, Inst->BundleStorage.BytesStorageInUse,
-                            BundleInfo);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, 1);
-
-        /* Additional counters handled by QM job */
-
-        Status = BPLIB_NO_STOR_ERR;
-    }
-
     for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
     {
         if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
@@ -139,8 +125,13 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     pthread_mutex_lock(&Inst->Ct.Lock);
 
     /* Reject custody due to lack of storage */
-    if (Status == BPLIB_NO_STOR_ERR)
+    /* Check if there's storage left */
+    if ((Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
+        BPLib_EM_SendEvent(BPLIB_CT_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "Cannot accept %ld byte bundle, not enough storage remaining (%ld bytes). %s.",
+                            Bundle->Meta.TotalBytes, Inst->BundleStorage.BytesStorageInUse,
+                            BundleInfo);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
