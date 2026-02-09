@@ -444,7 +444,7 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
  * \retval    BPLIB_NULL_PTR_ERROR: Provided Context pointer was NULL
  * \retval    TODO: unsupported admin record type
  */
-BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, BPLib_Bundle_t* Bundle);
+BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext *Context, BPLib_Bundle_t* Bundle);
 
 /**
  * \brief Encode the bytes in an ADU while tracking the size of the buffer
@@ -493,42 +493,26 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t C
  * \brief Encode a Bundle Status Report
  * \param[in]  Context QCBOR encode context instance pointer
  * \param[in]  BSR     Pointer to the Bundle Status Report to be encoded
- * \param[out] EncodeBuffer Buffer that tracks the size of the encoded values
- * \return     Execution status
- * \retval     BPLIB_SUCCESS: Successful execution
- * \retval     BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
+ * \return     void
 
-BPLib_Status_t BPLIB_CBOR_EncodeBsr(QCBOREncodeContext* Context,
-                                    BPLib_ARP_BundleStatusReport_t* BSR,
-                                    UsefulOutBuf* EncodeBuffer);
+void BPLib_CBOR_EncodeBsr(QCBOREncodeContext* Context, BPLib_ARP_BundleStatusReport_t* BSR);
 */
 
 /**
  * \brief Encode a Compressed Reporting Signal
  * \param[in]  Context QCBOR encode context instance pointer
  * \param[in]  CRS     Pointer to the Compressed Reporting Signal to be encoded
- * \param[out] EncodeBuffer Buffer that tracks the size of the encoded values
- * \return     Execution status
- * \retval     BPLIB_SUCCESS: Successful execution
- * \retval     BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
-
-BPLib_Status_t BPLIB_CBOR_EncodeCrs(QCBOREncodeContext* Context,
-                                    BPLib_ARP_CompressedReportingSignal_t* CRS,
-                                    UsefulOutBuf* EncodeBuffer);
+ * \return    void
+void BPLib_CBOR_EncodeCrs(QCBOREncodeContext* Context, BPLib_ARP_CompressedReportingSignal_t* CRS);
 */
 
 /**
  * \brief Encode a Compressed Custody Signal
  * \param[in]  Context      QCBOR encode context instance pointer
  * \param[in]  CCS          Pointer to the Compressed Custody Signal to be encoded
- * \param[out] EncodeBuffer Buffer that tracks the size of the encoded values
- * \return     Execution status
- * \retval     BPLIB_SUCCESS: Successful execution
- * \retval     BPLIB_NULL_PTR_ERROR: Invalid/NULL input pointer
+ * \return     void
  */
-BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
-                                    BPLib_CT_DeserializedCcs_t* CCS,
-                                    UsefulOutBuf* EncodeBuffer);
+void BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS);
 
 /**
  * \brief     Validates a block's CRC value
