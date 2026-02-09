@@ -99,6 +99,7 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
     if (Status == BPLIB_SUCCESS)
     {
         CandidateBundle->Meta.IngressID = ContId;
+        CandidateBundle->Meta.LocalBundle = false;
         
         if (CandidateBundle->blocks.AdminRecordPayload != NULL)
         {

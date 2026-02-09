@@ -47,22 +47,22 @@ extern const char* MarkEgressedSQL;
 /* =================== */
 
 BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
-                                        BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs);
+                        BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, bool LocalDelivery);
 
 SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
                                         BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs,
-                                        size_t MaxBundles);
+                                        size_t MaxBundles, bool LocalDelivery);
 
-BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch);
+BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, 
+                            BPLib_STOR_LoadBatch_t* Batch, bool LocalDelivery);
 
-SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch);
+SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, 
+                                    BPLib_STOR_LoadBatch_t* Batch, bool LocalDelivery);
 
 BPLib_Status_t BPLib_SQL_LoadBundle(BPLib_Instance_t* Inst, int64_t BundleRowID,
                                     BPLib_Bundle_t** Bundle);
 
 SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowID,
                                         BPLib_Bundle_t** Bundle);
-
-bool BPLib_SQL_InProgressEgress(BPLib_Instance_t *Inst);
 
 #endif

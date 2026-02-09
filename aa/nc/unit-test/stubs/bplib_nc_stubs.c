@@ -160,6 +160,18 @@ void BPLib_NC_ReaderUnlock(void)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_NC_RunMaintenanceActivities()
+ * ----------------------------------------------------
+ */
+void BPLib_NC_RunMaintenanceActivities(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_AddParam(BPLib_NC_RunMaintenanceActivities, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_NC_RunMaintenanceActivities, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_NC_SetAppState()
  * ----------------------------------------------------
  */

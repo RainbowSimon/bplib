@@ -47,23 +47,30 @@ char FindForEgressIdSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 char FindForEgressIdRetransmitSQL[BPLIB_SQL_MAX_STRLEN] = {0};
 
 const char* MarkEgressedSQL =
-"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ? AND bundle_type != 2);";
+"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ? AND is_custodial = 0);";
+
+const char* MarkEgressedLocalSQL =
+"UPDATE bundle_data SET egress_attempted = 1 WHERE (id = ?);";
 
 const char* ResetRetransmitTriggerSQL =
-"UPDATE bundle_data SET retransmit_timestamp = retransmit_trigger + ? WHERE (id = ? AND bundle_type = 2);";
+"UPDATE bundle_data SET retransmit_timestamp = retransmit_trigger + ? WHERE (id = ? AND is_custodial = 1);";
 
 const char *FindForEgressIdBaseSQL =
 "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND "
-            "((bundle_type != 2 AND egress_attempted = 0) OR "
-            "(bundle_type = 2 AND retransmit_trigger != ? AND retransmit_timestamp <= ?)) "
+            "(egress_attempted = 0) AND ((is_custodial = 0) OR "
+            "(is_custodial = 1 AND retransmit_trigger != ? AND retransmit_timestamp <= ?)) "
             "ORDER BY action_timestamp ASC LIMIT ?;";
+
+const char *FindForEgressIdLocalBaseSQL = 
+"SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND (egress_attempted = 0) "
+        "ORDER BY action_timestamp ASC LIMIT ?;";
 
 /* ==================== */
 /* Function Definitions */
 /* ==================== */
 
 BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
-                                        BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs)
+                        BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs, bool LocalDelivery)
 {
     BPLib_Status_t Status;
     SQL_Status_t   SQLStatus;
@@ -100,8 +107,16 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     ** sqlite to use the right index, otherwise it will try to use the much slower
     ** egress_attempted index by default, which will result in worse performance.
     */
-    snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN, FindForEgressIdBaseSQL,
-            WhereClause);
+    if (LocalDelivery)
+    {
+        snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN, FindForEgressIdLocalBaseSQL,
+                WhereClause);
+    }
+    else
+    {
+        snprintf(FindForEgressIdSQL, BPLIB_SQL_MAX_STRLEN, FindForEgressIdBaseSQL,
+                WhereClause);
+    }
 
     FindForEgressIdSQL[strlen(FindForEgressIdSQL)] = '\0';
 
@@ -116,7 +131,7 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
     if (Status == BPLIB_SUCCESS)
     {
         /* Run Batch Load Logic */
-        SQLStatus = BPLib_SQL_FindForEIDsImpl(Inst, Batch, DestEIDs, NumEIDs, BPLIB_STOR_LOADBATCHSIZE);
+        SQLStatus = BPLib_SQL_FindForEIDsImpl(Inst, Batch, DestEIDs, NumEIDs, BPLIB_STOR_LOADBATCHSIZE, LocalDelivery);
 
         if (SQLStatus != SQLITE_OK)
         {
@@ -132,7 +147,7 @@ BPLib_Status_t BPLib_SQL_FindForEIDs(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatc
 
 SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch,
                                         BPLib_EID_Pattern_t* DestEIDs, size_t NumEIDs,
-                                        size_t MaxBundles)
+                                        size_t MaxBundles, bool LocalDelivery)
 {
     SQL_Status_t  SQLStatus;
     sqlite3*      db;
@@ -190,20 +205,24 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
 
     }
 
-    /* Bind retransmit_trigger to garbage value */
-    SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, BPLIB_NO_RETRANSMIT_TRIGGER);
-    if (SQLStatus != SQLITE_OK)
+    /* Check for retransmission on foreign bundles */
+    if (LocalDelivery == false)
     {
-        fprintf(stderr, "Failed to bind retransmit_trigger: %s\n", sqlite3_errmsg(db));
-        return SQLStatus;
-    }
+        /* Bind retransmit_trigger to garbage value */
+        SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, BPLIB_NO_RETRANSMIT_TRIGGER);
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to bind retransmit_trigger: %s\n", sqlite3_errmsg(db));
+            return SQLStatus;
+        }
 
-    /* Bind retransmit_time to current time */
-    SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, BPLib_TIME_GetMonotonicTime());
-    if (SQLStatus != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to bind retransmit_time: %s\n", sqlite3_errmsg(db));
-        return SQLStatus;
+        /* Bind retransmit_time to current time */
+        SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, BPLib_TIME_GetMonotonicTime());
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Failed to bind retransmit_time: %s\n", sqlite3_errmsg(db));
+            return SQLStatus;
+        }
     }
 
     /* Bind maximum bundle limit */
@@ -216,19 +235,8 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
 
     /* For every bundle found, place its ID in the load batch for the EgressID */
     SQLStatus = sqlite3_step(FindForEgressIDStmt);
-
-    if (SQLStatus != SQLITE_ROW)
-    {
-        /* 
-        ** If bundles were previously being egressed by this egress ID, this flag is set
-        ** and is only turned off if no more bundles are found in storage.
-        */
-        Batch->EgressOpInProgress = false;
-    }
     while (SQLStatus == SQLITE_ROW)
     {
-        Batch->EgressOpInProgress = true;
-
         /* Load a single bundle from storage that matches the query */
         CurrBundleRowID = sqlite3_column_int64(FindForEgressIDStmt, 0);
         if (BPLib_STOR_LoadBatch_AddID(Batch, CurrBundleRowID) != BPLIB_SUCCESS)
@@ -250,7 +258,8 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
     return SQLStatus;
 }
 
-BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch)
+BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, 
+                            BPLib_STOR_LoadBatch_t* Batch, bool LocalDelivery)
 {
     BPLib_Status_t Status;
     SQL_Status_t   SQLStatus;
@@ -264,31 +273,47 @@ BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, BPLib_STOR_Lo
         return BPLIB_NULL_PTR_ERROR;
     }
 
-    SQLStatus = sqlite3_prepare_v2(db, MarkEgressedSQL, -1, &MarkEgressedStmt, 0);
-    if (SQLStatus != SQLITE_OK)
+    if (LocalDelivery)
     {
-        fprintf(stderr, "Programming Error: MarkEgressedSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
-        Status = BPLIB_STOR_SQL_MARK_EGRESSED_ERR;
+        SQLStatus = sqlite3_prepare_v2(db, MarkEgressedLocalSQL, -1, &MarkEgressedStmt, 0);
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Programming Error: MarkEgressedLocalSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
+            Status = BPLIB_STOR_SQL_MARK_EGRESSED_ERR;
+        }        
     }
-
-    if (SQLStatus == SQLITE_OK)
+    else
     {
-        SQLStatus = sqlite3_prepare_v2(db, ResetRetransmitTriggerSQL, -1, &ResetRetransmitStmt, 0);
-    }
+        SQLStatus = sqlite3_prepare_v2(db, MarkEgressedSQL, -1, &MarkEgressedStmt, 0);
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Programming Error: MarkEgressedSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
+            Status = BPLIB_STOR_SQL_MARK_EGRESSED_ERR;
+        }
 
-    if (SQLStatus != SQLITE_OK)
-    {
-        fprintf(stderr, "Programming Error: ResetRetransmitTriggerSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
-        Status = BPLIB_STOR_SQL_MARK_EGRESSED_ERR;
+        if (SQLStatus == SQLITE_OK)
+        {
+            SQLStatus = sqlite3_prepare_v2(db, ResetRetransmitTriggerSQL, -1, &ResetRetransmitStmt, 0);
+        }
+
+        if (SQLStatus != SQLITE_OK)
+        {
+            fprintf(stderr, "Programming Error: ResetRetransmitTriggerSQL prepare failed, error=%s\n", sqlite3_errmsg(db));
+            Status = BPLIB_STOR_SQL_MARK_EGRESSED_ERR;
+        }
     }
 
     if (Status == BPLIB_SUCCESS)
     {
-        SQLStatus = BPLib_SQL_MarkBatchEgressedImpl(Inst, Batch);
+        SQLStatus = BPLib_SQL_MarkBatchEgressedImpl(Inst, Batch, LocalDelivery);
     }
 
     sqlite3_finalize(MarkEgressedStmt);
-    sqlite3_finalize(ResetRetransmitStmt);
+
+    if (LocalDelivery == false)
+    {
+        sqlite3_finalize(ResetRetransmitStmt);
+    }
 
     if (SQLStatus != SQLITE_OK)
     {
@@ -299,11 +324,13 @@ BPLib_Status_t BPLib_SQL_MarkBatchEgressed(BPLib_Instance_t* Inst, BPLib_STOR_Lo
     return BPLIB_SUCCESS;
 }
 
-SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBatch_t* Batch)
+SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, 
+                                    BPLib_STOR_LoadBatch_t* Batch, bool LocalDelivery)
 {
     SQL_Status_t SQLStatus;
     sqlite3*     db;
     size_t       i;
+    size_t       NumEgressed;
 
     db = Inst->BundleStorage.db;
 
@@ -318,7 +345,7 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
     /* Go through the load batch and add each ID as egressed */
     for (i = 0; i < Batch->Size; i++)
     {
-        /* Mark non-custodial bundles as egressed */
+        /* Mark bundles as egressed */
         sqlite3_reset(MarkEgressedStmt);
 
         SQLStatus = sqlite3_bind_int64(MarkEgressedStmt, 1, Batch->BundleRowIDs[i]);
@@ -334,30 +361,38 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
             fprintf(stderr, "Mark Egressed Failed: %s\n", sqlite3_errstr(SQLStatus));
             break;
         }
+    }
+    
+    NumEgressed = sqlite3_changes(db);
 
-        /* Reset retransmission trigger for custodial bundles */
-        sqlite3_reset(ResetRetransmitStmt);
-
-        SQLStatus = sqlite3_bind_int64(ResetRetransmitStmt, 1, BPLib_TIME_GetMonotonicTime());
-        if (SQLStatus != SQLITE_OK)
+    if (LocalDelivery == false)
+    {
+        /* Go through the load batch and reset the retransmit triggers */
+        for (i = 0; i < Batch->Size; i++)
         {
-            fprintf(stderr, "Failed to bind retransmission_timestamp: %s\n", sqlite3_errmsg(db));
-            break;
-        }
+            sqlite3_reset(ResetRetransmitStmt);
 
-        SQLStatus = sqlite3_bind_int64(ResetRetransmitStmt, 2, Batch->BundleRowIDs[i]);
-        if (SQLStatus != SQLITE_OK)
-        {
-            fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
-            break;
-        }
+            SQLStatus = sqlite3_bind_int64(ResetRetransmitStmt, 1, BPLib_TIME_GetMonotonicTime());
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind retransmission_timestamp: %s\n", sqlite3_errmsg(db));
+                break;
+            }
 
-        SQLStatus = sqlite3_step(ResetRetransmitStmt);
-        if (SQLStatus != SQLITE_DONE)
-        {
-            fprintf(stderr, "Reset Transmit Failed: %s\n", sqlite3_errstr(SQLStatus));
-            break;
-        }
+            SQLStatus = sqlite3_bind_int64(ResetRetransmitStmt, 2, Batch->BundleRowIDs[i]);
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
+                break;
+            }
+
+            SQLStatus = sqlite3_step(ResetRetransmitStmt);
+            if (SQLStatus != SQLITE_DONE)
+            {
+                fprintf(stderr, "Reset Transmit Failed: %s\n", sqlite3_errstr(SQLStatus));
+                break;
+            }
+        }        
     }
 
     /* If there have been no errors so far, batch-write the data to persistent storage */
@@ -378,6 +413,10 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst, BPLib_STOR_
         {
             fprintf(stderr, "Failed to rollback transaction, RC=%d\n", SQLStatus);
         }
+    }
+    else
+    {
+        Inst->BundleStorage.BundleCountNotEgressed -= NumEgressed;
     }
 
     /* Expecting SQLITE_OK */
@@ -597,27 +636,4 @@ SQL_Status_t BPLib_SQL_LoadBundleImpl(BPLib_Instance_t* Inst, int64_t BundleRowI
 
     /* Expecting SQLITE_OK */
     return SQLStatus;
-}
-
-bool BPLib_SQL_InProgressEgress(BPLib_Instance_t *Inst)
-{
-    uint32_t i;
-    
-    for (i = 0; i < BPLIB_MAX_NUM_CONTACTS; i++)
-    {
-        if (Inst->BundleStorage.ContactLoadBatches[i].EgressOpInProgress)
-        {
-            return true;
-        }
-    }
-
-    for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
-    {
-        if (Inst->BundleStorage.ChannelLoadBatches[i].EgressOpInProgress)
-        {
-            return true;
-        }
-    }
-
-    return false;
 }

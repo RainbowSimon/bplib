@@ -74,16 +74,12 @@ void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t *Instance)
  * Generated stub function for BPLib_CT_DeleteBundleFromCtdb()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
+void BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
 {
-    UT_GenStub_SetupReturnBuffer(BPLib_CT_DeleteBundleFromCtdb, BPLib_Status_t);
-
     UT_GenStub_AddParam(BPLib_CT_DeleteBundleFromCtdb, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_CT_DeleteBundleFromCtdb, uint32_t, BundleId);
 
     UT_GenStub_Execute(BPLib_CT_DeleteBundleFromCtdb, Basic, NULL);
-
-    return UT_GenStub_GetReturnValue(BPLib_CT_DeleteBundleFromCtdb, BPLib_Status_t);
 }
 
 /*
@@ -124,13 +120,12 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
  * Generated stub function for BPLib_CT_ProcessNewBundle()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle, bool LocalBundle)
+BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_CT_ProcessNewBundle, BPLib_Status_t);
 
     UT_GenStub_AddParam(BPLib_CT_ProcessNewBundle, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_CT_ProcessNewBundle, BPLib_Bundle_t *, Bundle);
-    UT_GenStub_AddParam(BPLib_CT_ProcessNewBundle, bool, LocalBundle);
 
     UT_GenStub_Execute(BPLib_CT_ProcessNewBundle, Basic, NULL);
 
@@ -151,6 +146,25 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
     UT_GenStub_Execute(BPLib_CT_SetBundleId, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_CT_SetBundleId, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_SignalCustody()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
+                                      BPLib_CT_DispositionCode_t DispCode)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_SignalCustody, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CT_SignalCustody, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_CT_SignalCustody, BPLib_Bundle_t *, Bundle);
+    UT_GenStub_AddParam(BPLib_CT_SignalCustody, BPLib_CT_DispositionCode_t, DispCode);
+
+    UT_GenStub_Execute(BPLib_CT_SignalCustody, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_SignalCustody, BPLib_Status_t);
 }
 
 /*

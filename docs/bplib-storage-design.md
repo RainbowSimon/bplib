@@ -11,8 +11,7 @@ BPLib storage uses two sqlite tables:
     - egress_attempted: whether or not the bundle has been egressed from storage
     - dest_node: the destination EID node number
     - dest_service: the destination EID service number
-    - bundle_type: there are three different types of bundles with associated integer values - non-custodial bundles (0), custodial bundles that are being delivered to this node (1), and custodial bundles that are being forwarded to another node (2). A bundle's type determines what operations apply to it
-    - bundle_bytes: size of the encoded bundle in bytes
+    - is_custodial: whether or not a bundle is custodial
 - bundle_blobs: contains the full bundle data with the following columns
     - id: primary key assigned by sqlite to index into bundle_blobs
     - bundle_row: corresponds to the relevant bundle's bundle_data id value
@@ -21,7 +20,7 @@ BPLib storage uses two sqlite tables:
 The following indexes are used to search the two tables:
 - idx_bundle_blobs_bundle_row: Index on the 'bundle_row' column in the 'bundle_blobs' table. This index supports quick lookup of blob data by its associated bundle_row in the 'bundle_data' table.
 - idx_action_timestamp: Index on 'action_timestamp' in the 'bundle_data' table. This helps with queries that need to sort or filter based on the timestamp of the bundle: This is used for expiring bundles
-- idx_egress_id: Composite index on the columns 'dest_node', 'dest_service', 'egress_attempted', 'action_timestamp', and 'id'. This index optimizes queries that filter by node and service ranges, filter by egress_attempted (0), and sort by action_timestamp. It can also enable an index-only scan to quickly retrieve 'id'. This composite index is designed for loading egress bundles by batch for a particular EgressID (A channel or contact)
+- idx_egress_id: Composite index on the columns 'dest_node', 'dest_service', 'egress_attempted', 'action_timestamp', 'is_custodial' and 'id'. This index optimizes queries that filter by node and service ranges, filter by egress_attempted (0), and sort by action_timestamp. It can also enable an index-only scan to quickly retrieve 'id'. This composite index is designed for loading egress bundles by batch for a particular EgressID (A channel or contact)
 - idx_egress_attempted: Index on the 'egress_attempted' column in the 'bundle_data' table. This index is designed to speed up DELETE queries and other queries filtering by 'egress_attempted'.
 - Index on the bplib-assigned unique 'bundle_id' in the 'bundle_data' table. This is used to detect duplicate bundles in storage and by Custody Transfer to request the deletion or retransmission of custodial bundles. Whether or not to allow duplicate bundles in storage is toggled by the BPLIB_ALLOW_DUPLICATE_BUNDLES flag.
 
@@ -43,24 +42,26 @@ Once received bundles end up at Storage, they are kept in local memory until eit
 - retransmit_timestamp: Monotonic time at which the next retransmission will occur. When storing a bundle for the first time, it is set to the current time plus retransmit_trigger.
 - dest_node: Based on the destination EID node number in the primary block
 - dest_service: Based on the destination EID service number in the primary block
-- bundle_type: 0 if the bundle is not custodial, 1 if the bundle is custodial and its destination EID node number matches this node, or 2 if the bundle is custodial and its destination EID node number does not match this node
+- is_custodial: 1 if the bundle is custodial (contains a Custody Transfer Extension Block), 0 if not
 - bundle_bytes: size of the encoded bundle in bytes
 
 ## Bundle Forwarding
 
-When a contact/channel is started, if there are bundles in storage with corresponding destination EIDs, the contact out/channel out thread will start to request bundles from storage. Bundles are loaded by searching for the id's in bundle_data using the idx_egress_id index with the following criteria:
+When a contact/channel is started, if there are bundles in storage with corresponding destination EIDs, storage will start to push bundles corresponding to those egress paths to their respective egress queues. Bundles are loaded by searching for the id's in bundle_data using the idx_egress_id index with the following criteria:
 - dest_node and dest_service are either within the range provided by the contact's destination EIDs or match an exact EID value (for all destination EIDs corresponding to a particular contact or channel)
-- egress_attempted is 0 and bundle_type is not 2 (2 = foreign custodial)
-- if bundle_type is 2, the retransmit_timestamp is less than the current monotonic time
+- If the requesting egress path is a channel, it just checks for if egress_attempted is 0. Custodial bundles are treated the same as non-custodial bundles during bundle delivery.
+- If the requesting egress path is a channel, it treats custodial and non-custodial bundles separately:
+    - If the bundle is_custodial flag is 0 (false), it just checks if egress_attempted is 0
+    - If the bundle is_custodial flag is 1 (true), bundle retransmissions are detected by looking for bundles where the retransmit_trigger has not been turned off by setting it to 0 and where the retransmit_timestamp is less than or equal to the current monotonic time
 - selections are ordered in ascending order by action_timestamp and limited to no more than `BPLIB_STOR_LOADBATCHSIZE`.
 
-The id's are then loaded into memory in what is called a load batch. These id's allow the contact out thread to then index into the bundle_blobs table for the entries where the bundle_row matches the provided id and load the bundle_blob's blob_data into memory. Once a load batch of ids has been consumed and all bundles have been loaded into memory, the egress_attempted field of those bundles is set to 1, unless the bundle is custodial. Custodial bundles are only marked for deletion when a CCS is received confirming their successful transfer
+The id's are then loaded into memory in what is called a load batch. These id's allow the contact out thread to then index into the bundle_blobs table for the entries where the bundle_row matches the provided id and load the bundle_blob's blob_data into memory. Once a load batch of ids has been consumed and all bundles have been loaded into memory, the egress_attempted field of those bundles is set to 1, unless the bundle is custodial. Custodial bundles are only marked for deletion when a CCS is received confirming their successful transfer. Instead, the retransmit_timestamp of a custodial bundle will be reset by setting it to the current monotonic time plus its retransmit_trigger.
 
 ## Maintenance Activities
 
 Several activities should be done at a periodic cycle (say 1hz) by some sort of low priority maintenance task:
 - BPLib_STOR_FlushPending: Flushes any pending bundles waiting to be stored and stores them. This ensures that if fewer than `BPLIB_STOR_INSERTBATCHSIZE` are in the insertion batch after a certain amount of time, they still get stored without waiting too long
-- BPLib_STOR_GarbageCollection: This encompasses the deletion of both egressed and expired bundles. Bundles where egress_attempted = 1 are considered egressed, and bundles where action_timestamp > the current monotonic time are considered expired. Up to `BPLIB_STOR_DISCARDBATCHSIZE` egressed bundles or expired bundles are discarded in one go.
+- BPLib_STOR_GarbageCollection: This encompasses the deletion of both egressed and expired bundles. Bundles where egress_attempted = 1 are considered egressed, and bundles where action_timestamp < the current monotonic time are considered expired. Up to `BPLIB_STOR_DISCARDBATCHSIZE` egressed bundles or expired bundles are discarded in one go.
     - Note that garbage collection is always suspended if there is an active ingress or egress flow of bundles going on, in order to optimize throughput
 
 ## Storage Statistics
@@ -72,4 +73,6 @@ Storage keeps track of how many bundles have been inserted or deleted from the d
 Custodial bundles are always stored, even if there is an open contact immediately available for forwarding. They will be retransmitted by an applicable egressing contact whenever the retransmit_timestamp is passed, until a Compressed Custody Signal (CCS) corresponding to them is received. When a node receives a CCS, it builds a batch of various storage operations to perform updates depending on the contents of the CCS:
 - Bundle's custody was accepted by the next node: bundle is marked for deletion by setting egress_attempted to 1
 - Bundle's custody was rejected by the next node: bundle's retransmission is turned off by setting its retransmit_trigger to 0. The next time a contact is started with destination EIDs corresponding to this bundle, the retransmit_trigger will be reset to the new value and retransmission can start occurring again.
-- Bundle was not received by the next node: Set retransmission_timestamp to the current time to trigger a retransmission at the earliest possible next chance.
+- Bundle was not received by the next node: Set retransmit_timestamp to the current time to trigger a retransmission at the earliest possible next chance.
+
+Upon receiving a contact-setup directive, the node will also set the retransmit_trigger to the new contact's retransmit_trigger value and set the retransmit_timestamp to the current time. This will reconfigure the bundle for this new contact and set it up to be automatically retransmitted once the contact is started.

@@ -82,6 +82,8 @@ To build BPLib within the cFS architecture, see the [BPNode](https://github.com/
 
 ## 5. Building BPLib as a Standalone
 
+Please note that the provided standalone executable, bpcat, is provided only as a prototype and does not contain the full functionality of the library. For a comprehensive implementation of bplib, please see the cFS app, BPNode, in the section above.
+
 1. Clone the repositories
 ```
 # Navigate to the install directory

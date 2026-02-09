@@ -175,6 +175,7 @@ typedef struct
     size_t   TotalBytes;     /** \brief Size of this bundle in bytes */
     bool     IsCustodial;    /** \brief Tracks whether or not the bund has a CTEB */
     uint32_t RetransmitTime; /** \brief Retransmit time for custodial bundles */
+    bool     LocalBundle;    /** \brief Whether a bundle was created on this node or not */
 } BPLib_BundleMetaData_t;
 
 /**

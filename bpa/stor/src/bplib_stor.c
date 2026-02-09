@@ -123,13 +123,29 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
 
     pthread_mutex_lock(&CacheInst->lock);
 
-    BPLib_STOR_SetLastActiveTime(Inst);
-
-    /* Add to the next batch */
-    CacheInst->InsertBatch[CacheInst->InsertBatchSize++] = Bundle;
-    if (CacheInst->InsertBatchSize == BPLIB_STOR_INSERTBATCHSIZE)
+    if ((Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
-        Status = BPLib_STOR_FlushPendingUnlocked(Inst);
+        BPLib_EM_SendEvent(BPLIB_CT_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "Cannot accept %ld byte bundle, not enough storage remaining (%ld bytes).",
+                            Bundle->Meta.TotalBytes, Inst->BundleStorage.BytesStorageInUse);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, 1);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
+
+        BPLib_MEM_BundleFree(&(Inst->pool), Bundle);
+
+        Status = BPLIB_NO_STOR_ERR;
+    }
+    else
+    {
+        BPLib_STOR_SetLastActiveTime(Inst);
+
+        /* Add to the next batch */
+        CacheInst->InsertBatch[CacheInst->InsertBatchSize++] = Bundle;
+        if (CacheInst->InsertBatchSize == BPLIB_STOR_INSERTBATCHSIZE)
+        {
+            Status = BPLib_STOR_FlushPendingUnlocked(Inst);
+        }
     }
 
     pthread_mutex_unlock(&CacheInst->lock);
@@ -242,7 +258,7 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     if (BPLib_STOR_LoadBatch_IsEmpty(LoadBatch))
     {
         /* Ask SQL to load egressable bundles from the specified Destination EID */
-        Status = BPLib_SQL_FindForEIDs(Inst, LoadBatch, DestEIDs, NumEIDs);
+        Status = BPLib_SQL_FindForEIDs(Inst, LoadBatch, DestEIDs, NumEIDs, LocalDelivery);
         if (Status != BPLIB_SUCCESS)
         {
             BPLib_EM_SendEvent(BPLIB_STOR_SQL_LOAD_ERR_EID,
@@ -254,9 +270,7 @@ BPLib_Status_t BPLib_STOR_EgressForID(BPLib_Instance_t* Inst, uint32_t EgressID,
     else if (BPLib_STOR_LoadBatch_IsConsumed(LoadBatch))
     { /* All of the bundles for this batch have been egressed */
         /* Mark the batch as egressed */
-        Status = BPLib_SQL_MarkBatchEgressed(Inst, LoadBatch);
-
-        Inst->BundleStorage.BundleCountNotEgressed -= LoadBatch->Size;
+        Status = BPLib_SQL_MarkBatchEgressed(Inst, LoadBatch, LocalDelivery);
 
         /* Clear the batch */
         (void) BPLib_STOR_LoadBatch_Reset(LoadBatch);
@@ -486,6 +500,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     size_t               DuplicateBundlesIgnored;
     size_t               CustodialBundlesStored;
     BPLib_CLA_ContactRunState_t ConState;
+    BPLib_CT_DispositionCode_t  DispCode;
 
     CacheInst               = &Inst->BundleStorage;
     TotalBytesStored        = 0;
@@ -496,7 +511,8 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 
     if (Status == BPLIB_SUCCESS)
     {
-        CacheInst->BundleCountInCustody   += CustodialBundlesStored;
+        DispCode = BPLib_CT_CustodyAccepted;
+
         CacheInst->BytesStorageInUse      += TotalBytesStored;
         CacheInst->BundleCountStored      += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
         CacheInst->BundleCountNotEgressed += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
@@ -510,10 +526,11 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
                                 "Ignored %ld duplicate bundles in store batch.",
                                 DuplicateBundlesIgnored);
         }
-
     }
     else if (Status == BPLIB_STOR_DB_FULL_ERR)
     {
+        DispCode = BPLib_CT_CustodyRefused;
+
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, CacheInst->InsertBatchSize);
@@ -525,6 +542,8 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
     }
     else
     {
+        DispCode = BPLib_CT_CustodyRefused;
+
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
 
@@ -535,23 +554,32 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
 
     }
 
-    /* Free the bundles, as they're now persistent
+    /* 
+    ** Free the bundles, as they're now persistent
     ** Note: even if the storage fails, we free everything to avoid a leak.
     */
     for (i = 0; i < CacheInst->InsertBatchSize; i++)
-    {
-        /* Custodial bundles with an egress path should get sent out instead of freed */
-        if (CacheInst->InsertBatch[i]->Meta.IsCustodial && 
-            CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
+    {        
+        if (CacheInst->InsertBatch[i]->Meta.IsCustodial)
         {
-            (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
+            /* Finalize custodial transfer for custodial bundles */
+            (void) BPLib_CT_SignalCustody(Inst, CacheInst->InsertBatch[i], DispCode);
 
-            if (ConState == BPLIB_CLA_STARTED)
+            /* Custodial bundles with an egress path should get sent out instead of freed */
+            (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
+            if (CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS &&
+                ConState == BPLIB_CLA_STARTED && Status == BPLIB_SUCCESS)
             {
                 BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CacheInst->InsertBatch[i]->Meta.EgressID]), 
                                             &CacheInst->InsertBatch[i], QM_WAIT_FOREVER);
             }
+            /* The egress path disappeared, free the bundle */
+            else
+            {
+                BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
+            }
         }
+        /* Noncustodial bundles are all freed */
         else
         {
             BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);

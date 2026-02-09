@@ -691,3 +691,33 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(BPLib_Instance_t *Inst)
 
     return BPLIB_SUCCESS;
 }
+
+void BPLib_NC_RunMaintenanceActivities(BPLib_Instance_t *Inst)
+{
+    BPLib_Status_t Status;
+
+    if (Inst == NULL)
+    {
+        return;
+    }
+
+    /* Update time as needed */
+    Status = BPLib_TIME_MaintenanceActivities();
+    if (Status != BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_NC_MAINT_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "[Maintenance Task]: Error doing time maintenance activities, RC = %d", 
+                    Status);
+    }
+
+    /* Flush any bundles pending storage - error event issued by function */
+    (void) BPLib_STOR_FlushPending(Inst);
+
+    /* Discard any egressed or expired bundles if system is idle */
+    (void) BPLib_STOR_GarbageCollect(Inst);
+
+    /* See if any open CCSs need to be sent off */
+    BPLib_CT_CheckCcsTimeout(Inst);
+
+    return;
+}

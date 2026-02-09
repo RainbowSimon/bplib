@@ -263,4 +263,16 @@ BPLib_NC_ApplicationState_t BPLib_NC_GetAppState(uint8_t ChanId);
   */
 BPLib_Status_t BPLib_NC_ConfigUpdate(BPLib_Instance_t *Inst);
 
+/**
+  * \brief     Run regular system maintenance activities
+  * \details   Runs regular Time Management, Storage, and Custody Transfer maintenance
+  *            activities. The calling task sets how frequently these activities should be
+  *            run but no faster than a 1Hz cadence is recommended. Note that the storage
+  *            garbage collection function will only actually run if it does not detect
+  *            any active ingress or egress operations from other tasks.
+  * \param[in] Inst Pointer to bplib instance
+  * \return    void
+  */
+void BPLib_NC_RunMaintenanceActivities(BPLib_Instance_t *Inst);
+
 #endif // BPLIB_NC_H
