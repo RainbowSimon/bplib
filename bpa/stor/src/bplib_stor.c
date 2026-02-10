@@ -685,7 +685,8 @@ BPLib_Status_t BPLib_STOR_Egress(BPLib_Instance_t *Instance, size_t MaxBundles)
 
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        if (BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_STARTED)
+        if (BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_STARTED &&
+            BPLib_PI_GetRegistrationState(Instance, ChanId) == BPLIB_PI_ACTIVE)
         {
             Status = BPLib_STOR_EgressForID(Instance, ChanId, true, &NumLoaded);
             if (Status != BPLIB_SUCCESS || NumLoaded >= MaxBundles)
