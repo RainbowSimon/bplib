@@ -242,10 +242,17 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
             {
                 if (BPLib_PI_GetRegistrationState(Inst, i) == BPLIB_PI_PASSIVE_ABANDON)
                 {
-                    BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+                    /* Reject custodial bundles */
+                    if (Bundle->Meta.IsCustodial)
+                    {
+                        (void) BPLib_CT_SignalCustody(Inst, Bundle, BPLib_CT_CustodyRefused);
+                    }
+
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ABANDONED, 1);
+                    
+                    BPLib_MEM_BundleFree(&Inst->pool, Bundle);
                     
                     return NO_NEXT_STATE;
                 }
@@ -272,7 +279,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
             /* Contact ID is valid here, so we can ignore the error status of the function */
             (void) BPLib_CLA_GetContactRunState(i, &ContactState);
 
-            // Custodial bundles
+            /* Custodial bundles */
             if (Bundle->Meta.IsCustodial && ContactState != BPLIB_CLA_TORNDOWN)
             {
                 for (j = 0; j < BPLIB_MAX_CONTACT_DEST_EIDS; j++)
@@ -291,7 +298,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     }
                 }
             }
-            // Noncustodial bundles
+            /* Noncustodial bundles */
             else if (Bundle->Meta.IsCustodial == false && ContactState == BPLIB_CLA_STARTED)
             {
                 for (j = 0; j < BPLIB_MAX_CONTACT_DEST_EIDS; j++)

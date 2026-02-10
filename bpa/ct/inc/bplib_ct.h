@@ -352,6 +352,22 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
  */
 BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t ContactId);
 
+/**
+ * \brief Delete bundle from CTDB
+ *
+ *  \par Description 
+ *       Search for a bundle ID in the CTDB and if a bundle is found, delete it from the 
+ *       CTDB. This issues an error event if the bundle cannot be found in the CTDB
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       The BundleCountInCustody counter that CT tracks decrements after a successful
+ *       CTDB removal. 
+ * 
+ *  \param[in] Inst Pointer to the BPLib instance
+ *  \param[in] Bundle Pointer to bundle to remove from CTDB
+ *
+ *  \return void
+ */
 void BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId);
 
 /**
@@ -364,6 +380,17 @@ void BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId);
  */
 void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t* OpenCcs);
 
+/**
+ * \brief Check CCS timeout triggers
+ *
+ *  \par Description
+ *       Iterate through all open CCSs and check if the maximum time trigger has been 
+ *       reached. If so, trigger the generation of that CCS
+ * 
+ *  \param[in] Inst Pointer to the BPLib instance
+ *
+ *  \return void
+ */
 void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance);
 
 #endif /* BPLIB_CT_H */

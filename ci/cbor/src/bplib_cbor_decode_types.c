@@ -460,7 +460,6 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
 {
     BPLib_Status_t Status;
     QCBORItem      MapItem;
-    uint64_t       CollectionIdx;
     uint64_t       SeqRangeIdx;
     uint8_t        DispositionIdx;
 
@@ -484,7 +483,7 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
 
     *NumSeqCollections = MapItem.val.uCount;
 
-    for (CollectionIdx = 0; CollectionIdx < *NumSeqCollections; CollectionIdx++)
+    for (DispositionIdx = 0; DispositionIdx < *NumSeqCollections; DispositionIdx++)
     {
         Status = BPLib_QCBOR_EnterDefiniteArray(ctx, &MapItem);
         if (Status != BPLIB_SUCCESS)
@@ -492,8 +491,6 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
             return BPLIB_CBOR_DEC_TYPES_BNDL_SEQ_MAP_ENTR_ARR_ERR;
         }
 
-        /* Find the entry in the bundle sequence collection */
-        DispositionIdx = BPLib_ARP_GetDispCodeIdx((BPLib_CT_DispositionCode_t) MapItem.label.int64);
         memset((void*) &Parsed[DispositionIdx], 0, sizeof(BPLib_CT_BundleSeqCollection_t));
 
         /* === Set DispositionCode === */

@@ -528,7 +528,7 @@ BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext *Context, BPLib_B
         default:
             Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
             break;
-        }
+    }
 
     QCBOREncode_CloseArray(Context);
 

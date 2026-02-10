@@ -437,7 +437,6 @@ BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* 
  * \brief Encode the bytes in an administrative record while tracking the size
  *        of the buffer
  * \param[in] Context       QCBOR encode context instance pointer
- * \param[in] EncodeBuffer  Buffer to track the size of the encode buffer
  * \param[in] Bundle        Bundle whose payload is an administrative record
  * \return    Encoding buffer status
  * \retval    BPLIB_SUCCESS: Administrative record was successfully encoded
