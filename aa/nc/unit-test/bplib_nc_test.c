@@ -1,20 +1,20 @@
 /*
- * NASA Docket No. GSC-18,587-1 and identified as “The Bundle Protocol Core Flight
- * System Application (BP) v6.5”
+ * NASA Docket No. GSC-19,559-1, and identified as "Delay/Disruption Tolerant Networking 
+ * (DTN) Bundle Protocol (BP) v7 Core Flight System (cFS) Application Build 7.0
  *
- * Copyright © 2020 United States Government as represented by the Administrator of
- * the National Aeronautics and Space Administration. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this 
+ * file except in compliance with the License. You may obtain a copy of the License at 
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0 
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under 
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
+ * ANY KIND, either express or implied. See the License for the specific language 
+ * governing permissions and limitations under the License. The copyright notice to be 
+ * included in the software is as follows: 
+ *
+ * Copyright 2025 United States Government as represented by the Administrator of the 
+ * National Aeronautics and Space Administration. All Rights Reserved.
  *
  */
 
@@ -1073,20 +1073,26 @@ void Test_BPLib_NC_SetRegistrationState_Nominal(void)
 
     /* Verify event */
     BPLib_NC_Test_Verify_Event(0, BPLIB_NC_SET_REGI_STAT_SUCCESS_EID,
-                                "Set the registration state of channel #%ld to %ld.");
+                                "Set the registration state of channel #%d to %d.");
 }
 
 void Test_BPLib_NC_SetRegistrationState_Error(void)
 {
-    /*
     BPLib_SetRegistrationState_Payload_t Payload;
+    BPLib_Instance_t Inst;
 
-    Payload.ExampleParameter = 3;
-    BPLib_NC_SetRegistrationState(Payload);
+    Payload.ChanId = BPLIB_MAX_NUM_CHANNELS;
+    Payload.RegState = BPLIB_PI_ACTIVE;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_PI_SetRegistrationState), BPLIB_INVALID_CHAN_ID_ERR);
+
+    BPLib_NC_SetRegistrationState(&Inst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
-    */
+
+    BPLib_NC_Test_Verify_Event(0, BPLIB_NC_SET_REGI_STAT_ERR_EID,
+                            "Failed to set the registration state of channel #%d to %d, Status=%d.");
 }
 
 void Test_BPLib_NC_StartApplication_Nominal(void)

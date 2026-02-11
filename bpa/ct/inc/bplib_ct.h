@@ -1,20 +1,20 @@
 /*
- * NASA Docket No. GSC-18,587-1 and identified as “The Bundle Protocol Core Flight
- * System Application (BP) v6.5”
+ * NASA Docket No. GSC-19,559-1, and identified as "Delay/Disruption Tolerant Networking 
+ * (DTN) Bundle Protocol (BP) v7 Core Flight System (cFS) Application Build 7.0
  *
- * Copyright © 2020 United States Government as represented by the Administrator of
- * the National Aeronautics and Space Administration. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this 
+ * file except in compliance with the License. You may obtain a copy of the License at 
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0 
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under 
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
+ * ANY KIND, either express or implied. See the License for the specific language 
+ * governing permissions and limitations under the License. The copyright notice to be 
+ * included in the software is as follows: 
+ *
+ * Copyright 2025 United States Government as represented by the Administrator of the 
+ * National Aeronautics and Space Administration. All Rights Reserved.
  *
  */
 
@@ -290,13 +290,14 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
  *  \param[in] Bundle Pointer to the bundle
  *  \param[in] Inst Pointer to the BPLib instance
  *  \param[in] DispCode Disposition code of the custody signal
+ *  \param[in] IsDuplicate Whether the bundle is a duplicate of another bundle in custody
  *
  *  \return Execution status
  *  \retval BPLIB_SUCCESS Operation was successful
  *  \retval BPLIB_CT_CUSTODY_REFUSED_ERR Bundle custody could not be accepted
  */
 BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
-                                        BPLib_CT_DispositionCode_t DispCode);
+                                    BPLib_CT_DispositionCode_t DispCode, bool IsDuplicate);
 
 /**
  * \brief Update a bundle on egress
@@ -364,7 +365,7 @@ BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t Contac
  *       CTDB removal. 
  * 
  *  \param[in] Inst Pointer to the BPLib instance
- *  \param[in] Bundle Pointer to bundle to remove from CTDB
+ *  \param[in] BundleId Unique bundle identifier used by CTDB
  *
  *  \return void
  */

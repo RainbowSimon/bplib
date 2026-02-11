@@ -1,20 +1,20 @@
 /*
- * NASA Docket No. GSC-18,587-1 and identified as “The Bundle Protocol Core Flight
- * System Application (BP) v6.5”
+ * NASA Docket No. GSC-19,559-1, and identified as "Delay/Disruption Tolerant Networking 
+ * (DTN) Bundle Protocol (BP) v7 Core Flight System (cFS) Application Build 7.0
  *
- * Copyright © 2020 United States Government as represented by the Administrator of
- * the National Aeronautics and Space Administration. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this 
+ * file except in compliance with the License. You may obtain a copy of the License at 
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0 
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under 
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
+ * ANY KIND, either express or implied. See the License for the specific language 
+ * governing permissions and limitations under the License. The copyright notice to be 
+ * included in the software is as follows: 
+ *
+ * Copyright 2025 United States Government as represented by the Administrator of the 
+ * National Aeronautics and Space Administration. All Rights Reserved.
  *
  */
 
@@ -91,6 +91,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     BPLib_CT_DispositionCode_t DispCode;
     char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
+    bool IsDuplicate = false;
 
     if (Bundle == NULL || Inst == NULL)
     {
@@ -149,6 +150,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REDUNDANT, 1);
         DispCode = BPLib_CT_CustodyAccepted;
         Status = BPLIB_CT_DUPLICATE_ERR;
+        IsDuplicate = true;
     }
 
     /* Custody accepted! */
@@ -169,7 +171,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         ** Signal custody for rejected bundles or duplicate bundles, otherwise wait
         ** until a bundle is successfully stored to formally accept it
         */
-        (void) BPLib_CT_SignalCustody(Inst, Bundle, DispCode);
+        (void) BPLib_CT_SignalCustody(Inst, Bundle, DispCode, IsDuplicate);
     }
     else
     {
@@ -183,7 +185,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
 }
 
 BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
-                                        BPLib_CT_DispositionCode_t DispCode)
+                                    BPLib_CT_DispositionCode_t DispCode, bool IsDuplicate)
 {
     size_t OpenCcsIdx;
     uint8_t ExtBlockIdx;
@@ -226,7 +228,11 @@ BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bu
 
     if (DispCode == BPLib_CT_CustodyAccepted)
     {
-        Inst->Ct.BundleCountInCustody++;
+        if (IsDuplicate == false)
+        {
+            Inst->Ct.BundleCountInCustody++;
+        }
+        
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ACCEPTED_CUSTODY, 1);
     }
     else
