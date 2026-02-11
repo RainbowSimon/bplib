@@ -543,7 +543,7 @@ void Test_BPLib_CT_SignalCustody_Accept(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyAccepted_Idx);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
 
-    UtAssert_INT32_EQ(BPLib_CT_SignalCustody(&BplibInst, &Bundle, BPLib_CT_CustodyAccepted), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CT_SignalCustody(&BplibInst, &Bundle, BPLib_CT_CustodyAccepted, false), BPLIB_SUCCESS);
     UtAssert_EQ(size_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen, 5);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqId, 12);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[0], 2);
@@ -599,7 +599,7 @@ void Test_BPLib_CT_SignalCustody_Reject(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(DbEntry.IdRbtLink));
 
-    UtAssert_INT32_EQ(BPLib_CT_SignalCustody(&BplibInst, &Bundle, BPLib_CT_CustodyRefused), BPLIB_CT_CUSTODY_REFUSED_ERR);
+    UtAssert_INT32_EQ(BPLib_CT_SignalCustody(&BplibInst, &Bundle, BPLib_CT_CustodyRefused, false), BPLIB_CT_CUSTODY_REFUSED_ERR);
     UtAssert_EQ(size_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRangeLen, 5);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqId, 12);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyRefused_Idx].SeqRange[0], 2);

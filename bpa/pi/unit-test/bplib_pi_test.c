@@ -834,6 +834,8 @@ void Test_BPLib_PI_Egress_Timeout(void)
 
 void Test_BPLib_PI_SetRegistrationState_BadParam(void)
 {
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_STARTED);
+
     UtAssert_INT32_EQ(BPLIB_NULL_PTR_ERROR, BPLib_PI_SetRegistrationState(NULL, 0, 0));
 
     UtAssert_INT32_EQ(BPLIB_INVALID_CHAN_ID_ERR, BPLib_PI_SetRegistrationState(&BplibInst, BPLIB_MAX_NUM_CHANNELS, 0));
@@ -841,8 +843,17 @@ void Test_BPLib_PI_SetRegistrationState_BadParam(void)
     UtAssert_INT32_EQ(BPLIB_INV_REG_STATE, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLib_PI_NUM_REG_STATE));
 }
 
+void Test_BPLib_PI_SetRegistrationState_ChanRemoved(void)
+{
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_REMOVED);
+
+    UtAssert_INT32_EQ(BPLIB_INVALID_CHAN_ID_ERR, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLIB_PI_PASSIVE_DEFER));
+}
+
 void Test_BPLib_PI_SetRegistrationState_Nominal(void)
 {
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_STARTED);
+
     BplibInst.ChanCtxt[0].Config.RegState = BPLIB_PI_ACTIVE;
 
     UtAssert_INT32_EQ(BPLIB_SUCCESS, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLIB_PI_PASSIVE_DEFER));
@@ -851,6 +862,8 @@ void Test_BPLib_PI_SetRegistrationState_Nominal(void)
 
 void Test_BPLib_PI_SetRegistrationState_Abandon(void)
 {
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_STARTED);
+
     BplibInst.ChanCtxt[0].Config.RegState = BPLIB_PI_ACTIVE;
 
     UT_SetDeferredRetcode(UT_KEY(BPLib_QM_WaitQueueTryPull), 1, true);
@@ -933,6 +946,7 @@ void TestBplibPi_Register(void)
     ADD_TEST(Test_BPLib_PI_SetRegistrationState_BadParam);
     ADD_TEST(Test_BPLib_PI_SetRegistrationState_Nominal);
     ADD_TEST(Test_BPLib_PI_SetRegistrationState_Abandon);
+    ADD_TEST(Test_BPLib_PI_SetRegistrationState_ChanRemoved);
 
     ADD_TEST(Test_BPLib_PI_GetRegistrationState_Nominal);
     ADD_TEST(Test_BPLib_PI_GetRegistrationState_BadParam);

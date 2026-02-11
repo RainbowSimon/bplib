@@ -1073,20 +1073,26 @@ void Test_BPLib_NC_SetRegistrationState_Nominal(void)
 
     /* Verify event */
     BPLib_NC_Test_Verify_Event(0, BPLIB_NC_SET_REGI_STAT_SUCCESS_EID,
-                                "Set the registration state of channel #%ld to %ld.");
+                                "Set the registration state of channel #%d to %d.");
 }
 
 void Test_BPLib_NC_SetRegistrationState_Error(void)
 {
-    /*
     BPLib_SetRegistrationState_Payload_t Payload;
+    BPLib_Instance_t Inst;
 
-    Payload.ExampleParameter = 3;
-    BPLib_NC_SetRegistrationState(Payload);
+    Payload.ChanId = BPLIB_MAX_NUM_CHANNELS;
+    Payload.RegState = BPLIB_PI_ACTIVE;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_PI_SetRegistrationState), BPLIB_INVALID_CHAN_ID_ERR);
+
+    BPLib_NC_SetRegistrationState(&Inst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
-    */
+
+    BPLib_NC_Test_Verify_Event(0, BPLIB_NC_SET_REGI_STAT_ERR_EID,
+                            "Failed to set the registration state of channel #%d to %d, Status=%d.");
 }
 
 void Test_BPLib_NC_StartApplication_Nominal(void)
