@@ -426,7 +426,7 @@ void BPLib_NC_SetRegistrationState(BPLib_Instance_t *Inst, const BPLib_SetRegist
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_SET_REGI_STAT_SUCCESS_EID,
                             BPLib_EM_EventType_INFORMATION,
-                            "Set the registration state of channel #%ld to %ld.",
+                            "Set the registration state of channel #%d to %d.",
                             Payload.ChanId, Payload.RegState);
     }
     else
@@ -434,7 +434,7 @@ void BPLib_NC_SetRegistrationState(BPLib_Instance_t *Inst, const BPLib_SetRegist
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1);
         BPLib_EM_SendEvent(BPLIB_NC_SET_REGI_STAT_ERR_EID,
                             BPLib_EM_EventType_ERROR,
-                            "Failed to set the registration state of channel #%ld to %ld, Status=%ld.",
+                            "Failed to set the registration state of channel #%d to %d, Status=%d.",
                             Payload.ChanId, Payload.RegState, Status);
     }
 }

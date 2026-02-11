@@ -563,7 +563,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
         if (CacheInst->InsertBatch[i]->Meta.IsCustodial)
         {
             /* Finalize custodial transfer for custodial bundles */
-            (void) BPLib_CT_SignalCustody(Inst, CacheInst->InsertBatch[i], DispCode);
+            (void) BPLib_CT_SignalCustody(Inst, CacheInst->InsertBatch[i], DispCode, false);
 
             /* Custodial bundles with an egress path should get sent out instead of freed */
             (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);

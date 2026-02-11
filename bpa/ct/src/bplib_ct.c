@@ -91,6 +91,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     BPLib_CT_DispositionCode_t DispCode;
     char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
+    bool IsDuplicate = false;
 
     if (Bundle == NULL || Inst == NULL)
     {
@@ -149,6 +150,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REDUNDANT, 1);
         DispCode = BPLib_CT_CustodyAccepted;
         Status = BPLIB_CT_DUPLICATE_ERR;
+        IsDuplicate = true;
     }
 
     /* Custody accepted! */
@@ -169,7 +171,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         ** Signal custody for rejected bundles or duplicate bundles, otherwise wait
         ** until a bundle is successfully stored to formally accept it
         */
-        (void) BPLib_CT_SignalCustody(Inst, Bundle, DispCode);
+        (void) BPLib_CT_SignalCustody(Inst, Bundle, DispCode, IsDuplicate);
     }
     else
     {
@@ -183,7 +185,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
 }
 
 BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
-                                        BPLib_CT_DispositionCode_t DispCode)
+                                    BPLib_CT_DispositionCode_t DispCode, bool IsDuplicate)
 {
     size_t OpenCcsIdx;
     uint8_t ExtBlockIdx;
@@ -226,7 +228,11 @@ BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bu
 
     if (DispCode == BPLib_CT_CustodyAccepted)
     {
-        Inst->Ct.BundleCountInCustody++;
+        if (IsDuplicate == false)
+        {
+            Inst->Ct.BundleCountInCustody++;
+        }
+        
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ACCEPTED_CUSTODY, 1);
     }
     else

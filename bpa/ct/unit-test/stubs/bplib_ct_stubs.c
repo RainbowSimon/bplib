@@ -154,13 +154,14 @@ BPLib_Status_t BPLib_CT_SetBundleId(BPLib_Bundle_t *Bundle)
  * ----------------------------------------------------
  */
 BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
-                                      BPLib_CT_DispositionCode_t DispCode)
+                                      BPLib_CT_DispositionCode_t DispCode, bool IsDuplicate)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_CT_SignalCustody, BPLib_Status_t);
 
     UT_GenStub_AddParam(BPLib_CT_SignalCustody, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_CT_SignalCustody, BPLib_Bundle_t *, Bundle);
     UT_GenStub_AddParam(BPLib_CT_SignalCustody, BPLib_CT_DispositionCode_t, DispCode);
+    UT_GenStub_AddParam(BPLib_CT_SignalCustody, bool, IsDuplicate);
 
     UT_GenStub_Execute(BPLib_CT_SignalCustody, Basic, NULL);
 

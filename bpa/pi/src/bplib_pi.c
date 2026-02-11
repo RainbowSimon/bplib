@@ -603,7 +603,7 @@ BPLib_Status_t BPLib_PI_SetRegistrationState(BPLib_Instance_t *Inst, uint32_t Ch
         return BPLIB_NULL_PTR_ERROR;
     }
     
-    if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    if (ChanId >= BPLIB_MAX_NUM_CHANNELS || BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_REMOVED)
     {
         return BPLIB_INVALID_CHAN_ID_ERR;
     }

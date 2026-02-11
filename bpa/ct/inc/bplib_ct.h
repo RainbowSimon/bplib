@@ -290,13 +290,14 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
  *  \param[in] Bundle Pointer to the bundle
  *  \param[in] Inst Pointer to the BPLib instance
  *  \param[in] DispCode Disposition code of the custody signal
+ *  \param[in] IsDuplicate Whether the bundle is a duplicate of another bundle in custody
  *
  *  \return Execution status
  *  \retval BPLIB_SUCCESS Operation was successful
  *  \retval BPLIB_CT_CUSTODY_REFUSED_ERR Bundle custody could not be accepted
  */
 BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
-                                        BPLib_CT_DispositionCode_t DispCode);
+                                    BPLib_CT_DispositionCode_t DispCode, bool IsDuplicate);
 
 /**
  * \brief Update a bundle on egress
@@ -364,7 +365,7 @@ BPLib_Status_t BPLib_CT_AssignSeqCounter(BPLib_Instance_t *Inst, uint32_t Contac
  *       CTDB removal. 
  * 
  *  \param[in] Inst Pointer to the BPLib instance
- *  \param[in] Bundle Pointer to bundle to remove from CTDB
+ *  \param[in] BundleId Unique bundle identifier used by CTDB
  *
  *  \return void
  */

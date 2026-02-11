@@ -245,7 +245,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     /* Reject custodial bundles */
                     if (Bundle->Meta.IsCustodial)
                     {
-                        (void) BPLib_CT_SignalCustody(Inst, Bundle, BPLib_CT_CustodyRefused);
+                        (void) BPLib_CT_SignalCustody(Inst, Bundle, BPLib_CT_CustodyRefused, false);
                     }
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
@@ -260,7 +260,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     BPLib_PI_GetRegistrationState(Inst, i) == BPLIB_PI_ACTIVE)
                 {
                     /* Finalize custodial transfer for custodial bundles */
-                    (void) BPLib_CT_SignalCustody(Inst, Bundle, BPLib_CT_CustodyAccepted);
+                    (void) BPLib_CT_SignalCustody(Inst, Bundle, BPLib_CT_CustodyAccepted, false);
 
                     /* We have a channel we can deliver to: forward without storing */
                     Bundle->Meta.EgressID = i;
