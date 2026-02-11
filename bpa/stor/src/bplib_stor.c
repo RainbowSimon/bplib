@@ -126,8 +126,8 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
     if ((Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
         BPLib_EM_SendEvent(BPLIB_CT_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
-                            "Cannot accept %ld byte bundle, not enough storage remaining (%ld bytes).",
-                            Bundle->Meta.TotalBytes, Inst->BundleStorage.BytesStorageInUse);
+                            "Cannot accept bundle, not enough storage remaining (%ld bytes).",
+                            Inst->BundleStorage.BytesStorageInUse);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, 1);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
@@ -685,7 +685,8 @@ BPLib_Status_t BPLib_STOR_Egress(BPLib_Instance_t *Instance, size_t MaxBundles)
 
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
-        if (BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_STARTED)
+        if (BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_STARTED &&
+            BPLib_PI_GetRegistrationState(Instance, ChanId) == BPLIB_PI_ACTIVE)
         {
             Status = BPLib_STOR_EgressForID(Instance, ChanId, true, &NumLoaded);
             if (Status != BPLIB_SUCCESS || NumLoaded >= MaxBundles)

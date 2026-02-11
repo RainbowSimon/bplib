@@ -329,25 +329,17 @@ typedef enum
 #define BPLIB_CBOR_DEC_GENERIC_ERR_209                 ((BPLib_Status_t) -209) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_210                 ((BPLib_Status_t) -210) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_211                 ((BPLib_Status_t) -211) // CBOR decode error
-#define BPLIB_CBOR_DEC_GENERIC_ERR_212                 ((BPLib_Status_t) -212) // CBOR decode error
-#define BPLIB_CBOR_DEC_GENERIC_ERR_213                 ((BPLib_Status_t) -213) // CBOR decode error
-#define BPLIB_CBOR_DEC_GENERIC_ERR_214                 ((BPLib_Status_t) -214) // CBOR decode error
-#define BPLIB_CBOR_DEC_GENERIC_ERR_215                 ((BPLib_Status_t) -215) // CBOR decode error
-#define BPLIB_CBOR_DEC_GENERIC_ERR_216                 ((BPLib_Status_t) -216) // CBOR decode error
-#define BPLIB_CBOR_DEC_GENERIC_ERR_217                 ((BPLib_Status_t) -217) // CBOR decode error
-#define BPLIB_CBOR_DEC_GENERIC_ERR_218                 ((BPLib_Status_t) -218) // CBOR decode error
-#define BPLIB_CBOR_DEC_GENERIC_ERR_219                 ((BPLib_Status_t) -219) // CBOR decode error
 */
 
 /* CBOR Encode Errors */
-#define BPLIB_CBOR_ENC_QCBOR_FINISH_TAIL_ERR           ((BPLib_Status_t) -220) /* QCBOREncode_Finish Error */
-#define BPLIB_CBOR_ENC_ARRAY_ERR                       ((BPLib_Status_t) -220) /* Error while attempting to encode array */
-#define BPLIB_CBOR_ENC_MAP_ERR                         ((BPLib_Status_t) -220) /* Error while attempting to encode map */
-#define BPLIB_CBOR_ENC_UINT_ERR                        ((BPLib_Status_t) -220) /* Error while attempting to encode unsigned integer */
-#define BPLIB_CBOR_ENC_GET_BUFF_SIZE_ERR               ((BPLib_Status_t) -220) /* Error while attempting to get the size of the encoded data thusfar */
-#define BPLIB_CBOR_ENC_ADU_ERR                         ((BPLib_Status_t) -220) /* Error while attempting to encode ADU */
-#define BPLIB_CBOR_ENC_CRC_ERR                         ((BPLib_Status_t) -220) /* Error while attempting to encode CRC */
-#define BPLIB_CBOR_ENC_ADMIN_RECORD_ERR                ((BPLib_Status_t) -220) /* Error while attempting to encode administrative record */
+#define BPLIB_CBOR_ENC_QCBOR_FINISH_TAIL_ERR           ((BPLib_Status_t) -212) /* QCBOREncode_Finish Error */
+#define BPLIB_CBOR_ENC_ARRAY_ERR                       ((BPLib_Status_t) -213) /* Error while attempting to encode array */
+#define BPLIB_CBOR_ENC_MAP_ERR                         ((BPLib_Status_t) -214) /* Error while attempting to encode map */
+#define BPLIB_CBOR_ENC_UINT_ERR                        ((BPLib_Status_t) -215) /* Error while attempting to encode unsigned integer */
+#define BPLIB_CBOR_ENC_GET_BUFF_SIZE_ERR               ((BPLib_Status_t) -216) /* Error while attempting to get the size of the encoded data thusfar */
+#define BPLIB_CBOR_ENC_ADU_ERR                         ((BPLib_Status_t) -217) /* Error while attempting to encode ADU */
+#define BPLIB_CBOR_ENC_CRC_ERR                         ((BPLib_Status_t) -218) /* Error while attempting to encode CRC */
+#define BPLIB_CBOR_ENC_ADMIN_RECORD_ERR                ((BPLib_Status_t) -219) /* Error while attempting to encode administrative record */
 #define BPLIB_CBOR_ENC_CCS_ERR                         ((BPLib_Status_t) -220) /* Error while attempting to encode CCS */
 #define BPLIB_CBOR_ENC_EXT_SIZES_CRRPTD_ERR            ((BPLib_Status_t) -221) /* BPLib_CBOR_EncodeExtensionBlock: Block Sizes Corrupted Error */
 #define BPLIB_CBOR_ENC_EXT_INPUT_BLOCK_INDEX_ERR       ((BPLib_Status_t) -222) /* BPLib_CBOR_EncodeExtensionBlock: Ext Block Index Error */

@@ -370,25 +370,32 @@ void Test_BPLib_CBOR_EncodePayload_Ccs(void)
     uint8_t                 OutputBuffer[BPLIB_MAX_PAYLOAD_SIZE];
     size_t                  NumBytesCopied;
     BPLib_MEM_Block_t       BundleBlob;
-    size_t                  TotalBytesCopied;
     size_t                  SeqRangeSize;
     uint8_t                 Collection;
+    size_t                  i;
+    uint8_t                 ExpectedBlock[] = {
+        0x86, 0x01, 0x01, 0x00, 0x02, 0x51, 0x82, 0x0d, 
+        0xa1, 0x01, 0x83, 0x0a, 0x19, 0x01, 0x90, 0x83, 
+        0x19, 0x03, 0xf2, 0x02, 0x19, 0x0b, 0xd6, 0x44, 
+        0xde, 0xad, 0xbe, 0xef
+    };
 
     NumBytesCopied   = 0;
-    TotalBytesCopied = 0;
     SeqRangeSize     = 0;
     
     AdminRecord.AdminRecordType                                             = BPLib_CT_CcsRecordTypeCode;
     AdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections                 = 1;
     AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].DispositionCode = BPLib_CT_CustodyAccepted;
     AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRangeLen     = 3;
-    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[0]     = 1;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqId           = 10;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].FirstSeqNum     = 400;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[0]     = 1010;
     AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[1]     = 2;
-    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[2]     = 3;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[2]     = 3030;
 
     memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
     Bundle.blocks.PayloadHeader.BlockType      = BPLib_BlockType_Payload;
-    Bundle.blocks.PayloadHeader.BlockNum       = 0;
+    Bundle.blocks.PayloadHeader.BlockNum       = 1;
     Bundle.blocks.PayloadHeader.CrcType        = BPLib_CRC_Type_CRC32C;
 
     Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
@@ -403,29 +410,17 @@ void Test_BPLib_CBOR_EncodePayload_Ccs(void)
         SeqRangeSize += AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[Collection].SeqRangeLen;
     }
 
-    TotalBytesCopied = 1            + /* Open definite array initial byte */
-                       1            + /* Bundle.blocks.PayloadHeader.BlockType */
-                       1            + /* Bundle.blocks.PayloadHeader.BlockNum */
-                       1            + /* Bundle.blocks.PayloadHeader.BlockProcFlags */
-                       1            + /* Bundle.blocks.PayloadHeader.CrcType */
-                       1            + /* Initial byte for byte string that encapsulates admin record */
-                       1            + /* Open definite array initial byte for admin record */
-                       1            + /* AdminRecord.AdminRecordType */
-                       1            + /* Open definite map initial byte for CCS */
-                       1            + /* AdminRecord.DispositionCode */
-                       1            + /* Open definite array initial byte for bundle sequence collection */
-                       1            + /* Bundle sequence ID */
-                       1            + /* Bundle first sequence number */
-                       1            + /* Initial byte for bundle sequence range array */
-                       SeqRangeSize + /* Sequence range values */
-                       1            + /* Byte string initial byte for CRC */ 
-                       4;             /* ATTN: Assumes CRC is type BPLib_CRC_Type_CRC32C */
-
-
-    Status = BPLib_CBOR_EncodePayload(&Bundle, OutputBuffer, sizeof(OutputBuffer), &NumBytesCopied);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_CRC_Calculate), (BPLib_CRC_Val_t) 0xdeadbeef);
     
+    Status = BPLib_CBOR_EncodePayload(&Bundle, OutputBuffer, sizeof(OutputBuffer), &NumBytesCopied);
+
     UtAssert_INT32_EQ(Status, BPLIB_SUCCESS);
-    UtAssert_EQ(size_t, NumBytesCopied, TotalBytesCopied);
+    UtAssert_EQ(size_t, NumBytesCopied, sizeof(ExpectedBlock));
+
+    for (i = 0; i < NumBytesCopied; i++)
+    {
+        UtAssert_EQ(uint8_t, OutputBuffer[i], ExpectedBlock[i]);
+    }
 }
 
 void TestBplibCborEncodeInternal_Register(void)

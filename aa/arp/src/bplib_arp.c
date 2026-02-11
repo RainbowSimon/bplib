@@ -109,7 +109,10 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
 
     Bundle = BPLib_MEM_BundleAlloc(&(Instance->pool), &CcsAdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
     if (Bundle != NULL)
-    { /* Configure the bundle for egressing */
+    {
+        Bundle->Meta.LocalBundle = true;
+        Bundle->Meta.IsCustodial = false;
+
         /* === Set up the primary block === */
         Bundle->blocks.PrimaryBlock.RequiresEncode = true;
 

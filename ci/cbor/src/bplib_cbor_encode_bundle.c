@@ -141,6 +141,7 @@ BPLib_Status_t BPLib_CBOR_EncodeBundle(BPLib_Bundle_t* StoredBundle,
             printf("\n");
         }
     }
+    printf("\n");
     #endif
 
     return BPLIB_SUCCESS;

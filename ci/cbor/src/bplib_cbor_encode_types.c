@@ -496,177 +496,86 @@ BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t C
     return ReturnStatus;
 }
 
-BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, BPLib_Bundle_t* Bundle)
+BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext *Context, BPLib_Bundle_t* Bundle)
 {
-    BPLib_Status_t           Status;
+    BPLib_Status_t           Status = BPLIB_SUCCESS;
     BPLib_ARP_AdminRecord_t *AdminRecord;
 
-    if (Context != NULL)
+    /*
+    ** The bundle's payload has been determined to be a deserialized admin record
+    */
+    AdminRecord = &(Bundle->blob->user_data.AdminRecord);
+
+    QCBOREncode_OpenArray(Context);
+
+    QCBOREncode_AddUInt64(Context, (uint64_t) AdminRecord->AdminRecordType);
+
+    /* Determine which encoding is needed by checking the admin record type */
+    switch(AdminRecord->AdminRecordType)
     {
-        /*
-        ** The bundle's payload has been determined to be a deserialized admin record
-        */
-        AdminRecord = &(Bundle->blob->user_data.AdminRecord);
+        case BPLib_CT_BsrRecordTypeCode:
+            // BPLib_CBOR_EncodeBsr(&Context, &(AdminRecord.AdminRecordBody.BSR));
+            break;
 
-        /* Start an array that represents the admin record */
-        Status = BPLib_CBOR_EncodeArray(Context, EncodeBuffer);
-        if (Status == BPLIB_SUCCESS)
-        {
-            /* Encode the admin record type */
-            Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, AdminRecord->AdminRecordType);
-            if (Status == BPLIB_SUCCESS)
-            {
-                /* Determine which encoding is needed by checking the admin record type */
-                switch(AdminRecord->AdminRecordType)
-                {
-                    case BPLib_CT_BsrRecordTypeCode:
-                        // Status = BPLib_CBOR_EncodeBsr(&Context, &(AdminRecord.AdminRecordBody.BSR), &EncodeBuffer);
-                        break;
+        case BPLib_CT_CrsRecordTypeCode:
+            // BPLib_CBOR_EncodeCrs(&Context, &(AdminRecord.AdminRecordBody.CRS));
+            break;
 
-                    case BPLib_CT_CrsRecordTypeCode:
-                        // Status = BPLib_CBOR_EncodeCrs(&Context, &(AdminRecord.AdminRecordBody.CRS), &EncodeBuffer);
-                        break;
+        case BPLib_CT_CcsRecordTypeCode:
+            BPLib_CBOR_EncodeCcs(Context, &(AdminRecord->AdminRecordBody.CCS));
+            break;
 
-                    case BPLib_CT_CcsRecordTypeCode:
-                        Status = BPLib_CBOR_EncodeCcs(Context, &(AdminRecord->AdminRecordBody.CCS), EncodeBuffer);
-                        break;
-
-                    default:
-                        Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
-                        break;
-                }
-
-                if (Status != BPLIB_SUCCESS)
-                {
-                    Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
-                }
-            }
-            else
-            {
-                Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
-            }
-
-            QCBOREncode_CloseArray(Context);
-        }
-        else
-        {
+        default:
             Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
-        }
+            break;
     }
-    else
-    {
-        Status = BPLIB_CBOR_ENC_ADMIN_RECORD_ERR;
-    }
+
+    QCBOREncode_CloseArray(Context);
 
     return Status;
 }
 
 /*
-BPLib_Status_t BPLib_CBOR_EncodeBsr(QCBOREncodeContext* Context,
-                                    BPLib_ARP_BundleStatusReport_t* BSR,
-                                    size_t* EncodedSize)
+void BPLib_CBOR_EncodeBsr(QCBOREncodeContext* Context, BPLib_ARP_BundleStatusReport_t* BSR)
 {
-    return BPLIB_SUCCESS;
+    return;
 }
 
-BPLib_Status_t BPLib_CBOR_EncodeCrs(QCBOREncodeContext* Context,
-                                    BPLib_ARP_CompressedReportingSignal_t* CRS,
-                                    size_t* EncodedSize)
+void BPLib_CBOR_EncodeCrs(QCBOREncodeContext* Context, BPLib_ARP_CompressedReportingSignal_t* CRS)
 {
-    return BPLIB_SUCCESS;
+    return;
 }
 */
 
-BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context,
-                                    BPLib_CT_DeserializedCcs_t* CCS,
-                                    UsefulOutBuf* EncodeBuffer)
+void BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS)
 {
-    BPLib_Status_t                 Status;
-    uint8_t                        CollectionNum;
-    uint8_t                        SeqRangeEntry;
-    BPLib_CT_BundleSeqCollection_t BundleSeqCollection;
+    size_t BscIdx;
+    size_t SeqRangeIdx;
+    
+    QCBOREncode_OpenMap(Context);
 
-    if (Context != NULL)
+    for (BscIdx = 0; BscIdx < CCS->NumBundleSeqCollections; BscIdx++)
     {
-        Status = BPLib_CBOR_EncodeMap(Context, EncodeBuffer);
-        if (Status == BPLIB_SUCCESS)
+        QCBOREncode_AddInt64(Context, (int64_t) CCS->BundleSeqCollections[BscIdx].DispositionCode);
+
+        QCBOREncode_OpenArray(Context);
+
+        QCBOREncode_AddUInt64(Context, (uint64_t) CCS->BundleSeqCollections[BscIdx].SeqId);
+        QCBOREncode_AddUInt64(Context, (uint64_t) CCS->BundleSeqCollections[BscIdx].FirstSeqNum);
+
+        QCBOREncode_OpenArray(Context);
+
+        for (SeqRangeIdx = 0; SeqRangeIdx < CCS->BundleSeqCollections[BscIdx].SeqRangeLen; SeqRangeIdx++)
         {
-            for (CollectionNum = 0; CollectionNum < CCS->NumBundleSeqCollections; CollectionNum++)
-            {
-                BundleSeqCollection = CCS->BundleSeqCollections[CollectionNum];
-
-                Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.DispositionCode);
-                if (Status == BPLIB_SUCCESS)
-                {
-                    /* Encode array encapsulating bundle sequence collection */
-                    Status = BPLib_CBOR_EncodeArray(Context, EncodeBuffer);
-                    if (Status == BPLIB_SUCCESS)
-                    {
-                        /* Encode bundle sequence ID */
-                        Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.SeqId);
-                        if (Status == BPLIB_SUCCESS)
-                        {
-                            /* Encode first sequence number */
-                            Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.FirstSeqNum);
-                            if (Status == BPLIB_SUCCESS)
-                            {
-                                /* Encode array encapsulating bundle sequence range */
-                                Status = BPLib_CBOR_EncodeArray(Context, EncodeBuffer);
-                                if (Status == BPLIB_SUCCESS)
-                                {
-                                    for (SeqRangeEntry = 0; SeqRangeEntry < BundleSeqCollection.SeqRangeLen; SeqRangeEntry++)
-                                    {
-                                        /* Encode bundle sequence range value into map under disposition code label */
-                                        Status = BPLib_CBOR_EncodeUInt(Context, EncodeBuffer, BundleSeqCollection.SeqRange[SeqRangeEntry]);
-                                        if (Status != BPLIB_SUCCESS)
-                                        {
-                                            /* Exit the loop if something went wrong */
-                                            Status = BPLIB_CBOR_ENC_CCS_ERR;
-                                            break;
-                                        }
-                                    }
-
-                                    QCBOREncode_CloseArray(Context);
-                                }
-                                else
-                                {
-                                    Status = BPLIB_CBOR_ENC_CCS_ERR;
-                                }
-                            }
-                            else
-                            {
-                                Status = BPLIB_CBOR_ENC_CCS_ERR;
-                            }
-                        }
-                        else
-                        {
-                            Status = BPLIB_CBOR_ENC_CCS_ERR;
-                        }
-
-                        QCBOREncode_CloseArray(Context);
-                    }
-                    else
-                    {
-                        Status = BPLIB_CBOR_ENC_CCS_ERR;
-                    }
-                }
-                else
-                {
-                    Status = BPLIB_CBOR_ENC_CCS_ERR;
-                }
-            }
-
-            QCBOREncode_CloseMap(Context);
+            QCBOREncode_AddUInt64(Context, (uint64_t) CCS->BundleSeqCollections[BscIdx].SeqRange[SeqRangeIdx]);
         }
-        else
-        {
-            Status = BPLIB_CBOR_ENC_CCS_ERR;
-        }
-    }
-    else
-    {
-        Status = BPLIB_CBOR_ENC_CCS_ERR;
+
+        QCBOREncode_CloseArray(Context);
+
+        QCBOREncode_CloseArray(Context);
     }
 
-    return Status;
+    QCBOREncode_CloseMap(Context);
+
+    return;
 }

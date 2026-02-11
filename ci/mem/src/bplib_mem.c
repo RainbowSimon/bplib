@@ -233,8 +233,8 @@ BPLib_Bundle_t* BPLib_MEM_BundleAlloc(BPLib_MEM_Pool_t* pool, const void* blob_d
         curr_block = curr_block->next;
     }
 
-    /* Save the total size of the bundle in bytes */
-    bundle->Meta.TotalBytes = bytes_copied;
+    /* Save the total size of the bundle (decoded + encoded) in bytes */
+    bundle->Meta.TotalBytes = bytes_copied + sizeof(BPLib_BBlocks_t);
 
     /* Initialize admin record payload to null (most bundles will not use this) */
     bundle->blocks.AdminRecordPayload = NULL;

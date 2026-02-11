@@ -359,7 +359,107 @@ void Test_BPLib_CBOR_EncodeBundle_EncodePrimaryAndPayload(void)
     UtAssert_STUB_COUNT(BPLib_MEM_CopyOutFromOffset, 1);
 }
 
+void Test_BPLib_CBOR_EncodeBundle_EncodeCcs(void)
+{
+    BPLib_Status_t ReturnStatus;
+    BPLib_Bundle_t InputBundle;
+    uint8_t OutputBuffer[1024];
+    size_t OutputSize = 0xdeadbeef;
+    BPLib_MEM_Block_t FirstBlock;
+    size_t i;
+    size_t SeqRangeSize;
+    BPLib_ARP_AdminRecord_t *AdminRecordPayload;
+    uint8_t ExpectedOutputBundle[] = {
+        0x9f, 0x89, 0x07, 0x02, 0x01, 0x82, 0x02, 0x82, 
+        0x18, 0xc8, 0x02, 0x82, 0x02, 0x82, 0x19, 0x01, 
+        0x2c, 0x03, 0x82, 0x02, 0x82, 0x19, 0x01, 0x90, 
+        0x04, 0x82, 0x0c, 0x18, 0x22, 0x00, 0x42, 0xde, 
+        0xad, 0x86, 0x01, 0x01, 0x00, 0x01, 0x4f, 0x82, 
+        0x0d, 0xa1, 0x01, 0x83, 0x09, 0x15, 0x83, 0x19, 
+        0x13, 0x88, 0x02, 0x19, 0x01, 0x2c, 0x42, 0xbe, 
+        0xef, 0xff
+    };
 
+    SeqRangeSize = 0;
+
+    memset(&InputBundle, 0, sizeof(InputBundle));
+    memset(&FirstBlock, 0, sizeof(FirstBlock));
+    InputBundle.blob = &FirstBlock;
+    
+    AdminRecordPayload = &(InputBundle.blob->user_data.AdminRecord);
+
+    /* Header Info */
+    InputBundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+    InputBundle.blocks.PrimaryBlock.CrcType = BPLib_CRC_Type_CRC16;
+    /* Dest EID */
+    InputBundle.blocks.PrimaryBlock.DestEID.Scheme = BPLIB_EID_SCHEME_IPN;
+    InputBundle.blocks.PrimaryBlock.DestEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
+    InputBundle.blocks.PrimaryBlock.DestEID.Allocator = 0;
+    InputBundle.blocks.PrimaryBlock.DestEID.Node = 200;
+    InputBundle.blocks.PrimaryBlock.DestEID.Service = 2;
+    /* Src EID */
+    InputBundle.blocks.PrimaryBlock.SrcEID.Scheme = BPLIB_EID_SCHEME_IPN;
+    InputBundle.blocks.PrimaryBlock.SrcEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
+    InputBundle.blocks.PrimaryBlock.SrcEID.Allocator = 0;
+    InputBundle.blocks.PrimaryBlock.SrcEID.Node = 300;
+    InputBundle.blocks.PrimaryBlock.SrcEID.Service = 3;
+    /* Report-To EID */
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Scheme = BPLIB_EID_SCHEME_IPN;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Allocator = 0;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Node = 400;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Service = 4;
+    /* Other Header Info */
+    InputBundle.blocks.PrimaryBlock.Timestamp.CreateTime = 12;
+    InputBundle.blocks.PrimaryBlock.Timestamp.SequenceNumber = 34;
+    InputBundle.blocks.PrimaryBlock.Lifetime = 0;
+    
+    /* Primary Metadata */
+    InputBundle.blocks.PrimaryBlock.RequiresEncode = true;
+    InputBundle.blocks.PrimaryBlock.BlockOffsetStart = 1;
+    InputBundle.blocks.PrimaryBlock.BlockOffsetEnd = 41;
+    /* Payload Metadata */
+    InputBundle.blocks.PayloadHeader.RequiresEncode = true;
+    InputBundle.blocks.PayloadHeader.DataOffsetStart = 42;
+    InputBundle.blocks.PayloadHeader.DataSize = 29;
+    InputBundle.blocks.PayloadHeader.BlockNum = 1;
+    InputBundle.blocks.PayloadHeader.BlockProcFlags = 0;
+    InputBundle.blocks.PayloadHeader.BlockType = 1;
+    InputBundle.blocks.PayloadHeader.CrcType = BPLib_CRC_Type_CRC16;
+
+    AdminRecordPayload->AdminRecordType                                             = BPLib_CT_CcsRecordTypeCode;
+    AdminRecordPayload->AdminRecordBody.CCS.NumBundleSeqCollections                 = 1;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].DispositionCode = BPLib_CT_CustodyAccepted;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqId           = 9;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].FirstSeqNum     = 21;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqRangeLen     = 3;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[0]     = 5000;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[1]     = 2;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[2]     = 300;
+
+    for (i = 0; i < AdminRecordPayload->AdminRecordBody.CCS.NumBundleSeqCollections; i++)
+    {
+        SeqRangeSize += AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[i].SeqRangeLen;
+    }
+    
+    UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, (BPLib_CRC_Val_t) 0xdead);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, (BPLib_CRC_Val_t) 0xbeef);
+
+    ReturnStatus = BPLib_CBOR_EncodeBundle(&InputBundle,
+                                        OutputBuffer,
+                                        sizeof(OutputBuffer),
+                                        &OutputSize);
+
+    UtAssert_EQ(BPLib_Status_t, ReturnStatus, BPLIB_SUCCESS);
+    UtAssert_EQ(size_t, OutputSize, sizeof(ExpectedOutputBundle));
+
+    UtAssert_STUB_COUNT(BPLib_MEM_CopyOutFromOffset, 0);
+
+    for (i = 0; i < OutputSize; i++)
+    {
+        UtAssert_EQ(uint8_t, OutputBuffer[i], ExpectedOutputBundle[i]);
+    }
+}
 
 void Test_BPLib_CBOR_EncodeBundle_Nominal(void)
 {
@@ -645,4 +745,5 @@ void TestBplibCborEncode_Register(void)
     UtTest_Add(Test_BPLib_CBOR_EncodeBundle_EncodePrimaryAndPayload, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeBundle_EncodePrimaryAndPayload");
     UtTest_Add(Test_BPLib_CBOR_EncodeBundle_Nominal, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeBundle_Nominal");
     UtTest_Add(Test_BPLib_CBOR_EncodeBundle_DtnNone, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeBundle_DtnNone");
+    UtTest_Add(Test_BPLib_CBOR_EncodeBundle_EncodeCcs, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeBundle_EncodeCcs");
 }

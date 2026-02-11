@@ -3,19 +3,22 @@
 ## Initialization 
 
 BPLib storage uses two sqlite tables:
-- bundle_data, which contains any necessary bundle metadata for storage queries with the following columns:
+- bundle_data, which contains any necessary bundle metadata for storage queries with the following columns (in this order):
     - id: primary key assigned by sqlite to index into bundle_data
     - bundle_id: uint32 assigned by BPNode to track uniqueness of a bundle based on its source EID, creation timestamp, and sequence number. May or may not be unique depending on the `BPLIB_ALLOW_DUPLICATE_BUNDLES` configuration
-    - action_timestamp: a timestamp in monotonic time that denotes the time at which the bundle will expire
-    - retransmit_timestamp: a timestamp in monotonic time that denotes the time at which a custodial bundle should be retransmitted
+    - action_timestamp: a timestamp in monotonic time that denotes the time at which the bundle will expire (msec)
+    - retransmit_timestamp: a timestamp in monotonic time that denotes the time at which a custodial bundle should be retransmitted (msec)
+    - retransmit_trigger: the relative amount of time that retransmissions should be triggered at. If this is set to 0, this indicates that retransmissions are turned off. (msec)
     - egress_attempted: whether or not the bundle has been egressed from storage
     - dest_node: the destination EID node number
     - dest_service: the destination EID service number
     - is_custodial: whether or not a bundle is custodial
+    - bundle_bytes: the size of the blob_data stored. This should be the size of a `BPLib_BBlocks_t` structure plus the length of the CBOR encoded bundle
 - bundle_blobs: contains the full bundle data with the following columns
     - id: primary key assigned by sqlite to index into bundle_blobs
     - bundle_row: corresponds to the relevant bundle's bundle_data id value
-    - blob_data: binary data of the `BPLib_BBlocks_t` deserialized structure, as well as `BPLib_MEM_Block_t` blob(s) that contain the full encoded CBOR of the bundle
+    - blob_data: binary data of the `BPLib_BBlocks_t` deserialized structure, as well as `BPLib_MEM_Block_t` blob(s) that contain the full encoded CBOR of the bundle. Note that if the bundle is an administrative record created by the current node, the blob_data will actually contain the deserialized administrative record jammed into the blob memory block.
+    Is this hacky? Yes. But more importantly does it work? Yep. The author was tired and this was quicker than worrying about future maintainability. Apologies to future developers.
 
 The following indexes are used to search the two tables:
 - idx_bundle_blobs_bundle_row: Index on the 'bundle_row' column in the 'bundle_blobs' table. This index supports quick lookup of blob data by its associated bundle_row in the 'bundle_data' table.
