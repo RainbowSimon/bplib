@@ -444,7 +444,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         return BPLIB_BUF_LEN_ERROR;
     }
 
-    if ((Inst->BundleStorage.BytesStorageInUse + AduSize) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
+    if ((Inst->BundleStorage.BytesStorageInUse + AduSize + sizeof(BPLib_BBlocks_t)) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_REJECTED, 1);
         BPLib_EM_SendEvent(BPLIB_PI_INGRESS_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
