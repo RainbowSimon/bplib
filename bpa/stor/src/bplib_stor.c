@@ -612,33 +612,71 @@ BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst)
     return Status;
 }
 
-BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_CT_CcsUpdateBatch_t *Batch)
+void BPLib_STOR_UpdateCustodialBundlesUnlocked(BPLib_Instance_t* Inst, BPLib_STOR_CtUpdateBatch_t *CustodyBatch)
 {
     BPLib_Status_t Status;
 
-    if (Inst == NULL || Batch == NULL || Batch->Size > BPLIB_CT_BATCH_SIZE)
-    {
-        return BPLIB_NULL_PTR_ERROR;
-    }
-
-    if (Batch->Size == 0)
-    {
-        return BPLIB_SUCCESS;
-    }
-
-    pthread_mutex_lock(&(Inst->BundleStorage.lock));
-
-    Status = BPLib_SQL_UpdateCustodialBundles(Inst, Batch);
-
-    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
+    Status = BPLib_SQL_UpdateCustodialBundles(Inst, CustodyBatch);
 
     if (Status != BPLIB_SUCCESS)
     {
         BPLib_EM_SendEvent(BPLIB_STOR_CCS_ERR_EID, BPLib_EM_EventType_ERROR,
                 "Error performing CCS storage operations, Status = %d.", Status);
     }
+
+    CustodyBatch->Size = 0;
+
+    return;
+}
+
+void BPLib_STOR_AddToCustodialUpdateBatch(BPLib_Instance_t *Inst, uint32_t BundleId, 
+                                                                    BPLib_CT_StorOp_t Op)
+{
+    BPLib_STOR_CtUpdateBatch_t *CustodyBatch;
+
+    if (Inst == NULL || Inst->BundleStorage.CustodyUpdateBatch.Size >= BPLIB_STOR_CT_BATCH_SIZE)
+    {
+        return;
+    }
+
+    pthread_mutex_lock(&(Inst->BundleStorage.lock));
+
+    CustodyBatch = &(Inst->BundleStorage.CustodyUpdateBatch);
+
+    CustodyBatch->BundleIDs[CustodyBatch->Size] = BundleId;
+    CustodyBatch->Ops[CustodyBatch->Size] = Op;
+    CustodyBatch->Size++;
+
+    if (CustodyBatch->Size >= BPLIB_STOR_CT_BATCH_SIZE)
+    {
+        BPLib_STOR_UpdateCustodialBundlesUnlocked(Inst, CustodyBatch);
+    }
+
+    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
+}
+
+
+void BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst)
+{
+    BPLib_STOR_CtUpdateBatch_t *CustodyBatch;
+
+    if (Inst == NULL)
+    {
+        return;
+    }
+
+    pthread_mutex_lock(&(Inst->BundleStorage.lock));
+
+    CustodyBatch = &(Inst->BundleStorage.CustodyUpdateBatch);
+
+    if (CustodyBatch->Size <= BPLIB_STOR_CT_BATCH_SIZE && CustodyBatch->Size > 0)
+    {
+        BPLib_STOR_UpdateCustodialBundlesUnlocked(Inst, CustodyBatch);
+    }
+
+    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
     
-    return Status;
+    return;
 }
 
 BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId)

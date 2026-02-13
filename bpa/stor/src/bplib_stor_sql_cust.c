@@ -193,7 +193,7 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
     return SQLStatus;    
 }
 
-BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT_CcsUpdateBatch_t *Batch)
+BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_STOR_CtUpdateBatch_t *Batch)
 {
     SQL_Status_t   SQLStatus;
     sqlite3*       db;
@@ -236,7 +236,7 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT
     return BPLIB_SUCCESS;
 }
 
-SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdateBatch_t *Batch)
+SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_STOR_CtUpdateBatch_t *Batch)
 {
     SQL_Status_t SQLStatus;
     size_t       i;

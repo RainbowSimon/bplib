@@ -54,9 +54,25 @@
 
 #define BPLIB_STOR_MAX_IDLE_TIME        (4000u)
 
+/**
+ * \brief Size of a full custodial batch operation
+ */
+#define BPLIB_STOR_CT_BATCH_SIZE        (100u)
+
 /* ======== */
 /* Typedefs */
 /* ======== */
+
+/**
+ * \brief A batch of storage operations associated with a set of bundle IDs generated
+ *        after receiving and processing a CCS
+ */
+typedef struct 
+{
+    uint32_t BundleIDs[BPLIB_STOR_CT_BATCH_SIZE];
+    BPLib_CT_StorOp_t Ops[BPLIB_STOR_CT_BATCH_SIZE];
+    size_t   Size;
+} BPLib_STOR_CtUpdateBatch_t;
 
 struct BPLib_BundleCache
 {
@@ -67,6 +83,7 @@ struct BPLib_BundleCache
     size_t                 InsertBatchSize;
     BPLib_STOR_LoadBatch_t ChannelLoadBatches[BPLIB_MAX_NUM_CHANNELS];
     BPLib_STOR_LoadBatch_t ContactLoadBatches[BPLIB_MAX_NUM_CONTACTS];
+    BPLib_STOR_CtUpdateBatch_t CustodyUpdateBatch;
     int64_t                LastActiveTime;
     size_t                 BundleCountNotEgressed;  /* Number of bundles in storage that have not been marked as egressed */
 
@@ -174,7 +191,10 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst);
 
 BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst);
 
-BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst, BPLib_CT_CcsUpdateBatch_t *Batch);
+void BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst);
+
+void BPLib_STOR_AddToCustodialUpdateBatch(BPLib_Instance_t *Inst, uint32_t BundleId, 
+                                                                    BPLib_CT_StorOp_t Op);
 
 BPLib_Status_t BPLib_STOR_SetNewRetransmitTrigger(BPLib_Instance_t *Inst, uint32_t ContactId);
 
