@@ -35,7 +35,7 @@
 #define QM_MAX_GEN_WORKERS  1L /**< Constant representing maximum allowed generic workers */
 
 #ifndef BPLIB_QM_TX_QUEUE_DEPTH
-#define BPLIB_QM_TX_QUEUE_DEPTH 2048
+#  define BPLIB_QM_TX_QUEUE_DEPTH 8
 #endif
 
 typedef struct BPLib_QM_WorkerState
