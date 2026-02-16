@@ -44,9 +44,167 @@
 
 BPLib_StorageHkTlm_Payload_t BPLib_STOR_StoragePayload;
 
-/* ==================== */
-/* Function Definitions */
-/* ==================== */
+/*
+** Internal Functions
+*/
+
+void BPLib_STOR_FinalizeCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *CustodialBundles[], 
+                        size_t NumCustodialBundles, BPLib_CT_DispositionCode_t DispCode)
+{
+    BPLib_CLA_ContactRunState_t ConState;
+    size_t i;
+
+    for (i = 0; i < NumCustodialBundles; i++)
+    {
+        /* Finalize custodial transfer for custodial bundles */
+        (void) BPLib_CT_SignalCustody(Inst, CustodialBundles[i], DispCode, false);
+
+        /* Custodial bundles with an egress path should get sent out instead of freed */
+        (void) BPLib_CLA_GetContactRunState(CustodialBundles[i]->Meta.EgressID, &ConState);
+        if (CustodialBundles[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS &&
+            ConState == BPLIB_CLA_STARTED && DispCode == BPLib_CT_CustodyAccepted)
+        {
+            BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CustodialBundles[i]->Meta.EgressID]), 
+                                        &CustodialBundles[i], QM_WAIT_FOREVER);
+        }
+        /* There's no egress path, free memory */
+        else
+        {
+            BPLib_MEM_BundleFree(&Inst->pool, CustodialBundles[i]);
+        }        
+    }
+
+    return;
+}
+
+
+BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst, 
+                        BPLib_Bundle_t *CustodialBundles[], size_t *CustodialBundlesStored)
+{
+    BPLib_Status_t       Status;
+    BPLib_BundleCache_t* CacheInst;
+    size_t               i;
+    size_t               TotalBytesStored;
+    size_t               DuplicateBundlesIgnored;
+    size_t               CustodialIdx;
+
+    CacheInst               = &Inst->BundleStorage;
+    TotalBytesStored        = 0;
+    DuplicateBundlesIgnored = 0;
+    *CustodialBundlesStored = 0;
+    CustodialIdx            = 0;
+
+    Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored, CustodialBundlesStored);
+
+    if (Status == BPLIB_SUCCESS)
+    {
+        CacheInst->BytesStorageInUse      += TotalBytesStored;
+        CacheInst->BundleCountStored      += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
+        CacheInst->BundleCountNotEgressed += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
+
+        if (DuplicateBundlesIgnored > 0)
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, DuplicateBundlesIgnored);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, DuplicateBundlesIgnored);
+            BPLib_EM_SendEvent(BPLIB_STOR_DUPL_DBG_EID,
+                                BPLib_EM_EventType_DEBUG,
+                                "Ignored %ld duplicate bundles in store batch.",
+                                DuplicateBundlesIgnored);
+        }
+    }
+    else if (Status == BPLIB_STOR_DB_FULL_ERR)
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, CacheInst->InsertBatchSize);
+
+        BPLib_EM_SendEvent(BPLIB_STOR_DB_FULL_INF_EID,
+                            BPLib_EM_EventType_ERROR,
+                            "SQLite database is full, dropping %d bundles",
+                            CacheInst->InsertBatchSize);
+    }
+    else
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
+
+        BPLib_EM_SendEvent(BPLIB_STOR_SQL_STORE_ERR_EID,
+                            BPLib_EM_EventType_ERROR,
+                            "BPLib_SQL_Store failed to store bundle. RC=%d",
+                            Status);
+    }
+
+    /* 
+    ** Free the bundles, as they're now persistent
+    ** Note: even if the storage fails, we free everything to avoid a leak.
+    */
+    for (i = 0; i < CacheInst->InsertBatchSize; i++)
+    {        
+        if (CacheInst->InsertBatch[i]->Meta.IsCustodial)
+        {
+            CustodialBundles[CustodialIdx++] = CacheInst->InsertBatch[i];
+        }
+        /* Noncustodial bundles are all freed */
+        else
+        {
+            BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
+        }
+    }
+
+    CacheInst->InsertBatchSize = 0;
+
+    return Status;
+}
+
+
+void BPLib_STOR_UpdateCustodialBundlesUnlocked(BPLib_Instance_t* Inst, BPLib_STOR_CtUpdateBatch_t *CustodyBatch)
+{
+    BPLib_Status_t Status;
+
+    Status = BPLib_SQL_UpdateCustodialBundles(Inst, CustodyBatch);
+
+    if (Status != BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_STOR_CCS_ERR_EID, BPLib_EM_EventType_ERROR,
+                "Error performing CCS storage operations, Status = %d.", Status);
+    }
+
+    CustodyBatch->Size = 0;
+
+    return;
+}
+
+void BPLib_STOR_AddToCustodialUpdateBatch(BPLib_Instance_t *Inst, uint32_t BundleId, 
+                                                                    BPLib_CT_StorOp_t Op)
+{
+    BPLib_STOR_CtUpdateBatch_t *CustodyBatch;
+
+    if (Inst == NULL || Inst->BundleStorage.CustodyUpdateBatch.Size >= BPLIB_STOR_CT_BATCH_SIZE)
+    {
+        return;
+    }
+
+    pthread_mutex_lock(&(Inst->BundleStorage.lock));
+
+    CustodyBatch = &(Inst->BundleStorage.CustodyUpdateBatch);
+
+    CustodyBatch->BundleIDs[CustodyBatch->Size] = BundleId;
+    CustodyBatch->Ops[CustodyBatch->Size] = Op;
+    CustodyBatch->Size++;
+
+    if (CustodyBatch->Size >= BPLIB_STOR_CT_BATCH_SIZE)
+    {
+        BPLib_STOR_UpdateCustodialBundlesUnlocked(Inst, CustodyBatch);
+    }
+
+    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
+}
+
+
+
+/*
+** External Functions
+*/
 
 BPLib_Status_t BPLib_STOR_Init(BPLib_Instance_t* Inst)
 {
@@ -111,8 +269,11 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
 {
     BPLib_Status_t       Status;
     BPLib_BundleCache_t* CacheInst;
+    BPLib_Bundle_t *CustodialBundles[BPLIB_STOR_INSERTBATCHSIZE];
+    size_t          CustodialBundlesStored;
 
     Status = BPLIB_SUCCESS;
+    CustodialBundlesStored = 0;
 
     if ((Inst == NULL) || (Bundle == NULL) || (Bundle->blob == NULL))
     {
@@ -144,40 +305,59 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bu
         CacheInst->InsertBatch[CacheInst->InsertBatchSize++] = Bundle;
         if (CacheInst->InsertBatchSize == BPLIB_STOR_INSERTBATCHSIZE)
         {
-            Status = BPLib_STOR_FlushPendingUnlocked(Inst);
+            Status = BPLib_STOR_FlushPendingUnlocked(Inst, CustodialBundles, &CustodialBundlesStored);
         }
     }
 
     pthread_mutex_unlock(&CacheInst->lock);
+
+    /* Finalize custodial signaling for stored bundles */
+    if (CustodialBundlesStored > 0)
+    {
+        if (Status == BPLIB_SUCCESS)
+        {
+            BPLib_STOR_FinalizeCustody(Inst, CustodialBundles, 
+                                    CustodialBundlesStored, BPLib_CT_CustodyAccepted);
+        }
+        else
+        {
+            BPLib_STOR_FinalizeCustody(Inst, CustodialBundles, 
+                                    CustodialBundlesStored, BPLib_CT_CustodyRefused);
+        }
+    }
 
     return Status;
 }
 
 BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t* Inst)
 {
-    BPLib_Status_t       Status;
-    BPLib_BundleCache_t* CacheInst;
+    BPLib_Status_t  Status = BPLIB_SUCCESS;
+    BPLib_Bundle_t *CustodialBundles[BPLIB_STOR_INSERTBATCHSIZE];
+    size_t          CustodialBundlesStored = 0;
 
     if (Inst == NULL)
     {
         return BPLIB_NULL_PTR_ERROR;
     }
 
-    CacheInst = &Inst->BundleStorage;
-
-    pthread_mutex_lock(&CacheInst->lock);
-
-    if (CacheInst->InsertBatchSize > 0)
+    if (Inst->BundleStorage.InsertBatchSize > 0)
     {
-        Status = BPLib_STOR_FlushPendingUnlocked(Inst);
-    }
-    else
-    {
-        /* Don't go further if there's nothing to store */
-        Status = BPLIB_SUCCESS;
-    }
+        pthread_mutex_lock(&Inst->BundleStorage.lock);
+        Status = BPLib_STOR_FlushPendingUnlocked(Inst, CustodialBundles, &CustodialBundlesStored);
+        pthread_mutex_unlock(&Inst->BundleStorage.lock);
 
-    pthread_mutex_unlock(&CacheInst->lock);
+        /* Finalize custodial signaling for stored bundles */
+        if (Status == BPLIB_SUCCESS)
+        {
+            BPLib_STOR_FinalizeCustody(Inst, CustodialBundles, 
+                                    CustodialBundlesStored, BPLib_CT_CustodyAccepted);
+        }
+        else
+        {
+            BPLib_STOR_FinalizeCustody(Inst, CustodialBundles, 
+                                    CustodialBundlesStored, BPLib_CT_CustodyRefused);
+        }
+    }
 
     return Status;
 }
@@ -491,105 +671,6 @@ void BPLib_STOR_UpdateHkPkt(BPLib_Instance_t* Inst)
     return;
 }
 
-BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst)
-{
-    BPLib_Status_t       Status;
-    BPLib_BundleCache_t* CacheInst;
-    size_t               i;
-    size_t               TotalBytesStored;
-    size_t               DuplicateBundlesIgnored;
-    size_t               CustodialBundlesStored;
-    BPLib_CLA_ContactRunState_t ConState;
-    BPLib_CT_DispositionCode_t  DispCode;
-
-    CacheInst               = &Inst->BundleStorage;
-    TotalBytesStored        = 0;
-    DuplicateBundlesIgnored = 0;
-    CustodialBundlesStored  = 0;
-
-    Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored, &CustodialBundlesStored);
-
-    if (Status == BPLIB_SUCCESS)
-    {
-        DispCode = BPLib_CT_CustodyAccepted;
-
-        CacheInst->BytesStorageInUse      += TotalBytesStored;
-        CacheInst->BundleCountStored      += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
-        CacheInst->BundleCountNotEgressed += CacheInst->InsertBatchSize - DuplicateBundlesIgnored;
-
-        if (DuplicateBundlesIgnored > 0)
-        {
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, DuplicateBundlesIgnored);
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, DuplicateBundlesIgnored);
-            BPLib_EM_SendEvent(BPLIB_STOR_DUPL_DBG_EID,
-                                BPLib_EM_EventType_DEBUG,
-                                "Ignored %ld duplicate bundles in store batch.",
-                                DuplicateBundlesIgnored);
-        }
-    }
-    else if (Status == BPLIB_STOR_DB_FULL_ERR)
-    {
-        DispCode = BPLib_CT_CustodyRefused;
-
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED_NO_STORAGE, CacheInst->InsertBatchSize);
-
-        BPLib_EM_SendEvent(BPLIB_STOR_DB_FULL_INF_EID,
-                            BPLib_EM_EventType_ERROR,
-                            "SQLite database is full, dropping %d bundles",
-                            CacheInst->InsertBatchSize);
-    }
-    else
-    {
-        DispCode = BPLib_CT_CustodyRefused;
-
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, CacheInst->InsertBatchSize);
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, CacheInst->InsertBatchSize);
-
-        BPLib_EM_SendEvent(BPLIB_STOR_SQL_STORE_ERR_EID,
-                            BPLib_EM_EventType_ERROR,
-                            "BPLib_SQL_Store failed to store bundle. RC=%d",
-                            Status);
-
-    }
-
-    /* 
-    ** Free the bundles, as they're now persistent
-    ** Note: even if the storage fails, we free everything to avoid a leak.
-    */
-    for (i = 0; i < CacheInst->InsertBatchSize; i++)
-    {        
-        if (CacheInst->InsertBatch[i]->Meta.IsCustodial)
-        {
-            /* Finalize custodial transfer for custodial bundles */
-            (void) BPLib_CT_SignalCustody(Inst, CacheInst->InsertBatch[i], DispCode, false);
-
-            /* Custodial bundles with an egress path should get sent out instead of freed */
-            (void) BPLib_CLA_GetContactRunState(CacheInst->InsertBatch[i]->Meta.EgressID, &ConState);
-            if (CacheInst->InsertBatch[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS &&
-                ConState == BPLIB_CLA_STARTED && Status == BPLIB_SUCCESS)
-            {
-                BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CacheInst->InsertBatch[i]->Meta.EgressID]), 
-                                            &CacheInst->InsertBatch[i], QM_WAIT_FOREVER);
-            }
-            /* The egress path disappeared, free the bundle */
-            else
-            {
-                BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
-            }
-        }
-        /* Noncustodial bundles are all freed */
-        else
-        {
-            BPLib_MEM_BundleFree(&Inst->pool, CacheInst->InsertBatch[i]);
-        }
-    }
-
-    CacheInst->InsertBatchSize = 0;
-
-    return Status;
-}
 
 BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst)
 {
@@ -611,50 +692,6 @@ BPLib_Status_t BPLib_STOR_Cleanup(BPLib_Instance_t* Inst)
     
     return Status;
 }
-
-void BPLib_STOR_UpdateCustodialBundlesUnlocked(BPLib_Instance_t* Inst, BPLib_STOR_CtUpdateBatch_t *CustodyBatch)
-{
-    BPLib_Status_t Status;
-
-    Status = BPLib_SQL_UpdateCustodialBundles(Inst, CustodyBatch);
-
-    if (Status != BPLIB_SUCCESS)
-    {
-        BPLib_EM_SendEvent(BPLIB_STOR_CCS_ERR_EID, BPLib_EM_EventType_ERROR,
-                "Error performing CCS storage operations, Status = %d.", Status);
-    }
-
-    CustodyBatch->Size = 0;
-
-    return;
-}
-
-void BPLib_STOR_AddToCustodialUpdateBatch(BPLib_Instance_t *Inst, uint32_t BundleId, 
-                                                                    BPLib_CT_StorOp_t Op)
-{
-    BPLib_STOR_CtUpdateBatch_t *CustodyBatch;
-
-    if (Inst == NULL || Inst->BundleStorage.CustodyUpdateBatch.Size >= BPLIB_STOR_CT_BATCH_SIZE)
-    {
-        return;
-    }
-
-    pthread_mutex_lock(&(Inst->BundleStorage.lock));
-
-    CustodyBatch = &(Inst->BundleStorage.CustodyUpdateBatch);
-
-    CustodyBatch->BundleIDs[CustodyBatch->Size] = BundleId;
-    CustodyBatch->Ops[CustodyBatch->Size] = Op;
-    CustodyBatch->Size++;
-
-    if (CustodyBatch->Size >= BPLIB_STOR_CT_BATCH_SIZE)
-    {
-        BPLib_STOR_UpdateCustodialBundlesUnlocked(Inst, CustodyBatch);
-    }
-
-    pthread_mutex_unlock(&(Inst->BundleStorage.lock));
-}
-
 
 void BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t* Inst)
 {

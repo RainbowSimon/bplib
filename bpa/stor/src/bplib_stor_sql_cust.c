@@ -200,6 +200,11 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_ST
 
     db     = Inst->BundleStorage.db;
 
+    if (Batch->Size == 0)
+    {
+        return BPLIB_SUCCESS;
+    }
+
     SQLStatus = sqlite3_prepare_v2(db, TriggerRetransmitSQL, -1, &TriggerRetransmitStmt, 0);
     if (SQLStatus != SQLITE_OK)
     {
