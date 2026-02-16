@@ -42,18 +42,7 @@
 
 void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
 {
-    uint8_t i;
-
-    for (i = 0; i < BPLIB_CT_MAX_SEQ_COLLECTIONS; i++)
-    {
-        OpenCcs->BundleSeqCollections[i].SeqRangeLen = 0;
-        OpenCcs->BundleSeqCollections[i].SeqId = 0;
-    }
-
-    OpenCcs->InProgress          = false;
-    OpenCcs->Size                = 0;
-    OpenCcs->CollectionStartTime = 0;
-    OpenCcs->BundlesInCcs        = 0;
+    memset(OpenCcs, 0, sizeof(BPLib_CT_OpenCcs_t));
 
     return;
 }
@@ -203,7 +192,8 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
         Collection->SeqRangeLen >= (BPLIB_CT_MAX_SEQ_RANGE_LEN - 1))
     {
         BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
-                "Open CCS data failed sanity checks, check for memory corruption.");
+                "Open CCS data failed sanity checks, check for memory corruption. Sequence range length = %ld.",
+                Collection->SeqRangeLen);
 
         return BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
@@ -263,7 +253,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
     OpenCcs->BundlesInCcs++;
 
     /* Trigger CCS generation based on size */
-    if (OpenCcs->Size >= OpenCcs->MaxSize || Collection->SeqRangeLen == BPLIB_CT_MAX_SEQ_RANGE_LEN)
+    if (OpenCcs->Size >= OpenCcs->MaxSize || Collection->SeqRangeLen >= BPLIB_CT_MAX_SEQ_RANGE_LEN)
     {
         BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
     }

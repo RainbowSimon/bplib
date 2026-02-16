@@ -359,9 +359,10 @@ typedef enum
 #define BPLIB_CBOR_ENC_BUNDLE_OUTPUT_BUF_LEN_4_ERR     ((BPLib_Status_t) -235) /* BPLib_CBOR_EncodeBundle: Output buf too small (check 4) */
 #define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_HEAD_ERR      ((BPLib_Status_t) -236) /* BPLib_CBOR_EncodePayload: Error encoding payload header */
 #define BPLIB_CBOR_ENC_PAYL_ADD_BYTE_STR_HEAD_ERR      ((BPLib_Status_t) -237) /* BPLib_CBOR_EncodePayload: Error adding payload bytestring head */
-#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR      ((BPLib_Status_t) -238) /* BPLib_CBOR_EncoePayload: Error ending payload block */
+#define BPLIB_CBOR_ENC_PAYL_QCBOR_FINISH_TAIL_ERR      ((BPLib_Status_t) -238) /* BPLib_CBOR_EncodePayload: Error ending payload block */
+#define BPLIB_CBOR_ENC_CORRUPT_CCS_ERR                 ((BPLib_Status_t) -239) /* BPLib_CBOR_EncodePayload: Error encoding a corrupt CCS payload */
+
 /*
-#define BPLIB_CBOR_ENC_GENERIC_ERR_239                 ((BPLib_Status_t) -239) // CBOR encode error
 #define BPLIB_CBOR_ENC_GENERIC_ERR_240                 ((BPLib_Status_t) -240) // CBOR encode error
 #define BPLIB_CBOR_ENC_GENERIC_ERR_241                 ((BPLib_Status_t) -241) // CBOR encode error
 #define BPLIB_CBOR_ENC_GENERIC_ERR_242                 ((BPLib_Status_t) -242) // CBOR encode error
