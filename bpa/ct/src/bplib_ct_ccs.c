@@ -42,18 +42,7 @@
 
 void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
 {
-    uint8_t i;
-
-    for (i = 0; i < BPLIB_CT_MAX_SEQ_COLLECTIONS; i++)
-    {
-        OpenCcs->BundleSeqCollections[i].SeqRangeLen = 0;
-        OpenCcs->BundleSeqCollections[i].SeqId = 0;
-    }
-
-    OpenCcs->InProgress          = false;
-    OpenCcs->Size                = 0;
-    OpenCcs->CollectionStartTime = 0;
-    OpenCcs->BundlesInCcs        = 0;
+    memset(OpenCcs, 0, sizeof(BPLib_CT_OpenCcs_t));
 
     return;
 }
@@ -203,7 +192,8 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
         Collection->SeqRangeLen >= (BPLIB_CT_MAX_SEQ_RANGE_LEN - 1))
     {
         BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
-                "Open CCS data failed sanity checks, check for memory corruption.");
+                "Open CCS data failed sanity checks, check for memory corruption. Sequence range length = %ld.",
+                Collection->SeqRangeLen);
 
         return BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
@@ -263,7 +253,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
     OpenCcs->BundlesInCcs++;
 
     /* Trigger CCS generation based on size */
-    if (OpenCcs->Size >= OpenCcs->MaxSize || Collection->SeqRangeLen == BPLIB_CT_MAX_SEQ_RANGE_LEN)
+    if (OpenCcs->Size >= OpenCcs->MaxSize || Collection->SeqRangeLen >= BPLIB_CT_MAX_SEQ_RANGE_LEN)
     {
         BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
     }
@@ -352,10 +342,15 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     size_t NextSeqNum;
     BPLib_Status_t Status = BPLIB_SUCCESS;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
-    BPLib_CT_CcsUpdateBatch_t CcsStorBatch;
 
-    CcsStorBatch.Size = 0;
     CurrSeqNum =  SeqCollection->FirstSeqNum;
+
+    /* 
+    ** Normally we'd lock CT outside of this function but taking both the CT and STOR
+    ** locks at the same time introduces the potential for deadlocks. Each thread should
+    ** only ever have one of each lock at a time.
+    */
+    pthread_mutex_lock(&Inst->Ct.Lock);
 
     for (SeqRangeIdx = 0; SeqRangeIdx < SeqCollection->SeqRangeLen; SeqRangeIdx++)
     {
@@ -382,9 +377,9 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                     if (Status == BPLIB_SUCCESS)
                     {
                         /* Request bundle deletion from storage */
-                        CcsStorBatch.BundleIDs[CcsStorBatch.Size] = DbEntry->BundleId;
-                        CcsStorBatch.Ops[CcsStorBatch.Size] = BPLIB_CT_MARK_DELETE;
-                        CcsStorBatch.Size++;
+                        pthread_mutex_unlock(&Inst->Ct.Lock);
+                        BPLib_STOR_AddToCustodialUpdateBatch(Inst, DbEntry->BundleId, BPLIB_CT_MARK_DELETE);
+                        pthread_mutex_lock(&Inst->Ct.Lock);
 
                         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
                         Inst->Ct.BundleCountInCustody--;
@@ -400,9 +395,9 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 else
                 {
                     /* Request storage turn retransmit timer off */
-                    CcsStorBatch.BundleIDs[CcsStorBatch.Size] = DbEntry->BundleId;
-                    CcsStorBatch.Ops[CcsStorBatch.Size] = BPLIB_CT_STOP_RETRANSMIT;
-                    CcsStorBatch.Size++;
+                    pthread_mutex_unlock(&Inst->Ct.Lock);
+                    BPLib_STOR_AddToCustodialUpdateBatch(Inst, DbEntry->BundleId, BPLIB_CT_STOP_RETRANSMIT);
+                    pthread_mutex_lock(&Inst->Ct.Lock);
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REJECTED, 1);
                 }
@@ -413,30 +408,19 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             else
             {
                 /* Request bundle retransmission from storage */
-                CcsStorBatch.BundleIDs[CcsStorBatch.Size] = DbEntry->BundleId;
-                CcsStorBatch.Ops[CcsStorBatch.Size] = BPLIB_CT_START_RETRANSMIT;
-                CcsStorBatch.Size++;
-            }
-
-            /* If a batch of bundle IDs is reached, do storage operation */
-            if (CcsStorBatch.Size >= BPLIB_CT_BATCH_SIZE)
-            {
-                Status = BPLib_STOR_UpdateCustodialBundles(Inst, &CcsStorBatch);
-
-                /* Ignore return code, event message handled internally */
-
-                CcsStorBatch.Size = 0;
+                pthread_mutex_unlock(&Inst->Ct.Lock);
+                BPLib_STOR_AddToCustodialUpdateBatch(Inst, DbEntry->BundleId, BPLIB_CT_START_RETRANSMIT);
+                pthread_mutex_lock(&Inst->Ct.Lock);
             }
         }
 
         CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];
     }
 
+    pthread_mutex_unlock(&Inst->Ct.Lock);
+
     /* Do remaining batch of storage operations */
-    if (CcsStorBatch.Size > 0)
-    {
-        Status = BPLib_STOR_UpdateCustodialBundles(Inst, &CcsStorBatch);
-    }
+    BPLib_STOR_UpdateCustodialBundles(Inst);
 
     return Status;
 }

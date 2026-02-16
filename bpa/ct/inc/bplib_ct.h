@@ -96,17 +96,6 @@ typedef enum
 } BPLib_CT_StorOp_t;
 
 /**
- * \brief A batch of storage operations associated with a set of bundle IDs generated
- *        after receiving and processing a CCS
- */
-typedef struct 
-{
-    uint32_t BundleIDs[BPLIB_CT_BATCH_SIZE];
-    BPLib_CT_StorOp_t Ops[BPLIB_CT_BATCH_SIZE];
-    size_t   Size;
-} BPLib_CT_CcsUpdateBatch_t;
-
-/**
  * \brief Disposition codes relating custody information of a bundle sequence collection
  *        in a CCS. A positive disposition code indicates custody acceptance, a negative
  *        disposition code indicates custody refusal.

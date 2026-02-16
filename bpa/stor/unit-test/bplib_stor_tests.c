@@ -167,14 +167,16 @@ void Test_BPLib_STOR_Cleanup_Nominal(void)
 
 void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
 {
-    BPLib_CT_CcsUpdateBatch_t Batch;
-    size_t BundlesPerOp = BPLIB_CT_BATCH_SIZE / 3;
-    size_t NumBundles = BPLIB_CT_BATCH_SIZE;
-    BPLib_Bundle_t Bundles[BPLIB_CT_BATCH_SIZE];
+    BPLib_STOR_CtUpdateBatch_t *Batch;
+    size_t BundlesPerOp = BPLIB_STOR_CT_BATCH_SIZE / 3;
+    size_t NumBundles = BPLIB_STOR_CT_BATCH_SIZE;
+    BPLib_Bundle_t Bundles[BPLIB_STOR_CT_BATCH_SIZE];
     size_t i;
     size_t NumEgressed;
     uint64_t RetransmissionTime = 12345;
     size_t NumTransferred = 0;
+
+    Batch = &(BplibInst.BundleStorage.CustodyUpdateBatch);
 
     /*
     ** Test setup: Put a bunch of unique bundles into storage
@@ -189,24 +191,24 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
         Bundles[i].Meta.RetransmitTime = 100;
         BPLib_STOR_StoreBundle(&BplibInst, &Bundles[i]);
 
-        Batch.BundleIDs[i] = i;
+        Batch->BundleIDs[i] = i;
         
         if (i < BundlesPerOp)
         {
-            Batch.Ops[i] = BPLIB_CT_MARK_DELETE;
+            Batch->Ops[i] = BPLIB_CT_MARK_DELETE;
             NumTransferred++;
         }
         else if (i < (BundlesPerOp * 2))
         {
-            Batch.Ops[i] = BPLIB_CT_START_RETRANSMIT;
+            Batch->Ops[i] = BPLIB_CT_START_RETRANSMIT;
         }
         else if (i < (BundlesPerOp * 3))
         {
-            Batch.Ops[i] = BPLIB_CT_STOP_RETRANSMIT;
+            Batch->Ops[i] = BPLIB_CT_STOP_RETRANSMIT;
         }
     }
 
-    Batch.Size = NumBundles;
+    Batch->Size = NumBundles;
     BPLib_STOR_FlushPending(&BplibInst);
 
     /*
@@ -214,7 +216,7 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
     ** test that the expected updates took effect
     */
     UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), RetransmissionTime);
-    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, &Batch), BPLIB_SUCCESS);
+    UtAssert_VOIDCALL(BPLib_STOR_UpdateCustodialBundles(&BplibInst));
 
     BplibInst.BundleStorage.LastActiveTime = 0;
 
@@ -251,30 +253,26 @@ void Test_BPLib_STOR_UpdateCustodialBundles_Nominal(void)
 
 void Test_BPLib_STOR_UpdateCustodialBundles_Null(void)
 {
-    BPLib_CT_CcsUpdateBatch_t Batch;
+    UtAssert_VOIDCALL(BPLib_STOR_UpdateCustodialBundles(NULL));
 
-    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(NULL, &Batch), BPLIB_NULL_PTR_ERROR);
-    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, NULL), BPLIB_NULL_PTR_ERROR);
-
-    Batch.Size = BPLIB_CT_BATCH_SIZE + 1;
-    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, &Batch), BPLIB_NULL_PTR_ERROR);
+    BplibInst.BundleStorage.CustodyUpdateBatch.Size = BPLIB_STOR_CT_BATCH_SIZE + 1;
+    UtAssert_VOIDCALL(BPLib_STOR_UpdateCustodialBundles(&BplibInst));
 }
 
 void Test_BPLib_STOR_UpdateCustodialBundles_Err(void)
 {
-    BPLib_CT_CcsUpdateBatch_t Batch;
-
     BplibInst.BundleStorage.db = NULL;
-    Batch.Size = 1;
+    BplibInst.BundleStorage.CustodyUpdateBatch.Size = 1;
 
-    UtAssert_EQ(BPLib_Status_t, BPLib_STOR_UpdateCustodialBundles(&BplibInst, &Batch), BPLIB_SQL_CUSTODY_UPDATE_ERR);
+    UtAssert_VOIDCALL(BPLib_STOR_UpdateCustodialBundles(&BplibInst));
+    
     UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 1);
 }
 
 void Test_BPLib_STOR_SetNewRetransmitTrigger_Nominal(void)
 {
-    size_t NumBundles = BPLIB_CT_BATCH_SIZE;
-    BPLib_Bundle_t Bundles[BPLIB_CT_BATCH_SIZE];
+    size_t NumBundles = BPLIB_STOR_CT_BATCH_SIZE;
+    BPLib_Bundle_t Bundles[BPLIB_STOR_CT_BATCH_SIZE];
     size_t i;
     uint32_t OldTrigger = 100;
     uint32_t NewTrigger = 500;

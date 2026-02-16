@@ -193,12 +193,17 @@ SQL_Status_t BPLib_SQL_SetNewRetransmitTriggerImpl(sqlite3* db, BPLib_EID_Patter
     return SQLStatus;    
 }
 
-BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT_CcsUpdateBatch_t *Batch)
+BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_STOR_CtUpdateBatch_t *Batch)
 {
     SQL_Status_t   SQLStatus;
     sqlite3*       db;
 
     db     = Inst->BundleStorage.db;
+
+    if (Batch->Size == 0)
+    {
+        return BPLIB_SUCCESS;
+    }
 
     SQLStatus = sqlite3_prepare_v2(db, TriggerRetransmitSQL, -1, &TriggerRetransmitStmt, 0);
     if (SQLStatus != SQLITE_OK)
@@ -229,14 +234,14 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT
 
     if (SQLStatus != SQLITE_OK)
     {
-        fprintf(stderr, "Programming Error: MarkEgressedSQL finalize failed, error=%s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Programming Error: UpdateCustodialBundles finalize failed, error=%s\n", sqlite3_errmsg(db));
         return BPLIB_SQL_CUSTODY_UPDATE_ERR;
     }
 
     return BPLIB_SUCCESS;
 }
 
-SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_CT_CcsUpdateBatch_t *Batch)
+SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_STOR_CtUpdateBatch_t *Batch)
 {
     SQL_Status_t SQLStatus;
     size_t       i;

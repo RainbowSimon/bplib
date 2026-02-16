@@ -73,6 +73,8 @@ void Test_BPLib_STOR_FlushPending_SQLFail(void)
 {
     BPLib_Bundle_t Bundle;
 
+    Bundle.Meta.IsCustodial = false;
+
     /* Place bundle in storage batch */
     BplibInst.BundleStorage.InsertBatch[0] = &Bundle;
     BplibInst.BundleStorage.InsertBatchSize = 1;
@@ -137,6 +139,8 @@ void Test_BPLib_STOR_StoreBundle_SQLFail(void)
     BPLib_Bundle_t Bundle;
 
     BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
+
+    Bundle.Meta.IsCustodial = false;
     
     /* Store and flush bundle */
     BplibInst.BundleStorage.db = NULL;
@@ -205,6 +209,8 @@ void Test_BPLib_STOR_StoreBundle_Duplicates(void)
 
     BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
 
+    Bundle.Meta.IsCustodial = false;
+
     /* Store a batch worth of bundles */
     for (i = 0; i < BPLIB_STOR_INSERTBATCHSIZE - 1; i++)
     {
@@ -259,7 +265,7 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, MonoTime);
 
     /* Run the function under test */
-    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
+    Status = BPLib_STOR_FlushPending(&BplibInst);
 
     /* Show that the function was run successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -292,7 +298,7 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, 0);
 
     /* Run the function under test */
-    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
+    Status = BPLib_STOR_FlushPending(&BplibInst);
 
     /* Show that the function was run successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -321,7 +327,7 @@ void Test_BPLib_SQL_StoreMetadata_InvalidCreateTime(void)
     Bundle.blocks.ExtBlocks[0].BlockData.AgeBlockData.Age = 1000;
 
     /* Run the function under test */
-    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
+    Status = BPLib_STOR_FlushPending(&BplibInst);
 
     /* Show that the function was run successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -336,11 +342,6 @@ void Test_BPLib_SQL_StoreMetadata_InvalidCreateTime(void)
 
 void TestBplib_STOR_Store_Register(void)
 {
-    ADD_TEST(Test_BPLib_STOR_FlushPending_NullParams);
-    ADD_TEST(Test_BPLib_STOR_FlushPending_NoBundles);
-    ADD_TEST(Test_BPLib_STOR_FlushPending_Nominal);
-    ADD_TEST(Test_BPLib_STOR_FlushPending_SQLFail);
-
     ADD_TEST(Test_BPLib_STOR_FlushPending_NullParams);
     ADD_TEST(Test_BPLib_STOR_FlushPending_NoBundles);
     ADD_TEST(Test_BPLib_STOR_FlushPending_Nominal);

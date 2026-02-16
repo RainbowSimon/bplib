@@ -1,19 +1,19 @@
 /*
- * NASA Docket No. GSC-19,559-1, and identified as "Delay/Disruption Tolerant Networking 
+ * NASA Docket No. GSC-19,559-1, and identified as "Delay/Disruption Tolerant Networking
  * (DTN) Bundle Protocol (BP) v7 Core Flight System (cFS) Application Build 7.0
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this 
- * file except in compliance with the License. You may obtain a copy of the License at 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0 
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under 
- * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
- * ANY KIND, either express or implied. See the License for the specific language 
- * governing permissions and limitations under the License. The copyright notice to be 
- * included in the software is as follows: 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License. The copyright notice to be
+ * included in the software is as follows:
  *
- * Copyright 2025 United States Government as represented by the Administrator of the 
+ * Copyright 2025 United States Government as represented by the Administrator of the
  * National Aeronautics and Space Administration. All Rights Reserved.
  *
  */
@@ -28,6 +28,20 @@
 #include "utgenstub.h"
 
 BPLib_StorageHkTlm_Payload_t BPLib_STOR_StoragePayload;
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_STOR_AddToCustodialUpdateBatch()
+ * ----------------------------------------------------
+ */
+void BPLib_STOR_AddToCustodialUpdateBatch(BPLib_Instance_t *Inst, uint32_t BundleId, BPLib_CT_StorOp_t Op)
+{
+    UT_GenStub_AddParam(BPLib_STOR_AddToCustodialUpdateBatch, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_STOR_AddToCustodialUpdateBatch, uint32_t, BundleId);
+    UT_GenStub_AddParam(BPLib_STOR_AddToCustodialUpdateBatch, BPLib_CT_StorOp_t, Op);
+
+    UT_GenStub_Execute(BPLib_STOR_AddToCustodialUpdateBatch, Basic, NULL);
+}
 
 /*
  * ----------------------------------------------------
@@ -108,22 +122,6 @@ BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t *Inst)
     UT_GenStub_Execute(BPLib_STOR_FlushPending, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_STOR_FlushPending, BPLib_Status_t);
-}
-
-/*
- * ----------------------------------------------------
- * Generated stub function for BPLib_STOR_FlushPendingUnlocked()
- * ----------------------------------------------------
- */
-BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t *Inst)
-{
-    UT_GenStub_SetupReturnBuffer(BPLib_STOR_FlushPendingUnlocked, BPLib_Status_t);
-
-    UT_GenStub_AddParam(BPLib_STOR_FlushPendingUnlocked, BPLib_Instance_t *, Inst);
-
-    UT_GenStub_Execute(BPLib_STOR_FlushPendingUnlocked, Basic, NULL);
-
-    return UT_GenStub_GetReturnValue(BPLib_STOR_FlushPendingUnlocked, BPLib_Status_t);
 }
 
 /*
@@ -241,16 +239,11 @@ BPLib_Status_t BPLib_STOR_StoreBundle(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bu
  * Generated stub function for BPLib_STOR_UpdateCustodialBundles()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_CT_CcsUpdateBatch_t *Batch)
+void BPLib_STOR_UpdateCustodialBundles(BPLib_Instance_t *Inst)
 {
-    UT_GenStub_SetupReturnBuffer(BPLib_STOR_UpdateCustodialBundles, BPLib_Status_t);
-
     UT_GenStub_AddParam(BPLib_STOR_UpdateCustodialBundles, BPLib_Instance_t *, Inst);
-    UT_GenStub_AddParam(BPLib_STOR_UpdateCustodialBundles, BPLib_CT_CcsUpdateBatch_t *, Batch);
 
     UT_GenStub_Execute(BPLib_STOR_UpdateCustodialBundles, Basic, NULL);
-
-    return UT_GenStub_GetReturnValue(BPLib_STOR_UpdateCustodialBundles, BPLib_Status_t);
 }
 
 /*

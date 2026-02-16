@@ -371,8 +371,6 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
 
     /* Validate CCS here? TODO */
 
-    pthread_mutex_lock(&Inst->Ct.Lock);
-
     for (SeqCollectIdx = 0; SeqCollectIdx < Ccs->NumBundleSeqCollections; SeqCollectIdx++)
     {
         if (Ccs->BundleSeqCollections[SeqCollectIdx].SeqRangeLen >= BPLIB_CT_MAX_SEQ_RANGE_LEN)

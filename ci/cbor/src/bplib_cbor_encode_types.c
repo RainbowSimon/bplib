@@ -522,7 +522,7 @@ BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext *Context, BPLib_B
             break;
 
         case BPLib_CT_CcsRecordTypeCode:
-            BPLib_CBOR_EncodeCcs(Context, &(AdminRecord->AdminRecordBody.CCS));
+            Status = BPLib_CBOR_EncodeCcs(Context, &(AdminRecord->AdminRecordBody.CCS));
             break;
 
         default:
@@ -547,15 +547,25 @@ void BPLib_CBOR_EncodeCrs(QCBOREncodeContext* Context, BPLib_ARP_CompressedRepor
 }
 */
 
-void BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS)
+BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS)
 {
     size_t BscIdx;
     size_t SeqRangeIdx;
     
     QCBOREncode_OpenMap(Context);
 
+    if (CCS->NumBundleSeqCollections > BPLIB_CT_MAX_SEQ_COLLECTIONS)
+    {
+        return BPLIB_CBOR_ENC_CORRUPT_CCS_ERR;
+    }
+
     for (BscIdx = 0; BscIdx < CCS->NumBundleSeqCollections; BscIdx++)
     {
+        if (CCS->BundleSeqCollections[BscIdx].SeqRangeLen > BPLIB_CT_MAX_SEQ_RANGE_LEN)
+        {
+            return BPLIB_CBOR_ENC_CORRUPT_CCS_ERR;
+        }
+
         QCBOREncode_AddInt64(Context, (int64_t) CCS->BundleSeqCollections[BscIdx].DispositionCode);
 
         QCBOREncode_OpenArray(Context);
@@ -577,5 +587,5 @@ void BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_
 
     QCBOREncode_CloseMap(Context);
 
-    return;
+    return BPLIB_SUCCESS;
 }

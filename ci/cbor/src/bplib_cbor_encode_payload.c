@@ -123,7 +123,7 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     size_t BytesLeftInOutputBuffer;
     size_t ByteStringCborHeadSize;
     size_t PayloadSize;
-    UsefulBufC         EncodedAdminRecord;
+    UsefulBufC EncodedAdminRecord;
     
     UsefulBuf_MAKE_STACK_UB(  AdminRecordBuffer, BPLIB_MAX_PAYLOAD_SIZE);
 

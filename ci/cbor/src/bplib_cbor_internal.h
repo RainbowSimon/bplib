@@ -509,9 +509,10 @@ void BPLib_CBOR_EncodeCrs(QCBOREncodeContext* Context, BPLib_ARP_CompressedRepor
  * \brief Encode a Compressed Custody Signal
  * \param[in]  Context      QCBOR encode context instance pointer
  * \param[in]  CCS          Pointer to the Compressed Custody Signal to be encoded
- * \return     void
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
  */
-void BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS);
+BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS);
 
 /**
  * \brief     Validates a block's CRC value
