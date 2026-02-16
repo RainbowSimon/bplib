@@ -73,6 +73,8 @@ void Test_BPLib_STOR_FlushPending_SQLFail(void)
 {
     BPLib_Bundle_t Bundle;
 
+    Bundle.Meta.IsCustodial = false;
+
     /* Place bundle in storage batch */
     BplibInst.BundleStorage.InsertBatch[0] = &Bundle;
     BplibInst.BundleStorage.InsertBatchSize = 1;
@@ -137,6 +139,8 @@ void Test_BPLib_STOR_StoreBundle_SQLFail(void)
     BPLib_Bundle_t Bundle;
 
     BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
+
+    Bundle.Meta.IsCustodial = false;
     
     /* Store and flush bundle */
     BplibInst.BundleStorage.db = NULL;
@@ -204,6 +208,8 @@ void Test_BPLib_STOR_StoreBundle_Duplicates(void)
     int i;
 
     BPLib_STOR_Test_CreateTestBundle(&Bundle, 0);
+
+    Bundle.Meta.IsCustodial = false;
 
     /* Store a batch worth of bundles */
     for (i = 0; i < BPLIB_STOR_INSERTBATCHSIZE - 1; i++)
@@ -336,11 +342,6 @@ void Test_BPLib_SQL_StoreMetadata_InvalidCreateTime(void)
 
 void TestBplib_STOR_Store_Register(void)
 {
-    ADD_TEST(Test_BPLib_STOR_FlushPending_NullParams);
-    ADD_TEST(Test_BPLib_STOR_FlushPending_NoBundles);
-    ADD_TEST(Test_BPLib_STOR_FlushPending_Nominal);
-    ADD_TEST(Test_BPLib_STOR_FlushPending_SQLFail);
-
     ADD_TEST(Test_BPLib_STOR_FlushPending_NullParams);
     ADD_TEST(Test_BPLib_STOR_FlushPending_NoBundles);
     ADD_TEST(Test_BPLib_STOR_FlushPending_Nominal);
