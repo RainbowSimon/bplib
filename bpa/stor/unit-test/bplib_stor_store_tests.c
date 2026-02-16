@@ -259,7 +259,7 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeValidDtnTime(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, MonoTime);
 
     /* Run the function under test */
-    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
+    Status = BPLib_STOR_FlushPending(&BplibInst);
 
     /* Show that the function was run successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -292,7 +292,7 @@ void Test_BPLib_SQL_StoreMetadata_ValidCreateTimeInvalidDtnTime(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, 0);
 
     /* Run the function under test */
-    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
+    Status = BPLib_STOR_FlushPending(&BplibInst);
 
     /* Show that the function was run successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -321,7 +321,7 @@ void Test_BPLib_SQL_StoreMetadata_InvalidCreateTime(void)
     Bundle.blocks.ExtBlocks[0].BlockData.AgeBlockData.Age = 1000;
 
     /* Run the function under test */
-    Status = BPLib_STOR_FlushPendingUnlocked(&BplibInst);
+    Status = BPLib_STOR_FlushPending(&BplibInst);
 
     /* Show that the function was run successfully */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);

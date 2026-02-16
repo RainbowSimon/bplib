@@ -126,22 +126,6 @@ BPLib_Status_t BPLib_STOR_FlushPending(BPLib_Instance_t *Inst)
 
 /*
  * ----------------------------------------------------
- * Generated stub function for BPLib_STOR_FlushPendingUnlocked()
- * ----------------------------------------------------
- */
-BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t *Inst)
-{
-    UT_GenStub_SetupReturnBuffer(BPLib_STOR_FlushPendingUnlocked, BPLib_Status_t);
-
-    UT_GenStub_AddParam(BPLib_STOR_FlushPendingUnlocked, BPLib_Instance_t *, Inst);
-
-    UT_GenStub_Execute(BPLib_STOR_FlushPendingUnlocked, Basic, NULL);
-
-    return UT_GenStub_GetReturnValue(BPLib_STOR_FlushPendingUnlocked, BPLib_Status_t);
-}
-
-/*
- * ----------------------------------------------------
  * Generated stub function for BPLib_STOR_GarbageCollect()
  * ----------------------------------------------------
  */

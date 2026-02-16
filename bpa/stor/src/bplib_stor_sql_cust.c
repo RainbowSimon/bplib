@@ -234,7 +234,7 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_ST
 
     if (SQLStatus != SQLITE_OK)
     {
-        fprintf(stderr, "Programming Error: MarkEgressedSQL finalize failed, error=%s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Programming Error: UpdateCustodialBundles finalize failed, error=%s\n", sqlite3_errmsg(db));
         return BPLIB_SQL_CUSTODY_UPDATE_ERR;
     }
 

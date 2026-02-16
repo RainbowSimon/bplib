@@ -294,6 +294,11 @@ SQL_Status_t BPLib_SQL_StoreImpl(BPLib_Instance_t* Inst, size_t *TotalBytesStore
 
     db = Inst->BundleStorage.db;
 
+    if (Inst->BundleStorage.InsertBatchSize == 0)
+    {
+        return SQLITE_OK;
+    }
+
     /* Create a batch query */
     SQLStatus = sqlite3_exec(db, "BEGIN;", 0, 0, 0);
     if (SQLStatus != SQLITE_OK)
