@@ -114,7 +114,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     /* No CTEB was found, skip custody operations for this bundle */
     if (ExtBlockIdx >= BPLIB_MAX_NUM_EXTENSION_BLOCKS)
     {
-        return Status;
+        return BPLIB_SUCCESS;
     }
 
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REQUEST, 1);
@@ -163,6 +163,17 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 
+    if (Status == BPLIB_SUCCESS)
+    {
+        /* Add bundle to CTDB but leave sequence ID/number undefined until egress */
+        Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            DispCode = BPLib_CT_CustodyRefused;
+        }
+    }
+
     pthread_mutex_unlock(&Inst->Ct.Lock);
 
     if (Status != BPLIB_SUCCESS)
@@ -172,13 +183,6 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         ** until a bundle is successfully stored to formally accept it
         */
         (void) BPLib_CT_SignalCustody(Inst, Bundle, DispCode, IsDuplicate);
-    }
-    else
-    {
-        /* Add bundle to CTDB but leave sequence ID/number undefined until egress */
-        pthread_mutex_lock(&Inst->Ct.Lock);
-        Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
-        pthread_mutex_unlock(&Inst->Ct.Lock);
     }
     
     return Status;
