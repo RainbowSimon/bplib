@@ -41,8 +41,6 @@
 struct BPLib_BundleCache
 {
     mutex_t lock;
-    BPLib_Bundle_t* InsertBatch[BPLIB_STOR_INSERTBATCHSIZE];
-    size_t InsertBatchSize;
     /* The load batches are removed for RIOT because they are very implementation dependent
      * Loading the numbers (which iirc were the row numbers in the blob table) does not really
      * help if the actual storage implementation uses some other indexing / storage medium.

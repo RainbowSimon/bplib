@@ -66,10 +66,10 @@ BPLib_Status_t BPLib_QM_QueueTableInit(BPLib_Instance_t* inst, size_t MaxJobs)
         QueueInit = false;
     }
 
-    if (!BPLib_QM_WaitQueueInit(&(inst->BundleCacheList), sizeof(BPLib_Bundle_t*), MaxJobs))
+    /*if (!BPLib_QM_WaitQueueInit(&(inst->BundleCacheList), sizeof(BPLib_Bundle_t*), MaxJobs))
     {
         QueueInit = false;
-    }
+    }*/
 
     for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
     {
@@ -110,7 +110,7 @@ void BPLib_QM_QueueTableDestroy(BPLib_Instance_t* inst)
 
     /* Queue Cleanup */
     BPLib_QM_WaitQueueDestroy(&(inst->GenericWorkerJobs));
-    BPLib_QM_WaitQueueDestroy(&(inst->BundleCacheList));
+    /*BPLib_QM_WaitQueueDestroy(&(inst->BundleCacheList));*/
     for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
     {
         BPLib_QM_WaitQueueDestroy(&(inst->ChannelEgressJobs[i]));
