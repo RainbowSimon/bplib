@@ -376,6 +376,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     size_t NextSeqNum;
     BPLib_Status_t Status = BPLIB_SUCCESS;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
+    bool NotFoundErr = false;
 
     CurrSeqNum =  SeqCollection->FirstSeqNum;
 
@@ -395,9 +396,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
 
             if (Status != BPLIB_SUCCESS || DbEntry == NULL)
             {
-                BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_ERR_EID, BPLib_EM_EventType_ERROR,
-                    "Error, bundle sequence number %ld with sequence ID %ld does not exist in CTDB.",
-                    NextSeqNum, SeqCollection->SeqId);
+                NotFoundErr = true;
             }
 
             /* Even sequence range numbers indicate sequences that are *included* */
@@ -446,6 +445,16 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 BPLib_STOR_AddToCustodialUpdateBatch(Inst, DbEntry->BundleId, BPLIB_CT_START_RETRANSMIT);
                 pthread_mutex_lock(&Inst->Ct.Lock);
             }
+        }
+
+        if (NotFoundErr)
+        {
+            BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "Error, at least one bundle with sequence ID %ld in sequence number range [%ld-%ld] could not be found in the CTDB.",
+                    SeqCollection->SeqId, CurrSeqNum, 
+                    CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]);
+
+            NotFoundErr = false;
         }
 
         CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];
