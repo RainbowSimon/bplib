@@ -47,10 +47,11 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
     return;
 }
 
-void BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collection, 
+BPLib_Status_t BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collection, 
                                             uint64_t BundleSeqNum, size_t *CcsSizePtr)
 {
     uint64_t LastIncludeRangeNum;
+    uint64_t NewSeqRange[BPLIB_CT_MAX_SEQ_RANGE_LEN + 2];
     uint64_t OldSeqRange[BPLIB_CT_MAX_SEQ_RANGE_LEN];
     size_t OrigRangeIdx;
     size_t LastNewRangeIdx;
@@ -58,39 +59,41 @@ void BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collectio
     size_t OldExcIdx;
     size_t NewIncIdx;
     size_t CondenseCount;
+    int64_t ChangeInSeqLen = 0;
+    uint64_t FirstSeqNum = Collection->FirstSeqNum;
 
     memcpy(OldSeqRange, Collection->SeqRange, sizeof(Collection->SeqRange));
+    memset(NewSeqRange, 0, sizeof(NewSeqRange));
 
     /* If new bundle sequence number predates first sequence number entirely */
-    if (BundleSeqNum < Collection->FirstSeqNum)
+    if (BundleSeqNum < FirstSeqNum)
     {
-        if (BundleSeqNum + 1 == Collection->FirstSeqNum)
+        if (BundleSeqNum + 1 == FirstSeqNum)
         {
-            Collection->SeqRange[0] = OldSeqRange[0] + 1;
+            NewSeqRange[0] = OldSeqRange[0] + 1;
 
             LastNewRangeIdx = 0;
         }
         else
         {
-            Collection->SeqRange[0] = 1;
-            Collection->SeqRange[1] = (Collection->FirstSeqNum - (BundleSeqNum + 1));
-            Collection->SeqRange[2] = OldSeqRange[0];
-            Collection->SeqRangeLen += 2;
-            (*CcsSizePtr) += 2;
+            NewSeqRange[0] = 1;
+            NewSeqRange[1] = (FirstSeqNum - (BundleSeqNum + 1));
+            NewSeqRange[2] = OldSeqRange[0];
+            ChangeInSeqLen += 2;
 
             LastNewRangeIdx = 2;
         }
 
-        LastIncludeRangeNum = Collection->FirstSeqNum + OldSeqRange[0];
-        Collection->FirstSeqNum = BundleSeqNum;
+        LastIncludeRangeNum = FirstSeqNum + OldSeqRange[0];
+        FirstSeqNum = BundleSeqNum;
 
         InsertionComplete = true;
     }
     else
     {
-        Collection->SeqRange[0] = OldSeqRange[0];
+        NewSeqRange[0] = OldSeqRange[0];
     
-        LastIncludeRangeNum = Collection->FirstSeqNum + Collection->SeqRange[0];
+        LastIncludeRangeNum = FirstSeqNum + NewSeqRange[0];
         LastNewRangeIdx = 0;
     }
     
@@ -110,19 +113,30 @@ void BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collectio
         if (InsertionComplete == false && 
                  BundleSeqNum < (LastIncludeRangeNum + OldSeqRange[OrigRangeIdx]))
         {
-            Collection->SeqRange[LastNewRangeIdx + 1] = BundleSeqNum - LastIncludeRangeNum;
-            Collection->SeqRange[LastNewRangeIdx + 2] = 1;
-            Collection->SeqRange[LastNewRangeIdx + 3] = (LastIncludeRangeNum + OldSeqRange[OrigRangeIdx]) - (BundleSeqNum + 1);
-            Collection->SeqRange[LastNewRangeIdx + 4] = OldSeqRange[OrigRangeIdx + 1];
+            if (LastNewRangeIdx + 4 > (BPLIB_CT_MAX_SEQ_RANGE_LEN + 2))
+            {
+                return BPLIB_BUF_LEN_ERROR;
+            }
+
+            NewSeqRange[LastNewRangeIdx + 1] = BundleSeqNum - LastIncludeRangeNum;
+            NewSeqRange[LastNewRangeIdx + 2] = 1;
+            NewSeqRange[LastNewRangeIdx + 3] = (LastIncludeRangeNum + OldSeqRange[OrigRangeIdx]) - (BundleSeqNum + 1);
+            NewSeqRange[LastNewRangeIdx + 4] = OldSeqRange[OrigRangeIdx + 1];
 
             InsertionComplete = true;
             LastNewRangeIdx += 4;
+            ChangeInSeqLen += 2;
         }
         /* Else just copy over current exclude and include ranges */
         else
         {
-            Collection->SeqRange[LastNewRangeIdx + 1] = OldSeqRange[OrigRangeIdx];
-            Collection->SeqRange[LastNewRangeIdx + 2] = OldSeqRange[OrigRangeIdx + 1];
+            if (LastNewRangeIdx + 2 > (BPLIB_CT_MAX_SEQ_RANGE_LEN + 2))
+            {
+                return BPLIB_BUF_LEN_ERROR;
+            }
+
+            NewSeqRange[LastNewRangeIdx + 1] = OldSeqRange[OrigRangeIdx];
+            NewSeqRange[LastNewRangeIdx + 2] = OldSeqRange[OrigRangeIdx + 1];
 
             LastNewRangeIdx += 2;
         }
@@ -130,12 +144,6 @@ void BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collectio
         /* Jump to next "include" range */
         LastIncludeRangeNum += OldSeqRange[OrigRangeIdx];
         LastIncludeRangeNum += OldSeqRange[OrigRangeIdx + 1];
-    }
-
-    if (InsertionComplete)
-    {
-        Collection->SeqRangeLen += 2;
-        (*CcsSizePtr) += 2;
     }
 
     /*
@@ -147,20 +155,20 @@ void BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collectio
     NewIncIdx = 0;
     CondenseCount = 0;
 
-    while (OldExcIdx < Collection->SeqRangeLen)
+    while (OldExcIdx < (Collection->SeqRangeLen + ChangeInSeqLen))
     {
         /* Exclude range is 0, need to condense array */
-        if (Collection->SeqRange[OldExcIdx] == 0)
+        if (NewSeqRange[OldExcIdx] == 0)
         {
-            Collection->SeqRange[NewIncIdx] += Collection->SeqRange[OldExcIdx + 1];
+            NewSeqRange[NewIncIdx] += NewSeqRange[OldExcIdx + 1];
 
             CondenseCount++;
         }
         /* No 0 detected, just copy values down */
         else
         {
-            Collection->SeqRange[NewIncIdx + 1] = Collection->SeqRange[OldExcIdx];
-            Collection->SeqRange[NewIncIdx + 2] = Collection->SeqRange[OldExcIdx + 1];
+            NewSeqRange[NewIncIdx + 1] = NewSeqRange[OldExcIdx];
+            NewSeqRange[NewIncIdx + 2] = NewSeqRange[OldExcIdx + 1];
 
             NewIncIdx += 2;
         }
@@ -168,10 +176,19 @@ void BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collectio
         OldExcIdx += 2;
     }
 
-    Collection->SeqRangeLen -= (CondenseCount * 2);
-    (*CcsSizePtr) -= (CondenseCount * 2);
+    ChangeInSeqLen -= (CondenseCount * 2);
 
-    return;
+    if (Collection->SeqRangeLen + ChangeInSeqLen > BPLIB_CT_MAX_SEQ_RANGE_LEN)
+    {
+        return BPLIB_BUF_LEN_ERROR;
+    }
+
+    memcpy(Collection->SeqRange, NewSeqRange, sizeof(Collection->SeqRange));
+    Collection->FirstSeqNum = FirstSeqNum;
+    Collection->SeqRangeLen += ChangeInSeqLen;
+    (*CcsSizePtr) += ChangeInSeqLen;
+
+    return BPLIB_SUCCESS;
 }
 
 BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsIdx,
@@ -182,6 +199,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
     BPLib_CT_BundleSeqCollection_t *Collection;
     BPLib_CT_SeqCollectionIdx_t     DispCodeIdx;
     BPLib_CT_OpenCcs_t*             OpenCcs;
+    BPLib_Status_t                  Status = BPLIB_SUCCESS;
 
     OpenCcs     = &(Instance->Ct.OpenCcss[OpenCcsIdx]);
     DispCodeIdx = BPLib_ARP_GetDispCodeIdx(DispositionCode);
@@ -226,7 +244,23 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
     /* Older bundle was received, gotta update older CCS records */
     else if (CtebPtr->BundleSeqNum < Collection->LastSeqNumAdded)
     {
-        BPLib_CT_InsertOldSeqNumToOpenCcs(Collection, CtebPtr->BundleSeqNum, &(OpenCcs->Size));
+        Status = BPLib_CT_InsertOldSeqNumToOpenCcs(Collection, CtebPtr->BundleSeqNum, &(OpenCcs->Size));
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            /* 
+            ** Couldn't insert this bundle number for some reason, just go ahead and send
+            ** the existing CCS and throw this bundle sequence number out, it will get
+            ** added to the next CCS upon bundle retransmission
+            */
+            BPLib_EM_SendEvent(BPLIB_CT_CCS_INSERT_ERR_EID, BPLib_EM_EventType_ERROR, 
+                    "Error inserting bundle sequence number %ld in CCS with sequence ID %ld, Status = %d",
+                CtebPtr->BundleSeqNum, CtebPtr->BundleSeqId, Status);
+
+            BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
+
+            return Status;
+        }
     }
     /* Sequence number comes after last sequence number received */
     else
