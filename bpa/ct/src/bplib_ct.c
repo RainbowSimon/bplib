@@ -368,7 +368,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
         return BPLIB_NULL_PTR_ERROR;
     }
 
-    if (Ccs->NumBundleSeqCollections >= BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS)
+    if (Ccs->NumBundleSeqCollections > BPLIB_CT_MAX_RECVD_SEQ_COLLECTIONS)
     {
         return BPLIB_BUF_LEN_ERROR;
     }
@@ -377,7 +377,7 @@ BPLib_Status_t BPLib_CT_ProcessCcs(BPLib_Instance_t *Inst, BPLib_CT_Deserialized
 
     for (SeqCollectIdx = 0; SeqCollectIdx < Ccs->NumBundleSeqCollections; SeqCollectIdx++)
     {
-        if (Ccs->BundleSeqCollections[SeqCollectIdx].SeqRangeLen >= BPLIB_CT_MAX_SEQ_RANGE_LEN)
+        if (Ccs->BundleSeqCollections[SeqCollectIdx].SeqRangeLen > BPLIB_CT_MAX_SEQ_RANGE_LEN)
         {
             Status = BPLIB_BUF_LEN_ERROR;
             break;

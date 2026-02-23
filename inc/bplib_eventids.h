@@ -202,12 +202,13 @@
 
 /* QM event IDs */
 #define BPLIB_QM_EBP_OUT_ERR_EID                        (700u)
+#define BPLIB_QM_CT_IN_ERR_EID                          (701u)
 
 /* ================== */
 /* NC Debug Event IDs */
 /* ================== */
 
-#define BPLIB_NC_INIT_ERR_EID                           (701u)
+#define BPLIB_NC_INIT_ERR_EID                           (720u)
 
 /* CT event IDs */
 #define BPLIB_CT_INV_SEQ_NUM_ERR_EID                    (752u)
