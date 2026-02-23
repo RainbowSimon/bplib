@@ -396,7 +396,10 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
 
             if (Status != BPLIB_SUCCESS || DbEntry == NULL)
             {
-                NotFoundErr = true;
+                if (SeqRangeIdx % 2 != 0)
+                {
+                    NotFoundErr = true;
+                }
             }
 
             /* Even sequence range numbers indicate sequences that are *included* */
@@ -449,7 +452,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
 
         if (NotFoundErr)
         {
-            BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_ERR_EID, BPLib_EM_EventType_ERROR,
+            BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_DBG_EID, BPLib_EM_EventType_DEBUG,
                     "Error, at least one bundle with sequence ID %ld in sequence number range [%ld-%ld] could not be found in the CTDB.",
                     SeqCollection->SeqId, CurrSeqNum, 
                     CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]);
