@@ -240,8 +240,6 @@ BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bu
         BPLib_BI_GetBundleInfo(Bundle, BundleInfo, BPLIB_MAX_BUNDLE_INFO_STR_LENGTH);
 
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
-        BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG, 
-                            "Bundle custody rejected. %s.", BundleInfo);
 
         /* Make sure any CTDB entries that might exist with this bundle are removed */
         Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 

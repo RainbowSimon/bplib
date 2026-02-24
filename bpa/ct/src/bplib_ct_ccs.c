@@ -343,7 +343,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     BPLib_Status_t Status = BPLIB_SUCCESS;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
 
-    CurrSeqNum =  SeqCollection->FirstSeqNum;
+    CurrSeqNum = SeqCollection->FirstSeqNum;
 
     /* 
     ** Normally we'd lock CT outside of this function but taking both the CT and STOR
@@ -412,6 +412,15 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 BPLib_STOR_AddToCustodialUpdateBatch(Inst, DbEntry->BundleId, BPLIB_CT_START_RETRANSMIT);
                 pthread_mutex_lock(&Inst->Ct.Lock);
             }
+        }
+
+        /* Output on the CTEB-sending node when bundles have been rejected */
+        if (SeqRangeIdx % 2 == 0 && SeqCollection->DispositionCode < 0)
+        {
+            BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG,
+                                    "Bundles with sequence numbers %lu - %lu were rejected by downstream node",
+                                    CurrSeqNum,
+                                    (CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]) - 1);
         }
 
         CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];
