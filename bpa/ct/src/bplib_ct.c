@@ -126,11 +126,11 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     pthread_mutex_lock(&Inst->Ct.Lock);
 
     /* Reject custody due to lack of storage */
-    /* Check if there's storage left */
-    if ((Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes + sizeof(BPLib_BBlocks_t)) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
+    /* Check if there's storage left (TotalBytes includes the deserialized bundle) */
+    if (Inst->BundleStorage.BytesStorageInUse + Bundle->Meta.TotalBytes >= BPLIB_MAX_STORED_BUNDLE_BYTES)
     {
         BPLib_EM_SendEvent(BPLIB_CT_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
-                            "Cannot accept bundle, not enough storage (%ld bytes remaining). %s.",
+                            "Cannot process and accept bundle, not enough storage (%ld bytes remaining). %s.",
                             (BPLIB_MAX_STORED_BUNDLE_BYTES - Inst->BundleStorage.BytesStorageInUse), BundleInfo);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DEPLETED, 1);
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
