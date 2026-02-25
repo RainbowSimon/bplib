@@ -383,7 +383,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     bool NotFoundErr = false;
 
-    CurrSeqNum =  SeqCollection->FirstSeqNum;
+    CurrSeqNum = SeqCollection->FirstSeqNum;
 
     /* 
     ** Normally we'd lock CT outside of this function but taking both the CT and STOR
@@ -399,7 +399,13 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             TempStatus = BPLib_CT_GetEntryFromCtdbWithSeq(&Inst->Ct, SeqCollection->SeqId,
                                                             NextSeqNum, &DbEntry);
 
+<<<<<<< HEAD
             if (TempStatus != BPLIB_SUCCESS || DbEntry == NULL)
+=======
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
+
+            if (Status != BPLIB_SUCCESS || DbEntry == NULL)
+>>>>>>> main
             {
                 /* Excluded sequences can be ignored */
                 if (SeqRangeIdx % 2 != 0)
@@ -449,8 +455,6 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REJECTED, 1);
                 }
-
-                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
             }
             /* Odd sequence range numbers indicate sequences that are *excluded* */
             else
@@ -470,6 +474,16 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                     CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx] - 1);
 
             NotFoundErr = false;
+        }
+        
+        /* Output on the CTEB-sending node when bundles have been rejected */
+        if (SeqRangeIdx % 2 == 0 && SeqCollection->DispositionCode < 0)
+        {
+            BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG,
+                                    "Bundles with sequence ID %lu and sequence numbers [%lu-%lu] were rejected by downstream node",
+                                    SeqCollection->SeqId,
+                                    CurrSeqNum,
+                                    (CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]) - 1);
         }
 
         CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];
