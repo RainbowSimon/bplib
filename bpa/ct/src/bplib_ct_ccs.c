@@ -359,6 +359,8 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             Status = BPLib_CT_GetEntryFromCtdbWithSeq(&Inst->Ct, SeqCollection->SeqId,
                                                             NextSeqNum, &DbEntry);
 
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
+
             if (Status != BPLIB_SUCCESS || DbEntry == NULL)
             {
                 BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_ERR_EID, BPLib_EM_EventType_ERROR,
@@ -401,8 +403,6 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REJECTED, 1);
                 }
-
-                BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
             }
             /* Odd sequence range numbers indicate sequences that are *excluded* */
             else
@@ -418,7 +418,8 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
         if (SeqRangeIdx % 2 == 0 && SeqCollection->DispositionCode < 0)
         {
             BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG,
-                                    "Bundles with sequence numbers %lu - %lu were rejected by downstream node",
+                                    "Bundles with sequence ID %lu and sequence numbers %lu - %lu were rejected by downstream node",
+                                    SeqCollection->SeqId,
                                     CurrSeqNum,
                                     (CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]) - 1);
         }
