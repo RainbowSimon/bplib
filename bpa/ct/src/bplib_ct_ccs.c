@@ -50,9 +50,8 @@ void BPLib_CT_ResetOpenCcs(BPLib_CT_OpenCcs_t *OpenCcs)
 BPLib_Status_t BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t *Collection, 
                                             uint64_t BundleSeqNum, size_t *CcsSizePtr)
 {
-    uint64_t LastIncludeRangeNum;
+    uint64_t FirstExcludeRangeNum;
     uint64_t NewSeqRange[BPLIB_CT_MAX_SEQ_RANGE_LEN + 2];
-    uint64_t OldSeqRange[BPLIB_CT_MAX_SEQ_RANGE_LEN];
     size_t OrigRangeIdx;
     size_t LastNewRangeIdx;
     bool InsertionComplete = false;
@@ -62,40 +61,44 @@ BPLib_Status_t BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t 
     int64_t ChangeInSeqLen = 0;
     uint64_t FirstSeqNum = Collection->FirstSeqNum;
 
-    memcpy(OldSeqRange, Collection->SeqRange, sizeof(Collection->SeqRange));
     memset(NewSeqRange, 0, sizeof(NewSeqRange));
+
+    LastNewRangeIdx = 0;
 
     /* If new bundle sequence number predates first sequence number entirely */
     if (BundleSeqNum < FirstSeqNum)
     {
         if (BundleSeqNum + 1 == FirstSeqNum)
         {
-            NewSeqRange[0] = OldSeqRange[0] + 1;
-
-            LastNewRangeIdx = 0;
+            NewSeqRange[0] = Collection->SeqRange[0] + 1;
         }
         else
         {
             NewSeqRange[0] = 1;
             NewSeqRange[1] = (FirstSeqNum - (BundleSeqNum + 1));
-            NewSeqRange[2] = OldSeqRange[0];
+            NewSeqRange[2] = Collection->SeqRange[0];
             ChangeInSeqLen += 2;
 
             LastNewRangeIdx = 2;
         }
 
-        LastIncludeRangeNum = FirstSeqNum + OldSeqRange[0];
+        
         FirstSeqNum = BundleSeqNum;
 
         InsertionComplete = true;
     }
+    /* Nothing to do if the number is already included in this CCS */
+    else if (BundleSeqNum == FirstSeqNum)
+    {
+        NewSeqRange[0] = Collection->SeqRange[0];
+        InsertionComplete = true;
+    }
     else
     {
-        NewSeqRange[0] = OldSeqRange[0];
-    
-        LastIncludeRangeNum = FirstSeqNum + NewSeqRange[0];
-        LastNewRangeIdx = 0;
+        NewSeqRange[0] = Collection->SeqRange[0];
     }
+
+    FirstExcludeRangeNum = FirstSeqNum + Collection->SeqRange[0];
     
     /* 
     ** Iterate through sequence range two at a time [ExcludedRange, IncludedRange] and 
@@ -110,18 +113,18 @@ BPLib_Status_t BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t 
     for (OrigRangeIdx = 1; OrigRangeIdx < Collection->SeqRangeLen; OrigRangeIdx += 2)
     {
         /* Sequence number is within current excluded range */
-        if (InsertionComplete == false && 
-                 BundleSeqNum < (LastIncludeRangeNum + OldSeqRange[OrigRangeIdx]))
+        if (InsertionComplete == false && BundleSeqNum >= FirstExcludeRangeNum &&
+                 BundleSeqNum < (FirstExcludeRangeNum + Collection->SeqRange[OrigRangeIdx]))
         {
             if (LastNewRangeIdx + 4 > (BPLIB_CT_MAX_SEQ_RANGE_LEN + 2))
             {
                 return BPLIB_BUF_LEN_ERROR;
             }
 
-            NewSeqRange[LastNewRangeIdx + 1] = BundleSeqNum - LastIncludeRangeNum;
+            NewSeqRange[LastNewRangeIdx + 1] = BundleSeqNum - FirstExcludeRangeNum;
             NewSeqRange[LastNewRangeIdx + 2] = 1;
-            NewSeqRange[LastNewRangeIdx + 3] = (LastIncludeRangeNum + OldSeqRange[OrigRangeIdx]) - (BundleSeqNum + 1);
-            NewSeqRange[LastNewRangeIdx + 4] = OldSeqRange[OrigRangeIdx + 1];
+            NewSeqRange[LastNewRangeIdx + 3] = (FirstExcludeRangeNum + Collection->SeqRange[OrigRangeIdx]) - (BundleSeqNum + 1);
+            NewSeqRange[LastNewRangeIdx + 4] = Collection->SeqRange[OrigRangeIdx + 1];
 
             InsertionComplete = true;
             LastNewRangeIdx += 4;
@@ -135,15 +138,15 @@ BPLib_Status_t BPLib_CT_InsertOldSeqNumToOpenCcs(BPLib_CT_BundleSeqCollection_t 
                 return BPLIB_BUF_LEN_ERROR;
             }
 
-            NewSeqRange[LastNewRangeIdx + 1] = OldSeqRange[OrigRangeIdx];
-            NewSeqRange[LastNewRangeIdx + 2] = OldSeqRange[OrigRangeIdx + 1];
+            NewSeqRange[LastNewRangeIdx + 1] = Collection->SeqRange[OrigRangeIdx];
+            NewSeqRange[LastNewRangeIdx + 2] = Collection->SeqRange[OrigRangeIdx + 1];
 
             LastNewRangeIdx += 2;
         }
 
-        /* Jump to next "include" range */
-        LastIncludeRangeNum += OldSeqRange[OrigRangeIdx];
-        LastIncludeRangeNum += OldSeqRange[OrigRangeIdx + 1];
+        /* Jump to next "exclude" range */
+        FirstExcludeRangeNum += Collection->SeqRange[OrigRangeIdx];
+        FirstExcludeRangeNum += Collection->SeqRange[OrigRangeIdx + 1];
     }
 
     /*
@@ -254,8 +257,8 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
             ** added to the next CCS upon bundle retransmission
             */
             BPLib_EM_SendEvent(BPLIB_CT_CCS_INSERT_ERR_EID, BPLib_EM_EventType_ERROR, 
-                    "Error inserting bundle sequence number %ld in CCS with sequence ID %ld, Status = %d",
-                CtebPtr->BundleSeqNum, CtebPtr->BundleSeqId, Status);
+                    "Error inserting bundle sequence number %ld in CCS with sequence ID %ld starting at sequence number %ld, Status = %d",
+                CtebPtr->BundleSeqNum, CtebPtr->BundleSeqId, Collection->FirstSeqNum, Status);
 
             BPLib_CT_BuildAndSendOpenCcs_Impl(Instance, OpenCcs);
 
@@ -271,7 +274,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
             Collection->SeqRange[Collection->SeqRangeLen - 1]++;
         }
         /* If a gap in sequence numbers is detected, record missing sequence length */
-        else
+        else if (CtebPtr->BundleSeqNum > (Collection->LastSeqNumAdded + 1))
         {
             Collection->SeqRange[Collection->SeqRangeLen] = CtebPtr->BundleSeqNum - (Collection->LastSeqNumAdded + 1);
             Collection->SeqRange[Collection->SeqRangeLen + 1] = 1;
@@ -280,6 +283,7 @@ BPLib_Status_t BPLib_CT_AddToOpenCcs(BPLib_Instance_t* Instance, size_t OpenCcsI
             /* Update full CCS size accordingly */
             OpenCcs->Size += 2;
         }
+        /* else CtebPtr->BundleSeqNum == Collection->LastSeqNumAdded: do nothing */
 
         Collection->LastSeqNumAdded = CtebPtr->BundleSeqNum;
     }
@@ -374,6 +378,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     size_t SeqRangeIdx;
     size_t CurrSeqNum;
     size_t NextSeqNum;
+    BPLib_Status_t TempStatus = BPLIB_SUCCESS;
     BPLib_Status_t Status = BPLIB_SUCCESS;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     bool NotFoundErr = false;
@@ -391,14 +396,20 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     {
         for (NextSeqNum = CurrSeqNum; NextSeqNum < CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]; NextSeqNum++)
         {
-            Status = BPLib_CT_GetEntryFromCtdbWithSeq(&Inst->Ct, SeqCollection->SeqId,
+            TempStatus = BPLib_CT_GetEntryFromCtdbWithSeq(&Inst->Ct, SeqCollection->SeqId,
                                                             NextSeqNum, &DbEntry);
 
-            if (Status != BPLIB_SUCCESS || DbEntry == NULL)
+            if (TempStatus != BPLIB_SUCCESS || DbEntry == NULL)
             {
+                /* Excluded sequences can be ignored */
                 if (SeqRangeIdx % 2 != 0)
                 {
+                    TempStatus = BPLIB_SUCCESS;
+                }
+                else
+                {
                     NotFoundErr = true;
+                    Status = TempStatus;
                 }
             }
 
@@ -408,9 +419,9 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 /* Positive disposition code indicates custody was accepted */
                 if (SeqCollection->DispositionCode > 0)
                 {
-                    Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);   
+                    TempStatus = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
 
-                    if (Status == BPLIB_SUCCESS)
+                    if (TempStatus == BPLIB_SUCCESS)
                     {
                         /* Request bundle deletion from storage */
                         pthread_mutex_unlock(&Inst->Ct.Lock);
@@ -422,6 +433,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                     }                                
                     else
                     {
+                        Status = TempStatus;
                         BPLib_EM_SendEvent(BPLIB_CT_BUNDLE_DLT_ERR_EID, BPLib_EM_EventType_ERROR,
                             "Error deleting custodial bundle sequence number %ld with sequence ID %ld. Status = %d.",
                             SeqCollection->SeqId, NextSeqNum, Status);
@@ -455,7 +467,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             BPLib_EM_SendEvent(BPLIB_CT_INV_SEQ_NUM_DBG_EID, BPLib_EM_EventType_DEBUG,
                     "Error, at least one bundle with sequence ID %ld in sequence number range [%ld-%ld] could not be found in the CTDB.",
                     SeqCollection->SeqId, CurrSeqNum, 
-                    CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]);
+                    CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx] - 1);
 
             NotFoundErr = false;
         }

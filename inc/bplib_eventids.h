@@ -123,6 +123,9 @@
 #define BPLIB_NC_STOR_CLEANUP_INF_EID                   (584u)
 #define BPLIB_NC_STOR_CLEANUP_ERR_EID                   (585u)
 #define BPLIB_NC_MAINT_ERR_EID                          (586u)
+#define BPLIB_NC_TBL_UPDATE_INF_EID                     (587u)
+//#define BPLIB_NC_TBL_UPDATE_ERR_EID                     (588u)
+#define BPLIB_NC_INIT_ERR_EID                           (589u)
 
 /* ============ */
 /* AS event IDs */
@@ -142,9 +145,6 @@
 /* ============== */
 /* STOR event IDs */
 /* ============== */
-
-#define BPLIB_NC_TBL_UPDATE_INF_EID                     (606u)
-#define BPLIB_NC_TBL_UPDATE_ERR_EID                     (607u)
 
 #define BPLIB_STOR_SQL_LOAD_ERR_EID                     (608u)
 #define BPLIB_STOR_SQL_STORE_ERR_EID                    (609u)
@@ -203,12 +203,6 @@
 /* QM event IDs */
 #define BPLIB_QM_EBP_OUT_ERR_EID                        (700u)
 #define BPLIB_QM_CT_IN_ERR_EID                          (701u)
-
-/* ================== */
-/* NC Debug Event IDs */
-/* ================== */
-
-#define BPLIB_NC_INIT_ERR_EID                           (720u)
 
 /* CT event IDs */
 #define BPLIB_CT_INV_SEQ_NUM_DBG_EID                    (752u)

@@ -226,6 +226,74 @@ void Test_BPLib_CT_InsertOldSeqNum_BufErr(void)
     }
 }
 
+void Test_BPLib_CT_InsertOldSeqNum_IsFirst(void)
+{
+    BPLib_CT_BundleSeqCollection_t Collection;
+    uint64_t BundleSeqNum;
+    size_t CcsSize;
+
+    Collection.LastSeqNumAdded = 32;
+    Collection.SeqRangeLen = 3;
+    Collection.SeqRange[0] = 2;
+    Collection.SeqRange[1] = 3;
+    Collection.SeqRange[2] = 2;
+    Collection.FirstSeqNum = 26;
+
+    BundleSeqNum = 26;
+    CcsSize = 3;
+
+    /*
+    ** CCS data explanation: [2, 3, 2]
+    ** Sequence numbers 26-27 were received
+    ** Sequence numbers 28-30 were not
+    ** Sequence numbers 31-32 were received
+    ** New received sequence number is the same as the first sequence number so the 
+    ** CCS should not change
+    */
+
+    UtAssert_EQ(BPLib_Status_t, BPLIB_SUCCESS, BPLib_CT_InsertOldSeqNumToOpenCcs(&Collection, BundleSeqNum, &CcsSize));
+    UtAssert_EQ(uint64_t, Collection.FirstSeqNum, 26);
+    UtAssert_EQ(uint64_t, Collection.SeqRangeLen, 3);
+    UtAssert_EQ(uint64_t, Collection.SeqRange[0], 2);
+    UtAssert_EQ(uint64_t, Collection.SeqRange[1], 3);
+    UtAssert_EQ(uint64_t, Collection.SeqRange[2], 2);
+    UtAssert_EQ(uint64_t, CcsSize, 3);
+}
+
+void Test_BPLib_CT_InsertOldSeqNum_IsIncluded(void)
+{
+    BPLib_CT_BundleSeqCollection_t Collection;
+    uint64_t BundleSeqNum;
+    size_t CcsSize;
+
+    Collection.LastSeqNumAdded = 33;
+    Collection.SeqRangeLen = 3;
+    Collection.SeqRange[0] = 4;
+    Collection.SeqRange[1] = 2;
+    Collection.SeqRange[2] = 2;
+    Collection.FirstSeqNum = 26;
+
+    BundleSeqNum = 29;
+    CcsSize = 3;
+
+    /*
+    ** CCS data explanation: [2, 3, 2]
+    ** Sequence numbers 26-29 were received
+    ** Sequence numbers 30-31 were not
+    ** Sequence numbers 32-33 were received
+    ** New received sequence number is already included in the sequence ranges so the 
+    ** CCS should not change
+    */
+
+    UtAssert_EQ(BPLib_Status_t, BPLIB_SUCCESS, BPLib_CT_InsertOldSeqNumToOpenCcs(&Collection, BundleSeqNum, &CcsSize));
+    UtAssert_EQ(uint64_t, Collection.FirstSeqNum, 26);
+    UtAssert_EQ(uint64_t, Collection.SeqRangeLen, 3);
+    UtAssert_EQ(uint64_t, Collection.SeqRange[0], 4);
+    UtAssert_EQ(uint64_t, Collection.SeqRange[1], 2);
+    UtAssert_EQ(uint64_t, Collection.SeqRange[2], 2);
+    UtAssert_EQ(uint64_t, CcsSize, 3);
+}
+
 void TestBplibCtInternal_Register(void)
 {
     ADD_TEST(Test_BPLib_CT_InsertOldSeqNum_BeforeFirstGap);
@@ -233,4 +301,6 @@ void TestBplibCtInternal_Register(void)
     ADD_TEST(Test_BPLib_CT_InsertOldSeqNum_EdgeOfGap);
     ADD_TEST(Test_BPLib_CT_InsertOldSeqNum_MaxSeqLen);
     ADD_TEST(Test_BPLib_CT_InsertOldSeqNum_BufErr);
+    ADD_TEST(Test_BPLib_CT_InsertOldSeqNum_IsFirst);
+    ADD_TEST(Test_BPLib_CT_InsertOldSeqNum_IsIncluded);
 }
