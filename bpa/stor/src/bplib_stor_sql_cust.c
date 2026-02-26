@@ -280,10 +280,12 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_STOR_CtUpda
                 fprintf(stderr, "Mark for Deletion Failed: %s\n", sqlite3_errstr(SQLStatus));
                 break;
             }
+
+            *NumEgressed += sqlite3_changes(db);
         }
     }
 
-    *NumEgressed = sqlite3_changes(db);
+    printf("marked %ld egressed\n", *NumEgressed);
 
     /* Then complete the remaining operations */
     for (i = 0; i < Batch->Size; i++)

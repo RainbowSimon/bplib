@@ -412,7 +412,10 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                     Status = TempStatus;
                 }
             }
-
+            else if (DbEntry->State == BPLib_CT_Transferred)
+            {
+                /* Duplicate custody signal detected, ignore it */
+            }
             /* Even sequence range numbers indicate sequences that are *included* */
             else if (SeqRangeIdx % 2 == 0)
             {
@@ -421,7 +424,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 /* Positive disposition code indicates custody was accepted */
                 if (SeqCollection->DispositionCode > 0)
                 {
-                    DbEntry->State = BPLib_CT_Deleted;
+                    DbEntry->State = BPLib_CT_Transferred;
 
                     /* Request bundle deletion from storage */
                     pthread_mutex_unlock(&Inst->Ct.Lock);

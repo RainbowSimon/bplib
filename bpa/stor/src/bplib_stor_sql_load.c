@@ -361,9 +361,9 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst,
             fprintf(stderr, "Mark Egressed Failed: %s\n", sqlite3_errstr(SQLStatus));
             break;
         }
+
+        NumEgressed += sqlite3_changes(db);
     }
-    
-    NumEgressed = sqlite3_changes(db);
 
     if (LocalDelivery == false)
     {

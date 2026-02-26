@@ -127,7 +127,7 @@ typedef enum
     BPLib_CT_InCustody = 1,             /** \brief The bundle was successfully stored and is in custody */
     BPLib_CT_Transmitted = 2,           /** \brief The bundle has been transmitted to the next node */
     BPLib_CT_Retransmitted = 3,         /** \brief The bundle has been retransmitted at least once */
-    BPLib_CT_Deleted = 4,               /** \brief The bundle's custody has been transferred and it is marked for deletion */
+    BPLib_CT_Transferred = 4,           /** \brief The bundle's custody has been transferred and it is marked for deletion */
 } BPLib_CT_DbEntryState_t;
 
 /**
@@ -395,5 +395,22 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t
  *  \return void
  */
 void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance);
+
+/**
+ * \brief Complete delivery of custodial bundle
+ *
+ *  \par Description
+ *       To complete the delivery of a custodial bundle, mark it as transferred in the CTDB
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       None
+ * 
+ *  \param[in] Bundle Pointer to the bundle
+ *  \param[in] Inst Pointer to the BPLib instance
+ *
+ *  \return Execution status
+ *  \retval BPLIB_SUCCESS Operation was successful
+ */
+BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle);
 
 #endif /* BPLIB_CT_H */

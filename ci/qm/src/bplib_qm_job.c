@@ -145,19 +145,14 @@ static BPLib_QM_JobState_t ChannelIn_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
     BPLib_Status_t Status;
-    BPLib_QM_JobState_t JobState;
+    BPLib_QM_JobState_t JobState = CHANNEL_IN_CT_TO_STOR;
     bool DoCustody;
 
     BPLib_NC_ReaderLock();
     DoCustody = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY];
     BPLib_NC_ReaderUnlock();
 
-    if (DoCustody == false)
-    {
-        /* Don't do any custody operations, just pass bundles through */
-        JobState = CHANNEL_IN_CT_TO_STOR;
-    }
-    else
+    if (DoCustody)
     {
         Status = BPLib_CT_ProcessNewBundle(Inst, Bundle);
 
@@ -169,10 +164,6 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
 
             JobState = BUNDLE_FREED;
         }
-        else
-        {
-            JobState = CHANNEL_IN_CT_TO_STOR;
-        }
     }
 
     return JobState;
@@ -180,7 +171,8 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
 
 static BPLib_QM_JobState_t ChannelOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)
 {
-    uint8_t ExtBlockIdx;
+    BPLib_Status_t Status;
+    BPLib_QM_JobState_t JobState = CHANNEL_OUT_CT_TO_EBP;
     bool    DoCustody;
 
     BPLib_NC_ReaderLock();
@@ -189,22 +181,19 @@ static BPLib_QM_JobState_t ChannelOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 
     if (DoCustody)
     {
-        for (ExtBlockIdx = 0; ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS; ExtBlockIdx++)
-        {
-            if (Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.BlockType == BPLib_BlockType_CTEB)
-            {
-                break;
-            }
-        }
+        Status = BPLib_CT_CompleteDelivery(Inst, Bundle);
 
-        /* Remove custodial bundle from CTDB, it's being delivered */
-        if (ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS)
+        if (Status != BPLIB_SUCCESS)
         {
-            BPLib_CT_DeleteBundleFromCtdb(Inst, Bundle->blocks.PrimaryBlock.BundleId);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
+            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+
+            JobState = BUNDLE_FREED;
         }
     }
 
-    return CHANNEL_OUT_CT_TO_EBP;
+    return JobState;
 }
 
 static BPLib_QM_JobState_t ChannelOut_EBP(BPLib_Instance_t* Inst, BPLib_Bundle_t* Bundle)

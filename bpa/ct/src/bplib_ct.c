@@ -338,10 +338,19 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
     else
     {
         /* Sanity check the DbEntry's state */
-        if (DbEntry->State == BPLib_CT_Initialized || DbEntry->State == BPLib_CT_Deleted)
+        if (DbEntry->State == BPLib_CT_Initialized)
         {
             BPLib_EM_SendEvent(BPLIB_CT_NONCUSTODIAL_ERR_EID, BPLib_EM_EventType_ERROR,
-                    "Error, cannot update a custodial bundle with CTDB state %d", DbEntry->State);
+                    "Error, cannot update a custodial bundle whose custody has not been finalized; seq_num = %ld", 
+                    DbEntry->State, DbEntry->SeqNum);
+            Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
+        }
+        else if (DbEntry->State == BPLib_CT_Transferred)
+        {
+            /* 
+            ** Silently trigger bundle deletion, storage probably just triggered a
+            ** retransmission right before its custody was transferred successfully
+            */
             Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
         }
 
@@ -504,4 +513,37 @@ void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance)
     }
 
     pthread_mutex_unlock(&Instance->Ct.Lock);
+}
+
+BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle)
+{
+    BPLib_CT_DbEntry_t *DbEntry = NULL;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+    uint8_t ExtBlockIdx;
+
+    if (Inst == NULL || Bundle == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    /* Do nothing for non-custodial bundles */
+    ExtBlockIdx = BPLib_CT_GetCtebIndex(Bundle);
+    if (ExtBlockIdx >= BPLIB_MAX_NUM_EXTENSION_BLOCKS)
+    {
+        return BPLIB_SUCCESS;
+    }
+
+    pthread_mutex_lock(&Inst->Ct.Lock);
+
+    /* Mark bundle as transferred */
+    Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+                            Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
+    if (Status == BPLIB_SUCCESS && DbEntry != NULL)
+    {
+        DbEntry->State = BPLib_CT_Transferred;
+    }
+
+    pthread_mutex_unlock(&Inst->Ct.Lock);
+
+    return Status;
 }
