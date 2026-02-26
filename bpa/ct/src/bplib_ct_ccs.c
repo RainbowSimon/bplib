@@ -397,9 +397,10 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
         for (NextSeqNum = CurrSeqNum; NextSeqNum < CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]; NextSeqNum++)
         {
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
+
             TempStatus = BPLib_CT_GetEntryFromCtdbWithSeq(&Inst->Ct, SeqCollection->SeqId,
                                                             NextSeqNum, &DbEntry);
-            if (TempStatus != BPLIB_SUCCESS || DbEntry == NULL)
+            if (Status != BPLIB_SUCCESS || DbEntry == NULL)
             {
                 /* Excluded sequences can be ignored */
                 if (SeqRangeIdx % 2 != 0)
@@ -429,7 +430,6 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                         pthread_mutex_lock(&Inst->Ct.Lock);
 
                         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
-                        Inst->Ct.BundleCountInCustody--;
                     }                                
                     else
                     {
@@ -469,7 +469,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
 
             NotFoundErr = false;
         }
-        
+
         /* Output on the CTEB-sending node when bundles have been rejected */
         if (SeqRangeIdx % 2 == 0 && SeqCollection->DispositionCode < 0)
         {

@@ -164,11 +164,12 @@ typedef struct
  */
 typedef struct
 {
-    BPLib_RBT_Link_t SeqRbtLink;
-    BPLib_RBT_Link_t IdRbtLink;
-    uint64_t SeqId;
-    uint64_t SeqNum;
-    uint32_t BundleId;
+    BPLib_RBT_Link_t SeqRbtLink;        /** \brief RBT link to search based on sequence ID/number */
+    BPLib_RBT_Link_t IdRbtLink;         /** \brief RBT link to search based on bundle ID */
+    uint64_t SeqId;                     /** \brief Sequence ID */
+    uint64_t SeqNum;                    /** \brief Sequence number */
+    uint32_t BundleId;                  /** \brief Unique bundle ID */
+    bool     InCustody;                 /** \brief Whether this entry is officially in custody or not */
 } BPLib_CT_DbEntry_t;
 
 /**
@@ -382,7 +383,5 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t
  *  \return void
  */
 void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance);
-
-uint8_t BPLib_CT_GetCtebIndex(BPLib_Bundle_t *Bundle);
 
 #endif /* BPLIB_CT_H */

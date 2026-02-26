@@ -102,6 +102,18 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
             memcpy(&(AdminRecordCcs->BundleSeqCollections[AdminRecordCcs->NumBundleSeqCollections++]),
                     &(InProgressCcs->BundleSeqCollections[DispCodeIdx]),
                     sizeof(BPLib_CT_BundleSeqCollection_t));
+
+        #ifdef BPLIB_ARP_DEBUG_PRINTS_ENABLED
+            fprintf(stderr, "Sending BSC with disp_code %d, first_seq_num %ld: [", 
+                        InProgressCcs->BundleSeqCollections[DispCodeIdx].DispositionCode,
+                        InProgressCcs->BundleSeqCollections[DispCodeIdx].FirstSeqNum);
+
+            for (size_t i = 0; i < InProgressCcs->BundleSeqCollections[DispCodeIdx].SeqRangeLen; i++)
+            {
+                fprintf(stderr, "%ld ", InProgressCcs->BundleSeqCollections[DispCodeIdx].SeqRange[i]);
+            }
+            fprintf(stderr, "]\n");
+        #endif
         }
     }
 

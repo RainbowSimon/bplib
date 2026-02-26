@@ -92,6 +92,7 @@ BPLib_Status_t BPLib_CT_InitEntry(BPLib_Instance_t *Inst, uint32_t BundleId)
     /* Set initial CTDB entry values - the sequence ID/number will be updated later */
     DbEntry->BundleId = BundleId;
     DbEntry->SeqId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE;
+    DbEntry->InCustody = false;
 
     Inst->Ct.CurrDbSize++;
     
@@ -203,9 +204,19 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_
         Status = BPLib_RBT_ExtractNode(&(Inst->Ct.IdTreeRoot), &DbEntry->IdRbtLink);
         if (Status == BPLIB_SUCCESS)
         {
+            if (DbEntry->InCustody)
+            {
+                Inst->Ct.BundleCountInCustody--;
+            }
+
             Inst->Ct.CurrDbSize--;
             BPLib_MEM_BlockFree(&Inst->pool, BPLib_MEM_GetBlockFromUserData(DbEntry));
         }
+    }
+
+    if (Status != BPLIB_SUCCESS)
+    {
+        fprintf(stderr, "deletion failed %d\n", Status);
     }
 
     return Status;
