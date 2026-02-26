@@ -318,10 +318,8 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
 
     pthread_mutex_lock(&Inst->Ct.Lock);
     
-    /* Check if this is a bundle retransmission from storage or a new bundle */
     Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
                         Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
-
     if (Status != BPLIB_SUCCESS)
     {
         /* 

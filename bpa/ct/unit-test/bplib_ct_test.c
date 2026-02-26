@@ -395,6 +395,7 @@ void Test_BPLib_CT_UpdateBundle_Retransmit(void)
     ExistingDbEntry->SeqId = 12;
     ExistingDbEntry->SeqNum = 34;
     ExistingDbEntry->BundleId = 0xdead;
+    ExistingDbEntry->State = BPLib_CT_Transmitted;
     BplibInst.Ct.CurrDbSize = 10;    
     
     /* Find bundle in CTDB */
