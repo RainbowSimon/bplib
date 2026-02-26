@@ -26,6 +26,8 @@
 #include "bplib_as.h"
 #include "bplib_version.h"
 
+#ifdef MODULE_BPLIB_INCLUDE_AS
+
 /* ================= */
 /* Telemetry Packets */
 /* ================= */
@@ -150,3 +152,42 @@ void BPLib_AS_UpdateReportsHkTlm(BPLib_Instance_t *Inst)
     BPLib_AS_NodeReportsPayload.BundleCountStored = Inst->BundleStorage.BundleCountStored;
     BPLib_AS_NodeReportsPayload.KbytesCountStorageAvailable = (BPLIB_MAX_STORED_BUNDLE_BYTES - Inst->BundleStorage.BytesStorageInUse) / 1000;
 }
+
+#else
+
+uint32_t BPLib_AS_GetCounterImpl(BPLib_EID_t *EID, BPLib_AS_Counter_t Counter)
+{
+    (void) EID;
+    (void) Counter;
+    return 0;
+}
+
+BPLib_Status_t BPLib_AS_SetCounter(BPLib_EID_t EID, BPLib_AS_Counter_t Counter, uint32_t Value)
+{
+    (void) EID;
+    (void) Counter;
+    (void) Value;
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_AS_InitMutex(void)
+{
+    return BPLIB_SUCCESS;
+}
+
+void BPLib_AS_LockCounters(void)
+{
+    return;
+}
+
+void BPLib_AS_UnlockCounters(void)
+{
+    return;
+}
+
+void BPLib_AS_InitializeReportsHkTlm(void)
+{
+    return;
+}
+
+#endif

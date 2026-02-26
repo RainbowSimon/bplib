@@ -1076,7 +1076,11 @@ void BPLib_NC_SendNodeMibConfigHk(void)
 {
     BPLib_Status_t Status;
 
+#ifdef MODULE_BPLIB_INCLUDE_NC_TELEMETRY
     Status = BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendNodeMibConfigPkt(&BPLib_NC_NodeMibConfigPayload);
+#else
+    Status = BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendNodeMibConfigPkt(NULL);
+#endif
 
     if (Status != BPLIB_SUCCESS)
     {
@@ -1092,7 +1096,11 @@ void BPLib_NC_SendSourceMibConfigHk(void)
 {
     BPLib_Status_t Status;
 
+#ifdef MODULE_BPLIB_INCLUDE_NC_TELEMETRY
     Status = BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendPerSourceMibConfigPkt(&BPLib_NC_SourceMibConfigPayload);
+#else
+    Status = BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendPerSourceMibConfigPkt(NULL);
+#endif
 
     if (Status != BPLIB_SUCCESS)
     {

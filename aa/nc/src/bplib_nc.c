@@ -58,8 +58,10 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
 {
     BPLib_Status_t Status;
 
+#ifdef MODULE_BPLIB_INCLUDE_NC_TELEMETRY
     memset((void*) &BPLib_NC_SourceMibConfigPayload,     0, sizeof(BPLib_NC_SourceMibConfigPayload));
     memset((void*) &BPLib_NC_NodeMibConfigPayload,       0, sizeof(BPLib_NC_NodeMibConfigPayload));
+#endif
     memset((void*) &BPLib_NC_ChannelContactStatsPayload, 0, sizeof(BPLib_NC_ChannelContactStatsPayload));
 
     /* Initialize the configuration lock */
@@ -70,18 +72,20 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
     }
 
     /* Capture configuration pointers in the global configuration struct */
+    /* Note: For RIOT, tables which are currently not used in bplib can be NULL */
     if (ConfigPtrs                     == NULL ||
         ConfigPtrs->ChanConfigPtr      == NULL ||
         ConfigPtrs->ContactsConfigPtr  == NULL ||
-        ConfigPtrs->CrsConfigPtr       == NULL ||
-        ConfigPtrs->CustodianConfigPtr == NULL ||
-        ConfigPtrs->CustodyConfigPtr   == NULL ||
-        ConfigPtrs->MibPnConfigPtr     == NULL ||
-        ConfigPtrs->MibPsConfigPtr     == NULL ||
-        ConfigPtrs->ReportConfigPtr    == NULL ||
-        ConfigPtrs->AuthConfigPtr      == NULL ||
-        ConfigPtrs->LatConfigPtr       == NULL ||
-        ConfigPtrs->StorConfigPtr      == NULL)
+        /* ConfigPtrs->CrsConfigPtr       == NULL || */
+        /* ConfigPtrs->CustodianConfigPtr == NULL || */
+        /* ConfigPtrs->CustodyConfigPtr   == NULL || */
+        ConfigPtrs->MibPnConfigPtr     == NULL /* || */
+        /* ConfigPtrs->MibPsConfigPtr     == NULL || */
+        /* ConfigPtrs->ReportConfigPtr    == NULL || */
+        /* ConfigPtrs->AuthConfigPtr      == NULL || */
+        /* ConfigPtrs->LatConfigPtr       == NULL || */
+        /* ConfigPtrs->StorConfigPtr      == NULL */
+        )
     {
         Status = BPLIB_NC_INIT_CONFIG_PTRS_ERROR;
     }
@@ -104,8 +108,10 @@ BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
         BPLib_EID_CopyEids(&BPLIB_EID_INSTANCE, BPLib_NC_ConfigPtrs.MibPnConfigPtr->InstanceEID);
 
         /* Set telemetry values */
+#ifdef MODULE_BPLIB_INCLUDE_NC_TELEMETRY
         memcpy(&(BPLib_NC_NodeMibConfigPayload.Values), BPLib_NC_ConfigPtrs.MibPnConfigPtr, 
                                                             sizeof(BPLib_NC_MibPerNodeConfig_t));
+#endif
 
         /* Initialize contact/channel status telemetry with table values */
         BPLib_NC_UpdateContactHkTlm();
@@ -170,7 +176,9 @@ BPLib_Status_t BPLib_NC_SetMibNodeConfig(uint32_t MibItem, uint32_t Value)
                 ** Table update was successful, update the corresponding telemetry value
                 ** as well
                 */
+#ifdef MODULE_BPLIB_INCLUDE_NC_TELEMETRY
                 BPLib_NC_NodeMibConfigPayload.Values.Configs[MibItem] = Value;
+#endif
             }
             else
             {
@@ -430,8 +438,10 @@ static BPLib_Status_t BPLib_NC_ConfigUpdateUnlocked(void)
         BPLib_EID_CopyEids(&BPLIB_EID_INSTANCE, BPLib_NC_ConfigPtrs.MibPnConfigPtr->InstanceEID);
 
         /* Update telemetry values */
+#ifdef MODULE_BPLIB_INCLUDE_NC_TELEMETRY
         memcpy(&(BPLib_NC_NodeMibConfigPayload.Values), BPLib_NC_ConfigPtrs.MibPnConfigPtr, 
                                                             sizeof(BPLib_NC_MibPerNodeConfig_t));
+#endif
 
         BPLib_EM_SendEvent(BPLIB_NC_TBL_UPDATE_INF_EID,
                             BPLib_EM_EventType_INFORMATION,
