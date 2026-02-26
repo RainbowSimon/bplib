@@ -32,11 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// static size_t FreeCcs = 0;
-//static size_t FreeCtIn = 0;
-static size_t FreeCtOut = 0;
-// static size_t FreeCtNew = 0;
-
 /*******************************************************************************
  * Job Functions - These are the entry points to jobs being run within QM.
 */
@@ -115,9 +110,6 @@ static BPLib_QM_JobState_t ContactOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
 
             JobState = BUNDLE_FREED;
-
-            fprintf(stderr, "Freeing a custodial bundle on egress %ld, stat = %d\n", FreeCtOut++, Status);
-
         }
     }
     /* Else, don't do any custody operations, just pass bundles through */
@@ -176,8 +168,6 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
 
             JobState = BUNDLE_FREED;
-
-            //fprintf(stderr, "Freeing a custodial bundle on creation %ld, stat = %d\n", FreeCtNew++, Status);
         }
         else
         {

@@ -69,10 +69,18 @@ BPLib_Status_t BPLib_CT_SignalCustodyImpl(BPLib_Instance_t *Inst, BPLib_Bundle_t
 
     CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 
-    /* Make sure bundle is already in the CTDB */
+    /* Check to see if the bundle is in the CTDB */
     Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
                             Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
-    if (Status != BPLIB_SUCCESS || DbEntry == NULL)
+    if (Status == BPLIB_SUCCESS && DbEntry != NULL)
+    {
+        if (DispCode == BPLib_CT_CustodyRefused)
+        {
+            /* Make sure any CTDB entry that might exist with this bundle are removed */
+            (void) BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
+        }
+    }
+    else if (DispCode == BPLib_CT_CustodyAccepted)
     {
         return BPLIB_NOT_FOUND_ERR;
     }
@@ -99,11 +107,8 @@ BPLib_Status_t BPLib_CT_SignalCustodyImpl(BPLib_Instance_t *Inst, BPLib_Bundle_t
     }
     else
     {
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
-
-        /* Make sure any CTDB entries that might exist with this bundle are removed */
-        (void) BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
     }
 
     return Status;
@@ -232,7 +237,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
     }
 
-    if (Status == BPLIB_SUCCESS && IsDuplicate == false)
+    if (Status == BPLIB_SUCCESS)
     {
         /* Add bundle to CTDB but leave sequence ID/number undefined until egress */
         Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);

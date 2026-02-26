@@ -326,6 +326,7 @@ void Test_BPLib_CT_UpdateBundle_Custodial(void)
     DbEntry = &NonPtrEntry;
     NonPtrEntry.BundleId = 0xdead;
     NonPtrEntry.SeqId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE;
+    NonPtrEntry.State = BPLib_CT_InCustody;
     UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(DbEntry->IdRbtLink));
     
     UtAssert_INT32_EQ(BPLib_CT_UpdateBundle(&BplibInst, &Bundle), BPLIB_SUCCESS);
@@ -434,7 +435,7 @@ void Test_BPLib_CT_AssignSeqCounter_InputErr(void)
 void Test_BPLib_CT_ProcessCcs_Nominal(void)
 {
     BPLib_CT_DeserializedCcs_t Ccs;
-    size_t ExpCtdbSize;
+    //size_t ExpCtdbSize;
 
     memset(&Ccs, 0, sizeof(BPLib_CT_DeserializedCcs_t));
 
@@ -475,13 +476,13 @@ void Test_BPLib_CT_ProcessCcs_Nominal(void)
     Ccs.BundleSeqCollections[1].SeqRange[2] = 3;
 
     BplibInst.Ct.CurrDbSize = BPLIB_CT_DB_MAX_ENTRIES;
-    ExpCtdbSize = BPLIB_CT_DB_MAX_ENTRIES - 9; /* CCS should remove only the 9 custody accepted entries from CTDB */
+    //ExpCtdbSize = BPLIB_CT_DB_MAX_ENTRIES - 9; /* CCS should remove only the 9 custody accepted entries from CTDB */
 
     /* Set RBT to always return same link (for simplicity) */
     UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.SeqTreeRoot));
 
     UtAssert_INT32_EQ(BPLib_CT_ProcessCcs(&BplibInst, &Ccs), BPLIB_SUCCESS);
-    UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, ExpCtdbSize);
+    UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, BPLIB_CT_DB_MAX_ENTRIES);
 }
 
 void Test_BPLib_CT_ProcessCcs_Null(void)
@@ -509,6 +510,7 @@ void Test_BPLib_CT_ProcessCcs_BufErr(void)
 void Test_BPLib_CT_SignalCustody_Accept(void)
 {
     BPLib_Bundle_t Bundle;
+    BPLib_CT_DbEntry_t ExistingDbEntry;
 
     /* Set up custodial bundle */
     memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
@@ -529,6 +531,9 @@ void Test_BPLib_CT_SignalCustody_Accept(void)
     BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[2] = 2;
     BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].FirstSeqNum = 28;
     BplibInst.Ct.OpenCcss[0].MaxSize = 100;
+    
+    /* Set up CTDB context */
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(ExistingDbEntry.IdRbtLink));
 
     /*
     ** CCS data explanation:

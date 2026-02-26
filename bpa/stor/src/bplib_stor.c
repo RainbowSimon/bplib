@@ -94,6 +94,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst,
     DuplicateBundlesIgnored = 0;
     *CustodialBundlesStored = 0;
     CustodialIdx            = 0;
+    CustodialBundleCount    = 0;
 
     Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored, CustodialBundlesStored);
 

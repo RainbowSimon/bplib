@@ -207,7 +207,7 @@
 
 /* CT event IDs */
 #define BPLIB_CT_INV_SEQ_NUM_DBG_EID                    (752u)
-
+#define BPLIB_CT_NONCUSTODIAL_ERR_EID                   (753u)
 #define BPLIB_CT_CCS_CRRPTD_ERR_EID                     (754u)
 #define BPLIB_CT_INV_EGRESS_ID_ERR_EID                  (755u)
 #define BPLIB_CT_NO_STOR_ERR_EID                        (756u)
@@ -216,6 +216,5 @@
 #define BPLIB_CT_UNKNOWN_BUNDLE_WRN_EID                 (759u)
 #define BPLIB_CT_DB_DELETE_ERR_EID                      (760u)
 #define BPLIB_CT_CCS_INSERT_ERR_EID                     (761u)
-#define BPLIB_CT_NONCUSTODIAL_ERR_EID                   (762u)
 
 #endif /* BPLIB_EVENTIDS_H */
