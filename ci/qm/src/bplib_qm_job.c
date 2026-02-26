@@ -60,13 +60,13 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
         BPLib_EID_IsMatch(&(Bundle->blocks.PrimaryBlock.DestEID), &BPLIB_EID_INSTANCE))
     {
         /* Send the deserialized CCS off to CT */
-        (void) BPLib_CT_ProcessCcs(Inst, &(Bundle->blocks.AdminRecordPayload->AdminRecordBody.CCS));
-                    
+        Status = BPLib_CT_ProcessCcs(Inst, &(Bundle->blocks.AdminRecordPayload->AdminRecordBody.CCS));
+
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);        
         BPLib_MEM_BundleFree(&Inst->pool, Bundle);
         
-        JobState = NO_NEXT_STATE;
+        JobState = BUNDLE_FREED;
     }
     else
     {
@@ -78,7 +78,7 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
 
-            JobState = NO_NEXT_STATE;
+            JobState = BUNDLE_FREED;
         }
         else
         {
@@ -109,7 +109,7 @@ static BPLib_QM_JobState_t ContactOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
 
-            JobState = NO_NEXT_STATE;
+            JobState = BUNDLE_FREED;
         }
     }
     /* Else, don't do any custody operations, just pass bundles through */
@@ -167,7 +167,7 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
 
-            JobState = NO_NEXT_STATE;
+            JobState = BUNDLE_FREED;
         }
         else
         {
@@ -254,7 +254,7 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     
                     BPLib_MEM_BundleFree(&Inst->pool, Bundle);
                     
-                    return NO_NEXT_STATE;
+                    return BUNDLE_FREED;
                 }
                 else if (BPLib_NC_GetAppState(i) == BPLIB_NC_APP_STATE_STARTED && 
                     BPLib_PI_GetRegistrationState(Inst, i) == BPLIB_PI_ACTIVE)

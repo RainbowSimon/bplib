@@ -196,7 +196,8 @@ BPLib_Status_t BPLib_QM_WorkerRunJob(BPLib_Instance_t* inst, int32_t WorkerID, i
     ** access their own state within it.
     */
     WorkerState = &inst->RegisteredWorkers[WorkerID];
-    if (WorkerState->CurrJob.NextState == NO_NEXT_STATE)
+    if (WorkerState->CurrJob.NextState == NO_NEXT_STATE ||
+        WorkerState->CurrJob.NextState == BUNDLE_FREED)
     {
         if (BPLib_QM_WaitQueueTryPull(&(inst->GenericWorkerJobs), &WorkerState->CurrJob, TimeoutMs))
         {
@@ -339,16 +340,18 @@ BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool
     if (BPLib_QM_WaitQueueTryPull(DuctQueue, &Bundle, TimeoutMs))
     {
         /* Take this bundle all the way to NO_NEXT_STATE */
-        while (CurrState != NO_NEXT_STATE)
+        while (CurrState != NO_NEXT_STATE && CurrState != BUNDLE_FREED)
         {
             JobFunc = BPLib_QM_JobLookup(CurrState);
             CurrState = JobFunc(Inst, Bundle);
         }
-        *RetBundle = Bundle;
-        return BPLIB_SUCCESS;
+
+        if (CurrState != BUNDLE_FREED)
+        {
+            *RetBundle = Bundle;
+            return BPLIB_SUCCESS;
+        }
     }
-    else
-    {
-        return BPLIB_TIMEOUT;
-    }
+
+    return BPLIB_TIMEOUT;
 }

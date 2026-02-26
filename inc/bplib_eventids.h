@@ -123,6 +123,9 @@
 #define BPLIB_NC_STOR_CLEANUP_INF_EID                   (584u)
 #define BPLIB_NC_STOR_CLEANUP_ERR_EID                   (585u)
 #define BPLIB_NC_MAINT_ERR_EID                          (586u)
+#define BPLIB_NC_TBL_UPDATE_INF_EID                     (587u)
+//#define BPLIB_NC_TBL_UPDATE_ERR_EID                     (588u)
+#define BPLIB_NC_INIT_ERR_EID                           (589u)
 
 /* ============ */
 /* AS event IDs */
@@ -142,9 +145,6 @@
 /* ============== */
 /* STOR event IDs */
 /* ============== */
-
-#define BPLIB_NC_TBL_UPDATE_INF_EID                     (606u)
-#define BPLIB_NC_TBL_UPDATE_ERR_EID                     (607u)
 
 #define BPLIB_STOR_SQL_LOAD_ERR_EID                     (608u)
 #define BPLIB_STOR_SQL_STORE_ERR_EID                    (609u)
@@ -202,15 +202,10 @@
 
 /* QM event IDs */
 #define BPLIB_QM_EBP_OUT_ERR_EID                        (700u)
-
-/* ================== */
-/* NC Debug Event IDs */
-/* ================== */
-
-#define BPLIB_NC_INIT_ERR_EID                           (701u)
+#define BPLIB_QM_CT_IN_ERR_EID                          (701u)
 
 /* CT event IDs */
-#define BPLIB_CT_INV_SEQ_NUM_ERR_EID                    (752u)
+#define BPLIB_CT_INV_SEQ_NUM_DBG_EID                    (752u)
 #define BPLIB_CT_BUNDLE_DLT_ERR_EID                     (753u)
 #define BPLIB_CT_CCS_CRRPTD_ERR_EID                     (754u)
 #define BPLIB_CT_INV_EGRESS_ID_ERR_EID                  (755u)
@@ -219,5 +214,6 @@
 #define BPLIB_CT_REJECTED_DEBG_EID                      (758u)
 #define BPLIB_CT_UNKNOWN_BUNDLE_WRN_EID                 (759u)
 #define BPLIB_CT_DB_DELETE_ERR_EID                      (760u)
+#define BPLIB_CT_CCS_INSERT_ERR_EID                     (761u)
 
 #endif /* BPLIB_EVENTIDS_H */

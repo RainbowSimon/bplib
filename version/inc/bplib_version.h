@@ -31,12 +31,12 @@
  */
 #define BPLIB_MAJOR_VERSION (7u)  /*!< @brief Major version number */
 #define BPLIB_MINOR_VERSION (0u)  /*!< @brief Minor version number */
-#define BPLIB_REVISION      (2u)  /*!< @brief Revision version number. Value of 0 indicates a development version.*/
+#define BPLIB_REVISION      (4u)  /*!< @brief Revision version number. Value of 0 indicates a development version.*/
 
 /*
  * Development Build Macro Definitions
  */
-#define BPLIB_BUILD_NUMBER (6u) /*!< Development Build: Number of development builds (not commits) since baseline */
+#define BPLIB_BUILD_NUMBER (0u) /*!< Development Build: Number of development builds (not commits) since baseline */
 
 /**
  * @brief Max Version String length.

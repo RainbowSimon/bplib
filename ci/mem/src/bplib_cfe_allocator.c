@@ -70,10 +70,8 @@ void BPLib_MEM_PoolImplDestroy(BPLib_MEM_PoolImpl_t* Pool)
     {
         return;
     }
-    
-    (void) CFE_ES_PoolDelete(Pool->CfeHandle);
-    
-    memset(Pool, 0, sizeof(BPLib_MEM_PoolImpl_t));
+
+    /* cFE complains when it's not the one to call CFE_ES_PoolDelete so nothing really happens here */
 }
 
 void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* Pool, size_t Size)

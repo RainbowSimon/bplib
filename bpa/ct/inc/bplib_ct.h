@@ -383,4 +383,6 @@ void BPLib_CT_BuildAndSendOpenCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs_t
  */
 void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance);
 
+uint8_t BPLib_CT_GetCtebIndex(BPLib_Bundle_t *Bundle);
+
 #endif /* BPLIB_CT_H */

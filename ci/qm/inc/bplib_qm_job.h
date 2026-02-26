@@ -46,6 +46,7 @@ typedef enum BPLib_JobState
     CHANNEL_OUT_EBP_TO_PI = 11,     /**< Channel state: EBP to PI */
     NUM_GENWORKER_STATES = 12,      /**< Total number of worker states */
     NO_NEXT_STATE = 13,             /**< Signaling state with no next state */
+    BUNDLE_FREED  = 14,             /**< Signaling that the job freed the bundle, stop processing  */
 } BPLib_QM_JobState_t;
 
 /**

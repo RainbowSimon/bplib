@@ -86,11 +86,12 @@ BPLib_Status_t BPLib_CT_InitEntry(BPLib_Instance_t *Inst, uint32_t BundleId)
     }
 
     DbEntry = &(DbMemBlk->user_data.DbEntry);
+
+    memset(DbEntry, 0, sizeof(BPLib_CT_DbEntry_t));
     
     /* Set initial CTDB entry values - the sequence ID/number will be updated later */
     DbEntry->BundleId = BundleId;
     DbEntry->SeqId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE;
-    DbEntry->SeqNum = 0;
 
     Inst->Ct.CurrDbSize++;
     
