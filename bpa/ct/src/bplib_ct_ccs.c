@@ -396,16 +396,10 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     {
         for (NextSeqNum = CurrSeqNum; NextSeqNum < CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]; NextSeqNum++)
         {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
             TempStatus = BPLib_CT_GetEntryFromCtdbWithSeq(&Inst->Ct, SeqCollection->SeqId,
                                                             NextSeqNum, &DbEntry);
-
-<<<<<<< HEAD
             if (TempStatus != BPLIB_SUCCESS || DbEntry == NULL)
-=======
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
-
-            if (Status != BPLIB_SUCCESS || DbEntry == NULL)
->>>>>>> main
             {
                 /* Excluded sequences can be ignored */
                 if (SeqRangeIdx % 2 != 0)
