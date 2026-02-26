@@ -87,6 +87,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst,
     size_t               TotalBytesStored;
     size_t               DuplicateBundlesIgnored;
     size_t               CustodialIdx;
+    size_t               CustodialBundleCount;
 
     CacheInst               = &Inst->BundleStorage;
     TotalBytesStored        = 0;
@@ -143,6 +144,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst,
         if (CacheInst->InsertBatch[i]->Meta.IsCustodial)
         {
             CustodialBundles[CustodialIdx++] = CacheInst->InsertBatch[i];
+            CustodialBundleCount++;
         }
         /* Noncustodial bundles are all freed */
         else
@@ -151,6 +153,16 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst,
         }
     }
 
+    /* Unlikely error, but report it just in case */
+    if (CustodialBundleCount != *CustodialBundlesStored && Status == BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_STOR_UNKNOWN_CUST_ERR_EID, BPLib_EM_EventType_ERROR,
+                "Storage reported successfully storing %ld custodial bundles but %ld were in the batch.",
+                *CustodialBundlesStored, CustodialBundleCount);
+    }
+
+    *CustodialBundlesStored = CustodialBundleCount;
+    
     CacheInst->InsertBatchSize = 0;
 
     return Status;

@@ -66,7 +66,6 @@ BPLib_Status_t BPLib_CT_SignalCustodyImpl(BPLib_Instance_t *Inst, BPLib_Bundle_t
     BPLib_CustodyBlockData_t *CtebPtr;
     BPLib_Status_t Status = BPLIB_SUCCESS;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
-    char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
 
     CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
 
@@ -75,7 +74,6 @@ BPLib_Status_t BPLib_CT_SignalCustodyImpl(BPLib_Instance_t *Inst, BPLib_Bundle_t
                             Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
     if (Status != BPLIB_SUCCESS || DbEntry == NULL)
     {
-        printf("bundle can't be found in CTDB\n");
         return BPLIB_NOT_FOUND_ERR;
     }
 
@@ -91,21 +89,17 @@ BPLib_Status_t BPLib_CT_SignalCustodyImpl(BPLib_Instance_t *Inst, BPLib_Bundle_t
 
     if (DispCode == BPLib_CT_CustodyAccepted)
     {
-        if (IsDuplicate == false && DbEntry->InCustody == false)
+        if (IsDuplicate == false)
         {
             Inst->Ct.BundleCountInCustody++;
-            DbEntry->InCustody = true;
+            DbEntry->State = BPLib_CT_InCustody;
         }
         
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ACCEPTED_CUSTODY, 1);
     }
     else
     {
-        BPLib_BI_GetBundleInfo(Bundle, BundleInfo, BPLIB_MAX_BUNDLE_INFO_STR_LENGTH);
-
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
-        BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG, 
-                            "Bundle custody rejected. %s.", BundleInfo);
 
         /* Make sure any CTDB entries that might exist with this bundle are removed */
         (void) BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
@@ -337,29 +331,19 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         **    retransmission and deletes the bundle from the CTDB -> possible, 
         **    so just throw the bundle out and fail silently
         */
-
-        // BPLib_EM_SendEvent(BPLIB_CT_UNKNOWN_BUNDLE_WRN_EID, BPLib_EM_EventType_WARNING,
-        //     "Transmitting a custodial bundle that does not exist in CTDB, bundle ID = %d.",
-        //     Bundle->blocks.PrimaryBlock.BundleId);
-
-        // Status = BPLib_CT_InitEntry(Inst, Bundle->blocks.PrimaryBlock.BundleId);
-
-        // if (Status == BPLIB_SUCCESS)
-        // {
-        //     Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
-        //                 Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
-        // }
-
     }
-    if (Status == BPLIB_SUCCESS)
+    else
     {
-        if (DbEntry->InCustody == false)
+        /* Sanity check the DbEntry's state */
+        if (DbEntry->State == BPLib_CT_Initialized || DbEntry->State == BPLib_CT_Deleted)
         {
-            fprintf(stderr, "uhh this bundle is not in custody, seq_num=%ld\n", CtebPtr->BundleSeqNum);
+            BPLib_EM_SendEvent(BPLIB_CT_NONCUSTODIAL_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "Error, cannot update a custodial bundle with CTDB state %d", DbEntry->State);
+            Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
         }
 
         /* Bundle CTEB fields have not been updated yet, assign new values */
-        if (DbEntry->SeqId == BPLIB_CT_SEQ_ID_ROLLOVER_VALUE)
+        else if (DbEntry->State == BPLib_CT_InCustody)
         {
             CtebPtr->BundleSeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle->Meta.EgressID);;
             CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), Bundle->Meta.EgressID);
@@ -367,15 +351,16 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             Status = BPLib_CT_UpdateEntry(Inst, DbEntry, CtebPtr->BundleSeqId,
                                                             CtebPtr->BundleSeqNum);
         }
+        
         /* Bundle CTEB fields have been set, this is a retransmission */
-        else
+        else 
         {
             CtebPtr->BundleSeqId = DbEntry->SeqId;
             CtebPtr->BundleSeqNum = DbEntry->SeqNum;
 
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
+            DbEntry->State = BPLib_CT_Retransmitted;
 
-            fprintf(stderr, "retransmitting %ld\n", CtebPtr->BundleSeqNum);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
         }
 
         BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);

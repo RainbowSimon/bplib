@@ -119,6 +119,18 @@ typedef enum
 } BPLib_CT_SeqCollectionIdx_t;
 
 /**
+ * \brief The state of a bundle's CTDB entry
+ */
+typedef enum
+{
+    BPLib_CT_Initialized = 0,           /** \brief A CTDB entry has been created but the bundle is not in custody yet */
+    BPLib_CT_InCustody = 1,             /** \brief The bundle was successfully stored and is in custody */
+    BPLib_CT_Transmitted = 2,           /** \brief The bundle has been transmitted to the next node */
+    BPLib_CT_Retransmitted = 3,         /** \brief The bundle has been retransmitted at least once */
+    BPLib_CT_Deleted = 4,               /** \brief The bundle's custody has been transferred and it is marked for deletion */
+} BPLib_CT_DbEntryState_t;
+
+/**
  * \brief A bundle sequence collection and relevant information for building one.
  */
 typedef struct
@@ -169,7 +181,7 @@ typedef struct
     uint64_t SeqId;                     /** \brief Sequence ID */
     uint64_t SeqNum;                    /** \brief Sequence number */
     uint32_t BundleId;                  /** \brief Unique bundle ID */
-    bool     InCustody;                 /** \brief Whether this entry is officially in custody or not */
+    BPLib_CT_DbEntryState_t State;      /** \brief The custodial state of this bundle */
 } BPLib_CT_DbEntry_t;
 
 /**

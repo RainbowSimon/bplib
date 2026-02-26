@@ -382,6 +382,7 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     BPLib_Status_t Status = BPLIB_SUCCESS;
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     bool NotFoundErr = false;
+    uint32_t BundleId;
 
     CurrSeqNum = SeqCollection->FirstSeqNum;
 
@@ -396,8 +397,6 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
     {
         for (NextSeqNum = CurrSeqNum; NextSeqNum < CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]; NextSeqNum++)
         {
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, 1);
-
             TempStatus = BPLib_CT_GetEntryFromCtdbWithSeq(&Inst->Ct, SeqCollection->SeqId,
                                                             NextSeqNum, &DbEntry);
             if (Status != BPLIB_SUCCESS || DbEntry == NULL)
@@ -417,34 +416,26 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             /* Even sequence range numbers indicate sequences that are *included* */
             else if (SeqRangeIdx % 2 == 0)
             {
+                BundleId = DbEntry->BundleId;
+
                 /* Positive disposition code indicates custody was accepted */
                 if (SeqCollection->DispositionCode > 0)
                 {
-                    TempStatus = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
+                    DbEntry->State = BPLib_CT_Deleted;
 
-                    if (TempStatus == BPLIB_SUCCESS)
-                    {
-                        /* Request bundle deletion from storage */
-                        pthread_mutex_unlock(&Inst->Ct.Lock);
-                        BPLib_STOR_AddToCustodialUpdateBatch(Inst, DbEntry->BundleId, BPLIB_CT_MARK_DELETE);
-                        pthread_mutex_lock(&Inst->Ct.Lock);
+                    /* Request bundle deletion from storage */
+                    pthread_mutex_unlock(&Inst->Ct.Lock);
+                    BPLib_STOR_AddToCustodialUpdateBatch(Inst, BundleId, BPLIB_CT_MARK_DELETE);
+                    pthread_mutex_lock(&Inst->Ct.Lock);
 
-                        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
-                    }                                
-                    else
-                    {
-                        Status = TempStatus;
-                        BPLib_EM_SendEvent(BPLIB_CT_BUNDLE_DLT_ERR_EID, BPLib_EM_EventType_ERROR,
-                            "Error deleting custodial bundle sequence number %ld with sequence ID %ld. Status = %d.",
-                            SeqCollection->SeqId, NextSeqNum, Status);
-                    }
+                    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_TRANSFERRED, 1);
                 }
                 /* Negative disposition code indicates custody was rejected */
                 else
                 {
                     /* Request storage turn retransmit timer off */
                     pthread_mutex_unlock(&Inst->Ct.Lock);
-                    BPLib_STOR_AddToCustodialUpdateBatch(Inst, DbEntry->BundleId, BPLIB_CT_STOP_RETRANSMIT);
+                    BPLib_STOR_AddToCustodialUpdateBatch(Inst, BundleId, BPLIB_CT_STOP_RETRANSMIT);
                     pthread_mutex_lock(&Inst->Ct.Lock);
 
                     BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_REJECTED, 1);
@@ -453,9 +444,11 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             /* Odd sequence range numbers indicate sequences that are *excluded* */
             else
             {
+                BundleId = DbEntry->BundleId;
+
                 /* Request bundle retransmission from storage */
                 pthread_mutex_unlock(&Inst->Ct.Lock);
-                BPLib_STOR_AddToCustodialUpdateBatch(Inst, DbEntry->BundleId, BPLIB_CT_START_RETRANSMIT);
+                BPLib_STOR_AddToCustodialUpdateBatch(Inst, BundleId, BPLIB_CT_START_RETRANSMIT);
                 pthread_mutex_lock(&Inst->Ct.Lock);
             }
         }
@@ -470,14 +463,19 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
             NotFoundErr = false;
         }
 
-        /* Output on the CTEB-sending node when bundles have been rejected */
+        /* Output on the custodial node when bundles have been rejected */
         if (SeqRangeIdx % 2 == 0 && SeqCollection->DispositionCode < 0)
         {
-            BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG,
-                                    "Bundles with sequence ID %lu and sequence numbers [%lu-%lu] were rejected by downstream node",
-                                    SeqCollection->SeqId,
-                                    CurrSeqNum,
-                                    (CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]) - 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED_CUSTODY_SIGNAL, SeqCollection->SeqRange[SeqRangeIdx]);
+
+            if (SeqCollection->DispositionCode < 0)
+            {
+                BPLib_EM_SendEvent(BPLIB_CT_REJECTED_DEBG_EID, BPLib_EM_EventType_DEBUG,
+                    "Bundles with sequence ID %lu and sequence numbers [%lu-%lu] were rejected by downstream node",
+                    SeqCollection->SeqId, CurrSeqNum,
+                    (CurrSeqNum + SeqCollection->SeqRange[SeqRangeIdx]) - 1);
+
+            }
         }
 
         CurrSeqNum += SeqCollection->SeqRange[SeqRangeIdx];

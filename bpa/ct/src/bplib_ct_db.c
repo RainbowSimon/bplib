@@ -92,7 +92,7 @@ BPLib_Status_t BPLib_CT_InitEntry(BPLib_Instance_t *Inst, uint32_t BundleId)
     /* Set initial CTDB entry values - the sequence ID/number will be updated later */
     DbEntry->BundleId = BundleId;
     DbEntry->SeqId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE;
-    DbEntry->InCustody = false;
+    DbEntry->State = BPLib_CT_Initialized;
 
     Inst->Ct.CurrDbSize++;
     
@@ -106,6 +106,7 @@ BPLib_Status_t BPLib_CT_UpdateEntry(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_t *
     /* Update entry sequence ID/number */
     DbEntry->SeqId = SeqId;
     DbEntry->SeqNum = SeqNum;
+    DbEntry->State = BPLib_CT_Transmitted;
     
     return BPLib_RBT_InsertValueGeneric(SeqId, &(Inst->Ct.SeqTreeRoot), 
                                         &(DbEntry->SeqRbtLink),
@@ -194,7 +195,7 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_
     BPLib_Status_t Status = BPLIB_SUCCESS;
 
     /* The sequence ID/num RBT node may or may not be initialized */
-    if (DbEntry->SeqId != BPLIB_CT_SEQ_ID_ROLLOVER_VALUE)
+    if (DbEntry->State != BPLib_CT_Initialized)
     {
         Status = BPLib_RBT_ExtractNode(&(Inst->Ct.SeqTreeRoot), &DbEntry->SeqRbtLink);
     }
@@ -204,7 +205,7 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_
         Status = BPLib_RBT_ExtractNode(&(Inst->Ct.IdTreeRoot), &DbEntry->IdRbtLink);
         if (Status == BPLIB_SUCCESS)
         {
-            if (DbEntry->InCustody)
+            if (DbEntry->State != BPLib_CT_Initialized)
             {
                 Inst->Ct.BundleCountInCustody--;
             }
@@ -212,11 +213,6 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_
             Inst->Ct.CurrDbSize--;
             BPLib_MEM_BlockFree(&Inst->pool, BPLib_MEM_GetBlockFromUserData(DbEntry));
         }
-    }
-
-    if (Status != BPLIB_SUCCESS)
-    {
-        fprintf(stderr, "deletion failed %d\n", Status);
     }
 
     return Status;
