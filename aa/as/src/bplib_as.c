@@ -23,6 +23,9 @@
 /* ======== */
 
 #include "bplib_as.h"
+
+#ifdef MODULE_BPLIB_INCLUDE_AS
+
 #include "bplib_as_internal.h"
 #include "bplib_fwp.h"
 #include "bplib_time.h"
@@ -567,3 +570,95 @@ BPLib_Status_t BPLib_AS_AddMibArrayKey(const BPLib_EID_Pattern_t* EID_Patterns)
 
     return Status;
 }
+
+#else /* MODULE_BPLIB_INCLUDE_AS */
+
+BPLib_Status_t BPLib_AS_Init(BPLib_Instance_t *Inst)
+{
+    (void) Inst;
+    return BPLIB_SUCCESS;
+}
+
+uint32_t BPLib_AS_GetCounter(BPLib_EID_t *EID, BPLib_AS_Counter_t Counter)
+{
+    return 0;
+}
+
+void BPLib_AS_Increment(BPLib_EID_t EID, BPLib_AS_Counter_t Counter, uint32_t Amount)
+{
+    (void) EID;
+    (void) Counter;
+    (void) Amount;
+    return;
+}
+
+void BPLib_AS_Decrement(BPLib_EID_t EID, BPLib_AS_Counter_t Counter, uint32_t Amount)
+{
+    (void) EID;
+    (void) Counter;
+    (void) Amount;
+    return;
+}
+
+void BPLib_AS_IncrementRate(BPLib_Instance_t *Inst, BPLib_EID_t *EID,
+                            BPLib_AS_RateReport_t Rate, uint64_t Amount)
+{
+    (void) Inst;
+    (void) EID;
+    (void) Rate;
+    (void) Amount;
+    return;
+}
+
+BPLib_Status_t BPLib_AS_ResetCounter(uint16_t MibArrayIndex, BPLib_AS_Counter_t Counter)
+{
+    (void) MibArrayIndex;
+    (void) Counter;
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_AS_ResetSourceCounters(uint16_t MibArrayIndex)
+{
+    (void) MibArrayIndex;
+    return BPLIB_SUCCESS;
+}
+
+void BPLib_AS_ResetBundleCounters()
+{
+    return;
+}
+
+BPLib_Status_t BPLib_AS_ResetErrorCounters(uint16_t MibArrayIndex)
+{
+    (void) MibArrayIndex;
+    return BPLIB_SUCCESS;
+}
+
+void BPLib_AS_ResetAllCounters(void)
+{
+    return;
+}
+
+BPLib_Status_t BPLib_AS_SendNodeMibCountersHk()
+{
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_AS_SendSourceMibCountersHk()
+{
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_AS_SendNodeMibReportsHk(BPLib_Instance_t *Inst)
+{
+    (void) Inst;
+    return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_AS_AddMibArrayKey(const BPLib_EID_Pattern_t* EID_Patterns)
+{
+    (void) EID_Patterns;
+    return BPLIB_SUCCESS;
+}
+
+#endif /* MODULE_BPLIB_INCLUDE_AS */

@@ -33,8 +33,11 @@
 ** Global Data
 */
 
+#ifdef MODULE_BPLIB_INCLUDE_NC_TELEMETRY
 extern BPLib_SourceMibConfigHkTlm_Payload_t    BPLib_NC_SourceMibConfigPayload;
 extern BPLib_NodeMibConfigHkTlm_Payload_t      BPLib_NC_NodeMibConfigPayload;
+#endif
+
 extern BPLib_ChannelContactStatHkTlm_Payload_t BPLib_NC_ChannelContactStatsPayload;
 
 

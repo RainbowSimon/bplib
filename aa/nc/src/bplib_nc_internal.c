@@ -28,8 +28,11 @@
 ** Global Data
 */
 
+#ifdef MODULE_BPLIB_INCLUDE_NC_TELEMETRY
 BPLib_SourceMibConfigHkTlm_Payload_t    BPLib_NC_SourceMibConfigPayload;
 BPLib_NodeMibConfigHkTlm_Payload_t      BPLib_NC_NodeMibConfigPayload;
+#endif
+
 BPLib_ChannelContactStatHkTlm_Payload_t BPLib_NC_ChannelContactStatsPayload;
 
 
