@@ -161,6 +161,7 @@
 #define BPLIB_STOR_AUTO_CLEAN_END_INF_EID               (620u)
 #define BPLIB_STOR_AUTO_CLEAN_ERR_EID                   (621u)
 #define BPLIB_STOR_NO_MEM_ERR_EID                       (622u)
+#define BPLIB_STOR_UNKNOWN_CUST_ERR_EID                 (623u)
 
 /* ============ */
 /* BI event IDs */
@@ -206,7 +207,7 @@
 
 /* CT event IDs */
 #define BPLIB_CT_INV_SEQ_NUM_DBG_EID                    (752u)
-#define BPLIB_CT_BUNDLE_DLT_ERR_EID                     (753u)
+#define BPLIB_CT_NONCUSTODIAL_ERR_EID                   (753u)
 #define BPLIB_CT_CCS_CRRPTD_ERR_EID                     (754u)
 #define BPLIB_CT_INV_EGRESS_ID_ERR_EID                  (755u)
 #define BPLIB_CT_NO_STOR_ERR_EID                        (756u)

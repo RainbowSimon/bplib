@@ -33,10 +33,10 @@
 #include "bplib_nc.h"
 #include "bplib_bi.h"
 
-/*
-** Function Definitions
-*/
 
+/*
+** Internal Function Definitions
+*/
 
 uint8_t BPLib_CT_GetCtebIndex(BPLib_Bundle_t *Bundle)
 {
@@ -58,6 +58,65 @@ uint8_t BPLib_CT_GetCtebIndex(BPLib_Bundle_t *Bundle)
     return BPLIB_MAX_NUM_EXTENSION_BLOCKS;
 }
 
+
+BPLib_Status_t BPLib_CT_SignalCustodyImpl(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
+                        BPLib_CT_DispositionCode_t DispCode, bool IsDuplicate, uint8_t ExtBlockIdx)
+{
+    size_t OpenCcsIdx;
+    BPLib_CustodyBlockData_t *CtebPtr;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+    BPLib_CT_DbEntry_t *DbEntry = NULL;
+
+    CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
+
+    /* Check to see if the bundle is in the CTDB */
+    Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+                            Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
+    if (Status == BPLIB_SUCCESS && DbEntry != NULL)
+    {
+        if (DispCode == BPLib_CT_CustodyRefused)
+        {
+            /* Make sure any CTDB entry that might exist with this bundle are removed */
+            (void) BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
+        }
+    }
+    else if (DispCode == BPLib_CT_CustodyAccepted)
+    {
+        return BPLIB_NOT_FOUND_ERR;
+    }
+
+    /* For foreign bundles, need to accept/reject custody with previous node via CCS */
+    if (Bundle->Meta.LocalBundle == false)
+    {
+        OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(Inst, &(CtebPtr->BlockSrcAdminEID),
+                                            CtebPtr->BundleSeqId);
+
+        Status = BPLib_CT_AddToOpenCcs(Inst, OpenCcsIdx, Bundle->Meta.IngressID,
+                                        CtebPtr, DispCode);
+    }
+
+    if (DispCode == BPLib_CT_CustodyAccepted)
+    {
+        if (IsDuplicate == false)
+        {
+            Inst->Ct.BundleCountInCustody++;
+            DbEntry->State = BPLib_CT_InCustody;
+        }
+        
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ACCEPTED_CUSTODY, 1);
+    }
+    else
+    {
+        Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
+    }
+
+    return Status;
+}
+
+/*
+** External Function Definitions
+*/
 
 BPLib_Status_t BPLib_CT_Init(BPLib_Instance_t *Inst)
 {
@@ -189,29 +248,25 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         }
     }
 
-    pthread_mutex_unlock(&Inst->Ct.Lock);
-
     if (Status != BPLIB_SUCCESS)
     {
         /*
         ** Signal custody for rejected bundles or duplicate bundles, otherwise wait
         ** until a bundle is successfully stored to formally accept it
         */
-        (void) BPLib_CT_SignalCustody(Inst, Bundle, DispCode, IsDuplicate);
-    }
+        (void) BPLib_CT_SignalCustodyImpl(Inst, Bundle, DispCode, IsDuplicate, ExtBlockIdx);
+    }    
     
+    pthread_mutex_unlock(&Inst->Ct.Lock);
+
     return Status;
 }
 
 BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
                                     BPLib_CT_DispositionCode_t DispCode, bool IsDuplicate)
 {
-    size_t OpenCcsIdx;
     uint8_t ExtBlockIdx;
-    BPLib_CustodyBlockData_t *CtebPtr;
-    BPLib_Status_t Status = BPLIB_SUCCESS;
-    BPLib_CT_DbEntry_t *DbEntry = NULL;
-    char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
+    BPLib_Status_t Status;
 
     if (Bundle == NULL || Inst == NULL)
     {
@@ -225,46 +280,8 @@ BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bu
         return BPLIB_SUCCESS;
     }
 
-    CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
-
     pthread_mutex_lock(&Inst->Ct.Lock);
-
-    /* For foreign bundles, need to accept/reject custody with previous node via CCS */
-    if (Bundle->Meta.LocalBundle == false)
-    {
-        OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(Inst, &(CtebPtr->BlockSrcAdminEID),
-                                            CtebPtr->BundleSeqId);
-
-        Status = BPLib_CT_AddToOpenCcs(Inst, OpenCcsIdx, Bundle->Meta.IngressID,
-                                        CtebPtr, DispCode);
-    }
-
-    if (DispCode == BPLib_CT_CustodyAccepted)
-    {
-        if (IsDuplicate == false)
-        {
-            Inst->Ct.BundleCountInCustody++;
-        }
-        
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ACCEPTED_CUSTODY, 1);
-    }
-    else
-    {
-        BPLib_BI_GetBundleInfo(Bundle, BundleInfo, BPLIB_MAX_BUNDLE_INFO_STR_LENGTH);
-
-        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REJECTED_CUSTODY, 1);
-
-        /* Make sure any CTDB entries that might exist with this bundle are removed */
-        Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
-                                    Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
-        if (Status == BPLIB_SUCCESS)
-        {
-            Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
-        }
-
-        Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
-    }
-
+    Status = BPLib_CT_SignalCustodyImpl(Inst, Bundle, DispCode, IsDuplicate, ExtBlockIdx);
     pthread_mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
@@ -282,72 +299,89 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
         return BPLIB_NULL_PTR_ERROR;
     }
 
-    /* A CTEB was detected, do custody operations */
+    /* Do nothing for non-custodial bundles */
     ExtBlockIdx = BPLib_CT_GetCtebIndex(Bundle);
-    if (ExtBlockIdx < BPLIB_MAX_NUM_EXTENSION_BLOCKS)
+    if (ExtBlockIdx >= BPLIB_MAX_NUM_EXTENSION_BLOCKS)
     {
-        CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
-
-        /* Update CTEB fields */
-        if (Bundle->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS)
-        {
-            pthread_mutex_lock(&Inst->Ct.Lock);
-
-            /* Check if this is a bundle retransmission from storage or a new bundle */
-            Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
-                                Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
-
-            if (Status != BPLIB_SUCCESS)
-            {
-                /* 
-                ** Possible causes of this:
-                **  - The CTDB has been corrupted -> unlikely and if this is the case,
-                **    nothing we can really do
-                **  - The node was restarted with custodial bundles in storage -> possible,
-                **    but not a case that can currently be handled, this will require
-                **    logic to rebuild the CTDB on a node restart
-                **  - Some mismatch in the threads where this bundle was loaded into
-                **    memory in a retransmission right before a CCS confirms its
-                **    retransmission and deletes the bundle from the CTDB -> possible, 
-                **    so just throw the bundle out and fail silently
-                */
-            }
-            else
-            {
-                /* Bundle CTEB fields have not been updated yet, assign new values */
-                if (DbEntry->SeqId == BPLIB_CT_SEQ_ID_ROLLOVER_VALUE)
-                {
-                    CtebPtr->BundleSeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle->Meta.EgressID);;
-                    CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), Bundle->Meta.EgressID);
-
-                    Status = BPLib_CT_UpdateEntry(Inst, DbEntry, CtebPtr->BundleSeqId,
-                                                                    CtebPtr->BundleSeqNum);
-                }
-                /* Bundle CTEB fields have been set, this is a retransmission */
-                else
-                {
-                    CtebPtr->BundleSeqId = DbEntry->SeqId;
-                    CtebPtr->BundleSeqNum = DbEntry->SeqNum;
-
-                    BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
-                }
-
-                BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
-                Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
-            }
-
-            pthread_mutex_unlock(&Inst->Ct.Lock);
-        }
-        else
-        {
-            Status = BPLIB_INVALID_CONT_ID_ERR;
-            BPLib_EM_SendEvent(BPLIB_CT_CCS_CRRPTD_ERR_EID, BPLib_EM_EventType_ERROR,
-                    "Bundle has an invalid egress ID %d, check for memory corruption.", Bundle->Meta.EgressID);
-        }
-
+        return BPLIB_SUCCESS;
     }
 
-    /* Do nothing for non-custodial bundles */
+    if (Bundle->Meta.EgressID >= BPLIB_MAX_NUM_CONTACTS)
+    {
+        BPLib_EM_SendEvent(BPLIB_CT_INV_EGRESS_ID_ERR_EID, BPLib_EM_EventType_ERROR,
+                "Bundle has an invalid egress ID %d, check for memory corruption.", Bundle->Meta.EgressID);
+
+        return BPLIB_INVALID_CONT_ID_ERR;
+    }
+
+    CtebPtr = &(Bundle->blocks.ExtBlocks[ExtBlockIdx].BlockData.CustodyBlockData);
+
+    pthread_mutex_lock(&Inst->Ct.Lock);
+    
+    Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct),
+                        Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
+    if (Status != BPLIB_SUCCESS)
+    {
+        /* 
+        ** Possible causes of this:
+        **  - The CTDB has been corrupted -> unlikely and if this is the case,
+        **    nothing we can really do
+        **  - The node was restarted with custodial bundles in storage -> possible,
+        **    but not a case that can currently be handled, this will require
+        **    logic to rebuild the CTDB on a node restart
+        **  - Some mismatch in the threads where this bundle was loaded into
+        **    memory in a retransmission right before a CCS confirms its
+        **    retransmission and deletes the bundle from the CTDB -> possible, 
+        **    so just throw the bundle out and fail silently
+        */
+    }
+    else
+    {
+        /* Sanity check the DbEntry's state */
+        if (DbEntry->State == BPLib_CT_Initialized)
+        {
+            BPLib_EM_SendEvent(BPLIB_CT_NONCUSTODIAL_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "Error, cannot update a custodial bundle whose custody has not been finalized; seq_num = %ld", 
+                    DbEntry->State, DbEntry->SeqNum);
+            Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
+        }
+        else if (DbEntry->State == BPLib_CT_Transferred)
+        {
+            /* 
+            ** Silently trigger bundle deletion, storage probably just triggered a
+            ** retransmission right before its custody was transferred successfully
+            */
+            Status = BPLIB_CT_CUSTODY_REFUSED_ERR;
+        }
+
+        /* Bundle CTEB fields have not been updated yet, assign new values */
+        else if (DbEntry->State == BPLib_CT_InCustody)
+        {
+            CtebPtr->BundleSeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle->Meta.EgressID);;
+            CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), Bundle->Meta.EgressID);
+
+            DbEntry->State = BPLib_CT_Transmitted;
+
+            Status = BPLib_CT_UpdateEntry(Inst, DbEntry, CtebPtr->BundleSeqId,
+                                                            CtebPtr->BundleSeqNum);
+        }
+        
+        /* Bundle CTEB fields have been set, this is a retransmission */
+        else 
+        {
+            CtebPtr->BundleSeqId = DbEntry->SeqId;
+            CtebPtr->BundleSeqNum = DbEntry->SeqNum;
+
+            DbEntry->State = BPLib_CT_Retransmitted;
+
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_CUSTODY_RE_FORWARDED, 1);
+        }
+
+        BPLib_EID_CopyEids(&(CtebPtr->BlockSrcAdminEID), BPLIB_EID_INSTANCE);
+        Bundle->blocks.ExtBlocks[ExtBlockIdx].Header.RequiresEncode = true;
+    }
+
+    pthread_mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
 }
@@ -436,11 +470,7 @@ void BPLib_CT_DeleteBundleFromCtdb(BPLib_Instance_t *Inst, uint32_t BundleId)
         Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
     }
 
-    if (Status == BPLIB_SUCCESS)
-    {
-        Inst->Ct.BundleCountInCustody--;
-    }
-    else
+    if (Status != BPLIB_SUCCESS)
     {
         BPLib_EM_SendEvent(BPLIB_CT_DB_DELETE_ERR_EID, BPLib_EM_EventType_ERROR,
                     "Error, could not delete bundle ID 0x%x from CTDB. Status = %d.",
@@ -485,4 +515,75 @@ void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance)
     }
 
     pthread_mutex_unlock(&Instance->Ct.Lock);
+}
+
+BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle)
+{
+    BPLib_CT_DbEntry_t *DbEntry = NULL;
+    BPLib_Status_t Status = BPLIB_SUCCESS;
+    uint8_t ExtBlockIdx;
+
+    if (Inst == NULL || Bundle == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    /* Do nothing for non-custodial bundles */
+    ExtBlockIdx = BPLib_CT_GetCtebIndex(Bundle);
+    if (ExtBlockIdx >= BPLIB_MAX_NUM_EXTENSION_BLOCKS)
+    {
+        return BPLIB_SUCCESS;
+    }
+
+    pthread_mutex_lock(&Inst->Ct.Lock);
+
+    /* Mark bundle as transferred */
+    Status = BPLib_CT_GetEntryFromCtdbWithId(&(Inst->Ct), 
+                            Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
+    if (Status == BPLIB_SUCCESS && DbEntry != NULL)
+    {
+        /* Bundle was never stored, finalize custody */
+        if (DbEntry->State == BPLib_CT_Initialized)
+        {
+            /* Finalize custodial transfer for custodial bundles */
+            (void) BPLib_CT_SignalCustodyImpl(Inst, Bundle, BPLib_CT_CustodyAccepted, false, ExtBlockIdx);
+            Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
+        }
+        else
+        {
+            /* Let storage delete CTDB entry */
+            DbEntry->State = BPLib_CT_Delivered;
+            Inst->Ct.BundleCountInCustody--;
+        }
+    }
+
+    pthread_mutex_unlock(&Inst->Ct.Lock);
+
+    return Status;
+}
+
+bool BPLib_CT_TriggerCustodialGarbageCollection(BPLib_Instance_t *Inst)
+{
+    float    DecimalVal;
+    bool     TriggerGC = false;
+    
+    if (Inst != NULL)
+    {
+        pthread_mutex_lock(&Inst->Ct.Lock);
+
+        if (Inst->Ct.CurrDbSize == 0)
+        {
+            TriggerGC = false;
+        }
+        else
+        {
+            DecimalVal = ((float) (Inst->Ct.CurrDbSize - Inst->Ct.BundleCountInCustody) / 
+                                    (float) Inst->Ct.CurrDbSize);
+            TriggerGC = (BPLIB_CT_DB_MAX_PERCENT_NONCUSTODIAL_ENTRIES <= (uint32_t)(DecimalVal * 100));
+        }
+
+        pthread_mutex_unlock(&Inst->Ct.Lock);
+    }
+
+    return TriggerGC;
 }

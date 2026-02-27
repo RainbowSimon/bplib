@@ -44,7 +44,7 @@ const char* StopRetransmitSQL =
 "UPDATE bundle_data SET retransmit_trigger = ? WHERE (bundle_id = ? AND egress_attempted = 0);";
 
 const char* MarkForDeletionSQL =
-"UPDATE bundle_data SET egress_attempted = 1 WHERE bundle_id = ?;";
+"UPDATE bundle_data SET egress_attempted = 1 WHERE (bundle_id = ? AND egress_attempted = 0);";
 
 
 
@@ -197,6 +197,7 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_ST
 {
     SQL_Status_t   SQLStatus;
     sqlite3*       db;
+    size_t         NumEgressed = 0;
 
     db     = Inst->BundleStorage.db;
 
@@ -226,7 +227,7 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_ST
         return BPLIB_SQL_CUSTODY_UPDATE_ERR;
     }
 
-    SQLStatus = BPLib_SQL_UpdateCustodialBundlesImpl(db, Batch);
+    SQLStatus = BPLib_SQL_UpdateCustodialBundlesImpl(db, Batch, &NumEgressed);
 
     sqlite3_finalize(MarkForDeletionStmt);
     sqlite3_finalize(StopRetransmitStmt);
@@ -238,13 +239,17 @@ BPLib_Status_t BPLib_SQL_UpdateCustodialBundles(BPLib_Instance_t *Inst, BPLib_ST
         return BPLIB_SQL_CUSTODY_UPDATE_ERR;
     }
 
+    Inst->BundleStorage.BundleCountNotEgressed -= NumEgressed;
+
     return BPLIB_SUCCESS;
 }
 
-SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_STOR_CtUpdateBatch_t *Batch)
+SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_STOR_CtUpdateBatch_t *Batch, size_t *NumEgressed)
 {
     SQL_Status_t SQLStatus;
     size_t       i;
+    
+    *NumEgressed = 0;
 
     /* Create a batch query */
     SQLStatus = sqlite3_exec(db, "BEGIN;", 0, 0, 0);
@@ -254,7 +259,33 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_STOR_CtUpda
         return SQLStatus;
     }
 
-    /* Go through the load batch and add each ID as egressed */
+    /* Go through the update batch and look for bundles to mark as egressed first */
+    for (i = 0; i < Batch->Size; i++)
+    {
+        if (Batch->Ops[i] == BPLIB_CT_MARK_DELETE)
+        {
+            sqlite3_reset(MarkForDeletionStmt);
+
+            /* Set bundle_id to current bundle ID in the batch */
+            SQLStatus = sqlite3_bind_int64(MarkForDeletionStmt, 1, Batch->BundleIDs[i]);
+            if (SQLStatus != SQLITE_OK)
+            {
+                fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
+                return SQLStatus;                
+            }
+            
+            SQLStatus = sqlite3_step(MarkForDeletionStmt);
+            if (SQLStatus != SQLITE_DONE)
+            {
+                fprintf(stderr, "Mark for Deletion Failed: %s\n", sqlite3_errstr(SQLStatus));
+                break;
+            }
+
+            *NumEgressed += sqlite3_changes(db);
+        }
+    }
+
+    /* Then complete the remaining operations */
     for (i = 0; i < Batch->Size; i++)
     {
         /* Start retransmission by setting the retransmission timestamp to now */
@@ -310,26 +341,6 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_STOR_CtUpda
             if (SQLStatus != SQLITE_DONE)
             {
                 fprintf(stderr, "Stop Retransmit Failed: %s\n", sqlite3_errstr(SQLStatus));
-                break;
-            }
-        }
-        /* Mark bundle for deletion */
-        else /* (Batch->Ops[i] == BPLIB_CT_MARK_DELETE) */
-        {
-            sqlite3_reset(MarkForDeletionStmt);
-
-            /* Set bundle_id to current bundle ID in the batch */
-            SQLStatus = sqlite3_bind_int64(MarkForDeletionStmt, 1, Batch->BundleIDs[i]);
-            if (SQLStatus != SQLITE_OK)
-            {
-                fprintf(stderr, "Failed to bind bundle_id: %s\n", sqlite3_errmsg(db));
-                return SQLStatus;                
-            }
-            
-            SQLStatus = sqlite3_step(MarkForDeletionStmt);
-            if (SQLStatus != SQLITE_DONE)
-            {
-                fprintf(stderr, "Mark for Deletion Failed: %s\n", sqlite3_errstr(SQLStatus));
                 break;
             }
         }

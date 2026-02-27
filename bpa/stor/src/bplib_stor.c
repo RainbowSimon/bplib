@@ -87,12 +87,14 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst,
     size_t               TotalBytesStored;
     size_t               DuplicateBundlesIgnored;
     size_t               CustodialIdx;
+    size_t               CustodialBundleCount;
 
     CacheInst               = &Inst->BundleStorage;
     TotalBytesStored        = 0;
     DuplicateBundlesIgnored = 0;
     *CustodialBundlesStored = 0;
     CustodialIdx            = 0;
+    CustodialBundleCount    = 0;
 
     Status = BPLib_SQL_Store(Inst, &TotalBytesStored, &DuplicateBundlesIgnored, CustodialBundlesStored);
 
@@ -143,6 +145,7 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst,
         if (CacheInst->InsertBatch[i]->Meta.IsCustodial)
         {
             CustodialBundles[CustodialIdx++] = CacheInst->InsertBatch[i];
+            CustodialBundleCount++;
         }
         /* Noncustodial bundles are all freed */
         else
@@ -151,6 +154,16 @@ BPLib_Status_t BPLib_STOR_FlushPendingUnlocked(BPLib_Instance_t* Inst,
         }
     }
 
+    /* Unlikely error, but report it just in case */
+    if (CustodialBundleCount != *CustodialBundlesStored && Status == BPLIB_SUCCESS)
+    {
+        BPLib_EM_SendEvent(BPLIB_STOR_UNKNOWN_CUST_ERR_EID, BPLib_EM_EventType_ERROR,
+                "Storage reported successfully storing %ld custodial bundles but %ld were in the batch.",
+                *CustodialBundlesStored, CustodialBundleCount);
+    }
+
+    *CustodialBundlesStored = CustodialBundleCount;
+    
     CacheInst->InsertBatchSize = 0;
 
     return Status;
@@ -523,6 +536,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
     size_t               NumDiscarded;
     size_t               NumExpired;
     size_t               DbSize;
+    bool                 TriggerCustodialGc;
 
     NumDiscarded = 0;
     NumExpired   = 0;
@@ -532,11 +546,14 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
         return BPLIB_NULL_PTR_ERROR;
     }
 
+    TriggerCustodialGc = BPLib_CT_TriggerCustodialGarbageCollection(Inst);
+
     CacheInst = &Inst->BundleStorage;
 
     pthread_mutex_lock(&CacheInst->lock);    
 
-    if (BPLib_STOR_IsIngressEgressActive(Inst) == false && CacheInst->BundleCountStored != 0)
+    if (TriggerCustodialGc || 
+       (BPLib_STOR_IsIngressEgressActive(Inst) == false && CacheInst->BundleCountStored != 0))
     {
         /* 
         ** Avoid searching the DB if any of the ingress/egress queues are not empty or

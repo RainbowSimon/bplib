@@ -30,6 +30,15 @@
 #include "bplib_eid.h"
 #include "bplib_ct.h"
 
+
+/*
+** Macros
+*/
+
+// Only uncomment locally, shouldn't be included in the main branch
+//#define BPLIB_ARP_DEBUG_PRINTS_ENABLED (1)
+
+
 /* ======== */
 /* Typedefs */
 /* ======== */
