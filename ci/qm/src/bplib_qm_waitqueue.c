@@ -45,12 +45,16 @@ bool BPLib_QM_WaitQueueInit(BPLib_QM_WaitQueue_t* q, size_t el_size, size_t capa
     q->rear = capacity - 1;
     q->size = 0;
 
-    q->storage = calloc(capacity, el_size);
+    /* Dynamic memory allocation is removed here for the port. This is fine since the
+     * size of the QM queues is constant at compile time, and this function that
+     * normally allocates the queue is only called in bplib_qm.c, where static buffers
+     * are provided. The free() has also been removed. */
+    /*q->storage = calloc(capacity, el_size);
     if (q->storage == NULL)
     {
         fprintf(stderr, "calloc() for WaitQueue backing failed\n");
         return false;
-    }
+    }*/
 
     // TODO: move to bplib_OS module
     mutex_init(&q->lock);
@@ -66,8 +70,8 @@ void BPLib_QM_WaitQueueDestroy(BPLib_QM_WaitQueue_t* q)
         return;
     }
 
-    free(q->storage);
-    q->storage = NULL;
+    /* free(q->storage);
+    q->storage = NULL; */
     q->el_size = 0;
     q->capacity = 0;
     q->front = 0;
