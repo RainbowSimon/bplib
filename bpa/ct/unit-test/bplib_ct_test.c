@@ -578,6 +578,7 @@ void Test_BPLib_CT_SignalCustody_Reject(void)
     BplibInst.Ct.BundleCountInCustody = 10;
 
     DbEntry.SeqId = BPLIB_CT_SEQ_ID_ROLLOVER_VALUE;
+    DbEntry.State = BPLib_CT_Initialized;
 
     /* Set up an in progress CCS */
     BplibInst.Ct.OpenCcss[0].InProgress = true;

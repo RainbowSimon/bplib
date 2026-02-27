@@ -553,9 +553,8 @@ BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t 
         {
             /* Let storage delete CTDB entry */
             DbEntry->State = BPLib_CT_Delivered;
+            Inst->Ct.BundleCountInCustody--;
         }
-
-        Inst->Ct.BundleCountInCustody--;
     }
 
     pthread_mutex_unlock(&Inst->Ct.Lock);

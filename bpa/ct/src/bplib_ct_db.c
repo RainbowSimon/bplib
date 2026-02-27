@@ -206,6 +206,12 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_
         Status = BPLib_RBT_ExtractNode(&(Inst->Ct.IdTreeRoot), &DbEntry->IdRbtLink);
         if (Status == BPLIB_SUCCESS)
         {
+            if (DbEntry->State == BPLib_CT_InCustody || DbEntry->State == BPLib_CT_Transmitted ||
+                DbEntry->State == BPLib_CT_Retransmitted)
+            {
+                Inst->Ct.BundleCountInCustody--;
+            }
+
             Inst->Ct.CurrDbSize--;
             BPLib_MEM_BlockFree(&Inst->pool, BPLib_MEM_GetBlockFromUserData(DbEntry));
         }
