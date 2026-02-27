@@ -1,6 +1,12 @@
-# Custody Transfer Design Notes
+# Custody Transfer Design and Development Notes
 
-## How to Test Custody Transfer with Delays and Disruptions
+## Miscellaneous Dev Notes
+
+- 
+
+## Testing
+
+### How to Test Custody Transfer with Delays and Disruptions
 
 To add a delay of 1 second and a packet loss rate of 10% to the loopback interface (127.0.0.1) on port 4551:
 
@@ -15,3 +21,11 @@ To remove the TC filter:
 ```
 sudo tc qdisc del dev lo root
 ```
+
+### Main Test Cases to Think About
+
+- Custodial bundles created locally
+- Custodial bundles created on a foreign node
+- Custodial bundles forwarded to another node
+- Custodial bundles stored and then delivered locally
+- Custodial bundles delivered locally without being stored

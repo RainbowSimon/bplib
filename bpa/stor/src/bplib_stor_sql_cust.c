@@ -285,8 +285,6 @@ SQL_Status_t BPLib_SQL_UpdateCustodialBundlesImpl(sqlite3* db, BPLib_STOR_CtUpda
         }
     }
 
-    printf("marked %ld egressed\n", *NumEgressed);
-
     /* Then complete the remaining operations */
     for (i = 0; i < Batch->Size; i++)
     {

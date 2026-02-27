@@ -424,12 +424,12 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 /* Positive disposition code indicates custody was accepted */
                 if (SeqCollection->DispositionCode > 0)
                 {
-                    DbEntry->State = BPLib_CT_Transferred;
-
                     if (DbEntry->State != BPLib_CT_Initialized && DbEntry->State != BPLib_CT_Transferred)
                     {
                         Inst->Ct.BundleCountInCustody--;
                     }
+
+                    DbEntry->State = BPLib_CT_Transferred;
 
                     /* Request bundle deletion from storage */
                     pthread_mutex_unlock(&Inst->Ct.Lock);

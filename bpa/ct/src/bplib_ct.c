@@ -571,10 +571,16 @@ bool BPLib_CT_TriggerCustodialGarbageCollection(BPLib_Instance_t *Inst)
     {
         pthread_mutex_lock(&Inst->Ct.Lock);
 
-        DecimalVal = ((float) (Inst->Ct.CurrDbSize - Inst->Ct.BundleCountInCustody) / 
-                                (float) Inst->Ct.CurrDbSize);
-
-        TriggerGC = (BPLIB_CT_DB_MAX_PERCENT_NONCUSTODIAL_ENTRIES <= (uint32_t)(DecimalVal * 100));
+        if (Inst->Ct.CurrDbSize == 0)
+        {
+            TriggerGC = false;
+        }
+        else
+        {
+            DecimalVal = ((float) (Inst->Ct.CurrDbSize - Inst->Ct.BundleCountInCustody) / 
+                                    (float) Inst->Ct.CurrDbSize);
+            TriggerGC = (BPLIB_CT_DB_MAX_PERCENT_NONCUSTODIAL_ENTRIES <= (uint32_t)(DecimalVal * 100));
+        }
 
         pthread_mutex_unlock(&Inst->Ct.Lock);
     }
