@@ -189,7 +189,7 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
             BPLib_MEM_BundleFree(&(Instance->pool), Bundle);
 
             BPLib_EM_SendEvent(BPLIB_ARP_CREATE_JOB_ERR,
-                                BPLib_EM_EventType_INFORMATION,
+                                BPLib_EM_EventType_ERROR,
                                 "Error putting an in-progress CCS on the job queue, RC = %d",
                                 Status);
 
