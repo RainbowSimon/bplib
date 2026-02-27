@@ -195,7 +195,8 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_
     BPLib_Status_t Status = BPLIB_SUCCESS;
 
     /* The sequence ID/num RBT node may or may not be initialized */
-    if (DbEntry->State != BPLib_CT_Initialized)
+    if (DbEntry->State != BPLib_CT_Initialized && DbEntry->State != BPLib_CT_InCustody &&
+        DbEntry->State != BPLib_CT_Delivered)
     {
         Status = BPLib_RBT_ExtractNode(&(Inst->Ct.SeqTreeRoot), &DbEntry->SeqRbtLink);
     }
@@ -205,11 +206,6 @@ BPLib_Status_t BPLib_CT_RemoveFromCtdb(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_
         Status = BPLib_RBT_ExtractNode(&(Inst->Ct.IdTreeRoot), &DbEntry->IdRbtLink);
         if (Status == BPLIB_SUCCESS)
         {
-            if (DbEntry->State != BPLib_CT_Initialized)
-            {
-                Inst->Ct.BundleCountInCustody--;
-            }
-
             Inst->Ct.CurrDbSize--;
             BPLib_MEM_BlockFree(&Inst->pool, BPLib_MEM_GetBlockFromUserData(DbEntry));
         }

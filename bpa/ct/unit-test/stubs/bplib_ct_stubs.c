@@ -71,6 +71,23 @@ void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t *Instance)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_CompleteDelivery()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_CompleteDelivery, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CT_CompleteDelivery, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_CT_CompleteDelivery, BPLib_Bundle_t *, Bundle);
+
+    UT_GenStub_Execute(BPLib_CT_CompleteDelivery, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_CompleteDelivery, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_CT_DeleteBundleFromCtdb()
  * ----------------------------------------------------
  */
@@ -166,6 +183,22 @@ BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bu
     UT_GenStub_Execute(BPLib_CT_SignalCustody, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_CT_SignalCustody, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CT_TriggerCustodialGarbageCollection()
+ * ----------------------------------------------------
+ */
+bool BPLib_CT_TriggerCustodialGarbageCollection(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CT_TriggerCustodialGarbageCollection, bool);
+
+    UT_GenStub_AddParam(BPLib_CT_TriggerCustodialGarbageCollection, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_CT_TriggerCustodialGarbageCollection, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CT_TriggerCustodialGarbageCollection, bool);
 }
 
 /*

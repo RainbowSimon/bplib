@@ -620,6 +620,18 @@ void Test_BPLib_CT_SignalCustody_Reject(void)
     UtAssert_STUB_COUNT(BPLib_RBT_ExtractNode, 1);
 }
 
+void Test_BPLib_CT_TriggerGC_Nominal(void)
+{
+    BplibInst.Ct.CurrDbSize = 100;
+    BplibInst.Ct.BundleCountInCustody = BplibInst.Ct.CurrDbSize - BPLIB_CT_DB_MAX_PERCENT_NONCUSTODIAL_ENTRIES;
+
+    UtAssert_BOOL_TRUE(BPLib_CT_TriggerCustodialGarbageCollection(&BplibInst));
+
+    BplibInst.Ct.BundleCountInCustody = BplibInst.Ct.CurrDbSize - 1;
+
+    UtAssert_BOOL_FALSE(BPLib_CT_TriggerCustodialGarbageCollection(&BplibInst));
+}
+
 void TestBplibCt_Register(void)
 {
     ADD_TEST(Test_BPLib_CT_Init_Nominal);
@@ -651,4 +663,6 @@ void TestBplibCt_Register(void)
 
     ADD_TEST(Test_BPLib_CT_SignalCustody_Accept);
     ADD_TEST(Test_BPLib_CT_SignalCustody_Reject);
+
+    ADD_TEST(Test_BPLib_CT_TriggerGC_Nominal);
 }

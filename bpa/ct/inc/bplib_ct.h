@@ -81,6 +81,12 @@
  */
 #define BPLIB_MINIMUM_ENCODED_CCS_LEN               (63u)
 
+/**
+ * \brief Maximum percent of CTDB entries that can be not in custody before a garbage
+ *        collection cycle is triggered
+ */
+#define BPLIB_CT_DB_MAX_PERCENT_NONCUSTODIAL_ENTRIES    (90u)
+
 /*
 ** Type Definitions
 */
@@ -128,6 +134,7 @@ typedef enum
     BPLib_CT_Transmitted = 2,           /** \brief The bundle has been transmitted to the next node */
     BPLib_CT_Retransmitted = 3,         /** \brief The bundle has been retransmitted at least once */
     BPLib_CT_Transferred = 4,           /** \brief The bundle's custody has been transferred and it is marked for deletion */
+    BPLib_CT_Delivered  = 5,            /** \brief The bundle was delivered locally */
 } BPLib_CT_DbEntryState_t;
 
 /**
@@ -412,5 +419,27 @@ void BPLib_CT_CheckCcsTimeout(BPLib_Instance_t* Instance);
  *  \retval BPLIB_SUCCESS Operation was successful
  */
 BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle);
+
+/**
+ * \brief Whether to trigger garbage collection of custodial memory
+ *
+ *  \par Description
+ *       To prevent old CTDB entries from holding onto system memory for forever,
+ *       this checks if the percent of CTDB entries that are no longer in custody is
+ *       greater than the maximum \ref BPLIB_CT_DB_MAX_PERCENT_NONCUSTODIAL_ENTRIES.
+ *       This function is intended to be used by garbage collection functions to determine
+ *       when garbage collection should be run to free up memory in both the CTDB and in 
+ *       storage. Note that bundles that have been received but not stored will show up 
+ *       as not custodial, but CTDB entries are in this state for a very short period of 
+ *       time
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       None
+ * 
+ *  \param[in] Inst Pointer to the BPLib instance
+ *
+ *  \return True if custodial garbage collection should be triggered, else false
+ */
+bool BPLib_CT_TriggerCustodialGarbageCollection(BPLib_Instance_t *Inst);
 
 #endif /* BPLIB_CT_H */

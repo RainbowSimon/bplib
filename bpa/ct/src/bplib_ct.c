@@ -360,6 +360,8 @@ BPLib_Status_t BPLib_CT_UpdateBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t *Bun
             CtebPtr->BundleSeqId = BPLib_CT_GetSequenceId(&(Inst->Ct), Bundle->Meta.EgressID);;
             CtebPtr->BundleSeqNum = BPLib_CT_GetNextSequenceNum(&(Inst->Ct), Bundle->Meta.EgressID);
 
+            DbEntry->State = BPLib_CT_Transmitted;
+
             Status = BPLib_CT_UpdateEntry(Inst, DbEntry, CtebPtr->BundleSeqId,
                                                             CtebPtr->BundleSeqNum);
         }
@@ -540,10 +542,42 @@ BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t 
                             Bundle->blocks.PrimaryBlock.BundleId, &DbEntry);
     if (Status == BPLIB_SUCCESS && DbEntry != NULL)
     {
-        DbEntry->State = BPLib_CT_Transferred;
+        /* Bundle was never stored, finalize custody */
+        if (DbEntry->State == BPLib_CT_Initialized)
+        {
+            /* Finalize custodial transfer for custodial bundles */
+            (void) BPLib_CT_SignalCustodyImpl(Inst, Bundle, BPLib_CT_CustodyAccepted, false, ExtBlockIdx);
+            Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
+        }
+        else
+        {
+            /* Let storage delete CTDB entry */
+            DbEntry->State = BPLib_CT_Delivered;
+            Inst->Ct.BundleCountInCustody--;
+        }
     }
 
     pthread_mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
+}
+
+bool BPLib_CT_TriggerCustodialGarbageCollection(BPLib_Instance_t *Inst)
+{
+    float    DecimalVal;
+    bool     TriggerGC = false;
+    
+    if (Inst != NULL)
+    {
+        pthread_mutex_lock(&Inst->Ct.Lock);
+
+        DecimalVal = ((float) (Inst->Ct.CurrDbSize - Inst->Ct.BundleCountInCustody) / 
+                                (float) Inst->Ct.CurrDbSize);
+
+        TriggerGC = (BPLIB_CT_DB_MAX_PERCENT_NONCUSTODIAL_ENTRIES <= (uint32_t)(DecimalVal * 100));
+
+        pthread_mutex_unlock(&Inst->Ct.Lock);
+    }
+
+    return TriggerGC;
 }

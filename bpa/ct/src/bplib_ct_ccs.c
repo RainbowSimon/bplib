@@ -426,6 +426,11 @@ BPLib_Status_t BPLib_CT_ProcessBundleSeqCollection(BPLib_Instance_t *Inst,
                 {
                     DbEntry->State = BPLib_CT_Transferred;
 
+                    if (DbEntry->State != BPLib_CT_Initialized && DbEntry->State != BPLib_CT_Transferred)
+                    {
+                        Inst->Ct.BundleCountInCustody--;
+                    }
+
                     /* Request bundle deletion from storage */
                     pthread_mutex_unlock(&Inst->Ct.Lock);
                     BPLib_STOR_AddToCustodialUpdateBatch(Inst, BundleId, BPLIB_CT_MARK_DELETE);

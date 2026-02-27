@@ -536,6 +536,7 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
     size_t               NumDiscarded;
     size_t               NumExpired;
     size_t               DbSize;
+    bool                 TriggerCustodialGc;
 
     NumDiscarded = 0;
     NumExpired   = 0;
@@ -545,11 +546,14 @@ BPLib_Status_t BPLib_STOR_GarbageCollect(BPLib_Instance_t* Inst)
         return BPLIB_NULL_PTR_ERROR;
     }
 
+    TriggerCustodialGc = BPLib_CT_TriggerCustodialGarbageCollection(Inst);
+
     CacheInst = &Inst->BundleStorage;
 
     pthread_mutex_lock(&CacheInst->lock);    
 
-    if (BPLib_STOR_IsIngressEgressActive(Inst) == false && CacheInst->BundleCountStored != 0)
+    if (TriggerCustodialGc || 
+       (BPLib_STOR_IsIngressEgressActive(Inst) == false && CacheInst->BundleCountStored != 0))
     {
         /* 
         ** Avoid searching the DB if any of the ingress/egress queues are not empty or
