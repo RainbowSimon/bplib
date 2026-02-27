@@ -330,7 +330,7 @@ SQL_Status_t BPLib_SQL_MarkBatchEgressedImpl(BPLib_Instance_t* Inst,
     SQL_Status_t SQLStatus;
     sqlite3*     db;
     size_t       i;
-    size_t       NumEgressed;
+    size_t       NumEgressed = 0;
 
     db = Inst->BundleStorage.db;
 
