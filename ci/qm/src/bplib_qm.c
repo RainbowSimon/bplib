@@ -30,8 +30,21 @@
 
 #define BPLIB_QM_RUNJOB_PERF_ID  0x7F
 
+#ifndef BPLIB_QM_MAX_JOBS
+#  define BPLIB_QM_MAX_JOBS         32
+#endif
+
+typedef struct {
+    char buffer_generic[BPLIB_QM_NUM_PRIORITIES][sizeof(BPLib_QM_Job_t) * BPLIB_QM_MAX_JOBS];
+    char buffers_channels[BPLIB_MAX_NUM_CHANNELS][sizeof(BPLib_Bundle_t*) * BPLIB_QM_TX_QUEUE_DEPTH];
+    char buffers_contacts[BPLIB_MAX_NUM_CONTACTS][sizeof(BPLib_Bundle_t*) * BPLIB_QM_TX_QUEUE_DEPTH];
+} static_qm_buffers_t;
+
+static static_qm_buffers_t qm_buffers;
+
 BPLib_Status_t BPLib_QM_QueueTableInit(BPLib_Instance_t* inst, size_t MaxJobs)
 {
+    (void) MaxJobs;
     bool QueueInit;
     int i;
     BPLib_Status_t Status;
@@ -68,7 +81,8 @@ BPLib_Status_t BPLib_QM_QueueTableInit(BPLib_Instance_t* inst, size_t MaxJobs)
 
     for (i = 0; i < BPLIB_QM_NUM_PRIORITIES; i++)
     {
-        if (!BPLib_QM_WaitQueueInit(&(inst->GenericWorkerJobs[i]), sizeof(BPLib_QM_Job_t), MaxJobs))
+        inst->GenericWorkerJobs[i].storage = qm_buffers.buffer_generic[i];
+        if (!BPLib_QM_WaitQueueInit(&(inst->GenericWorkerJobs[i]), sizeof(BPLib_QM_Job_t), BPLIB_QM_MAX_JOBS))
         {
             QueueInit = false;
         }        
@@ -76,6 +90,7 @@ BPLib_Status_t BPLib_QM_QueueTableInit(BPLib_Instance_t* inst, size_t MaxJobs)
 
     for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
     {
+        inst->ChannelEgressJobs[i].storage = qm_buffers.buffers_channels[i];
         if (!BPLib_QM_WaitQueueInit(&(inst->ChannelEgressJobs[i]), sizeof(BPLib_Bundle_t*), BPLIB_QM_TX_QUEUE_DEPTH))
         {
             QueueInit = false;
@@ -84,6 +99,7 @@ BPLib_Status_t BPLib_QM_QueueTableInit(BPLib_Instance_t* inst, size_t MaxJobs)
 
     for (i = 0; i < BPLIB_MAX_NUM_CONTACTS; i++)
     {
+        inst->ContactEgressJobs[i].storage = qm_buffers.buffers_contacts[i];
         if (!BPLib_QM_WaitQueueInit(&(inst->ContactEgressJobs[i]), sizeof(BPLib_Bundle_t*), BPLIB_QM_TX_QUEUE_DEPTH))
         {
             QueueInit = false;
