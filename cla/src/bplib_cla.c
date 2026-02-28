@@ -230,6 +230,11 @@ BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId
             /* Contact has been not been setup if the state is anything other than torn down */
             
             BPLib_NC_ReaderLock();
+            if (BPLib_NC_ConfigPtrs.ContactsConfigPtr == NULL)
+            {
+                return BPLIB_NULL_PTR_ERROR;
+            }
+
             memcpy(&Inst->ContCtxt[ContactId].Config, 
                 &BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId], sizeof(BPLib_CLA_ContactsSet_t));
             BPLib_NC_ReaderUnlock();

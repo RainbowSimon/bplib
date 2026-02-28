@@ -57,12 +57,13 @@ const char* ResetRetransmitTriggerSQL =
 
 const char *FindForEgressIdBaseSQL =
 "SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND "
-            "(egress_attempted = 0) AND ((is_custodial = 0) OR "
+            "(egress_attempted = 0 AND action_timestamp > ?) AND ((is_custodial = 0) OR "
             "(is_custodial = 1 AND retransmit_trigger != ? AND retransmit_timestamp <= ?)) "
             "ORDER BY action_timestamp ASC LIMIT ?;";
 
 const char *FindForEgressIdLocalBaseSQL = 
-"SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND (egress_attempted = 0) "
+"SELECT id FROM bundle_data INDEXED BY idx_egress_id WHERE (%s) AND "
+        "(egress_attempted = 0 AND action_timestamp > ?) "
         "ORDER BY action_timestamp ASC LIMIT ?;";
 
 /* ==================== */
@@ -202,7 +203,13 @@ SQL_Status_t BPLib_SQL_FindForEIDsImpl(BPLib_Instance_t* Inst, BPLib_STOR_LoadBa
                 return SQLStatus;
             }
         }
+    }
 
+    SQLStatus = sqlite3_bind_int64(FindForEgressIDStmt, BindIndex++, BPLib_TIME_GetMonotonicTime());
+    if (SQLStatus != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind action_timestamp: %s\n", sqlite3_errmsg(db));
+        return SQLStatus;
     }
 
     /* Check for retransmission on foreign bundles */

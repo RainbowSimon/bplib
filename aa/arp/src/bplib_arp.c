@@ -150,12 +150,10 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
         Bundle->blocks.PrimaryBlock.Timestamp.CreateTime = BPLib_TIME_GetDtnTime(Bundle->blocks.PrimaryBlock.MonoTime);
         Bundle->blocks.PrimaryBlock.Timestamp.SequenceNumber = Instance->Arp.SequenceNum++;
 
-        BPLib_NC_ReaderLock();
-        if (Instance->Arp.SequenceNum > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM])
+        if (Instance->Arp.SequenceNum > BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_SEQUENCE_NUM))
         {
             Instance->Arp.SequenceNum = 0;
         }
-        BPLib_NC_ReaderUnlock();
 
         /* Add an age block if needed - no other extension blocks allowed in admin records */
         if (Bundle->blocks.PrimaryBlock.Timestamp.CreateTime == 0)
@@ -183,13 +181,13 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
 
         /* === Put the constructed bundle on the job queue === */
 
-        Status = BPLib_QM_CreateJob(Instance, Bundle, CHANNEL_IN_PI_TO_EBP, QM_PRI_NORMAL, QM_WAIT_FOREVER);
+        Status = BPLib_QM_CreateJob(Instance, Bundle, CHANNEL_IN_PI_TO_EBP, QM_PRI_NORMAL, QM_STANDARD_WAIT);
         if (Status != BPLIB_SUCCESS)
         { /* If something failed, cease bundle processing and free memory */
             BPLib_MEM_BundleFree(&(Instance->pool), Bundle);
 
-            BPLib_EM_SendEvent(BPLIB_ARP_CREATE_JOB_ERR,
-                                BPLib_EM_EventType_INFORMATION,
+            BPLib_EM_SendEvent(BPLIB_ARP_CREATE_JOB_ERR_EID,
+                                BPLib_EM_EventType_ERROR,
                                 "Error putting an in-progress CCS on the job queue, RC = %d",
                                 Status);
 
@@ -208,9 +206,9 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
     else
     { /* BPLib_MEM_BundleAlloc returned NULL */
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_REJECTED, 1);
-        BPLib_EM_SendEvent(BPLIB_ARP_NULL_BUNDLE_ERR,
+        BPLib_EM_SendEvent(BPLIB_ARP_NULL_BUNDLE_ERR_EID,
                             BPLib_EM_EventType_ERROR,
-                            "Could not be allocated a bundle while processing an in-progress CCS");
+                            "Could not allocate a bundle while processing an in-progress CCS");
     }
 
     return;

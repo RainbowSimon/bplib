@@ -148,7 +148,6 @@ BPLib_Status_t BPLib_BI_ValidateBundle(BPLib_Bundle_t *CandidateBundle)
     bool     AgeBlockPresent = false;
     bool     HopCountPresent = false;
     uint64_t EffectiveLifetime;
-    uint32_t MaxPayloadLen;
 
     if (CandidateBundle == NULL)
     {
@@ -167,11 +166,8 @@ BPLib_Status_t BPLib_BI_ValidateBundle(BPLib_Bundle_t *CandidateBundle)
         return BPLIB_BI_INVALID_BUNDLE_ERR;
     }
 
-    BPLib_NC_ReaderLock();
-    MaxPayloadLen = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH];
-    BPLib_NC_ReaderUnlock();
-
-    if (CandidateBundle->blocks.PayloadHeader.DataSize > MaxPayloadLen)
+    if (CandidateBundle->blocks.PayloadHeader.DataSize > 
+        BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_PAYLOAD_LENGTH))
     {
         return BPLIB_BI_INVALID_BUNDLE_ERR;
     }
@@ -235,9 +231,7 @@ BPLib_Status_t BPLib_BI_ValidateBundle(BPLib_Bundle_t *CandidateBundle)
     }
 
     /* Ensure the lifetime is less than or equal to the max allowed lifetime */
-    BPLib_NC_ReaderLock();
-    EffectiveLifetime = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_LIFETIME];
-    BPLib_NC_ReaderUnlock();
+    EffectiveLifetime = BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_LIFETIME);
 
     if (EffectiveLifetime > CandidateBundle->blocks.PrimaryBlock.Lifetime)
     {

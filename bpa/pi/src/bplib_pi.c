@@ -123,23 +123,27 @@ BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
     /* Initialize configs */
     Inst->ChanCtxt[ChanId].SequenceNum = 0;
 
+    /* Copy channel configurations in from table */
     BPLib_NC_ReaderLock();
-
-    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == false &&
-        BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].CustodyTransferBlkConfig.IncludeBlock == true)
+    if (BPLib_NC_ConfigPtrs.ChanConfigPtr == NULL)
     {
-        BPLib_NC_ReaderUnlock();
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    memcpy(&Inst->ChanCtxt[ChanId].Config, 
+        &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId], sizeof(BPLib_PI_Config_t));
+    BPLib_NC_ReaderUnlock();
+
+    if (BPLib_NC_GetNodeConfigValue(PARAM_SUPPORT_CUSTODY) == false && 
+        Inst->ChanCtxt[ChanId].Config.CustodyTransferBlkConfig.IncludeBlock == true)
+    {
+        memset(&Inst->ChanCtxt[ChanId].Config, 0, sizeof(BPLib_PI_Config_t));
 
         BPLib_EM_SendEvent(BPLIB_PI_NO_CTEB_DBG_EID, BPLib_EM_EventType_DEBUG,
                             "Error with add-application directive, cannot include CTEBs while custody support is disabled");
 
         return BPLIB_CT_NO_CUST_ERR;        
     }
-
-    memcpy(&Inst->ChanCtxt[ChanId].Config, 
-           &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId], sizeof(BPLib_PI_Config_t));
-
-    BPLib_NC_ReaderUnlock();  
 
     /* Do any framework-specific operations */
     Status = BPLib_FWP_ProxyCallbacks.BPA_ADUP_AddApplication(ChanId);
@@ -150,6 +154,7 @@ BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
     }
     else
     {
+        memset(&Inst->ChanCtxt[ChanId].Config, 0, sizeof(BPLib_PI_Config_t));
         BPLib_EM_SendEvent(BPLIB_PI_ADD_FWP_DBG_EID, BPLib_EM_EventType_DEBUG,
                             "Error with add-application directive, framework specific error code = %d",
                             Status);
@@ -413,6 +418,8 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
     BPLib_Bundle_t *NewBundle;
     BPLib_PI_Config_t *CurrCanonConfig;
     BPLib_Status_t Status = BPLIB_SUCCESS;
+    uint32_t MaxPayloadLength;
+    uint32_t MaxSequenceNum;
 
     /* Channel ID must be within array index limits */
     if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
@@ -420,26 +427,23 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         return BPLIB_INVALID_CHAN_ID_ERR;
     }
 
-    BPLib_NC_ReaderLock();
-
-    if ((Inst == NULL) || (AduPtr == NULL) || (BPLib_NC_ConfigPtrs.ChanConfigPtr == NULL) ||
-        (BPLib_NC_ConfigPtrs.MibPnConfigPtr == NULL))
+    if ((Inst == NULL) || (AduPtr == NULL))
     {
-        BPLib_NC_ReaderUnlock();
         return BPLIB_NULL_PTR_ERROR;
     }
 
     /* Indicate ADU reception */
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, ADU_COUNT_RECEIVED, 1);
 
-    if (AduSize > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH])
+    MaxPayloadLength = BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_PAYLOAD_LENGTH);
+    MaxSequenceNum   = BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_SEQUENCE_NUM);
+
+    if (AduSize > MaxPayloadLength)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_REJECTED, 1);
         BPLib_EM_SendEvent(BPLIB_PI_ADU_LEN_ERR_EID, BPLib_EM_EventType_ERROR,
                     "[ADU In #%d]: Received an ADU too big to ingest, Size=%ld, PARAM_SET_MAX_PAYLOAD_LENGTH=%d",
-                    ChanId, AduSize, 
-                    BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH]);
-        BPLib_NC_ReaderUnlock();
+                    ChanId, AduSize, MaxPayloadLength);
 
         return BPLIB_BUF_LEN_ERROR;
     }
@@ -449,7 +453,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_REJECTED, 1);
         BPLib_EM_SendEvent(BPLIB_PI_INGRESS_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
                             "[ADU In #%d]: Cannot ingress ADU, no storage left", ChanId);
-        BPLib_NC_ReaderUnlock();
+
         return BPLIB_NO_STOR_ERR;
     }
 
@@ -488,7 +492,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
 
         /* Update sequence number */
         Inst->ChanCtxt[ChanId].SequenceNum++;
-        if (Inst->ChanCtxt[ChanId].SequenceNum > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM])
+        if (Inst->ChanCtxt[ChanId].SequenceNum > MaxSequenceNum)
         {
             Inst->ChanCtxt[ChanId].SequenceNum = 0;
         }
@@ -526,8 +530,6 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
             "[ADU In #%d]: Failed to ingress an ADU. Error = %d.",
             ChanId, Status);
     }
-
-    BPLib_NC_ReaderUnlock();
 
     return Status;
 }

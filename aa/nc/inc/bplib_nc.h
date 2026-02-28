@@ -275,4 +275,11 @@ BPLib_Status_t BPLib_NC_ConfigUpdate(BPLib_Instance_t *Inst);
   */
 void BPLib_NC_RunMaintenanceActivities(BPLib_Instance_t *Inst);
 
+/**
+  * \brief     Get MIB per node configuration value
+  * \param[in] Config Enumeration of configuration to get
+  * \return    MIB Configuration value (or 0 if an error occured)
+  */
+uint32_t BPLib_NC_GetNodeConfigValue(BPLib_NC_Config_t Config);
+
 #endif // BPLIB_NC_H

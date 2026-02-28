@@ -96,9 +96,7 @@ SQL_Status_t BPLib_SQL_StoreMetadata(BPLib_Bundle_t* Bundle, BPLib_BundleCache_t
     ExpirationTime = 0;
 
     /* Ensure the lifetime is less than or equal to the max allowed lifetime */
-    BPLib_NC_ReaderLock();
-    EffectiveLifetime = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_LIFETIME];
-    BPLib_NC_ReaderUnlock();
+    EffectiveLifetime = BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_LIFETIME);
 
     if (EffectiveLifetime > PrimaryBlock->Lifetime)
     {

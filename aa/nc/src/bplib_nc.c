@@ -721,3 +721,19 @@ void BPLib_NC_RunMaintenanceActivities(BPLib_Instance_t *Inst)
 
     return;
 }
+
+uint32_t BPLib_NC_GetNodeConfigValue(BPLib_NC_Config_t Config)
+{
+    uint32_t ConfigValue = 0;
+
+    BPLib_NC_RWLock_RLock(&BPLib_NC_CfgLock);
+
+    if (BPLib_NC_ConfigPtrs.MibPnConfigPtr != NULL && Config < BPLIB_NC_NODE_MIB_CONFIG_NUM)
+    {
+        ConfigValue = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[Config];
+    }
+
+    BPLib_NC_RWLock_RUnlock(&BPLib_NC_CfgLock);
+
+    return ConfigValue;
+}

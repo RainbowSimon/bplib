@@ -46,9 +46,7 @@ static BPLib_QM_JobState_t ContactIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
     BPLib_QM_JobState_t JobState;
     bool DoCustody;
 
-    BPLib_NC_ReaderLock();
-    DoCustody = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY];
-    BPLib_NC_ReaderUnlock();
+    DoCustody = (bool) BPLib_NC_GetNodeConfigValue(PARAM_SUPPORT_CUSTODY);
 
     if (DoCustody == false)
     {
@@ -95,9 +93,7 @@ static BPLib_QM_JobState_t ContactOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
     BPLib_QM_JobState_t JobState = CONTACT_OUT_CT_TO_EBP;
     bool DoCustody;
 
-    BPLib_NC_ReaderLock();
-    DoCustody = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY];
-    BPLib_NC_ReaderUnlock();
+    DoCustody = (bool) BPLib_NC_GetNodeConfigValue(PARAM_SUPPORT_CUSTODY);
 
     if (DoCustody == true)
     {
@@ -148,9 +144,8 @@ static BPLib_QM_JobState_t ChannelIn_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t* 
     BPLib_QM_JobState_t JobState = CHANNEL_IN_CT_TO_STOR;
     bool DoCustody;
 
-    BPLib_NC_ReaderLock();
-    DoCustody = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY];
-    BPLib_NC_ReaderUnlock();
+    DoCustody = (bool) BPLib_NC_GetNodeConfigValue(PARAM_SUPPORT_CUSTODY);
+
 
     if (DoCustody)
     {
@@ -175,9 +170,7 @@ static BPLib_QM_JobState_t ChannelOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
     BPLib_QM_JobState_t JobState = CHANNEL_OUT_CT_TO_EBP;
     bool    DoCustody;
 
-    BPLib_NC_ReaderLock();
-    DoCustody = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY];
-    BPLib_NC_ReaderUnlock();
+    DoCustody = (bool) BPLib_NC_GetNodeConfigValue(PARAM_SUPPORT_CUSTODY);
 
     if (DoCustody)
     {
@@ -250,9 +243,16 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                 {
                     /* We have a channel we can deliver to: forward without storing */
                     Bundle->Meta.EgressID = i;
-                    BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), &Bundle, QM_WAIT_FOREVER);
-
-                    return NO_NEXT_STATE;
+                    if(BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), 
+                                                 &Bundle, QM_STANDARD_WAIT))
+                    {
+                        return NO_NEXT_STATE;
+                    }
+                    else
+                    {
+                        /* Store bundle, queue is busy */
+                        break;
+                    }
                 }
             }
         }
@@ -293,10 +293,15 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     {
                         /* We have a contact we can deliver to: forward without storing */
                         Bundle->Meta.EgressID = i;
-                        BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), 
-                                                                &Bundle, QM_WAIT_FOREVER);
-                        
-                        return NO_NEXT_STATE;
+                        if(BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), 
+                                                                &Bundle, QM_STANDARD_WAIT))
+                        {
+                            return NO_NEXT_STATE;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                 }
             }

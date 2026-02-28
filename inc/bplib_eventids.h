@@ -217,4 +217,7 @@
 #define BPLIB_CT_DB_DELETE_ERR_EID                      (760u)
 #define BPLIB_CT_CCS_INSERT_ERR_EID                     (761u)
 
+/* ARP event IDs */
+#define BPLIB_ARP_CREATE_JOB_ERR_EID                    (800u)
+#define BPLIB_ARP_NULL_BUNDLE_ERR_EID                   (801u)
 #endif /* BPLIB_EVENTIDS_H */
