@@ -150,12 +150,10 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
         Bundle->blocks.PrimaryBlock.Timestamp.CreateTime = BPLib_TIME_GetDtnTime(Bundle->blocks.PrimaryBlock.MonoTime);
         Bundle->blocks.PrimaryBlock.Timestamp.SequenceNumber = Instance->Arp.SequenceNum++;
 
-        BPLib_NC_ReaderLock();
-        if (Instance->Arp.SequenceNum > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM])
+        if (Instance->Arp.SequenceNum > BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_SEQUENCE_NUM))
         {
             Instance->Arp.SequenceNum = 0;
         }
-        BPLib_NC_ReaderUnlock();
 
         /* Add an age block if needed - no other extension blocks allowed in admin records */
         if (Bundle->blocks.PrimaryBlock.Timestamp.CreateTime == 0)

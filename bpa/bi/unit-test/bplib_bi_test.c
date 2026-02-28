@@ -353,11 +353,11 @@ void Test_BPLib_BI_ValidateBundle_Expired(void)
 void Test_BPLib_BI_ValidateBundle_MaxExpired(void)
 {
     DeserializedBundle.blocks.ExtBlocks[1].Header.BlockType = BPLib_BlockType_Reserved;
-    BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_LIFETIME] = 10;
     DeserializedBundle.blocks.PrimaryBlock.Timestamp.CreateTime = 10;
     DeserializedBundle.blocks.PrimaryBlock.Lifetime = 11;
 
     UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, 20);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_NC_GetNodeConfigValue), 2, 10);
 
     UtAssert_INT32_EQ(BPLib_BI_ValidateBundle(&DeserializedBundle), BPLIB_BI_EXPIRED_BUNDLE_ERR);        
 }

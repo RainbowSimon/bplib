@@ -27,8 +27,11 @@
 /* Test nominal add application function */
 void Test_BPLib_PI_AddApplication_Nominal(void)
 {
+    BPLib_PI_ChannelTable_t ChanTbl;
     uint32_t ChanId = 0;
 
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = &ChanTbl;
+    
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_REMOVED);
 
     UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_SUCCESS);
@@ -74,7 +77,10 @@ void Test_BPLib_PI_AddApplication_BadState(void)
 /* Test BPLib_PI_AddApplication when the proxy returns an error */
 void Test_BPLib_PI_AddApplication_ProxyErr(void)
 {
+    BPLib_PI_ChannelTable_t ChanTbl;
     uint32_t ChanId = 0;
+
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = &ChanTbl;
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_REMOVED);
     UT_SetDefaultReturnValue(UT_KEY(BPA_ADUP_AddApplication), BPLIB_ERROR);
@@ -656,10 +662,6 @@ void Test_BPLib_PI_Ingress_Nominal(void)
 
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_SUCCESS);
     UtAssert_EQ(uint64_t, BplibInst.ChanCtxt[ChanId].SequenceNum, 1);
-
-    /* Ensure Node Config is locked and unlocked */
-    UtAssert_STUB_COUNT(BPLib_NC_ReaderLock, 1);
-    UtAssert_STUB_COUNT(BPLib_NC_ReaderUnlock, 1);
 }
 
 /* Test nominal ingress function when the sequence number gets reset */
@@ -672,16 +674,12 @@ void Test_BPLib_PI_Ingress_ResetSequence(void)
 
     memset(&Bundle, 0, sizeof(Bundle));
 
-    BplibInst.ChanCtxt[ChanId].SequenceNum = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM];
+    BplibInst.ChanCtxt[ChanId].SequenceNum = 100;
 
     UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BundleAlloc), 1, (UT_IntReturn_t) &Bundle);
 
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_SUCCESS);
     UtAssert_EQ(uint64_t, BplibInst.ChanCtxt[ChanId].SequenceNum, 0);
-
-    /* Ensure Node Config is locked and unlocked */
-    UtAssert_STUB_COUNT(BPLib_NC_ReaderLock, 1);
-    UtAssert_STUB_COUNT(BPLib_NC_ReaderUnlock, 1);
 }
 
 /* Test ingress function null checks */
@@ -690,22 +688,12 @@ void Test_BPLib_PI_Ingress_Null(void)
     uint32_t ChanId = 0;
     uint8_t AduPtr[10];
     size_t AduSize = 0;
-    BPLib_PI_ChannelTable_t ChanTbl;
 
     /* Null BPLib instance */
     UtAssert_INT32_EQ(BPLib_PI_Ingress(NULL, ChanId, AduPtr, AduSize), BPLIB_NULL_PTR_ERROR);
     
     /* Null ADU pointer */
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, NULL, AduSize), BPLIB_NULL_PTR_ERROR);
-
-    /* Null channel configuration */
-    BPLib_NC_ConfigPtrs.ChanConfigPtr = NULL;
-    UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_NULL_PTR_ERROR);
-
-    /* Null MIB configuration */
-    BPLib_NC_ConfigPtrs.ChanConfigPtr = &ChanTbl;
-    BPLib_NC_ConfigPtrs.MibPnConfigPtr = NULL;
-    UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_NULL_PTR_ERROR);
 }
 
 /* Test ingress function channel ID check */
@@ -725,7 +713,7 @@ void Test_BPLib_PI_Ingress_InvLen(void)
     uint8_t AduPtr[10];
     size_t AduSize = BPLIB_MAX_PAYLOAD_SIZE + 1;
 
-    BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH] = BPLIB_MAX_PAYLOAD_SIZE;
+    UT_SetDeferredRetcode(UT_KEY(BPLib_NC_GetNodeConfigValue), 1, BPLIB_MAX_PAYLOAD_SIZE);
 
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_BUF_LEN_ERROR);
 }

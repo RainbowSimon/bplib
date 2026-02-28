@@ -24,6 +24,8 @@ To remove the TC filter:
 sudo tc qdisc del dev lo root
 ```
 
+Rebooting the machine will also remove the filter
+
 ### Main Test Cases to Think About
 
 - Custodial bundles created locally

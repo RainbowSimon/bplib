@@ -52,13 +52,10 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(BPLib_Instance_t *Inst, const void* CandB
     }
 
     /* Verify bundle is not longer than maximum allowed length */
-    BPLib_NC_ReaderLock();
-    if (CandBundleLen > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_BUNDLE_LENGTH])
+    if (CandBundleLen > BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_BUNDLE_LENGTH))
     {
-        BPLib_NC_ReaderUnlock();
         return BPLIB_CBOR_DEC_BUNDLE_TOO_LONG_DEC_ERR;
     }
-    BPLib_NC_ReaderUnlock();
 
     #if (BPLIB_CBOR_DEBUG_PRINTS_ENABLED)
     printf("Candidate bundle received with size %lu: \n", CandBundleLen);

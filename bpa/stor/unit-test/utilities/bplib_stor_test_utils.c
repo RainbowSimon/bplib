@@ -42,7 +42,6 @@ BPLib_Bundle_t TestBundle;
 
 BPLib_MEM_Block_t* BBlocksMem;
 BPLib_MEM_Block_t* BlobMem;
-BPLib_NC_MibPerNodeConfig_t MibPnTbl;
 
 
 /*
@@ -109,9 +108,7 @@ void BPLib_STOR_Test_Setup(void)
     UT_SetHandlerFunction(UT_KEY(BPLib_AS_Increment), UT_Handler_BPLib_AS_Increment, NULL);
     UT_SetHandlerFunction(UT_KEY(BPLib_AS_Decrement), UT_Handler_BPLib_AS_Decrement, NULL);
 
-    BPLib_NC_ConfigPtrs.MibPnConfigPtr = &MibPnTbl;
-
-    MibPnTbl.Configs[PARAM_SET_MAX_LIFETIME] = BPLIB_MAX_LIFETIME_ALLOWED;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetNodeConfigValue), BPLIB_MAX_LIFETIME_ALLOWED);
 
     /* Init Storage */
     BPLib_STOR_Init(&BplibInst);

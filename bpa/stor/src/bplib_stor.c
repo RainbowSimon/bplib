@@ -53,6 +53,7 @@ void BPLib_STOR_FinalizeCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Custodia
 {
     BPLib_CLA_ContactRunState_t ConState;
     size_t i;
+    bool PushedBundle = true;
 
     for (i = 0; i < NumCustodialBundles; i++)
     {
@@ -64,14 +65,19 @@ void BPLib_STOR_FinalizeCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Custodia
         if (CustodialBundles[i]->Meta.EgressID < BPLIB_MAX_NUM_CONTACTS &&
             ConState == BPLIB_CLA_STARTED && DispCode == BPLib_CT_CustodyAccepted)
         {
-            BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CustodialBundles[i]->Meta.EgressID]), 
-                                        &CustodialBundles[i], QM_WAIT_FOREVER);
+            PushedBundle = BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CustodialBundles[i]->Meta.EgressID]), 
+                                        &CustodialBundles[i], QM_STANDARD_WAIT);
         }
         /* There's no egress path, free memory */
         else
         {
+            PushedBundle = false;
+        }
+
+        if (PushedBundle == false)
+        {
             BPLib_MEM_BundleFree(&Inst->pool, CustodialBundles[i]);
-        }        
+        }
     }
 
     return;
