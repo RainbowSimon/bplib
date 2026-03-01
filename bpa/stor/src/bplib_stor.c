@@ -66,7 +66,7 @@ void BPLib_STOR_FinalizeCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Custodia
             ConState == BPLIB_CLA_STARTED && DispCode == BPLib_CT_CustodyAccepted)
         {
             PushedBundle = BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CustodialBundles[i]->Meta.EgressID]), 
-                                        &CustodialBundles[i], QM_STANDARD_WAIT);
+                                        &CustodialBundles[i], QM_WAIT_FOREVER);
         }
         /* There's no egress path, free memory */
         else

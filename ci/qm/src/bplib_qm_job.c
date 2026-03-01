@@ -243,16 +243,9 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                 {
                     /* We have a channel we can deliver to: forward without storing */
                     Bundle->Meta.EgressID = i;
-                    if(BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), 
-                                                 &Bundle, QM_STANDARD_WAIT))
-                    {
-                        return NO_NEXT_STATE;
-                    }
-                    else
-                    {
-                        /* Store bundle, queue is busy */
-                        break;
-                    }
+                    BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), 
+                                                 &Bundle, QM_WAIT_FOREVER);
+                    return NO_NEXT_STATE;
                 }
             }
         }
@@ -293,15 +286,9 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     {
                         /* We have a contact we can deliver to: forward without storing */
                         Bundle->Meta.EgressID = i;
-                        if(BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), 
-                                                                &Bundle, QM_STANDARD_WAIT))
-                        {
-                            return NO_NEXT_STATE;
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), 
+                                                                &Bundle, QM_WAIT_FOREVER);
+                        return NO_NEXT_STATE;
                     }
                 }
             }

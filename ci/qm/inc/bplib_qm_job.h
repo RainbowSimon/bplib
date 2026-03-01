@@ -55,7 +55,10 @@ typedef enum BPLib_JobState
  */
 typedef enum BPLib_QM_Priority
 {
-    QM_PRI_NORMAL = 1 /**< Normal priority for jobs */
+    BPLIB_QM_PRIORITY_ADMIN_REC = 0,
+    BPLIB_QM_PRIORITY_NORMAL    = 1,
+
+    BPLIB_QM_NUM_PRIORITIES = 2
 } BPLib_QM_Priority_t;
 
 /**

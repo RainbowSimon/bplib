@@ -181,7 +181,8 @@ void BPLib_ARP_ProcessInProgressCcs(BPLib_Instance_t* Instance, BPLib_CT_OpenCcs
 
         /* === Put the constructed bundle on the job queue === */
 
-        Status = BPLib_QM_CreateJob(Instance, Bundle, CHANNEL_IN_PI_TO_EBP, QM_PRI_NORMAL, QM_STANDARD_WAIT);
+        Status = BPLib_QM_CreateJob(Instance, Bundle, CHANNEL_IN_PI_TO_EBP, 
+                                        BPLIB_QM_PRIORITY_ADMIN_REC, QM_STANDARD_WAIT);
         if (Status != BPLIB_SUCCESS)
         { /* If something failed, cease bundle processing and free memory */
             BPLib_MEM_BundleFree(&(Instance->pool), Bundle);

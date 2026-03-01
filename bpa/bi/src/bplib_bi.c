@@ -106,7 +106,8 @@ BPLib_Status_t BPLib_BI_RecvFullBundleIn(BPLib_Instance_t* Inst, const void *Bun
             BPLib_ARP_ProcessNewCcs(CandidateBundle->blocks.AdminRecordPayload);
         }
 
-        Status = BPLib_QM_CreateJob(Inst, CandidateBundle, CONTACT_IN_BI_TO_EBP, QM_PRI_NORMAL, QM_WAIT_FOREVER);
+        Status = BPLib_QM_CreateJob(Inst, CandidateBundle, CONTACT_IN_BI_TO_EBP, 
+                                            BPLIB_QM_PRIORITY_NORMAL, QM_WAIT_FOREVER);
     }
     
     /* If something failed, cease bundle processing and free memory */

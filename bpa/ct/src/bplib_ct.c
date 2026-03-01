@@ -86,7 +86,7 @@ BPLib_Status_t BPLib_CT_SignalCustodyImpl(BPLib_Instance_t *Inst, BPLib_Bundle_t
     }
 
     /* For foreign bundles, need to accept/reject custody with previous node via CCS */
-    if (Bundle->Meta.LocalBundle == false)
+    if (Bundle->Meta.LocalBundle == false && Bundle->Meta.IngressID < BPLIB_MAX_NUM_CONTACTS)
     {
         OpenCcsIdx = BPLib_CT_GetOpenCcsIdx(Inst, &(CtebPtr->BlockSrcAdminEID),
                                             CtebPtr->BundleSeqId);

@@ -64,15 +64,17 @@ BPLib_Status_t BPLib_QM_QueueTableInit(BPLib_Instance_t* inst, size_t MaxJobs)
 
     QueueInit = true;
 
-    /* Initialize the job queue */
-    if (!BPLib_QM_WaitQueueInit(&(inst->GenericWorkerJobs), sizeof(BPLib_QM_Job_t), MaxJobs))
+    if (!BPLib_QM_WaitQueueInit(&(inst->BundleCacheList), sizeof(BPLib_Bundle_t*), MaxJobs))
     {
         QueueInit = false;
     }
 
-    if (!BPLib_QM_WaitQueueInit(&(inst->BundleCacheList), sizeof(BPLib_Bundle_t*), MaxJobs))
+    for (i = 0; i < BPLIB_QM_NUM_PRIORITIES; i++)
     {
-        QueueInit = false;
+        if (!BPLib_QM_WaitQueueInit(&(inst->GenericWorkerJobs[i]), sizeof(BPLib_QM_Job_t), MaxJobs))
+        {
+            QueueInit = false;
+        }        
     }
 
     for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
@@ -114,8 +116,12 @@ void BPLib_QM_QueueTableDestroy(BPLib_Instance_t* inst)
     inst->NumWorkers = 0;
 
     /* Queue Cleanup */
-    BPLib_QM_WaitQueueDestroy(&(inst->GenericWorkerJobs));
     BPLib_QM_WaitQueueDestroy(&(inst->BundleCacheList));
+
+    for (i = 0; i < BPLIB_QM_NUM_PRIORITIES; i++)
+    {
+        BPLib_QM_WaitQueueDestroy(&(inst->GenericWorkerJobs[i]));
+    }
     for (i = 0; i < BPLIB_MAX_NUM_CHANNELS; i++)
     {
         BPLib_QM_WaitQueueDestroy(&(inst->ChannelEgressJobs[i]));
@@ -165,7 +171,7 @@ BPLib_Status_t BPLib_QM_CreateJob(BPLib_Instance_t* inst, BPLib_Bundle_t* bundle
     NewJob.NextState = state;
     NewJob.Priority = priority;
     
-    if (!BPLib_QM_WaitQueueTryPush(&(inst->GenericWorkerJobs), &NewJob, TimeoutMs))
+    if (!BPLib_QM_WaitQueueTryPush(&(inst->GenericWorkerJobs[priority]), &NewJob, TimeoutMs))
     {
         Status = BPLIB_QM_PUSH_ERROR;
     }
@@ -178,6 +184,7 @@ BPLib_Status_t BPLib_QM_WorkerRunJob(BPLib_Instance_t* inst, int32_t WorkerID, i
     BPLib_QM_WorkerState_t* WorkerState;
     BPLib_QM_JobFunc_t JobFunc;
     BPLib_Status_t Status = BPLIB_SUCCESS;
+    uint8_t i;
 
     if (inst == NULL)
     {
@@ -199,15 +206,21 @@ BPLib_Status_t BPLib_QM_WorkerRunJob(BPLib_Instance_t* inst, int32_t WorkerID, i
     if (WorkerState->CurrJob.NextState == NO_NEXT_STATE ||
         WorkerState->CurrJob.NextState == BUNDLE_FREED)
     {
-        if (BPLib_QM_WaitQueueTryPull(&(inst->GenericWorkerJobs), &WorkerState->CurrJob, TimeoutMs))
+        Status = BPLIB_TIMEOUT;
+
+        for (i = 0; i < BPLIB_QM_NUM_PRIORITIES; i++)
         {
-            JobFunc = BPLib_QM_JobLookup(WorkerState->CurrJob.NextState);
-            WorkerState->CurrJob.NextState = JobFunc(inst, WorkerState->CurrJob.Bundle);
-            Status = BPLIB_SUCCESS;
-        }
-        else
-        {
-            Status = BPLIB_TIMEOUT;
+            if (!BPLib_QM_WaitQueueIsEmpty(&(inst->GenericWorkerJobs[i])))
+            {
+                if (BPLib_QM_WaitQueueTryPull(&(inst->GenericWorkerJobs[i]), 
+                                                    &WorkerState->CurrJob, TimeoutMs))
+                {
+                    JobFunc = BPLib_QM_JobLookup(WorkerState->CurrJob.NextState);
+                    WorkerState->CurrJob.NextState = JobFunc(inst, WorkerState->CurrJob.Bundle);
+                    Status = BPLIB_SUCCESS;
+                    break;
+                }
+            }
         }
     }
     else
@@ -248,7 +261,7 @@ bool BPLib_QM_IsSystemIdle(BPLib_Instance_t* Inst)
     }    
 
     /* If the job queue is empty, then system is idle */
-    return BPLib_QM_WaitQueueIsEmpty(&(Inst->GenericWorkerJobs));
+    return BPLib_QM_WaitQueueIsEmpty(&(Inst->GenericWorkerJobs[BPLIB_QM_PRIORITY_NORMAL]));
 }
 
 
@@ -259,7 +272,7 @@ bool BPLib_QM_IsIngressIdle(BPLib_Instance_t* Inst)
         return true;
     }
 
-    return BPLib_QM_WaitQueueIsEmpty(&(Inst->GenericWorkerJobs));
+    return BPLib_QM_WaitQueueIsEmpty(&(Inst->GenericWorkerJobs[BPLIB_QM_PRIORITY_NORMAL]));
 }
 
 
