@@ -165,6 +165,11 @@ BPLib_Status_t BPLib_RBT_InsertValueGeneric(BPLib_Val_t insert_key_value, BPLib_
  *--------------------------------------------------------------------------------------*/
 BPLib_Status_t BPLib_RBT_ExtractNode(BPLib_RBT_Root_t *tree, BPLib_RBT_Link_t *link_block)
 {
+    if (tree == NULL || link_block == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
     if (tree->root != link_block && !BPLib_RBT_NodeIsAttachedImpl(link_block))
     {
         return BPLIB_ERROR;
@@ -184,6 +189,12 @@ BPLib_Status_t BPLib_RBT_ExtractNode(BPLib_RBT_Root_t *tree, BPLib_RBT_Link_t *l
      * so once that is finally done, it will be OK again.
      */
     BPLib_RBT_DeleteMakeLeafImpl(tree, link_block);
+
+    /* Make sure the target link is now a leaf */
+    if (link_block->left != NULL || link_block->right != NULL)
+    {
+        return BPLIB_ERROR;
+    }
 
     /*
      * Rebalance the tree anticipating the removal of the subject leaf

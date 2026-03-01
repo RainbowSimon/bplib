@@ -23,6 +23,7 @@
  ******************************************************************************/
 
 #include "bplib_rbt_impl.h"
+#include <stdio.h>
 
 /*--------------------------------------------------------------------------------------
  * Internal implementation routine, see declaration for detail
@@ -521,10 +522,6 @@ void BPLib_RBT_DeleteRebalanceImpl(BPLib_RBT_Root_t *tree, BPLib_RBT_Link_t *ini
     node              = initial_subject;
     node_is_left_side = false; /* set for real later */
 
-    /* initial subject node must always be a leaf */
-    BPLIB_RBT_REQUIRED_CONDITION(node->left == NULL);
-    BPLIB_RBT_REQUIRED_CONDITION(node->right == NULL);
-
     if (BPLib_RBT_IsRedImpl(node))
     {
         /* red leaf - delete is trivial, does not affect black depth */
@@ -556,14 +553,20 @@ void BPLib_RBT_DeleteRebalanceImpl(BPLib_RBT_Root_t *tree, BPLib_RBT_Link_t *ini
             if (node_is_left_side)
             {
                 sibling        = parent->right;
-                close_nephew   = sibling->left;
-                distant_nephew = sibling->right;
+                if (sibling != NULL)
+                {
+                    close_nephew   = sibling->left;
+                    distant_nephew = sibling->right;
+                }
             }
             else
             {
                 sibling        = parent->left;
-                close_nephew   = sibling->right;
-                distant_nephew = sibling->left;
+                if (sibling != NULL)
+                {
+                    close_nephew   = sibling->right;
+                    distant_nephew = sibling->left;
+                }
             }
 
             if (BPLib_RBT_IsRedImpl(sibling))
@@ -605,7 +608,10 @@ void BPLib_RBT_DeleteRebalanceImpl(BPLib_RBT_Root_t *tree, BPLib_RBT_Link_t *ini
              * but must move up to the parent and repeat the process, to check the other paths
              * which are _not_ through this subtree.
              */
-            BPLib_RBT_SetRedImpl(sibling);
+            if (sibling != NULL)
+            {
+                BPLib_RBT_SetRedImpl(sibling);
+            }
             node = parent; /* move up one level and repeat */
         }
         else if (rebalance_case == delete_case_black_subject_with_red_sibling ||
