@@ -190,7 +190,7 @@ void Test_BPLib_CT_ProcessNewBundle_RejectCustody(void)
     */
 
     /* Avoid open CCS max size trigger */
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].CSSizeTrigger = 100;
+    BplibInst.ContCtxt[0].Config.CSSizeTrigger = 100;
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), false);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_PDB_AcceptCustody), BPLIB_ERROR);
@@ -231,7 +231,7 @@ void Test_BPLib_CT_ProcessNewBundle_StorFull(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyRefused_Idx);
 
     /* Avoid open CCS max size trigger */
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].CSSizeTrigger = 100;
+    BplibInst.ContCtxt[0].Config.CSSizeTrigger = 100;
 
     /* Set storage to full */
     BplibInst.BundleStorage.BytesStorageInUse = BPLIB_MAX_STORED_BUNDLE_BYTES;
@@ -274,7 +274,7 @@ void Test_BPLib_CT_ProcessNewBundle_Dupl(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyRefused_Idx);
 
     /* Avoid open CCS max size trigger */
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].CSSizeTrigger = 100;
+    BplibInst.ContCtxt[0].Config.CSSizeTrigger = 100;
 
     /*
     ** CCS data explanation:
