@@ -113,12 +113,7 @@ static void* BPCat_MaintTaskFunc(BPCat_AppData_t* gAppData)
             fprintf(stderr, "Error egressing from storage\n");
         }
         
-        Status = BPLib_NC_RunMaintenanceActivities(&(gAppData->BPLibInst));
-        
-        if (Status != BPLIB_SUCCESS)
-        {
-            fprintf(stderr, "Error running maintenance activities\n");
-        }
+        BPLib_NC_RunMaintenanceActivities(&(gAppData->BPLibInst));
     }
 
     return NULL;
@@ -260,7 +255,6 @@ static void BPCat_StopTasks()
 */
 void BPCat_Main()
 {
-    BPLib_Status_t BPLibStatus;
     BPCat_Status_t Status;
 
     BPLib_FWP_ProxyCallbacks_t Callbacks = {
