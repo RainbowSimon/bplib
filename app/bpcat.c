@@ -39,6 +39,7 @@
 #define BPCAT_MEMPOOL_LEN               8000000u
 #define BPCAT_QM_MAX_JOBS               1024u
 #define BPCAT_JOBS_PER_CYCLE            100
+#define BPCAT_MAX_BUNDLES_LOADED        60000
 
 /*******************************************************************************
 ** Global State
@@ -46,6 +47,7 @@
 BPCat_AppData_t AppData;
 static BPCat_Task_t CLAOutTask;
 static BPCat_Task_t CLAInTask;
+static BPCat_Task_t MaintTask;
 static BPCat_Task_t GenWorkers[BPCAT_NUM_GEN_WORKER];
 
 /*******************************************************************************
@@ -76,6 +78,44 @@ static void* BPCat_GenWorkerTaskFunc(BPCat_AppData_t* gAppData)
     {
         BPLib_QM_WorkerRunJob(&gAppData->BPLibInst, 0, BPCAT_GEN_WORKER_TIMEOUT);
     }
+    return NULL;
+}
+
+/*******************************************************************************
+** Maintenance Task Functions
+*/
+static BPLib_Status_t BPCat_MaintTaskSetup()
+{
+    /* Maintenance task does not need any pre-task setup */
+    printf("BPLib maintenance task reporting for duty\n");
+    return BPCAT_SUCCESS;
+}
+
+static BPLib_Status_t BPCat_MaintTaskTeardown()
+{
+    /* Maintenance task does not need any post-task teardown */
+    return BPCAT_SUCCESS;
+}
+
+static void* BPCat_MaintTaskFunc(BPCat_AppData_t* gAppData)
+{
+    BPLib_Status_t Status;
+
+    /* Run until a SIGINT (CTRL-C) sets AppData.Running to 0 */
+    while (gAppData->Running)
+    {
+        sleep(BPCAT_CYCLE_TIME_SECS);
+
+        Status = BPLib_STOR_Egress(&(gAppData->BPLibInst), BPCAT_MAX_BUNDLES_LOADED);
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            fprintf(stderr, "Error egressing from storage\n");
+        }
+        
+        BPLib_NC_RunMaintenanceActivities(&(gAppData->BPLibInst));
+    }
+
     return NULL;
 }
 
@@ -123,6 +163,18 @@ static BPCat_Status_t BPCat_StartTasks()
         return Status;
     }
 
+    /* Maintenance task init */
+    MaintTask.TaskSetup = BPCat_MaintTaskSetup;
+    MaintTask.TaskTeardown = BPCat_MaintTaskTeardown;
+    MaintTask.TaskFunc = BPCat_MaintTaskFunc;
+    MaintTask.TaskId = 0;
+    Status = BPCat_TaskInit(&MaintTask);
+    if (Status != BPCAT_SUCCESS)
+    {
+        fprintf(stderr, "Failed to initialize Maintenance Task\n");
+        return Status;
+    }
+
     /* Start the generic workers first so BPLib is ready to do work */
     for (i = 0; i < BPCAT_NUM_GEN_WORKER; i++)
     {
@@ -148,6 +200,14 @@ static BPCat_Status_t BPCat_StartTasks()
         return Status;
     }
 
+    /* Start the Maintenance Task */
+    Status = BPCat_TaskStart(&MaintTask, &AppData);
+    if (Status != BPCAT_SUCCESS)
+    {
+        fprintf(stderr, "Failed to start Maintenance Task\n");
+        return Status;
+    }    
+
     return BPCAT_SUCCESS;
 }
 
@@ -167,6 +227,13 @@ static void BPCat_StopTasks()
     {
         fprintf(stderr, "Failed to stop CLA-Ingress Task\n");
     }
+
+    /* Stop the maintenance task */
+    Status = BPCat_TaskStop(&MaintTask);
+    if (Status != BPCAT_SUCCESS)
+    {
+        fprintf(stderr, "Failed to stop Maintenance Task\n");
+    }    
 
     /* Stop Generic Workers */
     for (i = 0; i < BPCAT_NUM_GEN_WORKER; i++)
@@ -188,7 +255,6 @@ static void BPCat_StopTasks()
 */
 void BPCat_Main()
 {
-    BPLib_Status_t BPLibStatus;
     BPCat_Status_t Status;
 
     BPLib_FWP_ProxyCallbacks_t Callbacks = {
@@ -242,7 +308,7 @@ void BPCat_Main()
         return;
     }
 
-    /* Start CLAs and Gen Workers */
+    /* Start child tasks */
     Status = BPCat_StartTasks();
     if (Status != BPCAT_SUCCESS)
     {
@@ -261,20 +327,6 @@ void BPCat_Main()
     while (AppData.Running)
     {
         sleep(BPCAT_CYCLE_TIME_SECS);
-
-        BPLibStatus = BPLib_STOR_FlushPending(&AppData.BPLibInst);
-
-        if (BPLibStatus != BPLIB_SUCCESS)
-        {
-            fprintf(stderr, "Error flushing storage\n");
-        }
-        
-        BPLibStatus = BPLib_STOR_GarbageCollect(&AppData.BPLibInst);
-        
-        if (BPLibStatus != BPLIB_SUCCESS)
-        {
-            fprintf(stderr, "Error garbage collecting\n");
-        }
     }   
 
     /* Exit Signal Received */
