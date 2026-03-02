@@ -9,6 +9,8 @@
 
 ## CTDB Design
 
+The CTDB uses memory blocks of size 128 to hold bundle information needed while its custody transfer to the downstream node is ongoing. The CTDB can be searched using two red-black trees, one indexing based on bundle ID, and one based on the sequence ID and sequence number combination assigned to the bundle's CTEB by this node. The first RBT is used when a deserialized bundle is available for reference, the second RBT is used when looking up values from a CCS in the CTDB to assign a custody signal to a bundle.
+
 The Custody Transfer Database has a state for each entry to track the state of the bundle in the node. These states determine the custody transfer operations that can be performed for that bundle:
 
 - Initialized: The bundle was received and not rejected, but the bundle is not in custodial storage yet and therefore custody is not officially accepted.
