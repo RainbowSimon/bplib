@@ -496,6 +496,12 @@ BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx
         /* === Set DispositionCode === */
         Parsed[DispositionIdx].DispositionCode = (BPLib_CT_DispositionCode_t) MapItem.label.int64;
 
+        /* Disposition codes can be negative or positive but not 0 */
+        if (Parsed[DispositionIdx].DispositionCode == 0)
+        {
+            return BPLIB_CBOR_DEC_INV_DISP_CODE_ERR;
+        }
+
         /* === Jam LastSeqNumAdded to an innocuous initial value === */
         Parsed[DispositionIdx].LastSeqNumAdded = 0;
 

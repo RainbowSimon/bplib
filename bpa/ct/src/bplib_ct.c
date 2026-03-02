@@ -60,7 +60,7 @@ uint8_t BPLib_CT_GetCtebIndex(BPLib_Bundle_t *Bundle)
 
 
 BPLib_Status_t BPLib_CT_SignalCustodyImpl(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
-                        BPLib_CT_DispositionCode_t DispCode, bool IsDuplicate, uint8_t ExtBlockIdx)
+                        BPLib_CT_DispositionCode_t DispCode, bool StoreBundle, uint8_t ExtBlockIdx)
 {
     size_t OpenCcsIdx;
     BPLib_CustodyBlockData_t *CtebPtr;
@@ -97,7 +97,7 @@ BPLib_Status_t BPLib_CT_SignalCustodyImpl(BPLib_Instance_t *Inst, BPLib_Bundle_t
 
     if (DispCode == BPLib_CT_CustodyAccepted)
     {
-        if (IsDuplicate == false)
+        if (StoreBundle)
         {
             Inst->Ct.BundleCountInCustody++;
             DbEntry->State = BPLib_CT_InCustody;
@@ -172,7 +172,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
     BPLib_CT_DbEntry_t *DbEntry = NULL;
     BPLib_CT_DispositionCode_t DispCode;
     char BundleInfo[BPLIB_MAX_BUNDLE_INFO_STR_LENGTH];
-    bool IsDuplicate = false;
+    bool StoreBundle = true;
 
     if (Bundle == NULL || Inst == NULL)
     {
@@ -224,7 +224,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_REDUNDANT, 1);
         DispCode = BPLib_CT_CustodyAccepted;
         Status = BPLIB_CT_DUPLICATE_ERR;
-        IsDuplicate = true;
+        StoreBundle = false;
     }
 
     /* Custody accepted! */
@@ -254,7 +254,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
         ** Signal custody for rejected bundles or duplicate bundles, otherwise wait
         ** until a bundle is successfully stored to formally accept it
         */
-        (void) BPLib_CT_SignalCustodyImpl(Inst, Bundle, DispCode, IsDuplicate, ExtBlockIdx);
+        (void) BPLib_CT_SignalCustodyImpl(Inst, Bundle, DispCode, StoreBundle, ExtBlockIdx);
     }    
     
     pthread_mutex_unlock(&Inst->Ct.Lock);
@@ -263,7 +263,7 @@ BPLib_Status_t BPLib_CT_ProcessNewBundle(BPLib_Instance_t* Inst, BPLib_Bundle_t 
 }
 
 BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle,
-                                    BPLib_CT_DispositionCode_t DispCode, bool IsDuplicate)
+                            BPLib_CT_DispositionCode_t DispCode, bool StoreBundle)
 {
     uint8_t ExtBlockIdx;
     BPLib_Status_t Status;
@@ -281,7 +281,8 @@ BPLib_Status_t BPLib_CT_SignalCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bu
     }
 
     pthread_mutex_lock(&Inst->Ct.Lock);
-    Status = BPLib_CT_SignalCustodyImpl(Inst, Bundle, DispCode, IsDuplicate, ExtBlockIdx);
+    Status = BPLib_CT_SignalCustodyImpl(Inst, Bundle, DispCode, StoreBundle, ExtBlockIdx);
+
     pthread_mutex_unlock(&Inst->Ct.Lock);
 
     return Status;
@@ -545,8 +546,6 @@ BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t 
         /* Bundle was never stored, finalize custody */
         if (DbEntry->State == BPLib_CT_Initialized)
         {
-            /* Finalize custodial transfer for custodial bundles */
-            (void) BPLib_CT_SignalCustodyImpl(Inst, Bundle, BPLib_CT_CustodyAccepted, false, ExtBlockIdx);
             Status = BPLib_CT_RemoveFromCtdb(Inst, DbEntry);
         }
         else

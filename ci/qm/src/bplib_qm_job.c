@@ -243,6 +243,13 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                 {
                     /* We have a channel we can deliver to: forward without storing */
                     Bundle->Meta.EgressID = i;
+
+                    /* Accept custodial bundles */
+                    if (Bundle->Meta.IsCustodial)
+                    {
+                        (void) BPLib_CT_SignalCustody(Inst, Bundle, BPLib_CT_CustodyAccepted, false);
+                    }
+
                     BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), 
                                                  &Bundle, QM_WAIT_FOREVER);
                     return NO_NEXT_STATE;
