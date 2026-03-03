@@ -178,6 +178,8 @@ static BPLib_QM_JobState_t ChannelOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 
         if (Status != BPLIB_SUCCESS)
         {
+            BPLib_EM_SendEvent(BPLIB_QM_CT_OUT_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "Error occurred when completing the delivery of a custodial bundle, Status =%d", Status);
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);

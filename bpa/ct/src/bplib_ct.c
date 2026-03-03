@@ -555,6 +555,11 @@ BPLib_Status_t BPLib_CT_CompleteDelivery(BPLib_Instance_t *Inst, BPLib_Bundle_t 
             Inst->Ct.BundleCountInCustody--;
         }
     }
+    else
+    {
+        /* Storage probably already garbage collected this entry, ignore this */
+        Status = BPLIB_SUCCESS;
+    }
 
     pthread_mutex_unlock(&Inst->Ct.Lock);
 
