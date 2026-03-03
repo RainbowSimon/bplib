@@ -513,7 +513,8 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         /* Initialize the extension block data - parameters have been validated, ignore return code */
         (void) BPLib_EBP_InitializeExtensionBlocks(Inst, NewBundle, ChanId);
 
-        Status = BPLib_QM_CreateJob(Inst, NewBundle, CHANNEL_IN_PI_TO_EBP, QM_PRI_NORMAL, QM_WAIT_FOREVER);
+        Status = BPLib_QM_CreateJob(Inst, NewBundle, CHANNEL_IN_PI_TO_EBP, 
+                                                BPLIB_QM_PRIORITY_NORMAL, QM_WAIT_FOREVER);
     }
 
     if (Status == BPLIB_SUCCESS)

@@ -178,6 +178,8 @@ static BPLib_QM_JobState_t ChannelOut_CT(BPLib_Instance_t* Inst, BPLib_Bundle_t*
 
         if (Status != BPLIB_SUCCESS)
         {
+            BPLib_EM_SendEvent(BPLIB_QM_CT_OUT_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "Error occurred when completing the delivery of a custodial bundle, Status =%d", Status);
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
             BPLib_MEM_BundleFree(&Inst->pool, Bundle);
@@ -243,16 +245,16 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                 {
                     /* We have a channel we can deliver to: forward without storing */
                     Bundle->Meta.EgressID = i;
-                    if(BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), 
-                                                 &Bundle, QM_STANDARD_WAIT))
+
+                    /* Accept custodial bundles */
+                    if (Bundle->Meta.IsCustodial)
                     {
-                        return NO_NEXT_STATE;
+                        (void) BPLib_CT_SignalCustody(Inst, Bundle, BPLib_CT_CustodyAccepted, false);
                     }
-                    else
-                    {
-                        /* Store bundle, queue is busy */
-                        break;
-                    }
+
+                    BPLib_QM_WaitQueueTryPush(&(Inst->ChannelEgressJobs[Bundle->Meta.EgressID]), 
+                                                 &Bundle, QM_WAIT_FOREVER);
+                    return NO_NEXT_STATE;
                 }
             }
         }
@@ -293,15 +295,9 @@ static BPLib_QM_JobState_t STOR_Router(BPLib_Instance_t* Inst, BPLib_Bundle_t* B
                     {
                         /* We have a contact we can deliver to: forward without storing */
                         Bundle->Meta.EgressID = i;
-                        if(BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), 
-                                                                &Bundle, QM_STANDARD_WAIT))
-                        {
-                            return NO_NEXT_STATE;
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[Bundle->Meta.EgressID]), 
+                                                                &Bundle, QM_WAIT_FOREVER);
+                        return NO_NEXT_STATE;
                     }
                 }
             }

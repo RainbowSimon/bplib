@@ -110,7 +110,7 @@ BPLib_Status_t BPLib_CT_UpdateEntry(BPLib_Instance_t *Inst, BPLib_CT_DbEntry_t *
     
     return BPLib_RBT_InsertValueGeneric(SeqId, &(Inst->Ct.SeqTreeRoot), 
                                         &(DbEntry->SeqRbtLink),
-                                        BPLib_CT_CompareDbEntries, &SeqNum);
+                                        BPLib_CT_CompareDbEntries, &(DbEntry->SeqNum));
 }
 
 

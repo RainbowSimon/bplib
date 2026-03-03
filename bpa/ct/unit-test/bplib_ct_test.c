@@ -549,7 +549,7 @@ void Test_BPLib_CT_SignalCustody_Accept(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_ARP_GetDispCodeIdx), BPLib_CT_CustodyAccepted_Idx);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsMatch), true);
 
-    UtAssert_INT32_EQ(BPLib_CT_SignalCustody(&BplibInst, &Bundle, BPLib_CT_CustodyAccepted, false), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_CT_SignalCustody(&BplibInst, &Bundle, BPLib_CT_CustodyAccepted, true), BPLIB_SUCCESS);
     UtAssert_EQ(size_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRangeLen, 5);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqId, 12);
     UtAssert_EQ(uint64_t, BplibInst.Ct.OpenCcss[0].BundleSeqCollections[BPLib_CT_CustodyAccepted_Idx].SeqRange[0], 2);

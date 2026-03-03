@@ -54,11 +54,17 @@ void BPLib_STOR_FinalizeCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Custodia
     BPLib_CLA_ContactRunState_t ConState;
     size_t i;
     bool PushedBundle = true;
+    bool BundleStored = true;
+
+    if (DispCode == BPLib_CT_CustodyRefused)
+    {
+        BundleStored = false;
+    }
 
     for (i = 0; i < NumCustodialBundles; i++)
     {
         /* Finalize custodial transfer for custodial bundles */
-        (void) BPLib_CT_SignalCustody(Inst, CustodialBundles[i], DispCode, false);
+        (void) BPLib_CT_SignalCustody(Inst, CustodialBundles[i], DispCode, BundleStored);
 
         /* Custodial bundles with an egress path should get sent out instead of freed */
         (void) BPLib_CLA_GetContactRunState(CustodialBundles[i]->Meta.EgressID, &ConState);
@@ -66,7 +72,7 @@ void BPLib_STOR_FinalizeCustody(BPLib_Instance_t *Inst, BPLib_Bundle_t *Custodia
             ConState == BPLIB_CLA_STARTED && DispCode == BPLib_CT_CustodyAccepted)
         {
             PushedBundle = BPLib_QM_WaitQueueTryPush(&(Inst->ContactEgressJobs[CustodialBundles[i]->Meta.EgressID]), 
-                                        &CustodialBundles[i], QM_STANDARD_WAIT);
+                                        &CustodialBundles[i], QM_WAIT_FOREVER);
         }
         /* There's no egress path, free memory */
         else

@@ -30,7 +30,6 @@
 #define QM_WAIT_FOREVER    -1L   /**< Constant representing an indefinite wait */
 #define QM_MAX_GEN_WORKERS  8L   /**< Constant representing maximum allowed generic workers */
 
-
 typedef struct BPLib_QM_WorkerState
 {
     BPLib_QM_Job_t CurrJob;

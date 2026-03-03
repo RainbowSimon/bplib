@@ -204,6 +204,7 @@
 /* QM event IDs */
 #define BPLIB_QM_EBP_OUT_ERR_EID                        (700u)
 #define BPLIB_QM_CT_IN_ERR_EID                          (701u)
+#define BPLIB_QM_CT_OUT_ERR_EID                         (702u)
 
 /* CT event IDs */
 #define BPLIB_CT_INV_SEQ_NUM_DBG_EID                    (752u)

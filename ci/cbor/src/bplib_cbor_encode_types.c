@@ -566,6 +566,11 @@ BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_Deseri
             return BPLIB_CBOR_ENC_CORRUPT_CCS_ERR;
         }
 
+        if (CCS->BundleSeqCollections[BscIdx].DispositionCode == 0)
+        {
+            return BPLIB_CBOR_ENC_CORRUPT_CCS_ERR;
+        }        
+
         QCBOREncode_AddInt64(Context, (int64_t) CCS->BundleSeqCollections[BscIdx].DispositionCode);
 
         QCBOREncode_OpenArray(Context);

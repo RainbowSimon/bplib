@@ -320,9 +320,8 @@ typedef enum
 
 #define BPLIB_CBOR_DEC_TYPES_ADMIN_REC_INV_REC_TYPE    ((BPLib_Status_t) -203) /* CBOR decode types error: admin record invalid record type */
 #define BPLIB_CBOR_DEC_ADMIN_RECORD_NULL_ERR           ((BPLib_Status_t) -204) /* CBOR decode error: could not allocate an admin record block */
-
+#define BPLIB_CBOR_DEC_INV_DISP_CODE_ERR               ((BPLib_Status_t) -205) /* CBOR decode error: invalid disposition code */
 /*
-#define BPLIB_CBOR_DEC_GENERIC_ERR_205                 ((BPLib_Status_t) -205) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_206                 ((BPLib_Status_t) -206) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_207                 ((BPLib_Status_t) -207) // CBOR decode error
 #define BPLIB_CBOR_DEC_GENERIC_ERR_208                 ((BPLib_Status_t) -208) // CBOR decode error
