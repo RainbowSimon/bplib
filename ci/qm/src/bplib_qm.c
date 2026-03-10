@@ -184,7 +184,6 @@ BPLib_Status_t BPLib_QM_WorkerRunJob(BPLib_Instance_t* inst, int32_t WorkerID, i
     BPLib_QM_WorkerState_t* WorkerState;
     BPLib_QM_JobFunc_t JobFunc;
     BPLib_Status_t Status = BPLIB_SUCCESS;
-    uint8_t i;
 
     if (inst == NULL)
     {
@@ -208,19 +207,20 @@ BPLib_Status_t BPLib_QM_WorkerRunJob(BPLib_Instance_t* inst, int32_t WorkerID, i
     {
         Status = BPLIB_TIMEOUT;
 
-        for (i = 0; i < BPLIB_QM_NUM_PRIORITIES; i++)
+        /* Poll the admin record queue but don't wait */
+        if (BPLib_QM_WaitQueueTryPull(&(inst->GenericWorkerJobs[BPLIB_QM_PRIORITY_ADMIN_REC]), 
+                                            &WorkerState->CurrJob, QM_NO_WAIT))
         {
-            if (!BPLib_QM_WaitQueueIsEmpty(&(inst->GenericWorkerJobs[i])))
-            {
-                if (BPLib_QM_WaitQueueTryPull(&(inst->GenericWorkerJobs[i]), 
-                                                    &WorkerState->CurrJob, TimeoutMs))
-                {
-                    JobFunc = BPLib_QM_JobLookup(WorkerState->CurrJob.NextState);
-                    WorkerState->CurrJob.NextState = JobFunc(inst, WorkerState->CurrJob.Bundle);
-                    Status = BPLIB_SUCCESS;
-                    break;
-                }
-            }
+            JobFunc = BPLib_QM_JobLookup(WorkerState->CurrJob.NextState);
+            WorkerState->CurrJob.NextState = JobFunc(inst, WorkerState->CurrJob.Bundle);
+            Status = BPLIB_SUCCESS;
+        }
+        else if (BPLib_QM_WaitQueueTryPull(&(inst->GenericWorkerJobs[BPLIB_QM_PRIORITY_NORMAL]), 
+                                            &WorkerState->CurrJob, TimeoutMs))
+        {
+            JobFunc = BPLib_QM_JobLookup(WorkerState->CurrJob.NextState);
+            WorkerState->CurrJob.NextState = JobFunc(inst, WorkerState->CurrJob.Bundle);
+            Status = BPLIB_SUCCESS;
         }
     }
     else
