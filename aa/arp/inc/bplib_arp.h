@@ -36,7 +36,7 @@
 */
 
 // Only uncomment locally, shouldn't be included in the main branch
-//#define BPLIB_ARP_DEBUG_PRINTS_ENABLED (1)
+#define BPLIB_ARP_DEBUG_PRINTS_ENABLED (1)
 
 
 /* ======== */
