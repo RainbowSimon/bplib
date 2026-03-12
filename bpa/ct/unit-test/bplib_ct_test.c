@@ -633,6 +633,75 @@ void Test_BPLib_CT_TriggerGC_Nominal(void)
     UtAssert_BOOL_FALSE(BPLib_CT_TriggerCustodialGarbageCollection(&BplibInst));
 }
 
+void Test_BPLib_CT_ProcessCcs_EdgeCase(void)
+{
+    BPLib_CT_DeserializedCcs_t Ccs;
+    size_t TransferredCount = 0;
+    size_t i, j;
+    BPLib_CT_DbEntry_t DbEntries[100];
+    int32 RetCount = 1;
+    size_t DbEntryIdx = 0;
+    size_t InitialCustodyCount = 100;
+
+    memset(&Ccs, 0, sizeof(BPLib_CT_DeserializedCcs_t));
+
+    Ccs.NumBundleSeqCollections = 1;
+    Ccs.BundleSeqCollections[0].DispositionCode = 1;
+    Ccs.BundleSeqCollections[0].FirstSeqNum = 5320;
+    Ccs.BundleSeqCollections[0].SeqId = 1;
+    Ccs.BundleSeqCollections[0].SeqRangeLen = 11;
+
+    Ccs.BundleSeqCollections[0].SeqRange[0] = 26;
+    Ccs.BundleSeqCollections[0].SeqRange[1] = 1;
+    Ccs.BundleSeqCollections[0].SeqRange[2] = 7;
+    Ccs.BundleSeqCollections[0].SeqRange[3] = 1;
+    Ccs.BundleSeqCollections[0].SeqRange[4] = 5;
+    Ccs.BundleSeqCollections[0].SeqRange[5] = 102;
+    Ccs.BundleSeqCollections[0].SeqRange[6] = 1;
+    Ccs.BundleSeqCollections[0].SeqRange[7] = 5;
+    Ccs.BundleSeqCollections[0].SeqRange[8] = 2;
+    Ccs.BundleSeqCollections[0].SeqRange[9] = 13;
+    Ccs.BundleSeqCollections[0].SeqRange[10] = 1;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) NULL);
+
+    size_t CurrSeqNum = Ccs.BundleSeqCollections[0].FirstSeqNum;
+
+    for (i = 0; i < Ccs.BundleSeqCollections[0].SeqRangeLen; i++)
+    {
+        if (i % 2 == 0)
+        {
+            for (j = 0; j < Ccs.BundleSeqCollections[0].SeqRange[i]; j++)
+            {
+                if (j == 0 && i > 0)
+                {
+                    RetCount = Ccs.BundleSeqCollections[0].SeqRange[i - 1] + 1;
+                }
+                else
+                {
+                    RetCount = 1;
+                }
+                TransferredCount++;
+
+                memset (&DbEntries[DbEntryIdx], 0, sizeof(BPLib_CT_DbEntry_t));
+                DbEntries[DbEntryIdx].State = BPLib_CT_Transmitted;
+
+                DbEntries[DbEntryIdx].SeqNum = CurrSeqNum + j;
+                UT_SetDeferredRetcode(UT_KEY(BPLib_RBT_SearchGeneric), RetCount, (UT_IntReturn_t) &(DbEntries[DbEntryIdx].SeqRbtLink));
+                DbEntryIdx++;
+            }
+        }
+
+        CurrSeqNum += Ccs.BundleSeqCollections[0].SeqRange[i];
+    }
+
+    BplibInst.Ct.BundleCountInCustody = InitialCustodyCount;
+    
+    UtAssert_INT32_EQ(BPLIB_SUCCESS, BPLib_CT_ProcessCcs(&BplibInst, &Ccs));
+    UtAssert_STUB_COUNT(BPLib_AS_Increment, TransferredCount + (Ccs.BundleSeqCollections[0].SeqRangeLen / 2 + 1));
+    UtAssert_EQ(uint32_t, BplibInst.Ct.BundleCountInCustody, InitialCustodyCount - TransferredCount);
+}
+
 void TestBplibCt_Register(void)
 {
     ADD_TEST(Test_BPLib_CT_Init_Nominal);
@@ -661,6 +730,7 @@ void TestBplibCt_Register(void)
     ADD_TEST(Test_BPLib_CT_ProcessCcs_Nominal);
     ADD_TEST(Test_BPLib_CT_ProcessCcs_Null);
     ADD_TEST(Test_BPLib_CT_ProcessCcs_BufErr);
+    ADD_TEST(Test_BPLib_CT_ProcessCcs_EdgeCase);
 
     ADD_TEST(Test_BPLib_CT_SignalCustody_Accept);
     ADD_TEST(Test_BPLib_CT_SignalCustody_Reject);
