@@ -436,8 +436,7 @@ void Test_BPLib_CT_AssignSeqCounter_InputErr(void)
 void Test_BPLib_CT_ProcessCcs_Nominal(void)
 {
     BPLib_CT_DeserializedCcs_t Ccs;
-    //size_t ExpCtdbSize;
-
+ 
     memset(&Ccs, 0, sizeof(BPLib_CT_DeserializedCcs_t));
 
     Ccs.NumBundleSeqCollections = 2;
@@ -477,7 +476,7 @@ void Test_BPLib_CT_ProcessCcs_Nominal(void)
     Ccs.BundleSeqCollections[1].SeqRange[2] = 3;
 
     BplibInst.Ct.CurrDbSize = BPLIB_CT_DB_MAX_ENTRIES;
-    //ExpCtdbSize = BPLIB_CT_DB_MAX_ENTRIES - 9; /* CCS should remove only the 9 custody accepted entries from CTDB */
+    BplibInst.Ct.BundleCountInCustody = BPLIB_CT_DB_MAX_ENTRIES;
 
     /* Set RBT to always return same link (for simplicity) */
     UT_SetDefaultReturnValue(UT_KEY(BPLib_RBT_SearchGeneric), (UT_IntReturn_t) &(BplibInst.Ct.SeqTreeRoot));
@@ -702,6 +701,47 @@ void Test_BPLib_CT_ProcessCcs_EdgeCase(void)
     UtAssert_EQ(uint32_t, BplibInst.Ct.BundleCountInCustody, InitialCustodyCount - TransferredCount);
 }
 
+
+void Test_BPLib_CT_ProcessCcs_UnknownBundle(void)
+{
+    BPLib_CT_DeserializedCcs_t Ccs;
+    BPLib_CT_DbEntry_t DbEntries[2];
+ 
+    memset(&Ccs, 0, sizeof(BPLib_CT_DeserializedCcs_t));
+
+    Ccs.NumBundleSeqCollections = 1;
+
+    /*
+    ** This is a basic CCS that has two included bundles and one excluded bundle.
+    ** The second included bundle is missing from the CTDB and should return an error.
+    */
+
+    Ccs.BundleSeqCollections[0].DispositionCode = BPLib_CT_CustodyAccepted;
+    Ccs.BundleSeqCollections[0].FirstSeqNum = 20;
+    Ccs.BundleSeqCollections[0].SeqId = 10;
+    Ccs.BundleSeqCollections[0].SeqRangeLen = 3;
+    Ccs.BundleSeqCollections[0].SeqRange[0] = 1;
+    Ccs.BundleSeqCollections[0].SeqRange[1] = 1;
+    Ccs.BundleSeqCollections[0].SeqRange[2] = 1;
+
+    BplibInst.Ct.CurrDbSize = BPLIB_CT_DB_MAX_ENTRIES;
+    BplibInst.Ct.BundleCountInCustody = BPLIB_CT_DB_MAX_ENTRIES;
+
+    memset(&DbEntries[0], 0, sizeof(BPLib_CT_DbEntry_t));
+    memset(&DbEntries[1], 0, sizeof(BPLib_CT_DbEntry_t));
+
+    DbEntries[0].State = BPLib_CT_Transmitted;
+    DbEntries[1].State = BPLib_CT_Transmitted;
+
+    UT_SetDeferredRetcode(UT_KEY(BPLib_RBT_SearchGeneric), 1, (UT_IntReturn_t) &(DbEntries[0]));
+    UT_SetDeferredRetcode(UT_KEY(BPLib_RBT_SearchGeneric), 1, (UT_IntReturn_t) &(DbEntries[1]));
+    UT_SetDeferredRetcode(UT_KEY(BPLib_RBT_SearchGeneric), 1, (UT_IntReturn_t) NULL);
+
+    UtAssert_INT32_EQ(BPLib_CT_ProcessCcs(&BplibInst, &Ccs), BPLIB_NOT_FOUND_ERR);
+    UtAssert_EQ(size_t, BplibInst.Ct.CurrDbSize, BPLIB_CT_DB_MAX_ENTRIES);
+    UtAssert_EQ(uint32_t, BplibInst.Ct.BundleCountInCustody, BPLIB_CT_DB_MAX_ENTRIES - 1);
+}
+
 void TestBplibCt_Register(void)
 {
     ADD_TEST(Test_BPLib_CT_Init_Nominal);
@@ -731,6 +771,7 @@ void TestBplibCt_Register(void)
     ADD_TEST(Test_BPLib_CT_ProcessCcs_Null);
     ADD_TEST(Test_BPLib_CT_ProcessCcs_BufErr);
     ADD_TEST(Test_BPLib_CT_ProcessCcs_EdgeCase);
+    ADD_TEST(Test_BPLib_CT_ProcessCcs_UnknownBundle);
 
     ADD_TEST(Test_BPLib_CT_SignalCustody_Accept);
     ADD_TEST(Test_BPLib_CT_SignalCustody_Reject);
