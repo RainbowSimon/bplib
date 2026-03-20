@@ -41,6 +41,7 @@ target_include_directories(utobj_bplib_arp PRIVATE
 # Create test runner executable
 add_executable(coverage-bplib_arp-testrunner
     utilities/bplib_arp_test_utils.c
+    utilities/bplib_arp_handlers.c
     bplib_arp_test.c
     $<TARGET_OBJECTS:utobj_bplib_arp>
 )
@@ -55,6 +56,13 @@ target_include_directories(coverage-bplib_arp-testrunner PRIVATE
 target_link_libraries(coverage-bplib_arp-testrunner PUBLIC
     ut_coverage_link
     ut_assert
+    bplib_as_stubs
+    bplib_eid_stubs
+    bplib_mem_stubs
+    bplib_qm_stubs
+    bplib_em_stubs
+    bplib_time_stubs
+    bplib_nc_stubs
 )
 
 add_test(coverage-bplib_arp-testrunner coverage-bplib_arp-testrunner)

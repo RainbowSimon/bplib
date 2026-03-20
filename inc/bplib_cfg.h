@@ -36,6 +36,7 @@ extern "C" {
 
 #define BPLIB_MAX_IP_LENGTH                 16  /* Maximum length of an IP address string */
 #define BPLIB_MAX_STR_LENGTH                32  /* Maximum length for a generic string */
+#define BPLIB_MAX_BUNDLE_INFO_STR_LENGTH    64  /* Maximum length of a bundle information string */
 
 /**
  * \brief Configuration array constraints
@@ -57,7 +58,7 @@ extern "C" {
  *          This drives the number of entries in the CLA configuration
  *          tables, as well as the number of CLA In/Out tasks in BPNode
  */
-#define BPLIB_MAX_NUM_CONTACTS                  1
+#define BPLIB_MAX_NUM_CONTACTS 3
 
 /**
  * \brief Maximum number of destination EID patterns per contact
@@ -120,7 +121,7 @@ extern "C" {
 /**
  *  \brief This is the absolute maximum size a bundle is allowed to be.
  */
-#define BPLIB_MAX_BUNDLE_LEN                    8192
+#define BPLIB_MAX_BUNDLE_LEN                    17000
 
 /**
  * \brief This is the absolute maximum size a bundle payload is allowed to be. The real
@@ -129,7 +130,7 @@ extern "C" {
  *        value, the configurations will be rejected. This value must be smaller than
  *        \ref BPLIB_MAX_BUNDLE_LEN
  */
-#define BPLIB_MAX_PAYLOAD_SIZE                  4096
+#define BPLIB_MAX_PAYLOAD_SIZE                  16384
 
 /**
  * \brief This is the absolute maximum lifetime a bundle can have. Channel configurations
@@ -139,22 +140,39 @@ extern "C" {
  */
 #define BPLIB_MAX_LIFETIME_ALLOWED              0xfffffffe
 
-/**
- *  \brief This is the maximum retransmit timeout allowed in the contacts configuration
- */
-#define BPLIB_MAX_RETRANSMIT_ALLOWED            86000
 
 /**
- *  \brief This is the maximum CS time trigger allowed in the contacts configuration. 
- *         TODO revisit value in 7.1
+ *  \brief This is the maximum retransmit time allowed in the contacts configuration (msec)
  */
-#define BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED       86000
+#define BPLIB_MAX_RETRANSMIT_ALLOWED            600000
 
 /**
- *  \brief This is the maximum CS size trigger allowed in the contacts configuration. 
- *         TODO revisit value in 7.1 
+ *  \brief This is the minimum retransmit time allowed in the contacts configuration (msec)
  */
-#define BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED       86000
+#define BPLIB_MIN_RETRANSMIT_ALLOWED            1000
+
+/**
+ *  \brief This is the maximum CS time trigger allowed in the contacts configuration (msec)
+ */
+#define BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED       600000
+
+/**
+ *  \brief This is the minimum CS time trigger allowed in the contacts configuration (msec)
+ */
+#define BPLIB_MIN_CS_TIME_TRIGGER_ALLOWED       1000
+
+/**
+ *  \brief This is the maximum CS size trigger allowed in the contacts configuration (bytes)
+ * 
+ * By default, we can only have a maximum of two bundle sequence collections per CCS and 
+ * the length of their sequence range arrays is the upper limit on how big a CCS can get
+ */
+#define BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED       BPLIB_MINIMUM_ENCODED_CCS_LEN + (BPLIB_CT_MAX_SEQ_RANGE_LEN * BPLIB_CT_MAX_SEQ_COLLECTIONS)
+
+/**
+ *  \brief This is the minimum CS size trigger allowed in the contacts configuration (bytes)
+ */
+#define BPLIB_MIN_CS_SIZE_TRIGGER_ALLOWED       BPLIB_MINIMUM_ENCODED_CCS_LEN
 
 /**
  *  \brief Name of this entity. This should  unambiguously identify the node within 
@@ -180,12 +198,61 @@ extern "C" {
 /**
  *  \brief List of all CLAs currently supported by this node
  */
-#define BPLIB_SUPPORTED_CLAS                    "UDP"
+#define BPLIB_SUPPORTED_CLAS                    "UDP,SB"
 
 /**
  *  \brief Maximum number of bundle bytes allowed in storage at any given time
  */
-#define BPLIB_MAX_STORED_BUNDLE_BYTES            4000000000     /* 4 gigabytes */
+#define BPLIB_MAX_STORED_BUNDLE_BYTES            ((size_t) 8000000000)  /* 8 gigabytes */
+
+/**
+ *  \brief Whether to allow duplicate bundles in storage. This flag is recommended
+ *         to be set to false unless needed otherwise for testing purposes. Note that
+ *         bundle uniqueness is determined by a bundle's sequence number, source EID,
+ *         and creation time.
+ */
+#define BPLIB_ALLOW_DUPLICATE_BUNDLES            false
+
+/**
+ * \brief Maximum number of entries allowed in the Custody Transfer Database (CTDB)
+ */
+#define BPLIB_CT_DB_MAX_ENTRIES                     (10000u)
+
+#define BPLIB_ADMIN_RECORD_CRC_TYPE                 BPLib_CRC_Type_CRC16
+
+#define BPLIB_ADMIN_RECORD_LIFETIME                 (3600000u)
+
+#define BPLIB_ADMIN_RECORD_AGE_BLOCK_NUM            (2u)
+
+#define BPLIB_ADMIN_RECORD_BLOCK_FLAGS              (0u)
+
+/** 
+ * \brief Egress queue depth
+ *
+ * This is one of the key configs that will affect performance -> the higher this value is,
+ * the more bundles that can sit in memory for the Out task to egress while the maintenance
+ * task focuses on loading bundles from storage into memory. The combination of this value,
+ * BPLIB_STOR_LOADBATCHSIZE, and the total memory pool size provided by the user will 
+ * determine the egress from storage performance.
+**/
+#ifndef BPLIB_QM_TX_QUEUE_DEPTH
+#define BPLIB_QM_TX_QUEUE_DEPTH 2048
+#endif
+
+/** 
+ * \brief Storage load batch size
+ * 
+ *  Important Note:
+ * Load batch loads integers into memory. It does not load bundle blobs. You can
+ * set this number north of 50k and everything works fine. The tradeoff is how much
+ * system memory the array of integers takes up. For performance analysis, I reccommend setting
+ * this to a higher value using a CMake variable.  In general, nothing can keep up with how
+ * fast we egress (good problem to have right now). To perform rate limiting, BPNode or other
+ * callee application needs to manage how fast it calls CLA/Channel Egress API.
+**/
+#ifndef BPLIB_STOR_LOADBATCHSIZE
+#define BPLIB_STOR_LOADBATCHSIZE 60000
+#endif
 
 #ifdef __cplusplus
 } // extern "C"

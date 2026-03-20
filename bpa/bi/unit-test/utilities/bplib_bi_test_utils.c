@@ -52,6 +52,8 @@ void BPLib_BI_Test_Setup(void)
     DeserializedBundle.blocks.ExtBlocks[2].Header.BlockNum = 4;
     DeserializedBundle.blocks.ExtBlocks[3].Header.BlockType = BPLib_BlockType_Reserved;
 
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetNodeConfigValue), BPLIB_MAX_LIFETIME_ALLOWED);
+
     UT_SetHandlerFunction(UT_KEY(BPLib_AS_Increment), UT_Handler_BPLib_AS_Increment, NULL);
 }
 

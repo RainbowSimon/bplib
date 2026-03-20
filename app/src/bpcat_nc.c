@@ -63,8 +63,6 @@ static BPLib_NC_MibPerNodeConfig_t MibPnTbl = {
         /* PARAM_SET_MAX_SEQUENCE NUM         */ 100000,   
         /* PARAM_SET_MAX_PAYLOAD_LENGTH       */ BPLIB_MAX_PAYLOAD_SIZE,
         /* PARAM_SET_MAX_BUNDLE_LENGTH        */ BPLIB_MAX_BUNDLE_LEN,
-        /* PARAM_SET_NODE_DTN_TIME            */ 0,
-        /* PARAM_SET_BEHAVIOR_EVENT_REPORTING */ 10,
         /* PARAM_SET_MAX_LIFETIME             */ BPLIB_MAX_LIFETIME_ALLOWED
     }
 };
@@ -75,7 +73,8 @@ static BPLib_PDB_SrcAuthTable_t    AuthTbl;
 static BPLib_PDB_SrcLatencyTable_t LatencyTbl;
 static BPLib_STOR_StorageTable_t   StorTbl;
 
-BPCat_Status_t BPCat_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
+BPCat_Status_t BPCat_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks, BPLib_Instance_t* Instance,
+                                uint16_t MaxUnsortedJobs, void *PoolMem, size_t PoolMemLen)
 {
     BPLib_Status_t NCStatus;
 
@@ -96,7 +95,7 @@ BPCat_Status_t BPCat_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs)
     ConfigPtrs->LatConfigPtr       = &LatencyTbl;
     ConfigPtrs->StorConfigPtr      = &StorTbl;    
 
-    NCStatus = BPLib_NC_Init(ConfigPtrs);
+    NCStatus = BPLib_NC_Init(ConfigPtrs, Callbacks, Instance, MaxUnsortedJobs, PoolMem, PoolMemLen);
     if (NCStatus != BPLIB_SUCCESS)
     {
         fprintf(stderr, "Failed to Initialize Node Config, RC=%d\n", NCStatus);

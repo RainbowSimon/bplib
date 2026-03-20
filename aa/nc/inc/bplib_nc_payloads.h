@@ -34,8 +34,8 @@
 ** Macro Definitions
 */
 
-#define BPLIB_NC_NODE_MIB_CONFIG_NUM 7          /** \brief Number of Node MIB configurations */
-#define BPLIB_NC_SOURCE_MIB_CONFIG_BASE 6       /** \brief Base enumeration of source MIB configurations */
+#define BPLIB_NC_NODE_MIB_CONFIG_NUM    6       /** \brief Number of Node MIB configurations */
+#define BPLIB_NC_SOURCE_MIB_CONFIG_BASE 5       /** \brief Base enumeration of source MIB configurations */
 #define BPLIB_NC_SOURCE_MIB_CONFIG_NUM 13       /** \brief Number of Source MIB configurations */
 
 
@@ -53,25 +53,24 @@ typedef enum
     PARAM_SET_MAX_SEQUENCE_NUM            = 1,  /** \brief Max bundle sequence number allowable */
     PARAM_SET_MAX_PAYLOAD_LENGTH          = 2,  /** \brief Max payload length for fragmentation */
     PARAM_SET_MAX_BUNDLE_LENGTH           = 3,  /** \brief Max bundle length for processing */
-    PARAM_SET_NODE_DTN_TIME               = 4,  /** \brief Time being tracked by the node */
-    PARAM_SET_BEHAVIOR_EVENT_REPORTING    = 5,  /** \brief Inclusive level of events to be generated */
+    PARAM_SUPPORT_CUSTODY                 = 4,  /** \brief Whether or not this node can become a custodian (0=false, 1=true) */
 
     /* Node and source configs */
-    PARAM_SET_MAX_LIFETIME                = 6,  /** \brief Max bundle lifetime for retention of the bundle */
+    PARAM_SET_MAX_LIFETIME                = 5,  /** \brief Max bundle lifetime for retention of the bundle */
 
     /* Source-only configs */
-    PARAM_SET_MAX_BSR_GENERATION_RATE     = 7,  /** \brief Maximum number of BSRs per minute that a node can generate overall and on behalf of each source */
-    PARAM_SET_MAX_CBR_GENERATION_RATE     = 8,  /** \brief Maximum number of CBRs per minute that a node can generate overall and on behalf of each source */
-    BUNDLE_SET_BEHAVIOR_RCVD_BSR_GENERATE = 9,  /** \brief Flag indicating that BSR should be generated for bundles received */
-    BUNDLE_SET_BEHAVIOR_ACPT_BSR_GENERATE = 10, /** \brief Flag indicating that BSR should be generated for bundles accepted to custody */
-    BUNDLE_SET_BEHAVIOR_FWRD_BSR_GENERATE = 11, /** \brief Flag indicating that BSR should be generated for bundles forwarded */
-    BUNDLE_SET_BEHAVIOR_DLVR_BSR_GENERATE = 12, /** \brief Flag indicating that BSR should be generated for bundles delivered */
-    BUNDLE_SET_BEHAVIOR_DLTD_BSR_GENERATE = 13, /** \brief Flag indicating that BSR should be generated for bundles deleted */ 
-    BUNDLE_SET_BEHAVIOR_RCVD_CBR_GENERATE = 14, /** \brief Flag indicating that CBR should be generated for bundles received */
-    BUNDLE_SET_BEHAVIOR_ACPT_CBR_GENERATE = 15, /** \brief Flag indicating that CBR should be generated for bundles accepted to custody */
-    BUNDLE_SET_BEHAVIOR_FWRD_CBR_GENERATE = 16, /** \brief Flag indicating that CBR should be generated for bundles forwarded */
-    BUNDLE_SET_BEHAVIOR_DLVR_CBR_GENERATE = 17, /** \brief Flag indicating that CBR should be generated for bundles delivered */
-    BUNDLE_SET_BEHAVIOR_DLTD_CBR_GENERATE = 18, /** \brief Flag indicating that CBR should be generated for bundles deleted */
+    PARAM_SET_MAX_BSR_GENERATION_RATE     = 6,  /** \brief Maximum number of BSRs per minute that a node can generate overall and on behalf of each source */
+    PARAM_SET_MAX_CBR_GENERATION_RATE     = 7,  /** \brief Maximum number of CBRs per minute that a node can generate overall and on behalf of each source */
+    BUNDLE_SET_BEHAVIOR_RCVD_BSR_GENERATE = 8,  /** \brief Flag indicating that BSR should be generated for bundles received */
+    BUNDLE_SET_BEHAVIOR_ACPT_BSR_GENERATE = 9,  /** \brief Flag indicating that BSR should be generated for bundles accepted to custody */
+    BUNDLE_SET_BEHAVIOR_FWRD_BSR_GENERATE = 10,  /** \brief Flag indicating that BSR should be generated for bundles forwarded */
+    BUNDLE_SET_BEHAVIOR_DLVR_BSR_GENERATE = 11, /** \brief Flag indicating that BSR should be generated for bundles delivered */
+    BUNDLE_SET_BEHAVIOR_DLTD_BSR_GENERATE = 12, /** \brief Flag indicating that BSR should be generated for bundles deleted */ 
+    BUNDLE_SET_BEHAVIOR_RCVD_CBR_GENERATE = 13, /** \brief Flag indicating that CBR should be generated for bundles received */
+    BUNDLE_SET_BEHAVIOR_ACPT_CBR_GENERATE = 14, /** \brief Flag indicating that CBR should be generated for bundles accepted to custody */
+    BUNDLE_SET_BEHAVIOR_FWRD_CBR_GENERATE = 15, /** \brief Flag indicating that CBR should be generated for bundles forwarded */
+    BUNDLE_SET_BEHAVIOR_DLVR_CBR_GENERATE = 16, /** \brief Flag indicating that CBR should be generated for bundles delivered */
+    BUNDLE_SET_BEHAVIOR_DLTD_CBR_GENERATE = 17, /** \brief Flag indicating that CBR should be generated for bundles deleted */
 } BPLib_NC_Config_t;
 
 
@@ -110,7 +109,8 @@ typedef struct
 
 typedef struct
 {
-    uint32_t ExampleParameter;
+    uint32_t ChanId;         /** \brief Channel ID */
+    uint32_t RegState;      /** \brief Registration State */
 } BPLib_SetRegistrationState_Payload_t;
 
 typedef struct
@@ -254,7 +254,6 @@ typedef struct
 {
     BPLib_EID_t InstanceEID;                        /** \brief Endpoint ID of this BP instance */
     uint32_t Configs[BPLIB_NC_NODE_MIB_CONFIG_NUM]; /** \brief Node MIB configuration values */
-    uint32_t Spare;
 } BPLib_NC_MibPerNodeConfig_t;
 
 /*

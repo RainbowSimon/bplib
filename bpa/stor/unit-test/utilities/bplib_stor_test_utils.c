@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sqlite3.h>
 
 /*
 ** Global Data
@@ -46,13 +47,14 @@ BPLib_MEM_Block_t* BlobMem;
 /*
 ** Test Setup Helpers
 */
-void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle)
+void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle, uint32_t BundleId)
 {
     /* Test Bundle (Minimal Metadata needed to store) */
     Bundle->blocks.PrimaryBlock.Timestamp.CreateTime = 797186475264;
     Bundle->blocks.PrimaryBlock.Lifetime = 5000;
     Bundle->blocks.PrimaryBlock.DestEID.Node = 100;
     Bundle->blocks.PrimaryBlock.DestEID.Service = 1;
+    Bundle->blocks.PrimaryBlock.BundleId = BundleId;
     Bundle->Meta.TotalBytes = 1000;
 
     /* MEM is stubbed so the tests can check the call's in UTAssert 
@@ -60,7 +62,7 @@ void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle)
     */
     Bundle->blob = (BPLib_MEM_Block_t*)calloc(1, sizeof(BPLib_MEM_Block_t));
     Bundle->blob->next = NULL;
-    strcpy((char*)Bundle->blob->user_data.raw_bytes, "CBOR Blob");
+    strcpy((char*)Bundle->blob->user_data.BigData, "CBOR Blob");
     Bundle->blob->used_len = 10; // strlen + 1 for \0
 }
 
@@ -92,10 +94,12 @@ void BPLib_STOR_Test_Setup(void)
     UT_ResetState(0);
 
     memset(&BplibInst, 0, sizeof(BplibInst));
+    memset(&Context_BPLib_AS_Increment, 0, sizeof(BPLib_AS_IncrementDecrementContext_t));
 
     BPLib_NC_ConfigPtrs.ChanConfigPtr = &TestChanTbl;
     BPLib_NC_ConfigPtrs.ContactsConfigPtr = &TestContTbl;
     BPLib_FWP_ProxyCallbacks.BPA_TIMEP_GetHostTime = BPA_TIMEP_GetHostTime;
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_IsSystemIdle), (UT_IntReturn_t) true);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_IsIngressIdle), (UT_IntReturn_t) true);
     UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_WaitQueueTryPush), (UT_IntReturn_t) true);
 
@@ -103,6 +107,8 @@ void BPLib_STOR_Test_Setup(void)
     UT_SetHandlerFunction(UT_KEY(BPLib_QM_WaitQueueTryPush), UT_Handler_BPLib_QM_WaitQueueTryPush, NULL);
     UT_SetHandlerFunction(UT_KEY(BPLib_AS_Increment), UT_Handler_BPLib_AS_Increment, NULL);
     UT_SetHandlerFunction(UT_KEY(BPLib_AS_Decrement), UT_Handler_BPLib_AS_Decrement, NULL);
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetNodeConfigValue), BPLIB_MAX_LIFETIME_ALLOWED);
 
     /* Init Storage */
     BPLib_STOR_Init(&BplibInst);
@@ -117,8 +123,18 @@ void BPLib_STOR_Test_Teardown(void)
 void BPLib_STOR_Test_SetupOneBundleStored(void)
 {
     BPLib_STOR_Test_Setup();
-    BPLib_STOR_Test_CreateTestBundle(&TestBundle);
+    BPLib_STOR_Test_CreateTestBundle(&TestBundle, 0);
+
+    /* 
+    ** Assume bundle creation time is valid and DTN time is valid; assume a
+    ** nominal configuration. Also set it up such that the bundle expires in
+    ** TestBundle.blocks.PrimaryBlock.Lifetime milliseconds
+    */
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, TestBundle.blocks.PrimaryBlock.Timestamp.CreateTime);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, TestBundle.blocks.PrimaryBlock.Timestamp.CreateTime);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetMonotonicTime), 1, TestBundle.blocks.PrimaryBlock.Timestamp.CreateTime);
     BPLib_STOR_StoreBundle(&BplibInst, &TestBundle);
+
     BPLib_STOR_FlushPending(&BplibInst);
 
     /* We expect load bundle to MEM_Alloc twice for the test bundle: Setup BlockAlloc

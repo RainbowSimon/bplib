@@ -41,27 +41,28 @@
 /* There are 4 types of control message types, received from CL*/
 typedef enum
 {
-    SentIt              = 0, /* LTP Only, CL sends out */
-    SessionComplete     = 1, /*For LTP, Other end received*/
-    SessionCancelled    = 2, /* Session is cancelled, do nothing*/
-    SessionStarted      = 3 /* Session started, do nothing*/
+    SentIt           = 0, /* LTP Only, CL sends out */
+    SessionComplete  = 1, /* For LTP, Other end received */
+    SessionCancelled = 2, /* Session is cancelled, do nothing */
+    SessionStarted   = 3  /* Session started, do nothing */
 }BPLib_CLA_CtrlMsgTypes_t;
 
 typedef enum
 {
-    UDPType = 0x00000000,
-    TCPType = 0x00000001,
-    EPPType = 0x00000002,
-    LTPType = 0x00000003,
+    BPLib_UDP_CLA = 0,
+    BPLib_TCP_CLA = 1,
+    BPLib_EPP_CLA = 2,
+    BPLib_LTP_CLA = 3,
+    BPLib_SB_CLA  = 4,
 } BPLib_CLA_Type_t;
 
 typedef struct
 {
-    char        CtrlMsgTag[8]; /* "BPNMSG" */
-    uint32_t    SessionID;
-    uint32_t    BundleID;
-    BPLib_CLA_Type_t   ClaType;
-    uint8_t     MsgTypes;
+    char             CtrlMsgTag[8]; /* "BPNMSG" */
+    uint32_t         SessionID;
+    uint32_t         BundleID;
+    BPLib_CLA_Type_t ClaType;
+    uint8_t          MsgTypes;
 } BPLib_CLA_CtrlMsg_t;
 
 typedef enum
@@ -98,6 +99,14 @@ typedef struct
 {
     BPLib_CLA_ContactsSet_t ContactSet[BPLIB_MAX_NUM_CONTACTS];
 } BPLib_CLA_ContactsTable_t;
+
+/**
+** \brief Context information for each contact
+*/
+typedef struct 
+{
+    BPLib_CLA_ContactsSet_t Config;
+} BPLib_CLA_ContCtxt_t;
 
 /* =================== */
 /* Function Prototypes */
@@ -169,6 +178,7 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData);
 /**
  * \brief     Find the requested contact ID in the Contacts Configuration and pass that information to the
  *            CLA proxy to configure the CLA with
+ * \param[in] Inst Pointer to bplib instance
  * \param[in] ContactId (uint32_t) Contact ID from the Contacts Configuration to setup
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
@@ -176,7 +186,7 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData);
  * \retval    BPLIB_CLA_CONTACTS_MAX_REACHED: Setting up contact would exceed maximum simultaneous
  *                                            contacts allowed
  */
-BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId);
+BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId);
 
 /**
  * \brief     Pass Contact ID to start, on to CLA proxy
@@ -190,11 +200,12 @@ BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId);
  * \retval    BPLIB_INVALID_CONT_ID_ERR: Provided contact ID is invalid
  * \retval    BPLIB_CLA_IO_ERROR: A UDP conntection couldn't be set to running
  */
-BPLib_Status_t BPLib_CLA_ContactStart(uint32_t ContactId);
+BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId);
 
 /**
  * \brief     Pass Contact ID to stop, on to CLA proxy
- * \param[in] ContactId (uint32_t) Contact ID from the Contacts Configuration to stop
+ * \param[in] Instance  Instance that hold CT context of all open CCSs
+ * \param[in] ContactId Contact ID from the Contacts Configuration to stop
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_CLA_UNKNOWN_CONTACT: Provided contact ID does not match a contact ID in
@@ -203,7 +214,7 @@ BPLib_Status_t BPLib_CLA_ContactStart(uint32_t ContactId);
  *                                       successful operation
  * \retval    BPLIB_INVALID_CONT_ID_ERR: Provided contact ID is invalid
  */
-BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId);
+BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t* Instance, uint32_t ContactId);
 
 /**
  * \brief     If the contact has been stopped, deconfigure the CLA via BI, CT, EBP, and CLA
@@ -230,5 +241,15 @@ BPLib_Status_t BPLib_CLA_ContactTeardown(BPLib_Instance_t *Inst, uint32_t Contac
   * \retval     BPLIB_INVALID_CONT_ID_ERR: Provided contact ID is invalid
   */
 BPLib_Status_t BPLib_CLA_GetContactRunState(uint32_t ContactId, BPLib_CLA_ContactRunState_t* ReturnState);
+
+/**
+  * \brief     Set the run state of the provided contact
+  * \param[in] ContactId (uint32_t) Contact ID from the Contacts Configuration whose run state is being requested to change
+  * \param[in] RunState  (BPLib_CLA_ContactRunState_t) Requested run state of the provided contact ID from the Contacts Configuration
+  * \return    Execution status
+  * \retval    BPLIB_SUCCESS: Successfully changed the run state of the provided contact ID to the provided run state
+  * \retval    BPLIB_INVALID_CONT_ID_ERR: Provided contact ID does not match a contact ID in the Contacts Configuration
+  */
+ BPLib_Status_t BPLib_CLA_SetContactRunState(uint32_t ContactId, BPLib_CLA_ContactRunState_t RunState);
 
 #endif /* BPLIB_CLA_H */

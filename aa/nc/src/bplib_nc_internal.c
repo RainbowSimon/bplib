@@ -21,6 +21,7 @@
 #include "bplib_nc_internal.h"
 #include "bplib_nc.h"
 #include "bplib_eid.h"
+#include "bplib_inst.h"
 
 
 /*
@@ -37,7 +38,7 @@ BPLib_ChannelContactStatHkTlm_Payload_t BPLib_NC_ChannelContactStatsPayload;
 */
 
 /* Update the contact state telemetry with latest table values */
-void BPLib_NC_UpdateContactHkTlm(void)
+void BPLib_NC_UpdateContactHkTlm(BPLib_Instance_t *Inst)
 {
     uint32_t ContId;
     uint32_t EidIdx;
@@ -47,20 +48,22 @@ void BPLib_NC_UpdateContactHkTlm(void)
         for (EidIdx = 0; EidIdx < BPLIB_MAX_CONTACT_DEST_EIDS; EidIdx++)
         {
             BPLib_EID_CopyEidPatterns(&(BPLib_NC_ChannelContactStatsPayload.ContactStatus[ContId].DestEIDs[EidIdx]),
-                BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContId].DestEIDs[EidIdx]);
+                                    Inst->ContCtxt[ContId].Config.DestEIDs[EidIdx]);  
         }
     }
 }
 
 /* Update the channel state telemetry with latest table values */
-void BPLib_NC_UpdateChannelHkTlm(void)
+void BPLib_NC_UpdateChannelHkTlm(BPLib_Instance_t *Inst)
 {
     uint32_t ChanId;
 
     for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
     {
         BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].LocalServiceNum = 
-            BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId].LocalServiceNumber;
+            Inst->ChanCtxt[ChanId].Config.LocalServiceNumber;
+        BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].RegistrationState = 
+            BPLib_PI_GetRegistrationState(Inst, ChanId);
     }
 }
 
@@ -90,18 +93,10 @@ bool BPLib_NC_ValidParamMaxBundleLength(BPLib_NC_MibPerNodeConfig_t *TblDataPtr)
            (TblDataPtr->Configs[PARAM_SET_MAX_PAYLOAD_LENGTH] < TblDataPtr->Configs[PARAM_SET_MAX_BUNDLE_LENGTH]);
 }
 
-/* Validation function for PARAM_SET_NODE_DTN_TIME */
-bool BPLib_NC_ValidParamSetNodeDtnTime(BPLib_NC_MibPerNodeConfig_t *TblDataPtr)
+bool BPLib_NC_ValidParamSupportCustody(BPLib_NC_MibPerNodeConfig_t *TblDataPtr)
 {
-    /* All values accepted PARAM_SET_BEHAVIOR_EVENT_REPORTING */
-    return true;
-}
-
-/* Validation function for PARAM_SET_BEHAVIOR_EVENT_REPORTING */
-bool BPLib_NC_ValidParamSetBehaviorEventReporting(BPLib_NC_MibPerNodeConfig_t *TblDataPtr)
-{
-    /* All values accepted */
-    return true;
+    return ((TblDataPtr->Configs[PARAM_SUPPORT_CUSTODY] == 0) || 
+            (TblDataPtr->Configs[PARAM_SUPPORT_CUSTODY] == 1));
 }
 
 /* Validation function for PARAM_SET_MAX_LIFETIME */

@@ -32,10 +32,11 @@
  * Generated stub function for BPLib_PI_AddApplication()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_PI_AddApplication(uint32_t ChanId)
+BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_PI_AddApplication, BPLib_Status_t);
 
+    UT_GenStub_AddParam(BPLib_PI_AddApplication, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_PI_AddApplication, uint32_t, ChanId);
 
     UT_GenStub_Execute(BPLib_PI_AddApplication, Basic, NULL);
@@ -63,6 +64,23 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
     UT_GenStub_Execute(BPLib_PI_Egress, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_PI_Egress, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_PI_GetRegistrationState()
+ * ----------------------------------------------------
+ */
+BPLib_PI_RegistrationState_t BPLib_PI_GetRegistrationState(BPLib_Instance_t *Inst, uint32_t ChanId)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_PI_GetRegistrationState, BPLib_PI_RegistrationState_t);
+
+    UT_GenStub_AddParam(BPLib_PI_GetRegistrationState, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_PI_GetRegistrationState, uint32_t, ChanId);
+
+    UT_GenStub_Execute(BPLib_PI_GetRegistrationState, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_PI_GetRegistrationState, BPLib_PI_RegistrationState_t);
 }
 
 /*
@@ -99,6 +117,24 @@ BPLib_Status_t BPLib_PI_RemoveApplication(BPLib_Instance_t *Inst, uint32_t ChanI
     UT_GenStub_Execute(BPLib_PI_RemoveApplication, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_PI_RemoveApplication, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_PI_SetRegistrationState()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_PI_SetRegistrationState(BPLib_Instance_t *Inst, uint32_t ChanId, uint32_t RegState)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_PI_SetRegistrationState, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_PI_SetRegistrationState, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_PI_SetRegistrationState, uint32_t, ChanId);
+    UT_GenStub_AddParam(BPLib_PI_SetRegistrationState, uint32_t, RegState);
+
+    UT_GenStub_Execute(BPLib_PI_SetRegistrationState, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_PI_SetRegistrationState, BPLib_Status_t);
 }
 
 /*

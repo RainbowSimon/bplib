@@ -26,17 +26,24 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include "osapi.h"
 
 static void ms_to_abstimeout(uint32_t ms, struct timespec *ts)
 {
+    int64_t AbsTimeoutInMsec;
+    OS_time_t time;
+
     if (ts == NULL)
     {
         return;
     }
 
-    clock_gettime(CLOCK_REALTIME, ts);
-    ts->tv_sec += ms / 1000;
-    ts->tv_nsec += (ms % 1000 * 1000000);
+    /* This is super cleugy but it gets rid of our clock_gettime dependency for now */
+    OS_GetLocalTime(&time);
+    AbsTimeoutInMsec = (time.ticks / OS_TIME_TICKS_PER_MSEC) + ms;
+
+    ts->tv_sec = AbsTimeoutInMsec / 1000;
+    ts->tv_nsec = (AbsTimeoutInMsec % 1000 * 1000000);
     ts->tv_sec += ts->tv_nsec / 1000000000;
     ts->tv_nsec %= 1000000000;
 }
@@ -192,4 +199,20 @@ bool BPLib_QM_WaitQueueIsEmpty(BPLib_QM_WaitQueue_t* q)
     pthread_mutex_unlock(&q->lock);
 
     return IsEmpty;
+}
+
+bool BPLib_QM_WaitQueueIsFull(BPLib_QM_WaitQueue_t* q)
+{
+    bool IsFull;
+
+    if (q == NULL)
+    {
+        return false;
+    }
+
+    pthread_mutex_lock(&q->lock);
+    IsFull = (q->size == q->capacity);
+    pthread_mutex_unlock(&q->lock);
+
+    return IsFull;
 }

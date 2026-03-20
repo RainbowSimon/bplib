@@ -23,6 +23,7 @@
 /* ======== */
 
 #include "bplib_as_test_utils.h"
+#include "bplib_inst.h"
 
 /*
 ** Test function for
@@ -30,7 +31,9 @@
 */
 void Test_BPLib_AS_Init_Nominal(void)
 {
-    UtAssert_INT32_EQ(BPLib_AS_Init(), BPLIB_SUCCESS);
+    BPLib_Instance_t Inst;
+    
+    UtAssert_INT32_EQ(BPLib_AS_Init(&Inst), BPLIB_SUCCESS);
 }
 
 void Test_BPLib_AS_Init_Error(void)
@@ -532,10 +535,42 @@ void Test_BPLib_AS_SendNodeMibReportsHk_Nominal(void)
 {
     BPLib_Status_t Status;
     BPLib_Instance_t Inst;
+    uint64_t ExpRate;
+
+    memset(&Inst, 0, sizeof(BPLib_Instance_t));
+    Inst.As.LastTlmReqTime = 1000;
+    Inst.As.CurrRates[BUNDLE_INGRESS_RATE_BITS_PER_SEC] = 5000;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), 2000);
+
+    ExpRate = 5000 / ((2000 - 1000) / 1000);
 
     Status = BPLib_AS_SendNodeMibReportsHk(&Inst);
 
     UtAssert_EQ(BPLib_Status_t, BPLIB_SUCCESS, Status);
+    UtAssert_EQ(uint64_t, BPLib_AS_NodeReportsPayload.Rates[BUNDLE_INGRESS_RATE_BITS_PER_SEC], ExpRate);
+}
+
+void Test_BPLib_AS_SendNodeMibReportsHk_DivZero(void)
+{
+    BPLib_Status_t Status;
+    BPLib_Instance_t Inst;
+    uint64_t ExpRate;
+    float SecsElapsed;
+
+    memset(&Inst, 0, sizeof(BPLib_Instance_t));
+    Inst.As.LastTlmReqTime = 1000;
+    Inst.As.CurrRates[BUNDLE_INGRESS_RATE_BITS_PER_SEC] = 5000;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_GetMonotonicTime), 1000);
+
+    SecsElapsed = 1 / 1000.0;
+    ExpRate = 5000 / SecsElapsed;
+
+    Status = BPLib_AS_SendNodeMibReportsHk(&Inst);
+
+    UtAssert_EQ(BPLib_Status_t, BPLIB_SUCCESS, Status);
+    UtAssert_EQ(uint64_t, BPLib_AS_NodeReportsPayload.Rates[BUNDLE_INGRESS_RATE_BITS_PER_SEC], ExpRate);
 }
 
 void Test_BPLib_AS_SendNodeMibReportsHk_Null(void)
@@ -1148,6 +1183,58 @@ void Test_BPLib_AS_GetCounter_SrcCounter(void)
     UtAssert_EQ(uint32_t, BPLib_AS_GetCounter(&Eid, BUNDLE_COUNT_DELIVERED), 0);
 }
 
+void Test_BPLib_AS_IncrementRate_Null(void)
+{
+    BPLib_Instance_t Inst;
+    BPLib_EID_t Eid;
+
+    UtAssert_VOIDCALL(BPLib_AS_IncrementRate(NULL, &Eid, 0, 0));
+    UtAssert_VOIDCALL(BPLib_AS_IncrementRate(&Inst, NULL, 0, 0));
+}
+
+void Test_BPLib_AS_IncrementRate_InvRate(void)
+{
+    BPLib_Instance_t Inst;
+    BPLib_EID_t Eid;
+    BPLib_AS_RateReport_t Rate = BPLIB_AS_NUM_RATES_TO_REPORT;
+    uint64_t Amount = 1;
+
+    UtAssert_VOIDCALL(BPLib_AS_IncrementRate(&Inst, &Eid, Rate, Amount));
+}
+
+void Test_BPLib_AS_IncrementRate_Nominal(void)
+{
+    BPLib_Instance_t Inst;
+    BPLib_EID_t Eid;
+    BPLib_AS_RateReport_t Rate = BUNDLE_INGRESS_RATE_BITS_PER_SEC;
+    uint64_t Amount = 1;
+
+    memset(&Inst, 0, sizeof(Inst));
+    Inst.As.CurrRates[Rate] = 10;
+
+    UT_SetDeferredRetcode(UT_KEY(BPLib_EID_IsMatch), 1, true);
+
+    UtAssert_VOIDCALL(BPLib_AS_IncrementRate(&Inst, &Eid, Rate, Amount));
+    UtAssert_EQ(uint64_t, Inst.As.CurrRates[Rate], 11);
+}
+
+void Test_BPLib_AS_IncrementRate_PerSource(void)
+{
+    BPLib_Instance_t Inst;
+    BPLib_EID_t Eid;
+    BPLib_AS_RateReport_t Rate = BUNDLE_INGRESS_RATE_BITS_PER_SEC;
+    uint64_t Amount = 1;
+
+    memset(&Inst, 0, sizeof(Inst));
+
+    Inst.As.CurrRates[Rate] = 10;
+
+    UtAssert_VOIDCALL(BPLib_AS_IncrementRate(&Inst, &Eid, Rate, Amount));
+
+    /* TODO */
+}
+
+
 void TestBplibAs_Register(void)
 {
     ADD_TEST(Test_BPLib_AS_Init_Nominal);
@@ -1186,6 +1273,7 @@ void TestBplibAs_Register(void)
     ADD_TEST(Test_BPLib_AS_SendSourceMibCountersHk_Nominal);
 
     ADD_TEST(Test_BPLib_AS_SendNodeMibReportsHk_Nominal);
+    ADD_TEST(Test_BPLib_AS_SendNodeMibReportsHk_DivZero);
     ADD_TEST(Test_BPLib_AS_SendNodeMibReportsHk_Null);
     
     ADD_TEST(Test_BPLib_AS_AddMibArrayKey_Nominal);
@@ -1201,4 +1289,9 @@ void TestBplibAs_Register(void)
     ADD_TEST(Test_BPLib_AS_GetCounter_InvalidCounter);
     ADD_TEST(Test_BPLib_AS_GetCounter_InvalidEid);
     ADD_TEST(Test_BPLib_AS_GetCounter_SrcCounter);
+
+    ADD_TEST(Test_BPLib_AS_IncrementRate_Null);
+    ADD_TEST(Test_BPLib_AS_IncrementRate_InvRate);
+    ADD_TEST(Test_BPLib_AS_IncrementRate_Nominal);
+    ADD_TEST(Test_BPLib_AS_IncrementRate_PerSource);
 }

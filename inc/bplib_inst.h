@@ -1,0 +1,80 @@
+/*
+ * NASA Docket No. GSC-19,559-1, and identified as "Delay/Disruption Tolerant Networking 
+ * (DTN) Bundle Protocol (BP) v7 Core Flight System (cFS) Application Build 7.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this 
+ * file except in compliance with the License. You may obtain a copy of the License at 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0 
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under 
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
+ * ANY KIND, either express or implied. See the License for the specific language 
+ * governing permissions and limitations under the License. The copyright notice to be 
+ * included in the software is as follows: 
+ *
+ * Copyright 2025 United States Government as represented by the Administrator of the 
+ * National Aeronautics and Space Administration. All Rights Reserved.
+ *
+ */
+
+#ifndef BPLIB_INST_H
+#define BPLIB_INST_H
+
+#include "bplib_api_types.h"
+#include "bplib_cfg.h"
+#include "bplib_qm.h"
+#include "bplib_as.h"
+#include "bplib_mem.h"
+#include "bplib_ct.h"
+#include "bplib_stor.h"
+#include "bplib_pi.h"
+
+
+/*
+** Types
+*/
+
+/**
+ * @struct BPLib_Instance
+ * @brief Represents an instance of bplib
+ * 
+ * This structure holds the necessary data that bplib needs to know its current state.
+ * There's still work to go to make multiple instances of bplib possible but eventually
+ * all state information will be held in here.
+ */
+struct BPLib_Instance
+{
+    BPLib_MEM_Pool_t pool; /**< Memory pool for this BPLib Instance */
+
+    /* Worker Management */
+    pthread_mutex_t RegisteredWorkersLock; // Move to bplib_os
+    BPLib_QM_WorkerState_t RegisteredWorkers[QM_MAX_GEN_WORKERS];
+    size_t NumWorkers;
+
+    /* Queues */
+    BPLib_QM_WaitQueue_t GenericWorkerJobs[BPLIB_QM_NUM_PRIORITIES]; /**< Queue of jobs */
+    BPLib_QM_WaitQueue_t BundleCacheList; /**< Queue of bundles in cache */
+    BPLib_QM_WaitQueue_t ContactEgressJobs[BPLIB_MAX_NUM_CONTACTS]; /**< Queue of contact egress jobs */
+    BPLib_QM_WaitQueue_t ChannelEgressJobs[BPLIB_MAX_NUM_CHANNELS]; /**< Queue of channel egress jobs */
+
+    /* Bundle Storage */
+    BPLib_BundleCache_t BundleStorage;
+
+    /* Admin statistics context */
+    BLib_AS_Context_t As;
+
+    /* Custody transfer context */
+    BPLib_CT_Context_t Ct;
+
+    /* Context for each channel */
+    BPLib_PI_ChanCtxt_t ChanCtxt[BPLIB_MAX_NUM_CHANNELS];
+
+    /* Context for each contact */
+    BPLib_CLA_ContCtxt_t ContCtxt[BPLIB_MAX_NUM_CONTACTS];
+    
+    /* Context for the admin record processor */
+    BPLib_ARP_Context_t Arp;
+};
+
+#endif /* BPLIB_INST_H */

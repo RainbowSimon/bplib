@@ -36,6 +36,8 @@
 #include "bplib_em_handlers.h"
 #include "bplib_qm_handlers.h"
 #include "bpa_fwp_stubs.h"
+#include "bplib_nc.h"
+#include "bplib_inst.h"
 
 /*
 ** Global Data
@@ -44,9 +46,17 @@
 extern BPLib_Instance_t BplibInst;
 
 /*
+** Macros
+*/
+
+#define ADD_TEST(test) UtTest_Add(test, BPLib_STOR_Test_Setup, BPLib_STOR_Test_Teardown, #test)
+#define ADD_TEST_ONE_BUNDLE(test) UtTest_Add(test, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, #test)
+
+
+/*
 ** Helper Utilities
 */
-void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle);
+void BPLib_STOR_Test_CreateTestBundle(BPLib_Bundle_t* Bundle, uint32_t BundleId);
 void BPLib_STOR_Test_FreeTestBundle(BPLib_Bundle_t* Bundle);
 
 /*
@@ -63,5 +73,6 @@ void TestBplib_STOR_Register(void);
 void TestBplib_STOR_LoadBatch_Register(void);
 void TestBplib_STOR_Load_Register(void);
 void TestBplib_STOR_Store_Register(void);
+void TestBplib_STOR_SQL_Store_Register(void);
 
 #endif /* BPLIB_STOR_TEST_UTILS_H */

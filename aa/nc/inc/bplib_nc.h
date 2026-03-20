@@ -32,6 +32,7 @@
 #include "bplib_arp.h"
 #include "bplib_pdb.h"
 #include "bplib_stor.h"
+#include "bplib_nc_directives.h"
 
 /* ======== */
 /* Typedefs */
@@ -98,14 +99,49 @@ extern BPLib_NC_ConfigPtrs_t BPLib_NC_ConfigPtrs;
 /* =================== */
 
 /**
-  * \brief     Initialize NC
-  * \details   Node Configuration initialization
-  * \param[in] ConfigPtrs (BPLib_NC_ConfigPtrs_t*) Pointer to configurations for BPLib populated by BPNode
-  * \return    Execution status
-  * \retval    BPLIB_SUCCESS: Initialization was successful
-  * \retval    BPLIB_FWP_CONFIG_PTRS_INIT_ERROR: At least one passed in configuration is NULL
+ * \brief      Initialize the NC module
+ * \details    Initialize source and node MIB configuration payloads, the channel
+ *             and contacts statistics packet payload. Initialize the RW locks
+ *             used in configuration management. Capture the configuration
+ *             pointers passed in from BPNode. Save the instance EID in a place
+ *             that is easily accessible. Initialize the CRC table. Initialize AS
+ * \param[in]  ConfigPtrs Pointer to configurations for BPLib populated by BPNode
+ * \param[in]  Inst Pointer to bplib instance
+ * 
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Successful initialization of the NC module
+ * \retval     BPLIB_FWP_CONFIG_PTRS_INIT_ERROR: At least one passed in configuration is NULL
+ */
+BPLib_Status_t BPLib_NC_InitImpl(BPLib_Instance_t* Instance, BPLib_NC_ConfigPtrs_t* ConfigPtrs);
+
+/**
+  * \brief      Initialize all BPLib subsystems
+  * \details    Initialize FWP, EM, TIME, NC, QM, and MEM
+  * \note       Callbacks is a void* because bplib_nc.h include bplib_fwp.h
+  *             which includes bplib_nc.h. This cycle creates a scenario where
+  *             BPLib_FWP_ProxyCallbacks_t is not defined. Since bplib.fwp.h needs
+  *             bplib_nc.h prototypes for proxies and bplib_nc.h needs bplib_fwp.h
+  *             for the proxy struct, Callbacks was chosen to become a void* by
+  *             pulling a rabbit from a hat and selecting based on the fur color
+  * \param[in]  ConfigPtrs      Pointer to configurations for BPLib populated by BPNode
+  * \param[in]  Callbacks       Pointer to callback functions for BPLib, populated by BPNode
+  * \param[out] Instance        The instance to be initialized
+  * \param[in]  MaxUnsortedJobs The maximum number of jobs that can be queued
+  * \param[out] PoolMem         Pointer to the initial memory for the pool
+  * \param[in]  PoolMemLen      Size of the initial memory
+  * \return     Execution status
+  * \retval     BPLIB_SUCCESS: Initialization of subsystems was successful
+  * \retval     BPLIB_NC_FWP_INIT_ERR: FWP initialization error
+  * \retval     BPLIB_NC_EM_INIT_ERR: EM initialization error
+  * \retval     BPLIB_NC_TIME_INIT_ERR: TIME initialization error
+  * \retval     BPLIB_NC_INIT_ERR: NC initialization error
+  * \retval     BPLIB_NC_AS_INIT_ERR: AS initialization error
+  * \retval     BPLIB_NC_QM_INIT_ERR: QM initialization error
+  * \retval     BPLIB_NC_MEM_INIT_ERR: MEM initialization error
   */
-BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
+BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks,
+                                BPLib_Instance_t* Instance, uint16_t MaxUnsortedJobs,
+                                void* PoolMem, size_t PoolMemLen);
 
 /**
  * \brief Acquires the reader lock on the node configuration.
@@ -219,12 +255,31 @@ BPLib_NC_ApplicationState_t BPLib_NC_GetAppState(uint8_t ChanId);
   *            configurations to the module that controls that configuration
   * \note      As of right now, the API calls to modules that will update configurations are commented out, since
   *            some of those functions are not implemented yet
-  * \param[in] void No arguments accepted
+  * \param[in] Inst Pointer to bplib instance
   * \return    Execution status
   * \retval    BPLIB_SUCCESS: Successful execution without updates to configurations
   * \retval    BPLIB_TBL_UPDATED: Successful execution with configuration updates
   * \retval    BPLIB_ERROR: An error occured while attempting to refresh/update configurations
   */
-BPLib_Status_t BPLib_NC_ConfigUpdate(void);
+BPLib_Status_t BPLib_NC_ConfigUpdate(BPLib_Instance_t *Inst);
+
+/**
+  * \brief     Run regular system maintenance activities
+  * \details   Runs regular Time Management, Storage, and Custody Transfer maintenance
+  *            activities. The calling task sets how frequently these activities should be
+  *            run but no faster than a 1Hz cadence is recommended. Note that the storage
+  *            garbage collection function will only actually run if it does not detect
+  *            any active ingress or egress operations from other tasks.
+  * \param[in] Inst Pointer to bplib instance
+  * \return    void
+  */
+void BPLib_NC_RunMaintenanceActivities(BPLib_Instance_t *Inst);
+
+/**
+  * \brief     Get MIB per node configuration value
+  * \param[in] Config Enumeration of configuration to get
+  * \return    MIB Configuration value (or 0 if an error occured)
+  */
+uint32_t BPLib_NC_GetNodeConfigValue(BPLib_NC_Config_t Config);
 
 #endif // BPLIB_NC_H

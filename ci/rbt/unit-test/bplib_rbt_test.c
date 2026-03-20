@@ -725,6 +725,69 @@ void Test_BPLib_RBT_Iterator(void)
     UtAssert_INT32_NEQ(BPLib_RBT_IterGotoMax(50, &rbtree, &it), BPLIB_SUCCESS);
 }
 
+typedef struct 
+{
+    BPLib_RBT_Link_t Link;
+    uint64_t         SecondArg;
+
+} BPLib_RBT_TestNode_t;
+
+
+int Test_ComparisonFunc(const BPLib_RBT_Link_t *Node, void *Arg)
+{
+    BPLib_RBT_TestNode_t *TestNode;
+    uint64_t *SecondArg;
+
+    SecondArg = (uint64_t *) Arg;
+    TestNode = (BPLib_RBT_TestNode_t *)(void *)((uint8_t *) Node - offsetof(BPLib_RBT_TestNode_t, Link));
+
+    if (*SecondArg == TestNode->SecondArg)
+    {
+        return 0;
+    }
+    else if (*SecondArg > TestNode->SecondArg)
+    {
+        return 1;
+    }
+
+    return -1;
+}
+
+/* Test verifying use of RBT similar to how the CTDB uses it */
+void Test_BPLib_RBT_MaxingOutTest(void)
+{
+    size_t i;
+    BPLib_RBT_Root_t Root;
+    BPLib_RBT_TestNode_t Nodes[10000];
+    size_t TreeSize = 10000;
+    uint64_t FirstArg = 1;
+
+    memset(&Root, 0, sizeof(BPLib_RBT_Root_t));
+    memset(Nodes, 0, sizeof(BPLib_RBT_TestNode_t) * TreeSize);
+
+    UtAssert_VOIDCALL(BPLib_RBT_InitRoot(&Root));
+
+    for (i = 0; i < TreeSize; i++)
+    {
+        memset(&Nodes[i], 0, sizeof(BPLib_RBT_TestNode_t));
+        Nodes[i].SecondArg = i;
+
+        UtAssert_INT32_EQ(BPLib_RBT_InsertValueGeneric(FirstArg, &Root, &(Nodes[i].Link), 
+                                                Test_ComparisonFunc, &(Nodes[i].SecondArg)), BPLIB_SUCCESS);
+    }
+
+    for (i = 0; i < TreeSize; i++)
+    {
+        UtAssert_NOT_NULL(BPLib_RBT_SearchGeneric(FirstArg, &Root, Test_ComparisonFunc, &i));
+    }
+
+    for (i = 0; i < TreeSize; i++)
+    {
+        UtAssert_INT32_EQ(BPLib_RBT_ExtractNode(&Root, &(Nodes[i].Link)), BPLIB_SUCCESS);
+    }
+
+}
+
 void Test_BPLib_RBT_Register(void)
 {
     ADD_TEST(Test_BPLib_RBT_Setup);
@@ -735,4 +798,6 @@ void Test_BPLib_RBT_Register(void)
     ADD_TEST(Test_BPLib_RBT_Unique);
     ADD_TEST(Test_BPLib_RBT_NonUnique);
     ADD_TEST(Test_BPLib_RBT_Iterator);
+
+    ADD_TEST(Test_BPLib_RBT_MaxingOutTest);
 }

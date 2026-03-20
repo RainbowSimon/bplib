@@ -52,8 +52,7 @@ void Test_BPLib_STOR_EgressForID_NominalChan(void)
     /** Step 1: Load all available bundles into an egress batch **/
 
     /* Select a filter for the DestEID range matching the test bundle */
-    BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[EgressID].LocalServiceNumber = 100;
-    BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[EgressID].LocalServiceNumber = 1;
+    BplibInst.ChanCtxt[EgressID].Config.LocalServiceNumber = 1;
     
     /* Verify Egress Success and Egress Count remains 0 */
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, true, &NumEgressed), BPLIB_SUCCESS);
@@ -80,11 +79,10 @@ void Test_BPLib_STOR_EgressForID_NominalChan(void)
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.Lifetime, 5000);
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.DestEID.Node, 100);
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.DestEID.Service, 1);
-    UtAssert_UINT32_EQ(((BPLib_MEM_Block_t *)(LoadedBundle))->used_len, sizeof(BPLib_BBlocks_t));
 
     /* Check blob contents */
-    UtAssert_StrCmp((char*)LoadedBundle->blob->user_data.raw_bytes, "CBOR Blob", "Blob Comparison: %s == %s",
-        (char*)LoadedBundle->blob->user_data.raw_bytes, "CBOR Blob");
+    UtAssert_StrCmp((char*)LoadedBundle->blob->user_data.BigData, "CBOR Blob", "Blob Comparison: %s == %s",
+        (char*)LoadedBundle->blob->user_data.BigData, "CBOR Blob");
 
     /** Step 3: Verify batch was reset as a result of being consumed **/
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, true, &NumEgressed), BPLIB_SUCCESS);
@@ -103,10 +101,10 @@ void Test_BPLib_STOR_EgressForID_NominalCont(void)
     /** Step 1: Load all available bundles into an egress batch **/
 
     /* Select a filter for the DestEID range matching the test bundle */
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxService = 1;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinService = 1;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MaxNode = 100;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MinNode = 100;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MaxService = 1;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MinService = 1;
     
     /* Verify Egress Success and Egress Count remains 0 */
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, false, &NumEgressed), BPLIB_SUCCESS);
@@ -133,11 +131,10 @@ void Test_BPLib_STOR_EgressForID_NominalCont(void)
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.Lifetime, 5000);
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.DestEID.Node, 100);
     UtAssert_UINT32_EQ(LoadedBundle->blocks.PrimaryBlock.DestEID.Service, 1);
-    UtAssert_UINT32_EQ(((BPLib_MEM_Block_t *)(LoadedBundle))->used_len, sizeof(BPLib_BBlocks_t));
 
     /* Check blob contents */
-    UtAssert_StrCmp((char*)LoadedBundle->blob->user_data.raw_bytes, "CBOR Blob", "Blob Comparison: %s == %s",
-        (char*)LoadedBundle->blob->user_data.raw_bytes, "CBOR Blob");
+    UtAssert_StrCmp((char*)LoadedBundle->blob->user_data.BigData, "CBOR Blob", "Blob Comparison: %s == %s",
+        (char*)LoadedBundle->blob->user_data.BigData, "CBOR Blob");
 
     /** Step 3: Verify batch was reset as a result of being consumed **/
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, false, &NumEgressed), BPLIB_SUCCESS);
@@ -157,10 +154,10 @@ void Test_BPLib_STOR_EgressForID_WaitQueuePushFail(void)
     /** Step 1: Load all available bundles into an egress batch **/
 
     /* Select a filter for the DestEID range matching the test bundle */
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinNode = 100;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MaxService = 1;
-    BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[0].DestEIDs[0].MinService = 1;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MaxNode = 100;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MinNode = 100;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MaxService = 1;
+    BplibInst.ContCtxt[EgressID].Config.DestEIDs[0].MinService = 1;
     
     /* Verify Egress Success and Egress Count remains 0 */
     UtAssert_INT32_EQ(BPLib_STOR_EgressForID(&BplibInst, EgressID, false, &NumEgressed), BPLIB_SUCCESS);
@@ -223,10 +220,10 @@ void Test_BPLib_STOR_EgressForID_SQLFail(void)
 void TestBplib_STOR_Load_Register(void)
 {
     /* Load (Egress) Tests */
-    UtTest_Add(Test_BPLib_STOR_EgressForID_NullParams, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_NullParams");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_NominalChan, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_NominalChan");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_NominalCont, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_NominalCont");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_WaitQueuePushFail, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_WaitQueuePushFail");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_NoBundles, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_EgressForID_NoBundles");
-    UtTest_Add(Test_BPLib_STOR_EgressForID_SQLFail, BPLib_STOR_Test_SetupOneBundleStored, BPLib_STOR_Test_TeardownOneBundleStored, "Test_BPLib_STOR_Egress_SQLFail");
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_NullParams);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_NominalChan);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_NominalCont);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_WaitQueuePushFail);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_NoBundles);
+     ADD_TEST_ONE_BUNDLE(Test_BPLib_STOR_EgressForID_SQLFail);
 }

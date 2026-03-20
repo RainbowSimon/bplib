@@ -64,9 +64,19 @@ typedef struct
 } BPLib_HopCountData_t;
 
 /**
+ * \brief Custody Transfer Extension Block Data
+ */
+typedef struct
+{
+    uint64_t    BundleSeqNum;
+    uint64_t    BundleSeqId;
+    BPLib_EID_t BlockSrcAdminEID;
+} BPLib_CustodyBlockData_t;
+
+/**
  * @brief Creation timestamp of a bundle
  */
-typedef struct 
+typedef struct
 {
     uint64_t CreateTime;
     uint64_t SequenceNumber;
@@ -75,34 +85,42 @@ typedef struct
 /**
  * @brief Represents an RFC-9171 primary block in the bundle.
  */
-typedef struct 
+typedef struct
 {
-    uint64_t                  CrcType;
-    uint64_t                  BundleProcFlags;
-    BPLib_EID_t               DestEID;
-    BPLib_EID_t               SrcEID;
-    BPLib_EID_t               ReportToEID;
-    BPLib_CreationTimeStamp_t Timestamp;
-    uint64_t                  Lifetime;
-    uint64_t                  FragmentOffset;
-    uint64_t                  TotalAduLength;
-    BPLib_CRC_Val_t           CrcVal;
+    uint64_t                   CrcType;
+    uint64_t                   BundleProcFlags;
+    BPLib_EID_t                DestEID;
+    BPLib_EID_t                SrcEID;
+    BPLib_EID_t                ReportToEID;
+    BPLib_CreationTimeStamp_t  Timestamp;
+    uint64_t                   Lifetime;
+    uint64_t                   FragmentOffset;
+    uint64_t                   TotalAduLength;
+    BPLib_CRC_Val_t            CrcVal;
 
     /* Metadata */
-    bool                      RequiresEncode;
-    size_t                    BlockOffsetStart;
-    size_t                    BlockOffsetEnd;
-    BPLib_TIME_MonotonicTime_t MonoTime;   /** \brief Creation *monotonic* time */
+    bool                       RequiresEncode;
+    size_t                     BlockOffsetStart;
+    size_t                     BlockOffsetEnd;
+
+    /**
+     * \brief If this bundle was created locally, MonoTime will be the monotonic
+     *        time upon creation. If this bundle was created on another node,
+     *        MonoTime will be the monotonic time that the bundle was received
+     */
+    BPLib_TIME_MonotonicTime_t MonoTime;
+    uint32_t                   BundleId;
 } BPLib_PrimaryBlock_t;
 
 /**
  * @brief Union of all extension block data types
  */
-typedef union 
+typedef union
 {
     BPLib_HopCountData_t      HopCountData;
     BPLib_AgeBlockData_t      AgeBlockData;
     BPLib_PrevNodeBlockData_t PrevNodeBlockData;
+    BPLib_CustodyBlockData_t  CustodyBlockData;
 } BPLib_ExtBlockData_t;
 
 /**
@@ -129,7 +147,7 @@ typedef struct
 /**
  * @brief Represents an RFC-9171 extension block in the bundle.
  */
-typedef struct 
+typedef struct
 {
     BPLib_CanBlockHeader_t Header;
     BPLib_ExtBlockData_t   BlockData;
@@ -141,21 +159,34 @@ typedef struct
  */
 typedef struct
 {
-    BPLib_PrimaryBlock_t   PrimaryBlock;
-    BPLib_ExtensionBlock_t ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS];
-    BPLib_CanBlockHeader_t PayloadHeader;
+    BPLib_PrimaryBlock_t     PrimaryBlock;
+    BPLib_ExtensionBlock_t   ExtBlocks[BPLIB_MAX_NUM_EXTENSION_BLOCKS];
+    BPLib_CanBlockHeader_t   PayloadHeader;
+    BPLib_ARP_AdminRecord_t *AdminRecordPayload;     /** \brief If a bundle is an admin record, this gets populated with the data, otherwise it stays NULL */
 } BPLib_BBlocks_t;
 
 /**
  * @brief Represents the metadata needed for bundle processing
  */
-typedef struct 
+typedef struct
 {
-    uint16_t                   EgressID;   /** \brief For egressing bundles, ID of channel/contact to send to */
-    size_t                     TotalBytes; /** \brief Size of this bundle in bytes */
-
-    /* Additional metadata will likely get added here */
-
+    uint32_t EgressID;       /** \brief For egressing bundles, ID of channel/contact to send to */
+    uint32_t IngressID;      /** \brief For associating bundle with the channel/contact they came in on */
+    size_t   TotalBytes;     /** \brief Size of this bundle in bytes */
+    bool     IsCustodial;    /** \brief Tracks whether or not the bund has a CTEB */
+    uint32_t RetransmitTime; /** \brief Retransmit time for custodial bundles */
+    bool     LocalBundle;    /** \brief Whether a bundle was created on this node or not */
 } BPLib_BundleMetaData_t;
+
+/**
+ * @brief Represents the entire bundle, including its deserialized blocks plus an 
+ *        additional blob for the encoded CBOR bundle.
+ */
+typedef struct
+{
+    BPLib_BundleMetaData_t  Meta;
+    BPLib_BBlocks_t         blocks;
+    struct BPLib_MEM_Block *blob;
+} BPLib_Bundle_t;
 
 #endif /* BPLIB_BBLOCKS_H */

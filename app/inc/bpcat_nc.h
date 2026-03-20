@@ -23,6 +23,7 @@
 #include "bpcat_types.h"
 #include "bplib.h"
 
-BPCat_Status_t BPCat_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs);
+BPCat_Status_t BPCat_NC_Init(BPLib_NC_ConfigPtrs_t* ConfigPtrs, void* Callbacks, BPLib_Instance_t* Instance,
+                                uint16_t MaxUnsortedJobs, void *PoolMem, size_t PoolMemLen);
 
 #endif /* BPLIB_BPCAT_NC_H */

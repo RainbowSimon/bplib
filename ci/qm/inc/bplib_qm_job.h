@@ -46,6 +46,7 @@ typedef enum BPLib_JobState
     CHANNEL_OUT_EBP_TO_PI = 11,     /**< Channel state: EBP to PI */
     NUM_GENWORKER_STATES = 12,      /**< Total number of worker states */
     NO_NEXT_STATE = 13,             /**< Signaling state with no next state */
+    BUNDLE_FREED  = 14,             /**< Signaling that the job freed the bundle, stop processing  */
 } BPLib_QM_JobState_t;
 
 /**
@@ -54,7 +55,10 @@ typedef enum BPLib_JobState
  */
 typedef enum BPLib_QM_Priority
 {
-    QM_PRI_NORMAL = 1 /**< Normal priority for jobs */
+    BPLIB_QM_PRIORITY_ADMIN_REC = 0,
+    BPLIB_QM_PRIORITY_NORMAL    = 1,
+
+    BPLIB_QM_NUM_PRIORITIES = 2
 } BPLib_QM_Priority_t;
 
 /**

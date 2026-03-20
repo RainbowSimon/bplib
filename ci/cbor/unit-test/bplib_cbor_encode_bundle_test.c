@@ -25,7 +25,7 @@
 
 
 /*
-** Primary Block: 
+** Primary Block:
 **         CRC Type: 1
 **         Flags: 4
 **         Dest EID (scheme.node.service): 2.200.1
@@ -34,7 +34,7 @@
 **         Timestamp (created, seq): 755533838904, 0
 **         Lifetime: 3600000
 **         CRC Value: 0xB19
-** Canonical Block [0]: 
+** Canonical Block [0]:
 **         Block Type: 1
 **         Block Number: 1
 **         Flags: 0
@@ -42,14 +42,14 @@
 **         Offset Into Encoded Bundle: 42
 */
 unsigned char const primary_and_payload_with_aa_x_20[] = {
-    0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82, 
-    0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 
-    0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 0x01, 0x82, 
-    0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a, 
-    0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42, 
-    0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54, 
-    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
-    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
+    0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82,
+    0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64,
+    0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 0x01, 0x82,
+    0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a,
+    0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42,
+    0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+    0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
     0xaa, 0xaa, 0xaa, 0xaa, 0x42, 0xc6, 0x8f, 0xff,
 };
 
@@ -180,7 +180,7 @@ void Test_BPLib_CBOR_EncodeBundle_PayloadCopyLenError(void)
     InputBundle.blocks.PrimaryBlock.RequiresEncode = false;
     InputBundle.blocks.PayloadHeader.RequiresEncode = false;
 
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         primary_and_payload_with_aa_x_20,
         sizeof(primary_and_payload_with_aa_x_20));
     InputBundle.blob->used_len = sizeof(primary_and_payload_with_aa_x_20);
@@ -222,7 +222,7 @@ void Test_BPLib_CBOR_EncodeBundle_EncodePrimaryCopyPayload(void)
     InputBundle.blob = &FirstBlock;
 
     /* copy valid bundle into our block */
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         primary_and_payload_with_aa_x_20,
         sizeof(primary_and_payload_with_aa_x_20));
     InputBundle.blob->used_len = sizeof(primary_and_payload_with_aa_x_20);
@@ -298,7 +298,7 @@ void Test_BPLib_CBOR_EncodeBundle_EncodePrimaryAndPayload(void)
     memset(&FirstBlock, 0, sizeof(FirstBlock));
     InputBundle.blob = &FirstBlock;
 
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         primary_and_payload_with_aa_x_20,
         sizeof(primary_and_payload_with_aa_x_20));
     InputBundle.blob->used_len = sizeof(primary_and_payload_with_aa_x_20);
@@ -359,7 +359,107 @@ void Test_BPLib_CBOR_EncodeBundle_EncodePrimaryAndPayload(void)
     UtAssert_STUB_COUNT(BPLib_MEM_CopyOutFromOffset, 1);
 }
 
+void Test_BPLib_CBOR_EncodeBundle_EncodeCcs(void)
+{
+    BPLib_Status_t ReturnStatus;
+    BPLib_Bundle_t InputBundle;
+    uint8_t OutputBuffer[1024];
+    size_t OutputSize = 0xdeadbeef;
+    BPLib_MEM_Block_t FirstBlock;
+    size_t i;
+    size_t SeqRangeSize;
+    BPLib_ARP_AdminRecord_t *AdminRecordPayload;
+    uint8_t ExpectedOutputBundle[] = {
+        0x9f, 0x89, 0x07, 0x02, 0x01, 0x82, 0x02, 0x82, 
+        0x18, 0xc8, 0x02, 0x82, 0x02, 0x82, 0x19, 0x01, 
+        0x2c, 0x03, 0x82, 0x02, 0x82, 0x19, 0x01, 0x90, 
+        0x04, 0x82, 0x0c, 0x18, 0x22, 0x00, 0x42, 0xde, 
+        0xad, 0x86, 0x01, 0x01, 0x00, 0x01, 0x4f, 0x82, 
+        0x0d, 0xa1, 0x01, 0x83, 0x09, 0x15, 0x83, 0x19, 
+        0x13, 0x88, 0x02, 0x19, 0x01, 0x2c, 0x42, 0xbe, 
+        0xef, 0xff
+    };
 
+    SeqRangeSize = 0;
+
+    memset(&InputBundle, 0, sizeof(InputBundle));
+    memset(&FirstBlock, 0, sizeof(FirstBlock));
+    InputBundle.blob = &FirstBlock;
+    
+    AdminRecordPayload = &(InputBundle.blob->user_data.AdminRecord);
+
+    /* Header Info */
+    InputBundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+    InputBundle.blocks.PrimaryBlock.CrcType = BPLib_CRC_Type_CRC16;
+    /* Dest EID */
+    InputBundle.blocks.PrimaryBlock.DestEID.Scheme = BPLIB_EID_SCHEME_IPN;
+    InputBundle.blocks.PrimaryBlock.DestEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
+    InputBundle.blocks.PrimaryBlock.DestEID.Allocator = 0;
+    InputBundle.blocks.PrimaryBlock.DestEID.Node = 200;
+    InputBundle.blocks.PrimaryBlock.DestEID.Service = 2;
+    /* Src EID */
+    InputBundle.blocks.PrimaryBlock.SrcEID.Scheme = BPLIB_EID_SCHEME_IPN;
+    InputBundle.blocks.PrimaryBlock.SrcEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
+    InputBundle.blocks.PrimaryBlock.SrcEID.Allocator = 0;
+    InputBundle.blocks.PrimaryBlock.SrcEID.Node = 300;
+    InputBundle.blocks.PrimaryBlock.SrcEID.Service = 3;
+    /* Report-To EID */
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Scheme = BPLIB_EID_SCHEME_IPN;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Allocator = 0;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Node = 400;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Service = 4;
+    /* Other Header Info */
+    InputBundle.blocks.PrimaryBlock.Timestamp.CreateTime = 12;
+    InputBundle.blocks.PrimaryBlock.Timestamp.SequenceNumber = 34;
+    InputBundle.blocks.PrimaryBlock.Lifetime = 0;
+    
+    /* Primary Metadata */
+    InputBundle.blocks.PrimaryBlock.RequiresEncode = true;
+    InputBundle.blocks.PrimaryBlock.BlockOffsetStart = 1;
+    InputBundle.blocks.PrimaryBlock.BlockOffsetEnd = 41;
+    /* Payload Metadata */
+    InputBundle.blocks.PayloadHeader.RequiresEncode = true;
+    InputBundle.blocks.PayloadHeader.DataOffsetStart = 42;
+    InputBundle.blocks.PayloadHeader.DataSize = 29;
+    InputBundle.blocks.PayloadHeader.BlockNum = 1;
+    InputBundle.blocks.PayloadHeader.BlockProcFlags = 0;
+    InputBundle.blocks.PayloadHeader.BlockType = 1;
+    InputBundle.blocks.PayloadHeader.CrcType = BPLib_CRC_Type_CRC16;
+
+    AdminRecordPayload->AdminRecordType                                             = BPLib_CT_CcsRecordTypeCode;
+    AdminRecordPayload->AdminRecordBody.CCS.NumBundleSeqCollections                 = 1;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].DispositionCode = BPLib_CT_CustodyAccepted;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqId           = 9;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].FirstSeqNum     = 21;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqRangeLen     = 3;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[0]     = 5000;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[1]     = 2;
+    AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[2]     = 300;
+
+    for (i = 0; i < AdminRecordPayload->AdminRecordBody.CCS.NumBundleSeqCollections; i++)
+    {
+        SeqRangeSize += AdminRecordPayload->AdminRecordBody.CCS.BundleSeqCollections[i].SeqRangeLen;
+    }
+    
+    UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, (BPLib_CRC_Val_t) 0xdead);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, (BPLib_CRC_Val_t) 0xbeef);
+
+    ReturnStatus = BPLib_CBOR_EncodeBundle(&InputBundle,
+                                        OutputBuffer,
+                                        sizeof(OutputBuffer),
+                                        &OutputSize);
+
+    UtAssert_EQ(BPLib_Status_t, ReturnStatus, BPLIB_SUCCESS);
+    UtAssert_EQ(size_t, OutputSize, sizeof(ExpectedOutputBundle));
+
+    UtAssert_STUB_COUNT(BPLib_MEM_CopyOutFromOffset, 0);
+
+    for (i = 0; i < OutputSize; i++)
+    {
+        UtAssert_EQ(uint8_t, OutputBuffer[i], ExpectedOutputBundle[i]);
+    }
+}
 
 void Test_BPLib_CBOR_EncodeBundle_Nominal(void)
 {
@@ -373,7 +473,7 @@ void Test_BPLib_CBOR_EncodeBundle_Nominal(void)
     memset(&FirstBlock, 0, sizeof(FirstBlock));
     InputBundle.blob = &FirstBlock;
 
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
+    memcpy(&InputBundle.blob->user_data.BigData,
         primary_and_payload_with_aa_x_20,
         sizeof(primary_and_payload_with_aa_x_20));
     InputBundle.blob->used_len = sizeof(primary_and_payload_with_aa_x_20);
@@ -437,34 +537,106 @@ void Test_BPLib_CBOR_EncodeBundle_Nominal(void)
 
 void Test_BPLib_CBOR_EncodeBundle_DtnNone(void)
 {
-    /*
-    Primary Block: 
-            CRC Type: 1
-            Flags: 4
-            Dest EID (scheme.node.service): 2.200.1
-            Source EID (scheme.node.service): 2.100.1
-            Report-To EID (scheme.ssp): 1.0 (dtn:none)
-            Timestamp (created, seq): 755533838904, 0
-            Lifetime: 3600000
-            CRC Value: 0xB19
-    Canonical Block [0]: 
-            Block Type: 1
-            Block Number: 1
-            Flags: 0
-            CRC Type: 1
-            CRC Value: 0xc68f
-            Offset Into Encoded Bundle: 42
-    */
-   unsigned char bundle_primary_and_payload_with_dtn_none[] = {
-        0x9f, 0x89, 0x07, 0x04, 0x01, 0x82, 0x02, 0x82, 
-        0x18, 0xc8, 0x01, 0x82, 0x02, 0x82, 0x18, 0x64, 
-        0x01, 0x82, 0x01, 0x00, 0x82, 
-        0x1b, 0x00, 0x00, 0x00, 0xaf, 0xe9, 0x53, 0x7a, 
-        0x38, 0x00, 0x1a, 0x00, 0x36, 0xee, 0x80, 0x42, 
-        0x0b, 0x19, 0x86, 0x01, 0x01, 0x00, 0x01, 0x54, 
-        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
-        0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
-        0xaa, 0xaa, 0xaa, 0xaa, 0x42, 0xc6, 0x8f, 0xff,
+    unsigned char bundle_primary_and_payload_with_dtn_none[] = {
+        0x9F, /* Indefinite array */
+            /* Primary block */
+            0x89, /* Array (9 data items follow) */
+                0x07, /* Bundle protocol version */
+                0x04, /* BundleProcFlags */
+                0x01, /* CrcType */
+                /* DestEID */
+                0x82, /* Array (2 data items follow) */
+                    0x02, /* Scheme */
+                    /* SSP */
+                    0x82, /* Array (2 data items follow) */
+                        0x18, /* unsigned integer (one-byte uint8_t follows) */
+                            0xC8, /* Node */
+                        0x01, /* Service */
+                /* SrcEID */
+                0x82, /* Array (2 data items follow) */
+                    0x02, /* Scheme */
+                    /* SSP */
+                    0x82, /* Array (2 data items follow) */
+                        0x18, /* unsigned integer (one-byte uint8_t follows) */
+                            0x64, /* Node */
+                        0x01, /* Service */
+                /* ReportToEID */
+                0x82, /* Array (2 data items follow) */
+                    0x01, /* Scheme */
+                    0x00, /* dtn:none so 0 is encoded */
+                /* Timestamp */
+                0x82, /* Array (2 data items follow) */
+                    0x1B, /* unsigned integer (eight-byte uint64_t follows) */
+                        0x00, /* CreateTime byte 1 */
+                        0x00, /* CreateTime byte 2 */
+                        0x00, /* CreateTime byte 3 */
+                        0xAF, /* CreateTime byte 4 */
+                        0xE9, /* CreateTime byte 5 */
+                        0x53, /* CreateTime byte 6 */
+                        0x7A, /* CreateTime byte 7 */
+                        0x38, /* CreateTime byte 8 */
+                    0x00, /* SequenceNumber */
+                0x1A, /* unsigned integer (four-byte uint32_t follows) */
+                    0x00, /* Lifetime byte 1 */
+                    0x36, /* Lifetime byte 2 */
+                    0xEE, /* Lifetime byte 3 */
+                    0x80, /* Lifetime byte 4 */
+                0x42, /* byte string (2 bytes follow) */
+                    0x42, /* CrcVal byte 1 */
+                    0x42, /* CrcVal byte 2 */
+            /* Payload block */
+            0x86, /* Array (6 items follow) */
+                0x01, /* BlockType (Payload) */
+                0x00, /* BlockNum */
+                0x00, /* BlockProcFlags */
+                0x01, /* CrcType */
+                /* ADU */
+                0x58, /* byte string (one-byte uint8_t for n, and then n bytes follow) */
+                    0x1E, /* 30 bytes follow */
+                    0xAA, /* Payload byte 0 */
+                    0xAA, /* Payload byte 1 */
+                    0xAA, /* Payload byte 2 */
+                    0xAA, /* Payload byte 3 */
+                    0xAA, /* Payload byte 4 */
+                    0xAA, /* Payload byte 5 */
+                    0xAA, /* Payload byte 6 */
+                    0xAA, /* Payload byte 7 */
+                    0xAA, /* Payload byte 8 */
+                    0xAA, /* Payload byte 9 */
+                    0xAA, /* Payload byte 10 */
+                    0xAA, /* Payload byte 11 */
+                    0xAA, /* Payload byte 12 */
+                    0xAA, /* Payload byte 13 */
+                    0xAA, /* Payload byte 14 */
+                    0xAA, /* Payload byte 15 */
+                    0xAA, /* Payload byte 16 */
+                    0xAA, /* Payload byte 17 */
+                    0xAA, /* Payload byte 18 */
+                    0xAA, /* Payload byte 19 */
+                    0xAA, /* Payload byte 20 */
+                    0xAA, /* Payload byte 21 */
+                    0xAA, /* Payload byte 22 */
+                    0xAA, /* Payload byte 23 */
+                    0xAA, /* Payload byte 24 */
+                    0xAA, /* Payload byte 25 */
+                    0xAA, /* Payload byte 26 */
+                    0xAA, /* Payload byte 27 */
+                    0xAA, /* Payload byte 28 */
+                    0xAA, /* Payload byte 29 */
+                /* CrcVal */
+                0x42, /* byte string (2 bytes follow) */
+                    0x42, /* CrcVal byte 1 */
+                    0x42, /* CrcVal byte 2 */
+        0xFF /* End of bundle */
+    };
+
+    uint8_t BundlePayload[] = {
+        0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+        0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+        0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+        0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+        0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
+        0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
     };
 
     BPLib_Status_t ReturnStatus;
@@ -478,58 +650,72 @@ void Test_BPLib_CBOR_EncodeBundle_DtnNone(void)
     memset(&FirstBlock, 0, sizeof(FirstBlock));
     InputBundle.blob = &FirstBlock;
 
-    memcpy(&InputBundle.blob->user_data.raw_bytes,
-        bundle_primary_and_payload_with_dtn_none,
-        sizeof(bundle_primary_and_payload_with_dtn_none));
-    InputBundle.blob->used_len = sizeof(bundle_primary_and_payload_with_dtn_none);
+    memcpy(&InputBundle.blob->user_data.BigData,
+            BundlePayload,
+            sizeof(BundlePayload));
 
-    UT_SetDeferredRetcode(UT_KEY(BPLib_CRC_Calculate), 1, 0xb19);
+    InputBundle.blob->used_len = sizeof(BundlePayload);
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_CRC_Calculate), (BPLib_CRC_Val_t) 0x4242);
 
     /* Header Info */
     InputBundle.blocks.PrimaryBlock.BundleProcFlags = 4;
-    InputBundle.blocks.PrimaryBlock.CrcType = BPLib_CRC_Type_CRC16;
-    /* Dest EID */
-    InputBundle.blocks.PrimaryBlock.DestEID.Scheme = BPLIB_EID_SCHEME_IPN;
-    InputBundle.blocks.PrimaryBlock.DestEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
-    InputBundle.blocks.PrimaryBlock.DestEID.Node = 200;
-    InputBundle.blocks.PrimaryBlock.DestEID.Service = 1;
-    /* Src EID */
-    InputBundle.blocks.PrimaryBlock.SrcEID.Scheme = BPLIB_EID_SCHEME_IPN;
-    InputBundle.blocks.PrimaryBlock.SrcEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
-    InputBundle.blocks.PrimaryBlock.SrcEID.Node = 100;
-    InputBundle.blocks.PrimaryBlock.SrcEID.Service = 1;
-    /* Report-To EID */
-    InputBundle.blocks.PrimaryBlock.ReportToEID.Scheme = BPLIB_EID_SCHEME_DTN;
-    InputBundle.blocks.PrimaryBlock.ReportToEID.Node = 0;
-    InputBundle.blocks.PrimaryBlock.ReportToEID.Service = 0;
-    /* Other Header Info */
-    InputBundle.blocks.PrimaryBlock.Timestamp.CreateTime = 755533838904;
-    InputBundle.blocks.PrimaryBlock.Timestamp.SequenceNumber = 0;
-    InputBundle.blocks.PrimaryBlock.Lifetime = 3600000;
-    InputBundle.blocks.PrimaryBlock.FragmentOffset = 0;
-    InputBundle.blocks.PrimaryBlock.TotalAduLength = 0;
-    InputBundle.blocks.PrimaryBlock.CrcVal = 0xb19;
-    /* Primary Metadata */
-    InputBundle.blocks.PrimaryBlock.RequiresEncode = true;
-    InputBundle.blocks.PrimaryBlock.BlockOffsetStart = 1;
-    InputBundle.blocks.PrimaryBlock.BlockOffsetEnd = 38;
-    /* Payload Metadata */
-    InputBundle.blocks.PayloadHeader.RequiresEncode = true;
-    InputBundle.blocks.PayloadHeader.BlockOffsetStart = 39;
-    InputBundle.blocks.PayloadHeader.BlockOffsetEnd = InputBundle.blocks.PayloadHeader.BlockOffsetStart + 29;
+    InputBundle.blocks.PrimaryBlock.CrcType         = BPLib_CRC_Type_CRC16;
 
+    /* Dest EID */
+    InputBundle.blocks.PrimaryBlock.DestEID.Scheme       = BPLIB_EID_SCHEME_IPN;
+    InputBundle.blocks.PrimaryBlock.DestEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
+    InputBundle.blocks.PrimaryBlock.DestEID.Node         = 200;
+    InputBundle.blocks.PrimaryBlock.DestEID.Service      = 1;
+
+    /* Src EID */
+    InputBundle.blocks.PrimaryBlock.SrcEID.Scheme       = BPLIB_EID_SCHEME_IPN;
+    InputBundle.blocks.PrimaryBlock.SrcEID.IpnSspFormat = BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT;
+    InputBundle.blocks.PrimaryBlock.SrcEID.Node         = 100;
+    InputBundle.blocks.PrimaryBlock.SrcEID.Service      = 1;
+
+    /* Report-To EID */
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Scheme  = BPLIB_EID_SCHEME_DTN;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Node    = 0;
+    InputBundle.blocks.PrimaryBlock.ReportToEID.Service = 0;
+
+    /* Other Header Info */
+    InputBundle.blocks.PrimaryBlock.Timestamp.CreateTime     = 755533838904;
+    InputBundle.blocks.PrimaryBlock.Timestamp.SequenceNumber = 0;
+    InputBundle.blocks.PrimaryBlock.Lifetime                 = 3600000;
+    InputBundle.blocks.PrimaryBlock.FragmentOffset           = 0;
+    InputBundle.blocks.PrimaryBlock.TotalAduLength           = 0;
+    InputBundle.blocks.PrimaryBlock.CrcVal                   = 0x4242;
+
+    /* Primary Metadata */
+    InputBundle.blocks.PrimaryBlock.RequiresEncode   = true;
+    InputBundle.blocks.PrimaryBlock.BlockOffsetStart = 1;
+    InputBundle.blocks.PrimaryBlock.BlockOffsetEnd   = InputBundle.blocks.PrimaryBlock.BlockOffsetStart + 39;
+
+    /* Payload Metadata */
+    InputBundle.blocks.PayloadHeader.RequiresEncode   = true;
+    InputBundle.blocks.PayloadHeader.BlockOffsetStart = InputBundle.blocks.PrimaryBlock.BlockOffsetEnd + 1;
+    InputBundle.blocks.PayloadHeader.BlockOffsetEnd   = InputBundle.blocks.PayloadHeader.BlockOffsetStart + 43;
+
+    /* Payload Header */
+    InputBundle.blocks.PayloadHeader.BlockType       = BPLib_BlockType_Payload;
+    InputBundle.blocks.PayloadHeader.BlockNum        = 0;
+    InputBundle.blocks.PayloadHeader.BlockProcFlags  = 0;
+    InputBundle.blocks.PayloadHeader.CrcType         = BPLib_CRC_Type_CRC16;
+    InputBundle.blocks.PayloadHeader.DataOffsetStart = 0;
+    InputBundle.blocks.PayloadHeader.DataSize        = InputBundle.blob->used_len;
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_CopyOutFromOffset), BPLIB_SUCCESS);
+    UT_SetHandlerFunction(UT_KEY(BPLib_MEM_CopyOutFromOffset), UT_Handler_BPLib_MEM_CopyOutFromOffset, BundlePayload);
 
     ReturnStatus = BPLib_CBOR_EncodeBundle(&InputBundle,
-                                        OutputBuffer,
-                                        sizeof(OutputBuffer),
-                                        &OutputSize);
+                                            OutputBuffer,
+                                            sizeof(OutputBuffer),
+                                            &OutputSize);
 
     UtAssert_EQ(BPLib_Status_t, ReturnStatus, BPLIB_SUCCESS);
 
-    // Just validate the primary block for this test
-    for (i = 0; i <= InputBundle.blocks.PrimaryBlock.BlockOffsetEnd; i++)
+    for (i = 0; i <= sizeof(bundle_primary_and_payload_with_dtn_none) - 1; i++)
     {
         UtAssert_EQ(uint8_t, OutputBuffer[i], bundle_primary_and_payload_with_dtn_none[i]);
     }
@@ -559,4 +745,5 @@ void TestBplibCborEncode_Register(void)
     UtTest_Add(Test_BPLib_CBOR_EncodeBundle_EncodePrimaryAndPayload, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeBundle_EncodePrimaryAndPayload");
     UtTest_Add(Test_BPLib_CBOR_EncodeBundle_Nominal, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeBundle_Nominal");
     UtTest_Add(Test_BPLib_CBOR_EncodeBundle_DtnNone, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeBundle_DtnNone");
+    UtTest_Add(Test_BPLib_CBOR_EncodeBundle_EncodeCcs, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeBundle_EncodeCcs");
 }

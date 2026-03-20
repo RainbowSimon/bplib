@@ -25,6 +25,7 @@
 #include "bplib_api_types.h"
 #include "bplib_bblocks.h"
 #include "bplib_cbor.h"
+#include "bplib_arp.h"
 
 
 #include "qcbor/qcbor_encode.h"
@@ -45,6 +46,7 @@
 /**
  * \brief     Decode Canonical Block Data
  * \details   Decode Canonical Block Data and fill in related bundle metadata
+ * \param[in] Inst (BPLib_Instance_t *) Pointer to bplib instance
  * \param[in] ctx (QCBORDecodeContext*) QCBOR decode context instance pointer
  * \param[in] bundle (BPLib_Bundle_t*) pointer to the bundle metadata (to be filled out)
  * \param[in] CanonicalBlockIndex (uint32_t) which bundle extension block metadata to fill out
@@ -54,8 +56,8 @@
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  * \retval    BPLIB_CBOR_DEC_CANON_BLOCK_INDEX_ERR: index past max supported canonical blocks
  */
-BPLib_Status_t BPLib_CBOR_DecodeCanonical(QCBORDecodeContext* ctx, BPLib_Bundle_t* bundle,
-    uint32_t CanonicalBlockIndex, const void *CandBundle);
+BPLib_Status_t BPLib_CBOR_DecodeCanonical(BPLib_Instance_t *Inst, QCBORDecodeContext* ctx, 
+            BPLib_Bundle_t* bundle, uint32_t CanonicalBlockIndex, const void *CandBundle);
 
 
 /**
@@ -135,38 +137,68 @@ typedef BPLib_Status_t (*QCBOR_TimestampParser)(QCBORDecodeContext* ctx, BPLib_C
 typedef BPLib_Status_t (*QCBOR_CRCParser)(QCBORDecodeContext* ctx, uint64_t* parsed,
                                             uint64_t crc_type);
 
+/**
+ * \brief     Function pointer for a function that decodes the type-specific
+ *            format for the contents of the administrative record
+ * \param[in] ctx    QCBOR decode context instance pointer
+ * \param[in] parsed pointer to the field that needs to be filled with decoded data
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
+ */
+typedef BPLib_Status_t (*QCBOR_AdminRecordContentParser)(QCBORDecodeContext* ctx,
+                                                            BPLib_ARP_AdminRecord_t* parsed);
 
+/**
+ * \brief     Function pointer for a function that decodes a bundle sequence collection
+ * \param[in] ctx    QCBOR decode context instance pointer
+ * \param[in] parsed pointer to the field that needs to be filled with decoded data
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
+ */
+typedef BPLib_Status_t (*QCBOR_BundleSeqCollectionParser)(QCBORDecodeContext* ctx,
+                                                            BPLib_CT_BundleSeqCollection_t* parsed);
 
 /*******************************************************************************
 * Exported Parsing Helpers
 */
 
-
 /**
- * \brief     Enters a CBOR definite array (always to be used with BPLib_QCBOR_ExitDefiniteArray)
- * \param[in] ctx (QCBORDecodeContext*) QCBOR decode context instance pointer
- * \param[in] parsed (uint64_t*) pointer to the field that needs to be filled with decoded data
+ * \brief     Enters a CBOR indefinite array, which means it doesn't check that
+ *            the number of elements in the array are bounded (always to be used
+ *            with BPLib_QCBOR_ExitArray)
+ * \param[in] ctx       QCBOR decode context instance pointer
+ * \param[in] ArrayItem Decoded data provided by QCBOR
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
-BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, size_t* ArrayLen);
-
+BPLib_Status_t BPLib_QCBOR_EnterIndefiniteArray(QCBORDecodeContext* ctx, QCBORItem* ArrayItem);
 
 /**
- * \brief     Exits a CBOR definite array (always to be used with BPLib_QCBOR_EnterDefiniteArray)
- * \param[in] ctx (QCBORDecodeContext*) QCBOR decode context instance pointer
+ * \brief     Enters a CBOR definite array (always to be used with BPLib_QCBOR_ExitArray)
+ * \param[in] ctx       QCBOR decode context instance pointer
+ * \param[in] ArrayItem Decoded data provided by QCBOR
  * \return    Execution status
  * \retval    BPLIB_SUCCESS: Successful execution
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
-BPLib_Status_t BPLib_QCBOR_ExitDefiniteArray(QCBORDecodeContext* ctx);
+BPLib_Status_t BPLib_QCBOR_EnterDefiniteArray(QCBORDecodeContext* ctx, QCBORItem* ArrayItem);
 
+/**
+ * \brief     Exits a CBOR array (always to be used with
+ *            BPLib_QCBOR_EnterDefiniteArray/BPLib_QCBOR_EnterIndefiniteArray)
+ * \param[in] ctx QCBOR decode context instance pointer
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
+ */
+BPLib_Status_t BPLib_QCBOR_ExitArray(QCBORDecodeContext* ctx);
 
 /*******************************************************************************
 * RFC-9171 Type Parsers (Implementation Prototypes)
 */
-
 
 /**
  * \brief     Decodes a uint64_t type
@@ -208,8 +240,6 @@ BPLib_Status_t BPLib_QCBOR_ReportToEidParserImpl(QCBORDecodeContext* ctx, BPLib_
  */
 BPLib_Status_t BPLib_QCBOR_TimestampParserImpl(QCBORDecodeContext* ctx, BPLib_CreationTimeStamp_t* parsed);
 
-
-
 /**
  * \brief     Decodes a CRC value
  * \param[in] ctx (QCBORDecodeContext*) QCBOR decode context instance pointer
@@ -221,8 +251,28 @@ BPLib_Status_t BPLib_QCBOR_TimestampParserImpl(QCBORDecodeContext* ctx, BPLib_Cr
  */
 BPLib_Status_t BPLib_QCBOR_CRCParserImpl(QCBORDecodeContext* ctx, uint64_t* parsed, uint64_t crc_type);
 
+/**
+ * \brief     Decodes an administrative record's content
+ * \param[in] ctx    QCBOR decode context instance pointer
+ * \param[in] parsed Pointer to the field that needs to be filled with decoded data
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
+ */
+BPLib_Status_t BPLib_QCBOR_AdminRecordContentParserImpl(QCBORDecodeContext* ctx, BPLib_ARP_AdminRecord_t* parsed);
 
-
+/**
+ * \brief      Decodes a bundle sequence collection
+ * \param[in]  ctx               QCBOR decode context instance pointer
+ * \param[in]  parsed            Pointer to the field that needs to be filled with
+ *                               decoded data
+ * \param[out] NumSeqCollections Number of bundle sequence collections in the
+ *                               disposition code, bundle sequence collection map
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Successful execution
+ * \retval     BPLIB_NULL_PTR_ERROR: invalid input pointer
+ */
+BPLib_Status_t BPLib_QCBOR_BundleSeqCollectionParserImpl(QCBORDecodeContext* ctx, BPLib_CT_BundleSeqCollection_t* parsed, size_t* NumSeqCollections);
 
 /**
  * \brief Encodes the primary block data into the output buffer
@@ -258,7 +308,6 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePrimary(BPLib_Bundle_t* StoredBundle,
     size_t OutputBufferSize,
     size_t* NumBytesCopied);
 
-
 /**
  * \brief Returns the number of extension blocks populated in bundle metadata
  *
@@ -267,7 +316,6 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePrimary(BPLib_Bundle_t* StoredBundle,
  * \return (uint32_t) number of extension blocks populated in bundle metadata
  */
 uint32_t BPLib_CBOR_GetNumExtensionBlocks(BPLib_Bundle_t* StoredBundle);
-
 
 /**
  * \brief Encodes the extension block's block-specific data, putting the output in the provided buffer
@@ -319,7 +367,6 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     size_t OutputBufferSize,
     size_t* NumBytesCopied);
 
-
 /**
  * \brief Copies the Payload Block out of a stored bundle,
  *        or encodes the primary (if never previously encoded)
@@ -339,6 +386,76 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePayload(BPLib_Bundle_t* StoredBundle,
     size_t OutputBufferSize,
     size_t* NumBytesCopied);
 
+/**
+ * \brief     Start encoding an array and account for encoded byte to track size
+ * \param[in] Context      QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer Buffer to track the size of the encode buffer
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: Array initial byte will fit in the buffer
+ * \retval    BPLIB_ERROR: Array initial byte will not fit in the buffer or byte
+ *                         string is malformed
+ */
+BPLib_Status_t BPLib_CBOR_EncodeArray(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer);
+
+/**
+ * \brief     Start encoding a map and account for encoded byte to track size
+ * \param[in] Context      QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer Buffer to track the size of the encode buffer
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: Map initial byte will fit in the buffer
+ * \retval    BPLIB_ERROR: Map initial byte will not fit in the buffer or byte
+ *                         string is malformed
+ */
+BPLib_Status_t BPLib_CBOR_EncodeMap(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer);
+
+/**
+ * \brief Check the size of the encoded buffer for overflows and increment a
+ *        buffer size tracking value if successful
+ * \param[in]  EncodedBuffer Buffer to check for overflows
+ * \param[out] EncodedSize   Size of the encode buffer
+ * \return     Execution status
+ * \retval     BPLIB_SUCCESS: Bytes were encoded without error and EncodedSize
+ *                            was incremented
+ * \retval     BPLIB_ERROR:   An error was encountered, see definition for causes
+ */
+BPLib_Status_t BPLib_CBOR_EncodeGetBufferSize(UsefulOutBuf* EncodeBuffer, size_t* EncodedSize);
+
+/**
+ * \brief     Encode an unsigned integer while tracking the size of the buffer
+ * \param[in] Context       QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer  Buffer to track the size of the encode buffer
+ * \param[in] ValueToEncode Integer you wish to encode
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: Value can be successfully encoded
+ * \retval    BPLIB_ERROR: Value won't fit the buffer or the value could not be
+ *                         encoded for several reasons (see function body for
+ *                         reasoning)
+ */
+BPLib_Status_t BPLib_CBOR_EncodeUInt(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint64_t ValueToEncode);
+
+/**
+ * \brief Encode the bytes in an administrative record while tracking the size
+ *        of the buffer
+ * \param[in] Context       QCBOR encode context instance pointer
+ * \param[in] Bundle        Bundle whose payload is an administrative record
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: Administrative record was successfully encoded
+ * \retval    BPLIB_NULL_PTR_ERROR: Provided Context pointer was NULL
+ * \retval    TODO: unsupported admin record type
+ */
+BPLib_Status_t BPLib_CBOR_EncodeAdminRecord(QCBOREncodeContext *Context, BPLib_Bundle_t* Bundle);
+
+/**
+ * \brief Encode the bytes in an ADU while tracking the size of the buffer
+ * \param[in] Context      QCBOR encode context instance pointer
+ * \param[in] EncodeBuffer Buffer to track the size of the encode buffer
+ * \param[in] Adu          ADU that is to be encoded
+ * \param[in] AduLen       Length of the ADU in bytes
+ * \return    Encoding buffer status
+ * \retval    BPLIB_SUCCESS: ADU will fit the buffer and data was well formed
+ * \retval    BPLIB_ERROR: ADU won't fit the buffer or the data was malformed
+ */
+BPLib_Status_t BPLib_CBOR_EncodeAdu(QCBOREncodeContext* Context, UsefulOutBuf* EncodeBuffer, uint8_t* Adu, size_t AduLen);
 
 /**
  * \brief     Encodes a BPLib_EID_t type
@@ -349,8 +466,6 @@ BPLib_Status_t BPLib_CBOR_CopyOrEncodePayload(BPLib_Bundle_t* StoredBundle,
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
 BPLib_Status_t BPLib_CBOR_EncodeEID(QCBOREncodeContext* Context, BPLib_EID_t* SourceData);
-
-
 
 /**
  * \brief     Encodes a BPLib_CreationTimeStamp_t
@@ -372,6 +487,32 @@ BPLib_Status_t BPLib_CBOR_EncodeCreationTimeStamp(QCBOREncodeContext* Context, B
  * \retval    BPLIB_NULL_PTR_ERROR: invalid input pointer
  */
 BPLib_Status_t BPLib_CBOR_EncodeCrcValue(QCBOREncodeContext* Context, uint64_t CrcValue, uint64_t CrcType);
+
+/**
+ * \brief Encode a Bundle Status Report
+ * \param[in]  Context QCBOR encode context instance pointer
+ * \param[in]  BSR     Pointer to the Bundle Status Report to be encoded
+ * \return     void
+
+void BPLib_CBOR_EncodeBsr(QCBOREncodeContext* Context, BPLib_ARP_BundleStatusReport_t* BSR);
+*/
+
+/**
+ * \brief Encode a Compressed Reporting Signal
+ * \param[in]  Context QCBOR encode context instance pointer
+ * \param[in]  CRS     Pointer to the Compressed Reporting Signal to be encoded
+ * \return    void
+void BPLib_CBOR_EncodeCrs(QCBOREncodeContext* Context, BPLib_ARP_CompressedReportingSignal_t* CRS);
+*/
+
+/**
+ * \brief Encode a Compressed Custody Signal
+ * \param[in]  Context      QCBOR encode context instance pointer
+ * \param[in]  CCS          Pointer to the Compressed Custody Signal to be encoded
+ * \return    Execution status
+ * \retval    BPLIB_SUCCESS: Successful execution
+ */
+BPLib_Status_t BPLib_CBOR_EncodeCcs(QCBOREncodeContext* Context, BPLib_CT_DeserializedCcs_t* CCS);
 
 /**
  * \brief     Validates a block's CRC value

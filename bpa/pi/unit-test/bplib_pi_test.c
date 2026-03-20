@@ -27,11 +27,14 @@
 /* Test nominal add application function */
 void Test_BPLib_PI_AddApplication_Nominal(void)
 {
+    BPLib_PI_ChannelTable_t ChanTbl;
     uint32_t ChanId = 0;
 
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = &ChanTbl;
+    
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_REMOVED);
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_SUCCESS);
     UtAssert_STUB_COUNT(BPLib_NC_SetAppState, 1);
 }
 
@@ -42,7 +45,7 @@ void Test_BPLib_PI_AddApplication_Added(void)
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_ADDED);
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_SUCCESS);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_SUCCESS);
     UtAssert_STUB_COUNT(BPLib_NC_SetAppState, 1);
 }
 
@@ -51,7 +54,7 @@ void Test_BPLib_PI_AddApplication_BadId(void)
 {
     uint32_t ChanId = BPLIB_MAX_NUM_CHANNELS;
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_INVALID_CHAN_ID_ERR);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_INVALID_CHAN_ID_ERR);
     UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_PI_ADD_ID_DBG_EID);
     UtAssert_STRINGBUF_EQ("Error with add-application directive, invalid ChanId=%d", BPLIB_EM_EXPANDED_EVENT_SIZE, 
                             context_BPLib_EM_SendEvent[0].Spec, BPLIB_EM_EXPANDED_EVENT_SIZE);
@@ -64,7 +67,7 @@ void Test_BPLib_PI_AddApplication_BadState(void)
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_STARTED);
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_APP_STATE_ERR);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_APP_STATE_ERR);
 
     UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_PI_ADD_STATE_DBG_EID);
     UtAssert_STRINGBUF_EQ("Error with add-application directive, invalid AppState=%d for ChanId=%d", BPLIB_EM_EXPANDED_EVENT_SIZE, 
@@ -74,12 +77,15 @@ void Test_BPLib_PI_AddApplication_BadState(void)
 /* Test BPLib_PI_AddApplication when the proxy returns an error */
 void Test_BPLib_PI_AddApplication_ProxyErr(void)
 {
+    BPLib_PI_ChannelTable_t ChanTbl;
     uint32_t ChanId = 0;
+
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = &ChanTbl;
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_REMOVED);
     UT_SetDefaultReturnValue(UT_KEY(BPA_ADUP_AddApplication), BPLIB_ERROR);
 
-    UtAssert_INT32_EQ(BPLib_PI_AddApplication(ChanId), BPLIB_ERROR);
+    UtAssert_INT32_EQ(BPLib_PI_AddApplication(&BplibInst, ChanId), BPLIB_ERROR);
     UtAssert_INT32_EQ(context_BPLib_EM_SendEvent[0].EventID, BPLIB_PI_ADD_FWP_DBG_EID);
     UtAssert_STRINGBUF_EQ("Error with add-application directive, framework specific error code = %d", BPLIB_EM_EXPANDED_EVENT_SIZE, 
                             context_BPLib_EM_SendEvent[0].Spec, BPLIB_EM_EXPANDED_EVENT_SIZE);
@@ -462,25 +468,6 @@ void Test_BPLib_PI_ValidateConfigs_RepToEidInv(void)
     UtAssert_INT32_EQ(BPLib_PI_ValidateConfigs(&ChanTbl), BPLIB_INVALID_CONFIG_ERR);
 }
 
-void Test_BPLib_PI_ValidateConfigs_SizeInv(void)
-{
-    BPLib_PI_ChannelTable_t ChanTbl;
-
-    memset(&ChanTbl, 0, sizeof(ChanTbl));
-
-    ChanTbl.Configs[0].HopLimit = 10;
-    ChanTbl.Configs[0].RegState = BPLIB_PI_PASSIVE_ABANDON;
-    ChanTbl.Configs[0].CrcType = BPLib_CRC_Type_CRC32C;
-    ChanTbl.Configs[0].DestEID.Scheme = BPLIB_EID_SCHEME_IPN;
-
-    /* Invalid payload size */
-    ChanTbl.Configs[0].MaxBundlePayloadSize = BPLIB_MAX_PAYLOAD_SIZE + 1;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_EID_IsValid), true);
-
-    UtAssert_INT32_EQ(BPLib_PI_ValidateConfigs(&ChanTbl), BPLIB_INVALID_CONFIG_ERR);
-}
-
 void Test_BPLib_PI_ValidateConfigs_LifetimeInv(void)
 {
     BPLib_PI_ChannelTable_t ChanTbl;
@@ -674,11 +661,7 @@ void Test_BPLib_PI_Ingress_Nominal(void)
     UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BundleAlloc), 1, (UT_IntReturn_t) &Bundle);
 
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_SUCCESS);
-    UtAssert_EQ(uint64_t, BPLib_PI_SequenceNums[ChanId], 1);
-
-    /* Ensure Node Config is locked and unlocked */
-    UtAssert_STUB_COUNT(BPLib_NC_ReaderLock, 1);
-    UtAssert_STUB_COUNT(BPLib_NC_ReaderUnlock, 1);
+    UtAssert_EQ(uint64_t, BplibInst.ChanCtxt[ChanId].SequenceNum, 1);
 }
 
 /* Test nominal ingress function when the sequence number gets reset */
@@ -691,16 +674,12 @@ void Test_BPLib_PI_Ingress_ResetSequence(void)
 
     memset(&Bundle, 0, sizeof(Bundle));
 
-    BPLib_PI_SequenceNums[ChanId] = BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM];
+    BplibInst.ChanCtxt[ChanId].SequenceNum = 100;
 
     UT_SetDeferredRetcode(UT_KEY(BPLib_MEM_BundleAlloc), 1, (UT_IntReturn_t) &Bundle);
 
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_SUCCESS);
-    UtAssert_EQ(uint64_t, BPLib_PI_SequenceNums[ChanId], 0);
-
-    /* Ensure Node Config is locked and unlocked */
-    UtAssert_STUB_COUNT(BPLib_NC_ReaderLock, 1);
-    UtAssert_STUB_COUNT(BPLib_NC_ReaderUnlock, 1);
+    UtAssert_EQ(uint64_t, BplibInst.ChanCtxt[ChanId].SequenceNum, 0);
 }
 
 /* Test ingress function null checks */
@@ -715,13 +694,6 @@ void Test_BPLib_PI_Ingress_Null(void)
     
     /* Null ADU pointer */
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, NULL, AduSize), BPLIB_NULL_PTR_ERROR);
-
-    /* Null channel configuration */
-    BPLib_NC_ConfigPtrs.ChanConfigPtr = NULL;
-    UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_NULL_PTR_ERROR);
-
-    /* The block allocation function returns null by default */
-    UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_NULL_PTR_ERROR);
 }
 
 /* Test ingress function channel ID check */
@@ -732,6 +704,18 @@ void Test_BPLib_PI_Ingress_BadChanId(void)
     size_t AduSize = 0;
 
     UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_INVALID_CHAN_ID_ERR);
+}
+
+/* Test ingress function length check */
+void Test_BPLib_PI_Ingress_InvLen(void)
+{
+    uint32_t ChanId = 0;
+    uint8_t AduPtr[10];
+    size_t AduSize = BPLIB_MAX_PAYLOAD_SIZE + 1;
+
+    UT_SetDeferredRetcode(UT_KEY(BPLib_NC_GetNodeConfigValue), 1, BPLIB_MAX_PAYLOAD_SIZE);
+
+    UtAssert_INT32_EQ(BPLib_PI_Ingress(&BplibInst, ChanId, AduPtr, AduSize), BPLIB_BUF_LEN_ERROR);
 }
 
 /* Test ingress function null memory allocation */
@@ -836,6 +820,59 @@ void Test_BPLib_PI_Egress_Timeout(void)
     UtAssert_INT32_EQ(BPLib_PI_Egress(&BplibInst, ChanId, AduPtr, &AduSize, BufLen, Timeout), BPLIB_PI_TIMEOUT);
 }
 
+void Test_BPLib_PI_SetRegistrationState_BadParam(void)
+{
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_STARTED);
+
+    UtAssert_INT32_EQ(BPLIB_NULL_PTR_ERROR, BPLib_PI_SetRegistrationState(NULL, 0, 0));
+
+    UtAssert_INT32_EQ(BPLIB_INVALID_CHAN_ID_ERR, BPLib_PI_SetRegistrationState(&BplibInst, BPLIB_MAX_NUM_CHANNELS, 0));
+
+    UtAssert_INT32_EQ(BPLIB_INV_REG_STATE, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLib_PI_NUM_REG_STATE));
+}
+
+void Test_BPLib_PI_SetRegistrationState_ChanRemoved(void)
+{
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_REMOVED);
+
+    UtAssert_INT32_EQ(BPLIB_INVALID_CHAN_ID_ERR, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLIB_PI_PASSIVE_DEFER));
+}
+
+void Test_BPLib_PI_SetRegistrationState_Nominal(void)
+{
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_STARTED);
+
+    BplibInst.ChanCtxt[0].Config.RegState = BPLIB_PI_ACTIVE;
+
+    UtAssert_INT32_EQ(BPLIB_SUCCESS, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLIB_PI_PASSIVE_DEFER));
+    UtAssert_INT32_EQ(BplibInst.ChanCtxt[0].Config.RegState, BPLIB_PI_PASSIVE_DEFER);
+}
+
+void Test_BPLib_PI_SetRegistrationState_Abandon(void)
+{
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_NC_GetAppState), BPLIB_NC_APP_STATE_STARTED);
+
+    BplibInst.ChanCtxt[0].Config.RegState = BPLIB_PI_ACTIVE;
+
+    UT_SetDeferredRetcode(UT_KEY(BPLib_QM_WaitQueueTryPull), 1, true);
+
+    UtAssert_INT32_EQ(BPLIB_SUCCESS, BPLib_PI_SetRegistrationState(&BplibInst, 0, BPLIB_PI_PASSIVE_ABANDON));
+    UtAssert_INT32_EQ(BplibInst.ChanCtxt[0].Config.RegState, BPLIB_PI_PASSIVE_ABANDON);
+    UtAssert_STUB_COUNT(BPLib_MEM_BundleFree, 1);
+}
+
+void Test_BPLib_PI_GetRegistrationState_Nominal(void)
+{
+    BplibInst.ChanCtxt[0].Config.RegState = BPLIB_PI_ACTIVE;
+    UtAssert_INT32_EQ(BPLIB_PI_ACTIVE, BPLib_PI_GetRegistrationState(&BplibInst, 0));
+}
+
+void Test_BPLib_PI_GetRegistrationState_BadParam(void)
+{
+    UtAssert_INT32_EQ(BPLIB_PI_PASSIVE_ABANDON, BPLib_PI_GetRegistrationState(NULL, 0));
+    UtAssert_INT32_EQ(BPLIB_PI_PASSIVE_ABANDON, BPLib_PI_GetRegistrationState(&BplibInst, BPLIB_MAX_NUM_CHANNELS));
+}
+
 void TestBplibPi_Register(void)
 {
     ADD_TEST(Test_BPLib_PI_AddApplication_Nominal);
@@ -872,7 +909,6 @@ void TestBplibPi_Register(void)
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_DtnDestEid);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_DestEidInv);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_RepToEidInv);
-    ADD_TEST(Test_BPLib_PI_ValidateConfigs_SizeInv);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_LifetimeInv);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_NoPayload);
     ADD_TEST(Test_BPLib_PI_ValidateConfigs_BadPayloadBlockNum);
@@ -887,6 +923,7 @@ void TestBplibPi_Register(void)
     ADD_TEST(Test_BPLib_PI_Ingress_Null);
     ADD_TEST(Test_BPLib_PI_Ingress_BadChanId);
     ADD_TEST(Test_BPLib_PI_Ingress_NullMem);
+    ADD_TEST(Test_BPLib_PI_Ingress_InvLen);
 
     ADD_TEST(Test_BPLib_PI_Egress_Nominal);
     ADD_TEST(Test_BPLib_PI_Egress_Null);
@@ -894,4 +931,11 @@ void TestBplibPi_Register(void)
     ADD_TEST(Test_BPLib_PI_Egress_BadChanId);
     ADD_TEST(Test_BPLib_PI_Egress_BadCopy);  
     
+    ADD_TEST(Test_BPLib_PI_SetRegistrationState_BadParam);
+    ADD_TEST(Test_BPLib_PI_SetRegistrationState_Nominal);
+    ADD_TEST(Test_BPLib_PI_SetRegistrationState_Abandon);
+    ADD_TEST(Test_BPLib_PI_SetRegistrationState_ChanRemoved);
+
+    ADD_TEST(Test_BPLib_PI_GetRegistrationState_Nominal);
+    ADD_TEST(Test_BPLib_PI_GetRegistrationState_BadParam);
 }

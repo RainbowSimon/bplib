@@ -208,7 +208,6 @@ void Test_BPLib_BI_RecvFullBundleIn_Nominal(void)
     UtAssert_STUB_COUNT(BPLib_CBOR_DecodeBundle, 1);
     UtAssert_STUB_COUNT(BPLib_MEM_BundleFree, 0);
     UtAssert_STUB_COUNT(BPLib_EM_SendEvent, 0);
-    UtAssert_STUB_COUNT(BPLib_AS_Increment, 1);
     UtAssert_STUB_COUNT(BPLib_QM_CreateJob, 1);
 }
 
@@ -350,6 +349,19 @@ void Test_BPLib_BI_ValidateBundle_Expired(void)
     UtAssert_INT32_EQ(BPLib_BI_ValidateBundle(&DeserializedBundle), BPLIB_BI_EXPIRED_BUNDLE_ERR);        
 }
 
+/* Test that bundle validation fails when the max lifetime overrides the lifetime and expires the bundle */
+void Test_BPLib_BI_ValidateBundle_MaxExpired(void)
+{
+    DeserializedBundle.blocks.ExtBlocks[1].Header.BlockType = BPLib_BlockType_Reserved;
+    DeserializedBundle.blocks.PrimaryBlock.Timestamp.CreateTime = 10;
+    DeserializedBundle.blocks.PrimaryBlock.Lifetime = 11;
+
+    UT_SetDeferredRetcode(UT_KEY(BPLib_TIME_GetCurrentDtnTime), 1, 20);
+    UT_SetDeferredRetcode(UT_KEY(BPLib_NC_GetNodeConfigValue), 2, 10);
+
+    UtAssert_INT32_EQ(BPLib_BI_ValidateBundle(&DeserializedBundle), BPLIB_BI_EXPIRED_BUNDLE_ERR);        
+}
+
 /* Test that bundle validation fails when an extension block number matches the payload number */
 void Test_BPLib_BI_ValidateBundle_PayloadNumErr(void)
 {
@@ -479,6 +491,7 @@ void TestBplibBi_Register(void)
     UtTest_Add(Test_BPLib_BI_ValidateBundle_ValidTime, BPLib_BI_Test_Setup, BPLib_BI_Test_Teardown, "Test_BPLib_BI_ValidateBundle_ValidTime");
     UtTest_Add(Test_BPLib_BI_ValidateBundle_NoTime, BPLib_BI_Test_Setup, BPLib_BI_Test_Teardown, "Test_BPLib_BI_ValidateBundle_NoTime");
     UtTest_Add(Test_BPLib_BI_ValidateBundle_Expired, BPLib_BI_Test_Setup, BPLib_BI_Test_Teardown, "Test_BPLib_BI_ValidateBundle_Expired");
+    UtTest_Add(Test_BPLib_BI_ValidateBundle_MaxExpired, BPLib_BI_Test_Setup, BPLib_BI_Test_Teardown, "Test_BPLib_BI_ValidateBundle_MaxExpired");
     UtTest_Add(Test_BPLib_BI_ValidateBundle_PayloadNumErr, BPLib_BI_Test_Setup, BPLib_BI_Test_Teardown, "Test_BPLib_BI_ValidateBundle_PayloadNumErr");
     UtTest_Add(Test_BPLib_BI_ValidateBundle_BlockNumErr, BPLib_BI_Test_Setup, BPLib_BI_Test_Teardown, "Test_BPLib_BI_ValidateBundle_BlockNumErr");
 

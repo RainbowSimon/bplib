@@ -27,19 +27,17 @@
 #include "bplib_cbor.h"
 #include "utgenstub.h"
 
-#include "qcbor/qcbor_encode.h"
-#include "qcbor/qcbor_decode.h"
-#include "qcbor/qcbor_spiffy_decode.h"
-
 /*
  * ----------------------------------------------------
  * Generated stub function for BPLib_CBOR_DecodeBundle()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_CBOR_DecodeBundle(const void *CandBundle, size_t CandBundleLen, BPLib_Bundle_t *bundle)
+BPLib_Status_t BPLib_CBOR_DecodeBundle(BPLib_Instance_t *Inst, const void *CandBundle, size_t CandBundleLen,
+                                       BPLib_Bundle_t *bundle)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_CBOR_DecodeBundle, BPLib_Status_t);
 
+    UT_GenStub_AddParam(BPLib_CBOR_DecodeBundle, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_CBOR_DecodeBundle, const void *, CandBundle);
     UT_GenStub_AddParam(BPLib_CBOR_DecodeBundle, size_t, CandBundleLen);
     UT_GenStub_AddParam(BPLib_CBOR_DecodeBundle, BPLib_Bundle_t *, bundle);

@@ -37,11 +37,6 @@
 #include "bplib_cbor.h"
 #include <stdio.h>
 
-/* 
-** Global Data 
-*/
-
-uint64_t      BPLib_PI_SequenceNums[BPLIB_MAX_NUM_CHANNELS];
 
 /*
 ** Internal Function Definitions
@@ -99,7 +94,7 @@ BPLib_Status_t BPLib_PI_ValidateCanBlkConfig(BPLib_PI_CanBlkConfig_t *CanBlkConf
 */
 
 /* Add application configurations */
-BPLib_Status_t BPLib_PI_AddApplication(uint32_t ChanId)
+BPLib_Status_t BPLib_PI_AddApplication(BPLib_Instance_t *Inst, uint32_t ChanId)
 {
     BPLib_NC_ApplicationState_t AppState;
     BPLib_Status_t Status = BPLIB_SUCCESS;
@@ -125,8 +120,30 @@ BPLib_Status_t BPLib_PI_AddApplication(uint32_t ChanId)
         return BPLIB_APP_STATE_ERR;
     }
 
-    /* Initialize sequence number */
-    BPLib_PI_SequenceNums[ChanId] = 0;
+    /* Initialize configs */
+    Inst->ChanCtxt[ChanId].SequenceNum = 0;
+
+    /* Copy channel configurations in from table */
+    BPLib_NC_ReaderLock();
+    if (BPLib_NC_ConfigPtrs.ChanConfigPtr == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+
+    memcpy(&Inst->ChanCtxt[ChanId].Config, 
+        &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId], sizeof(BPLib_PI_Config_t));
+    BPLib_NC_ReaderUnlock();
+
+    if (BPLib_NC_GetNodeConfigValue(PARAM_SUPPORT_CUSTODY) == false && 
+        Inst->ChanCtxt[ChanId].Config.CustodyTransferBlkConfig.IncludeBlock == true)
+    {
+        memset(&Inst->ChanCtxt[ChanId].Config, 0, sizeof(BPLib_PI_Config_t));
+
+        BPLib_EM_SendEvent(BPLIB_PI_NO_CTEB_DBG_EID, BPLib_EM_EventType_DEBUG,
+                            "Error with add-application directive, cannot include CTEBs while custody support is disabled");
+
+        return BPLIB_CT_NO_CUST_ERR;        
+    }
 
     /* Do any framework-specific operations */
     Status = BPLib_FWP_ProxyCallbacks.BPA_ADUP_AddApplication(ChanId);
@@ -137,6 +154,7 @@ BPLib_Status_t BPLib_PI_AddApplication(uint32_t ChanId)
     }
     else
     {
+        memset(&Inst->ChanCtxt[ChanId].Config, 0, sizeof(BPLib_PI_Config_t));
         BPLib_EM_SendEvent(BPLIB_PI_ADD_FWP_DBG_EID, BPLib_EM_EventType_DEBUG,
                             "Error with add-application directive, framework specific error code = %d",
                             Status);
@@ -275,17 +293,16 @@ BPLib_Status_t BPLib_PI_RemoveApplication(BPLib_Instance_t *Inst, uint32_t ChanI
                                 "Error with remove-application directive pushing a bundle back to storage, Status=%d for ChanId=%d",
                                 Status, ChanId);
 
-            /* Bundle is effectively getting dropped */
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
-
             /* This is still considered a successful directive just with some bundle loss */
             Status = BPLIB_SUCCESS;
         }
     }
 
+    /* Clear relevant load batch. Ignore return code since we've already done a null check */
+    (void) BPLib_STOR_LoadBatch_Reset(&Inst->BundleStorage.ChannelLoadBatches[ChanId]);
+
     /* Reset sequence number */
-    BPLib_PI_SequenceNums[ChanId] = 0;
+    Inst->ChanCtxt[ChanId].SequenceNum = 0;
     
     /* Do any framework-specific operations */
     Status = BPLib_FWP_ProxyCallbacks.BPA_ADUP_RemoveApplication(ChanId);
@@ -309,7 +326,7 @@ BPLib_Status_t BPLib_PI_ValidateConfigs(void *TblData)
 {
     BPLib_PI_ChannelTable_t *TblDataPtr = (BPLib_PI_ChannelTable_t *)TblData;
     uint32_t ChanId;
-    uint32_t BlockNums[4];
+    uint32_t BlockNums[5];
     uint8_t  BlockNumsInArr;
     uint32_t i;
 
@@ -365,12 +382,6 @@ BPLib_Status_t BPLib_PI_ValidateConfigs(void *TblData)
             return BPLIB_INVALID_CONFIG_ERR;
         }
 
-        /* Validate that the maximum bundle payload size doesn't exceed the system limit */
-        if (TblDataPtr->Configs[ChanId].MaxBundlePayloadSize > BPLIB_MAX_PAYLOAD_SIZE)
-        {
-            return BPLIB_INVALID_CONFIG_ERR;
-        }
-
         /* Validate that the bundle lifetime doesn't exceed the system limit */
         if (TblDataPtr->Configs[ChanId].Lifetime > BPLIB_MAX_LIFETIME_ALLOWED)
         {
@@ -390,6 +401,7 @@ BPLib_Status_t BPLib_PI_ValidateConfigs(void *TblData)
         if (BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].PrevNodeBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
             BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].AgeBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
             BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].HopCountBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
+            BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].CustodyTransferBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS ||
             BPLib_PI_ValidateCanBlkConfig(&(TblDataPtr->Configs[ChanId].PayloadBlkConfig), BlockNums, &BlockNumsInArr) != BPLIB_SUCCESS)
         {
             return BPLIB_INVALID_CONFIG_ERR;
@@ -406,6 +418,8 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
     BPLib_Bundle_t *NewBundle;
     BPLib_PI_Config_t *CurrCanonConfig;
     BPLib_Status_t Status = BPLIB_SUCCESS;
+    uint32_t MaxPayloadLength;
+    uint32_t MaxSequenceNum;
 
     /* Channel ID must be within array index limits */
     if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
@@ -413,16 +427,35 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         return BPLIB_INVALID_CHAN_ID_ERR;
     }
 
-    BPLib_NC_ReaderLock();
-
-    if ((Inst == NULL) || (AduPtr == NULL) || (BPLib_NC_ConfigPtrs.ChanConfigPtr == NULL))
+    if ((Inst == NULL) || (AduPtr == NULL))
     {
-        BPLib_NC_ReaderUnlock();
         return BPLIB_NULL_PTR_ERROR;
     }
 
     /* Indicate ADU reception */
     BPLib_AS_Increment(BPLIB_EID_INSTANCE, ADU_COUNT_RECEIVED, 1);
+
+    MaxPayloadLength = BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_PAYLOAD_LENGTH);
+    MaxSequenceNum   = BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_SEQUENCE_NUM);
+
+    if (AduSize > MaxPayloadLength)
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_REJECTED, 1);
+        BPLib_EM_SendEvent(BPLIB_PI_ADU_LEN_ERR_EID, BPLib_EM_EventType_ERROR,
+                    "[ADU In #%d]: Received an ADU too big to ingest, Size=%ld, PARAM_SET_MAX_PAYLOAD_LENGTH=%d",
+                    ChanId, AduSize, MaxPayloadLength);
+
+        return BPLIB_BUF_LEN_ERROR;
+    }
+
+    if ((Inst->BundleStorage.BytesStorageInUse + AduSize + sizeof(BPLib_BBlocks_t)) >= BPLIB_MAX_STORED_BUNDLE_BYTES)
+    {
+        BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_REJECTED, 1);
+        BPLib_EM_SendEvent(BPLIB_PI_INGRESS_NO_STOR_ERR_EID, BPLib_EM_EventType_ERROR,
+                            "[ADU In #%d]: Cannot ingress ADU, no storage left", ChanId);
+
+        return BPLIB_NO_STOR_ERR;
+    }
 
     /* Allocate Bundle based on AduSize */
     NewBundle = BPLib_MEM_BundleAlloc(&Inst->pool, (const void*)AduPtr, AduSize);
@@ -435,7 +468,7 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         /* Mark the primary block as "dirty" */
         NewBundle->blocks.PrimaryBlock.RequiresEncode = true;
 
-        CurrCanonConfig = &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId];
+        CurrCanonConfig = &Inst->ChanCtxt[ChanId].Config;
 
         /* Set primary block based on channel table configurations */
         BPLib_EID_CopyEids(&(NewBundle->blocks.PrimaryBlock.DestEID), CurrCanonConfig->DestEID);
@@ -455,13 +488,13 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         NewBundle->blocks.PrimaryBlock.MonoTime.Time = BPLib_TIME_GetMonotonicTime();
         NewBundle->blocks.PrimaryBlock.MonoTime.BootEra = BPLib_TIME_GetBootEra();
         NewBundle->blocks.PrimaryBlock.Timestamp.CreateTime = BPLib_TIME_GetDtnTime(NewBundle->blocks.PrimaryBlock.MonoTime);
-        NewBundle->blocks.PrimaryBlock.Timestamp.SequenceNumber = BPLib_PI_SequenceNums[ChanId];
+        NewBundle->blocks.PrimaryBlock.Timestamp.SequenceNumber = Inst->ChanCtxt[ChanId].SequenceNum;
 
         /* Update sequence number */
-        BPLib_PI_SequenceNums[ChanId]++;
-        if (BPLib_PI_SequenceNums[ChanId] > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_SEQUENCE_NUM])
+        Inst->ChanCtxt[ChanId].SequenceNum++;
+        if (Inst->ChanCtxt[ChanId].SequenceNum > MaxSequenceNum)
         {
-            BPLib_PI_SequenceNums[ChanId] = 0;
+            Inst->ChanCtxt[ChanId].SequenceNum = 0;
         }
 
         /* Initialize payload block */
@@ -475,15 +508,20 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
         NewBundle->blocks.PayloadHeader.DataOffsetStart = 0;
         NewBundle->blocks.PayloadHeader.DataSize = AduSize;
 
-        /* Initialize the extension block data - parameters have been validated, ignore return code */
-        (void) BPLib_EBP_InitializeExtensionBlocks(NewBundle, ChanId);
+        NewBundle->Meta.LocalBundle = true;
 
-        Status = BPLib_QM_CreateJob(Inst, NewBundle, CHANNEL_IN_PI_TO_EBP, QM_PRI_NORMAL, QM_WAIT_FOREVER);
+        /* Initialize the extension block data - parameters have been validated, ignore return code */
+        (void) BPLib_EBP_InitializeExtensionBlocks(Inst, NewBundle, ChanId);
+
+        Status = BPLib_QM_CreateJob(Inst, NewBundle, CHANNEL_IN_PI_TO_EBP, 
+                                                BPLIB_QM_PRIORITY_NORMAL, QM_WAIT_FOREVER);
     }
 
     if (Status == BPLIB_SUCCESS)
     {
         BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_GENERATED_ACCEPTED, 1);
+        BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_RECV_RATE_BITS_PER_SEC, AduSize * BPLIB_BITS_IN_BYTE);
+        BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_RECV_RATE_BUNDLES_PER_SEC, 1);
     }
     else 
     {
@@ -493,8 +531,6 @@ BPLib_Status_t BPLib_PI_Ingress(BPLib_Instance_t* Inst, uint32_t ChanId,
             "[ADU In #%d]: Failed to ingress an ADU. Error = %d.",
             ChanId, Status);
     }
-
-    BPLib_NC_ReaderUnlock();
 
     return Status;
 }
@@ -511,13 +547,19 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
     {
         return BPLIB_NULL_PTR_ERROR;
     }
-    else if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
-    {
-        *AduSize = 0;
-        return BPLIB_INVALID_CHAN_ID_ERR;
-    }
+
     *AduSize = 0;
 
+    if (ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    {    
+        return BPLIB_INVALID_CHAN_ID_ERR;
+    }
+    else if (BPLib_PI_GetRegistrationState(Inst, ChanId) != BPLIB_PI_ACTIVE)
+    {
+        /* Only deliver ADUs if the registration state is active */
+        return BPLIB_PI_TIMEOUT;
+    }
+    
     /* Get the next bundle in the channel egress queue */
     Status = BPLib_QM_DuctPull(Inst, ChanId, true, Timeout, &Bundle);
     if (Status == BPLIB_SUCCESS)
@@ -530,6 +572,9 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
         {
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, ADU_COUNT_DELIVERED, 1);
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELIVERED, 1);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_DLVR_RATE_BITS_PER_SEC, 
+                                            Bundle->blocks.PayloadHeader.DataSize * BPLIB_BITS_IN_BYTE);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, ADU_DLVR_RATE_BUNDLES_PER_SEC, 1);
 
             *AduSize = Bundle->blocks.PayloadHeader.DataSize;
         }
@@ -550,4 +595,50 @@ BPLib_Status_t BPLib_PI_Egress(BPLib_Instance_t *Inst, uint32_t ChanId, void *Ad
     }
 
     return Status;
+}
+
+BPLib_Status_t BPLib_PI_SetRegistrationState(BPLib_Instance_t *Inst, uint32_t ChanId, uint32_t RegState)
+{
+    BPLib_Bundle_t *Bundle = NULL;
+
+    if (Inst == NULL)
+    {
+        return BPLIB_NULL_PTR_ERROR;
+    }
+    
+    if (ChanId >= BPLIB_MAX_NUM_CHANNELS || BPLib_NC_GetAppState(ChanId) == BPLIB_NC_APP_STATE_REMOVED)
+    {
+        return BPLIB_INVALID_CHAN_ID_ERR;
+    }
+
+    if (RegState >= BPLib_PI_NUM_REG_STATE)
+    {
+        return BPLIB_INV_REG_STATE;
+    }
+
+    Inst->ChanCtxt[ChanId].Config.RegState = RegState;
+
+    if (RegState == BPLIB_PI_PASSIVE_ABANDON)
+    {
+        /* Delete ("abandon") any queued bundles */
+        while (BPLib_QM_WaitQueueTryPull(&Inst->ChannelEgressJobs[ChanId], &Bundle, QM_NO_WAIT))
+        {
+            BPLib_MEM_BundleFree(&Inst->pool, Bundle);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_ABANDONED, 1);
+        }
+    } 
+
+    return BPLIB_SUCCESS;
+}
+
+BPLib_PI_RegistrationState_t BPLib_PI_GetRegistrationState(BPLib_Instance_t *Inst, uint32_t ChanId)
+{
+    if (Inst == NULL || ChanId >= BPLIB_MAX_NUM_CHANNELS)
+    {
+        return BPLIB_PI_PASSIVE_ABANDON;
+    }
+
+    return Inst->ChanCtxt[ChanId].Config.RegState;
 }

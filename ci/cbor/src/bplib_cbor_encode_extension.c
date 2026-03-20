@@ -75,6 +75,14 @@ size_t BPLib_CBOR_EncodeBlockSpecificData(BPLib_ExtensionBlock_t* CurrExtBlock,
             QCBOREncode_AddUInt64(&Context, CurrExtBlock->BlockData.HopCountData.HopCount);
             QCBOREncode_CloseArray(&Context);
         }
+        else if (CurrExtBlock->Header.BlockType == BPLib_BlockType_CTEB)
+        {
+            QCBOREncode_OpenArray(&Context);
+            QCBOREncode_AddUInt64(&Context, CurrExtBlock->BlockData.CustodyBlockData.BundleSeqNum);
+            QCBOREncode_AddUInt64(&Context, CurrExtBlock->BlockData.CustodyBlockData.BundleSeqId);
+            (void) BPLib_CBOR_EncodeEID(&Context, &CurrExtBlock->BlockData.CustodyBlockData.BlockSrcAdminEID);
+            QCBOREncode_CloseArray(&Context);
+        }
         else
         {
             /* should we report an error here? */

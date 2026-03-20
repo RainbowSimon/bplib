@@ -11,6 +11,7 @@ cmake_minimum_required(VERSION 3.5)
 project(BPLIB C)
 
 set(BPLIB_OS_LAYER OSAL CACHE STRING "Operating system adapter layer to enable (POSIX or NASA OSAL)")
+set(BPLIB_MEM_IMPL DEFAULT CACHE STRING "Memory allocation implementation to use (DEFAULT, BEN_ALLOC, or CFE)")
 
 # Check if this is a subdirectory within a larger project, or if it was built standalone
 # This affects how to find dependencies (e.g. OSAL) and whether to install the libraries
@@ -51,6 +52,13 @@ set(BPLIB_VERSION_STRING "3.0.99") # development
 # no extra link libraries at first
 set(BPLIB_SRC)
 set(BPLIB_COMMON_COMPILE_OPTIONS)
+
+if (IS_CFS_ARCH_BUILD)
+  set(BPLIB_MEM_IMPL CFE)
+  add_definitions(-DCFS_BUILD)
+else()
+  set(BPLIB_MEM_IMPL DEFAULT)
+endif()
 
 # If using an external OSAL package, then locate it now
 # This needs to be done at the top level so the imported targets are
@@ -123,6 +131,7 @@ if (IS_CFS_ARCH_BUILD)
   add_cfe_app(bplib ${BPLIB_SRC})
 
   # link with the requisite dependencies
+  set_target_properties(bplib PROPERTIES LINK_FLAGS "-Wl,-rpath,${BPLIB_RUNTIME_SEARCH_PATH}")
   target_link_libraries(bplib qcbor m sqlite3)
 
 else()

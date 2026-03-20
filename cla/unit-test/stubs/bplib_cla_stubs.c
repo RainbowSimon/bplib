@@ -32,10 +32,11 @@
  * Generated stub function for BPLib_CLA_ContactSetup()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_CLA_ContactSetup, BPLib_Status_t);
 
+    UT_GenStub_AddParam(BPLib_CLA_ContactSetup, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_CLA_ContactSetup, uint32_t, ContactId);
 
     UT_GenStub_Execute(BPLib_CLA_ContactSetup, Basic, NULL);
@@ -48,10 +49,11 @@ BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
  * Generated stub function for BPLib_CLA_ContactStart()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_CLA_ContactStart(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_CLA_ContactStart, BPLib_Status_t);
 
+    UT_GenStub_AddParam(BPLib_CLA_ContactStart, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_CLA_ContactStart, uint32_t, ContactId);
 
     UT_GenStub_Execute(BPLib_CLA_ContactStart, Basic, NULL);
@@ -64,10 +66,11 @@ BPLib_Status_t BPLib_CLA_ContactStart(uint32_t ContactId)
  * Generated stub function for BPLib_CLA_ContactStop()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t *Instance, uint32_t ContactId)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_CLA_ContactStop, BPLib_Status_t);
 
+    UT_GenStub_AddParam(BPLib_CLA_ContactStop, BPLib_Instance_t *, Instance);
     UT_GenStub_AddParam(BPLib_CLA_ContactStop, uint32_t, ContactId);
 
     UT_GenStub_Execute(BPLib_CLA_ContactStop, Basic, NULL);
@@ -166,4 +169,21 @@ BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t *Inst, uint32_t ContId, const 
     UT_GenStub_Execute(BPLib_CLA_Ingress, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_CLA_Ingress, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_CLA_SetContactRunState()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_CLA_SetContactRunState(uint32_t ContactId, BPLib_CLA_ContactRunState_t RunState)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_CLA_SetContactRunState, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_CLA_SetContactRunState, uint32_t, ContactId);
+    UT_GenStub_AddParam(BPLib_CLA_SetContactRunState, BPLib_CLA_ContactRunState_t, RunState);
+
+    UT_GenStub_Execute(BPLib_CLA_SetContactRunState, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_CLA_SetContactRunState, BPLib_Status_t);
 }

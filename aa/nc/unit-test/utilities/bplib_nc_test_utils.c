@@ -23,6 +23,7 @@
 /* ======== */
 
 #include "bplib_nc_test_utils.h"
+#include "bplib_cla_handlers.h"
 
 /* =========== */
 /* Global Data */
@@ -165,6 +166,7 @@ void BPLib_NC_Test_Setup(void)
     UT_SetHandlerFunction(UT_KEY(BPLib_AS_Increment),     UT_Handler_BPLib_AS_Increment,     NULL);
     UT_SetHandlerFunction(UT_KEY(BPLib_AS_Decrement),     UT_Handler_BPLib_AS_Decrement,     NULL);
     UT_SetHandlerFunction(UT_KEY(BPA_TABLEP_TableUpdate), UT_Handler_BPA_TABLEP_TableUpdate, NULL);
+    UT_SetHandlerFunction(UT_KEY(BPLib_CLA_GetContactRunState), UT_Handler_BPLib_CLA_GetContactRunState, NULL);
 }
 
 void BPLib_NC_Test_Teardown(void)

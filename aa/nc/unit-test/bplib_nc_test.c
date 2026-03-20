@@ -26,16 +26,20 @@
 #include "bplib_nc_directives.h"
 #include "bplib_nc_test_utils.h"
 #include "bplib_eventids.h"
+#include "bplib_inst.h"
+
+
+BPLib_Instance_t BplibInst;
 
 /* ==================== */
 /* Function Definitions */
 /* ==================== */
 
-void Test_BPLib_NC_Init_Nominal(void)
+void Test_BPLib_NC_Init_Impl_Nominal(void)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
     UtAssert_True(BPLib_NC_ConfigPtrs.ChanConfigPtr      == TestConfigPtrs.ChanConfigPtr,      "BPLib_NC_ConfigPtrs ChanConfigPtr successfully modified");
@@ -51,160 +55,558 @@ void Test_BPLib_NC_Init_Nominal(void)
     UtAssert_True(BPLib_NC_ConfigPtrs.StorConfigPtr      == TestConfigPtrs.StorConfigPtr,      "BPLib_NC_ConfigPtrs StorConfigPtr successfully modified");
 }
 
-void Test_BPLib_NC_Init_AS_Init_Error(void)
-{
-    BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_ERROR);
-
-    Status = BPLib_NC_Init(&TestConfigPtrs);
-
-    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_ERROR);
-}
-
-void Test_BPLib_NC_Init_NullConfigPtrs_Error(void)
+void Test_BPLib_NC_Init_Impl_NullConfigPtrs_Error(void)
 {
     BPLib_Status_t Status;
     BPLib_NC_ConfigPtrs_t* NullConfigPtr;
 
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
-
     NullConfigPtr = NULL;
-    Status = BPLib_NC_Init(NullConfigPtr);
+    Status = BPLib_NC_InitImpl(&BplibInst, NullConfigPtr);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullChanTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullChanTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.ChanConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullContactsTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullContactsTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.ContactsConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullCrsTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullCrsTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.CrsConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullCustodianTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullCustodianTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.CustodianConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullCustodyTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullCustodyTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.CustodyConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullMibPnTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullMibPnTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.MibPnConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullMibPsTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullMibPsTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.MibPsConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullReportTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullReportTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.ReportConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullAuthTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullAuthTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.AuthConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullLatTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullLatTblPtr_Error(void)
 {
     BPLib_Status_t Status;
-
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
 
     TestConfigPtrs.LatConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
 }
 
-void Test_BPLib_NC_Init_NullStorTblPtr_Error(void)
+void Test_BPLib_NC_Init_Impl_NullStorTblPtr_Error(void)
 {
     BPLib_Status_t Status;
 
-    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
-
     TestConfigPtrs.StorConfigPtr = NULL;
-    Status = BPLib_NC_Init(&TestConfigPtrs);
+    Status = BPLib_NC_InitImpl(&BplibInst, &TestConfigPtrs);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_CONFIG_PTRS_ERROR);
+}
+
+void Test_BPLib_NC_Init_Nominal(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+    BPLib_CLA_ContactRunState_t RunState = BPLIB_CLA_TORNDOWN;
+    uint32_t ContId;
+    uint32_t ChanId;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    TestCallbacks.BPA_TABLEP_TableInit = BPA_TABLEP_TableInit;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_FWP_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EM_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_SUCCESS);
+
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
+    {
+        BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].State = BPLIB_NC_APP_STATE_REMOVED;
+    }
+
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
+    {
+        UT_SetDataBuffer(UT_KEY(BPLib_CLA_GetContactRunState), &RunState, sizeof(RunState), false);
+    }
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
+
+    UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
+    UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_AS_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 1);
+    UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 1);
+    UtAssert_STUB_COUNT(BPLib_PI_StopApplication, 0);
+    UtAssert_STUB_COUNT(BPLib_CLA_ContactStop, 0);
+}
+
+/* Test NC initialization when a contact or application needs to be forcefully shut down */
+void Test_BPLib_NC_Init_ForceShutdown(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+    BPLib_CLA_ContactRunState_t RunState = BPLIB_CLA_STARTED;
+    uint32_t ContId;
+    uint32_t ChanId;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    TestCallbacks.BPA_TABLEP_TableInit = BPA_TABLEP_TableInit;
+
+    for (ChanId = 0; ChanId < BPLIB_MAX_NUM_CHANNELS; ChanId++)
+    {
+        BPLib_NC_ChannelContactStatsPayload.ChannelStatus[ChanId].State = BPLIB_NC_APP_STATE_STARTED;
+    }
+
+    for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
+    {
+        UT_SetDataBuffer(UT_KEY(BPLib_CLA_GetContactRunState), &RunState, sizeof(RunState), false);
+    }
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
+
+    UtAssert_STUB_COUNT(BPLib_PI_StopApplication, BPLIB_MAX_NUM_CHANNELS);
+    UtAssert_STUB_COUNT(BPLib_CLA_ContactStop, BPLIB_MAX_NUM_CONTACTS);
+}
+
+void Test_BPLib_NC_Init_FWP_Err(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_FWP_Init), BPLIB_NC_FWP_INIT_ERR);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EM_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_SUCCESS);
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_FWP_INIT_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_Init, 0);
+    UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 0);
+    UtAssert_STUB_COUNT(BPLib_TIME_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_CRC_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_AS_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 0);
+    UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 0);
+}
+
+void Test_BPLib_NC_Init_EM_Err(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_FWP_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EM_Init), BPLIB_NC_EM_INIT_ERR);
+    UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_SUCCESS);
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_EM_INIT_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_TIME_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_CRC_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_AS_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 0);
+    UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 0);
+}
+
+void Test_BPLib_NC_Init_TABLEP_Err(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+    
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    TestCallbacks.BPA_TABLEP_TableInit = BPA_TABLEP_TableInit;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_FWP_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EM_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableInit), BPLIB_NC_TABLEP_INIT_ERR);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_SUCCESS);
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_TABLEP_INIT_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
+    UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
+    UtAssert_STUB_COUNT(BPLib_TIME_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_CRC_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_AS_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 0);
+    UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 0);
+}
+
+#ifdef CFS_BUILD
+void Test_BPLib_NC_Init_TIME_Err(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+    
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    TestCallbacks.BPA_TABLEP_TableInit = BPA_TABLEP_TableInit;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_FWP_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EM_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_Init), BPLIB_NC_TIME_INIT_ERR);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_SUCCESS);
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_TIME_INIT_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
+    UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
+    UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_CRC_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_AS_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 0);
+    UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 0);
+}
+#endif
+
+void Test_BPLib_NC_Init_NC_Err(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+
+    MaxJobs                      = 10;
+    PoolMemLen                   = 100;
+    TestConfigPtrs.AuthConfigPtr = NULL;
+
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    TestCallbacks.BPA_TABLEP_TableInit = BPA_TABLEP_TableInit;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_FWP_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EM_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_SUCCESS);
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_INIT_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
+    UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_AS_Init, 0);
+    UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 0);
+    UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 0);
+}
+
+void Test_BPLib_NC_Init_AS_Err(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+    
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    TestCallbacks.BPA_TABLEP_TableInit = BPA_TABLEP_TableInit;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_FWP_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EM_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_NC_AS_INIT_ERR);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_SUCCESS);
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_AS_INIT_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
+    UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_AS_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 0);
+    UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 0);
+}
+
+void Test_BPLib_NC_Init_QM_Err(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+    
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    TestCallbacks.BPA_TABLEP_TableInit = BPA_TABLEP_TableInit;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_FWP_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EM_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_NC_QM_INIT_ERR);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_SUCCESS);
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_QM_INIT_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
+    UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_AS_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 1);
+    UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 0);
+}
+
+void Test_BPLib_NC_Init_MEM_Err(void)
+{
+    BPLib_Status_t             Status;
+    BPLib_FWP_ProxyCallbacks_t TestCallbacks;
+    BPLib_Instance_t           Instance;
+    uint16_t                   MaxJobs;
+    uint8_t                    PoolMem[100];
+    size_t                     PoolMemLen;
+
+    MaxJobs    = 10;
+    PoolMemLen = 100;
+    
+    memset((void*) &TestCallbacks, 0, sizeof(BPLib_FWP_ProxyCallbacks_t));
+    memset((void*) &Instance, 0, sizeof(BPLib_Instance_t));
+    memset((void*) PoolMem, 0, PoolMemLen);
+
+    TestCallbacks.BPA_TABLEP_TableInit = BPA_TABLEP_TableInit;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_FWP_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_EM_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_TIME_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_AS_Init), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_QM_QueueTableInit), BPLIB_SUCCESS);
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_MEM_PoolInit), BPLIB_NC_MEM_INIT_ERR);
+
+    Status = BPLib_NC_Init(&TestConfigPtrs, &TestCallbacks, &Instance, MaxJobs, PoolMem, PoolMemLen);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_NC_MEM_INIT_ERR);
+
+    UtAssert_STUB_COUNT(BPLib_FWP_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_EM_Init, 1);
+    UtAssert_STUB_COUNT(BPA_TABLEP_TableInit, 1);
+
+    #ifdef CFS_BUILD
+        UtAssert_STUB_COUNT(BPLib_TIME_Init, 1);
+    #endif
+
+    UtAssert_STUB_COUNT(BPLib_CRC_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_AS_Init, 1);
+    UtAssert_STUB_COUNT(BPLib_QM_QueueTableInit, 1);
+    UtAssert_STUB_COUNT(BPLib_MEM_PoolInit, 1);
 }
 
 void Test_BPLib_NC_Noop_Nominal(void)
@@ -218,14 +620,14 @@ void Test_BPLib_NC_Noop_Nominal(void)
 
 void Test_BPLib_NC_AddAllApplications_Nominal(void)
 {
-    BPLib_NC_AddAllApplications();
+    BPLib_NC_AddAllApplications(&BplibInst);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
 
     /* Verify event */
     BPLib_NC_Test_Verify_Event(0, BPLIB_NC_ADD_ALL_APPS_SUCCESS_EID,
-                                "Add all applications directive is unimplemented");
+                                "Successful add-all-applications directive");
 }
 
 void Test_BPLib_NC_AddAllApplications_Error(void)
@@ -247,7 +649,7 @@ void Test_BPLib_NC_StartAllApplications_Nominal(void)
 
     /* Verify event */
     BPLib_NC_Test_Verify_Event(0,BPLIB_NC_START_ALL_APPS_SUCCESS_EID,
-                                "Start all applications directive not implemented");
+                                "Successful start-all-applications directive");
 }
 
 void Test_BPLib_NC_StartAllApplications_Error(void)
@@ -404,7 +806,7 @@ void Test_BPLib_NC_ResetCounter_Nominal(void)
     memset((void*) &Payload, 0, sizeof(BPLib_ResetCounter_Payload_t));
 
     Payload.MibArrayIndex = 4;
-    Payload.Counter       = BUNDLE_COUNT_DELETED_CANCELLED;
+    Payload.Counter       = BUNDLE_COUNT_DELETED_EXPIRED;
 
     BPLib_NC_ResetCounter(Payload);
 
@@ -587,7 +989,7 @@ void Test_BPLib_NC_AddApplication_Nominal(void)
     memset((void*) &Payload, 0, sizeof(BPLib_AddApplication_Payload_t));
 
     Payload.ChanId = 1;
-    BPLib_NC_AddApplication(Payload);
+    BPLib_NC_AddApplication(&BplibInst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
@@ -607,7 +1009,7 @@ void Test_BPLib_NC_AddApplication_Error(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_PI_AddApplication), BPLIB_ERROR);
 
     Payload.ChanId = 2;
-    BPLib_NC_AddApplication(Payload);
+    BPLib_NC_AddApplication(&BplibInst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
@@ -659,29 +1061,38 @@ void Test_BPLib_NC_RemoveApplication_Error(void)
 void Test_BPLib_NC_SetRegistrationState_Nominal(void)
 {
     BPLib_SetRegistrationState_Payload_t Payload;
+    BPLib_Instance_t Inst;
 
-    Payload.ExampleParameter = 3;
-    BPLib_NC_SetRegistrationState(Payload);
+    Payload.ChanId = 0;
+    Payload.RegState = BPLIB_PI_ACTIVE;
+
+    BPLib_NC_SetRegistrationState(&Inst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
 
     /* Verify event */
     BPLib_NC_Test_Verify_Event(0, BPLIB_NC_SET_REGI_STAT_SUCCESS_EID,
-                                "Set registration state directive not implemented, received %d in payload");
+                                "Set the registration state of channel #%d to %d.");
 }
 
 void Test_BPLib_NC_SetRegistrationState_Error(void)
 {
-    /*
     BPLib_SetRegistrationState_Payload_t Payload;
+    BPLib_Instance_t Inst;
 
-    Payload.ExampleParameter = 3;
-    BPLib_NC_SetRegistrationState(Payload);
+    Payload.ChanId = BPLIB_MAX_NUM_CHANNELS;
+    Payload.RegState = BPLIB_PI_ACTIVE;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_PI_SetRegistrationState), BPLIB_INVALID_CHAN_ID_ERR);
+
+    BPLib_NC_SetRegistrationState(&Inst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
-    */
+
+    BPLib_NC_Test_Verify_Event(0, BPLIB_NC_SET_REGI_STAT_ERR_EID,
+                            "Failed to set the registration state of channel #%d to %d, Status=%d.");
 }
 
 void Test_BPLib_NC_StartApplication_Nominal(void)
@@ -1037,7 +1448,7 @@ void Test_BPLib_NC_ContactSetup_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_CLA_ContactSetup), BPLIB_SUCCESS);
 
     Payload.ContactId = 0;
-    BPLib_NC_ContactSetup(Payload);
+    BPLib_NC_ContactSetup(&BplibInst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
@@ -1054,7 +1465,7 @@ void Test_BPLib_NC_ContactSetup_Error(void)
     UT_SetDefaultReturnValue(UT_KEY(BPLib_CLA_ContactSetup), BPLIB_ERROR);
 
     Payload.ContactId = 0;
-    BPLib_NC_ContactSetup(Payload);
+    BPLib_NC_ContactSetup(&BplibInst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
@@ -1067,11 +1478,12 @@ void Test_BPLib_NC_ContactSetup_Error(void)
 void Test_BPLib_NC_ContactStart_Nominal(void)
 {
     BPLib_ContactStart_Payload_t Payload;
+    BPLib_Instance_t Inst;
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_CLA_ContactStart), BPLIB_SUCCESS);
 
     Payload.ContactId = 0;
-    BPLib_NC_ContactStart(Payload);
+    BPLib_NC_ContactStart(&Inst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
@@ -1084,11 +1496,12 @@ void Test_BPLib_NC_ContactStart_Nominal(void)
 void Test_BPLib_NC_ContactStart_Error(void)
 {
     BPLib_ContactStart_Payload_t Payload;
+    BPLib_Instance_t Inst;
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_CLA_ContactStart), BPLIB_ERROR);
 
     Payload.ContactId = 0;
-    BPLib_NC_ContactStart(Payload);
+    BPLib_NC_ContactStart(&Inst, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
@@ -1101,11 +1514,12 @@ void Test_BPLib_NC_ContactStart_Error(void)
 void Test_BPLib_NC_ContactStop_Nominal(void)
 {
     BPLib_ContactStop_Payload_t Payload;
+    BPLib_Instance_t            Instance;
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_CLA_ContactStop), BPLIB_SUCCESS);
 
     Payload.ContactId = 0;
-    BPLib_NC_ContactStop(Payload);
+    BPLib_NC_ContactStop(&Instance, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
@@ -1118,11 +1532,12 @@ void Test_BPLib_NC_ContactStop_Nominal(void)
 void Test_BPLib_NC_ContactStop_Error(void)
 {
     BPLib_ContactStop_Payload_t Payload;
+    BPLib_Instance_t            Instance;
 
     UT_SetDefaultReturnValue(UT_KEY(BPLib_CLA_ContactStop), BPLIB_ERROR);
 
     Payload.ContactId = 0;
-    BPLib_NC_ContactStop(Payload);
+    BPLib_NC_ContactStop(&Instance, Payload);
 
     // Verify directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
@@ -1186,8 +1601,8 @@ void Test_BPLib_NC_AddMibArrayKey_Nominal(void)
                                 "Successful add-mib-array-key directive");
 }
 
-// void Test_BPLib_NC_AddMibArrayKey_Error(void)
-// {
+void Test_BPLib_NC_AddMibArrayKey_Error(void)
+{
 //     BPLib_AddMibArrayKey_Payload_t Payload;
 
 //     /* Force AS_AddMibArrayKey function to return success */
@@ -1202,7 +1617,7 @@ void Test_BPLib_NC_AddMibArrayKey_Nominal(void)
 //     /* Verify event */
 //     BPLib_NC_Test_Verify_Event(0, BPLIB_NC_ADD_MIB_ARR_KEY_ERR_EID,
 //                                 "An error occurred while attempting to add a MIB array key");
-// }
+}
 
 void Test_BPLib_NC_RemoveMibArrayKey_Nominal(void)
 {
@@ -1423,6 +1838,33 @@ void Test_BPLib_NC_PerformSelfTest_Error(void)
     */
 }
 
+void Test_BPLib_NC_CleanupStorage_Nominal(void)
+{
+    BPLib_Instance_t Inst;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_STOR_Cleanup), BPLIB_SUCCESS);
+
+    BPLib_NC_CleanupStorage(&Inst);
+
+    Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_ACCEPTED_DIRECTIVE_COUNT, 1, 1);
+    BPLib_NC_Test_Verify_Event(0, BPLIB_NC_STOR_CLEANUP_INF_EID,
+                                "Storage cleanup has completed successfully.");
+}
+
+void Test_BPLib_NC_CleanupStorage_Error(void)
+{
+    BPLib_Instance_t Inst;
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_STOR_Cleanup), BPLIB_ERROR);
+
+    BPLib_NC_CleanupStorage(&Inst);
+
+    // Verify that the error was reported
+    Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
+    BPLib_NC_Test_Verify_Event(0, BPLIB_NC_STOR_CLEANUP_ERR_EID,
+                                "Storage cleanup failed, RC=%d");
+}
+
 void Test_BPLib_NC_SendNodeMibConfigHk_Nominal(void)
 {
     UT_SetDefaultReturnValue(UT_KEY(BPA_TLMP_SendNodeMibConfigPkt), BPLIB_SUCCESS);
@@ -1588,9 +2030,14 @@ void Test_BPLib_NC_SendStorageHk_Error(void)
 
 void Test_BPLib_NC_SendChannelContactStatHk_Nominal(void)
 {
+    BPLib_Instance_t Inst;
+
+    memset(&Inst, 0, sizeof(BPLib_Instance_t));
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = TestConfigPtrs.ChanConfigPtr;
+
     UT_SetDefaultReturnValue(UT_KEY(BPA_TLMP_SendChannelContactPkt), BPLIB_SUCCESS);
 
-    BPLib_NC_SendChannelContactStatHk();
+    BPLib_NC_SendChannelContactStatHk(&Inst);
 
     // Verify directive counter was not incremented
     UtAssert_STUB_COUNT(BPLib_AS_Increment, 0);
@@ -1598,9 +2045,14 @@ void Test_BPLib_NC_SendChannelContactStatHk_Nominal(void)
 
 void Test_BPLib_NC_SendChannelContactStatHk_Error(void)
 {
+    BPLib_Instance_t Inst;
+
+    memset(&Inst, 0, sizeof(BPLib_Instance_t));
+    BPLib_NC_ConfigPtrs.ChanConfigPtr = TestConfigPtrs.ChanConfigPtr;
+
     UT_SetDefaultReturnValue(UT_KEY(BPA_TLMP_SendChannelContactPkt), BPLIB_ERROR);
 
-    BPLib_NC_SendChannelContactStatHk();
+    BPLib_NC_SendChannelContactStatHk(&Inst);
 
     // Verify rejected directive counter was incremented
     Test_BPLib_NC_VerifyIncrement(BPLIB_EID_INSTANCE, BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT, 1, 1);
@@ -1756,6 +2208,12 @@ void Test_BPLib_NC_GetSetAppState_Nominal(void)
     UtAssert_EQ(BPLib_NC_ApplicationState_t, BPLIB_NC_APP_STATE_STARTED, State);
 }
 
+void Test_BPLib_NC_GetSetAppState_InvChanId(void)
+{
+    UtAssert_EQ(BPLib_NC_ApplicationState_t, BPLib_NC_GetAppState(BPLIB_MAX_NUM_CHANNELS), BPLIB_NC_APP_STATE_REMOVED);
+    UtAssert_VOIDCALL(BPLib_NC_SetAppState(BPLIB_MAX_NUM_CHANNELS, BPLIB_NC_APP_STATE_REMOVED));
+}
+
 void Test_BPLib_NC_TableUpdate_Success_Nominal(void)
 {
     BPLib_Status_t Status;
@@ -1764,7 +2222,7 @@ void Test_BPLib_NC_TableUpdate_Success_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableUpdate), BPLIB_SUCCESS);
 
     /* Run function under test */
-    Status = BPLib_NC_ConfigUpdate();
+    Status = BPLib_NC_ConfigUpdate(&BplibInst);
 
     /* Show that the function returned success */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
@@ -1798,7 +2256,7 @@ void Test_BPLib_NC_TableUpdate_Update_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableUpdate), BPLIB_TBL_UPDATED);
 
     /* Run function under test */
-    Status = BPLib_NC_ConfigUpdate();
+    Status = BPLib_NC_ConfigUpdate(&BplibInst);
 
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
 
@@ -1839,7 +2297,7 @@ void Test_BPLib_NC_TableUpdate_Error_Nominal(void)
     UT_SetDefaultReturnValue(UT_KEY(BPA_TABLEP_TableUpdate), BPLIB_ERROR);
 
     /* Run function under test */
-    Status = BPLib_NC_ConfigUpdate();
+    Status = BPLib_NC_ConfigUpdate(&BplibInst);
 
     /* Show that the function returned an error */
     UtAssert_EQ(BPLib_Status_t, Status, BPLIB_ERROR);
@@ -1862,22 +2320,41 @@ void Test_BPLib_NC_TableUpdate_Error_Nominal(void)
     BPNode_Test_TABLEP_TableUpdate(10, BPLIB_STORAGE);
 }
 
+void Test_BPLib_NC_RunMaintenanceActivities_Nominal(void)
+{
+    BPLib_Instance_t Inst;
+
+    UtAssert_VOIDCALL(BPLib_NC_RunMaintenanceActivities(&Inst));
+}
+
 void TestBplibNc_Register(void)
 {
+    ADD_TEST(Test_BPLib_NC_Init_Impl_Nominal);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullConfigPtrs_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullChanTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullContactsTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullCrsTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullCustodianTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullCustodyTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullMibPnTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullMibPsTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullReportTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullAuthTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullLatTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_Impl_NullStorTblPtr_Error);
     ADD_TEST(Test_BPLib_NC_Init_Nominal);
-    ADD_TEST(Test_BPLib_NC_Init_AS_Init_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullConfigPtrs_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullChanTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullContactsTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullCrsTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullCustodianTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullCustodyTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullMibPnTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullMibPsTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullReportTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullAuthTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullLatTblPtr_Error);
-    ADD_TEST(Test_BPLib_NC_Init_NullStorTblPtr_Error);
+    ADD_TEST(Test_BPLib_NC_Init_ForceShutdown);
+    ADD_TEST(Test_BPLib_NC_Init_FWP_Err);
+    ADD_TEST(Test_BPLib_NC_Init_EM_Err);
+
+    #ifdef CFS_BUILD
+    ADD_TEST(Test_BPLib_NC_Init_TIME_Err);
+    #endif
+
+    ADD_TEST(Test_BPLib_NC_Init_NC_Err);
+    ADD_TEST(Test_BPLib_NC_Init_AS_Err);
+    ADD_TEST(Test_BPLib_NC_Init_QM_Err);
+    ADD_TEST(Test_BPLib_NC_Init_MEM_Err);
     ADD_TEST(Test_BPLib_NC_Noop_Nominal);
     ADD_TEST(Test_BPLib_NC_AddAllApplications_Nominal);
     ADD_TEST(Test_BPLib_NC_AddAllApplications_Error);
@@ -1943,7 +2420,7 @@ void TestBplibNc_Register(void)
     ADD_TEST(Test_BPLib_NC_ContactTeardown_Nominal);
     ADD_TEST(Test_BPLib_NC_ContactTeardown_Error);
     ADD_TEST(Test_BPLib_NC_AddMibArrayKey_Nominal);
-    // ADD_TEST(Test_BPLib_NC_AddMibArrayKey_Error);
+    ADD_TEST(Test_BPLib_NC_AddMibArrayKey_Error);
     ADD_TEST(Test_BPLib_NC_RemoveMibArrayKey_Nominal);
     ADD_TEST(Test_BPLib_NC_RemoveMibArrayKey_Error);
     ADD_TEST(Test_BPLib_NC_SetMibItem_NodeNom);
@@ -1957,6 +2434,8 @@ void TestBplibNc_Register(void)
     ADD_TEST(Test_BPLib_NC_RemoveStorageAllocation_Error);
     ADD_TEST(Test_BPLib_NC_PerformSelfTest_Nominal);
     ADD_TEST(Test_BPLib_NC_PerformSelfTest_Error);
+    ADD_TEST(Test_BPLib_NC_CleanupStorage_Nominal);
+    ADD_TEST(Test_BPLib_NC_CleanupStorage_Error);
     ADD_TEST(Test_BPLib_NC_SendNodeMibConfigHk_Nominal);
     ADD_TEST(Test_BPLib_NC_SendNodeMibConfigHk_Error);
     ADD_TEST(Test_BPLib_NC_SendSourceMibConfigHk_Nominal);
@@ -1982,7 +2461,10 @@ void TestBplibNc_Register(void)
     ADD_TEST(Test_BPLib_NC_MIBConfigPSTblValidateFunc_Nominal);
     ADD_TEST(Test_BPLib_NC_MIBConfigPSTblValidateFunc_Invalid);
     ADD_TEST(Test_BPLib_NC_GetSetAppState_Nominal);
+    ADD_TEST(Test_BPLib_NC_GetSetAppState_InvChanId);
     ADD_TEST(Test_BPLib_NC_TableUpdate_Success_Nominal);
     ADD_TEST(Test_BPLib_NC_TableUpdate_Update_Nominal);
     ADD_TEST(Test_BPLib_NC_TableUpdate_Error_Nominal);
+
+    ADD_TEST(Test_BPLib_NC_RunMaintenanceActivities_Nominal);
 }

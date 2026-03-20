@@ -22,11 +22,11 @@
 ** Includes
 */
 #include "bpcat_types.h"
-#include "bpcat_fwp.h"
 #include "bpcat_task.h"
 #include "bpcat_cla.h"
 #include "bpcat_nc.h"
 #include "bplib.h"
+#include "bpcat_fwp.h"
 
 #include "osapi.h"
 #include <unistd.h>
@@ -39,6 +39,7 @@
 #define BPCAT_MEMPOOL_LEN               8000000u
 #define BPCAT_QM_MAX_JOBS               1024u
 #define BPCAT_JOBS_PER_CYCLE            100
+#define BPCAT_MAX_BUNDLES_LOADED        60000
 
 /*******************************************************************************
 ** Global State
@@ -46,6 +47,7 @@
 BPCat_AppData_t AppData;
 static BPCat_Task_t CLAOutTask;
 static BPCat_Task_t CLAInTask;
+static BPCat_Task_t MaintTask;
 static BPCat_Task_t GenWorkers[BPCAT_NUM_GEN_WORKER];
 
 /*******************************************************************************
@@ -76,6 +78,44 @@ static void* BPCat_GenWorkerTaskFunc(BPCat_AppData_t* gAppData)
     {
         BPLib_QM_WorkerRunJob(&gAppData->BPLibInst, 0, BPCAT_GEN_WORKER_TIMEOUT);
     }
+    return NULL;
+}
+
+/*******************************************************************************
+** Maintenance Task Functions
+*/
+static BPLib_Status_t BPCat_MaintTaskSetup()
+{
+    /* Maintenance task does not need any pre-task setup */
+    printf("BPLib maintenance task reporting for duty\n");
+    return BPCAT_SUCCESS;
+}
+
+static BPLib_Status_t BPCat_MaintTaskTeardown()
+{
+    /* Maintenance task does not need any post-task teardown */
+    return BPCAT_SUCCESS;
+}
+
+static void* BPCat_MaintTaskFunc(BPCat_AppData_t* gAppData)
+{
+    BPLib_Status_t Status;
+
+    /* Run until a SIGINT (CTRL-C) sets AppData.Running to 0 */
+    while (gAppData->Running)
+    {
+        sleep(BPCAT_CYCLE_TIME_SECS);
+
+        Status = BPLib_STOR_Egress(&(gAppData->BPLibInst), BPCAT_MAX_BUNDLES_LOADED);
+
+        if (Status != BPLIB_SUCCESS)
+        {
+            fprintf(stderr, "Error egressing from storage\n");
+        }
+        
+        BPLib_NC_RunMaintenanceActivities(&(gAppData->BPLibInst));
+    }
+
     return NULL;
 }
 
@@ -123,6 +163,18 @@ static BPCat_Status_t BPCat_StartTasks()
         return Status;
     }
 
+    /* Maintenance task init */
+    MaintTask.TaskSetup = BPCat_MaintTaskSetup;
+    MaintTask.TaskTeardown = BPCat_MaintTaskTeardown;
+    MaintTask.TaskFunc = BPCat_MaintTaskFunc;
+    MaintTask.TaskId = 0;
+    Status = BPCat_TaskInit(&MaintTask);
+    if (Status != BPCAT_SUCCESS)
+    {
+        fprintf(stderr, "Failed to initialize Maintenance Task\n");
+        return Status;
+    }
+
     /* Start the generic workers first so BPLib is ready to do work */
     for (i = 0; i < BPCAT_NUM_GEN_WORKER; i++)
     {
@@ -148,6 +200,14 @@ static BPCat_Status_t BPCat_StartTasks()
         return Status;
     }
 
+    /* Start the Maintenance Task */
+    Status = BPCat_TaskStart(&MaintTask, &AppData);
+    if (Status != BPCAT_SUCCESS)
+    {
+        fprintf(stderr, "Failed to start Maintenance Task\n");
+        return Status;
+    }    
+
     return BPCAT_SUCCESS;
 }
 
@@ -167,6 +227,13 @@ static void BPCat_StopTasks()
     {
         fprintf(stderr, "Failed to stop CLA-Ingress Task\n");
     }
+
+    /* Stop the maintenance task */
+    Status = BPCat_TaskStop(&MaintTask);
+    if (Status != BPCAT_SUCCESS)
+    {
+        fprintf(stderr, "Failed to stop Maintenance Task\n");
+    }    
 
     /* Stop Generic Workers */
     for (i = 0; i < BPCAT_NUM_GEN_WORKER; i++)
@@ -188,70 +255,60 @@ static void BPCat_StopTasks()
 */
 void BPCat_Main()
 {
-    BPLib_Status_t BPLibStatus;
     BPCat_Status_t Status;
 
-    /* FWP */
-    Status = BPCat_FWP_Init();
-    if (Status != BPLIB_SUCCESS)
-    {
-        fprintf(stderr, "Failed to init FWP\n");
-        return;
-    }
+    BPLib_FWP_ProxyCallbacks_t Callbacks = {
+        /* Time Proxy */
+        .BPA_TIMEP_GetMonotonicTime          = BPA_TIMEP_GetMonotonicTime,
+        .BPA_TIMEP_GetHostEpoch              = BPA_TIMEP_GetHostEpoch,
+        .BPA_TIMEP_GetHostClockState         = BPA_TIMEP_GetHostClockState,
+        .BPA_TIMEP_GetHostTime               = BPA_TIMEP_GetHostTime,
+        /* Perf Log Proxy */
+        .BPA_PERFLOGP_Entry                  = BPA_PERFLOGP_Entry,
+        .BPA_PERFLOGP_Exit                   = BPA_PERFLOGP_Exit,
+        /* Table Proxy */
+        .BPA_TABLEP_TableInit                = BPA_TABLEP_TableInit,
+        .BPA_TABLEP_TableUpdate              = BPA_TABLEP_TableUpdate,
+        /* Event Proxy */
+        .BPA_EVP_Init                        = BPA_EVP_Init,
+        .BPA_EVP_SendEvent                   = BPA_EVP_SendEvent,
+        /* ADU Proxy */
+        .BPA_ADUP_AddApplication             = BPA_ADUP_AddApplication,
+        .BPA_ADUP_StartApplication           = BPA_ADUP_StartApplication,
+        .BPA_ADUP_StopApplication            = BPA_ADUP_StopApplication,
+        .BPA_ADUP_RemoveApplication          = BPA_ADUP_RemoveApplication,
+        /* Telemetry Proxy */
+        .BPA_TLMP_SendNodeMibConfigPkt       = BPA_TLMP_SendNodeMibConfigPkt,
+        .BPA_TLMP_SendPerSourceMibConfigPkt  = BPA_TLMP_SendPerSourceMibConfigPkt,
+        .BPA_TLMP_SendNodeMibCounterPkt      = BPA_TLMP_SendNodeMibCounterPkt,
+        .BPA_TLMP_SendPerSourceMibCounterPkt = BPA_TLMP_SendPerSourceMibCounterPkt,
+        .BPA_TLMP_SendNodeMibReportsPkt      = BPA_TLMP_SendNodeMibReportsPkt,
+        .BPA_TLMP_SendChannelContactPkt      = BPA_TLMP_SendChannelContactPkt,
+        .BPA_TLMP_SendStoragePkt             = BPA_TLMP_SendStoragePkt,
+        /* CLA Proxy */
+        .BPA_CLAP_ContactSetup               = BPA_CLAP_ContactSetup,
+        .BPA_CLAP_ContactStart               = BPA_CLAP_ContactStart,
+        .BPA_CLAP_ContactStop                = BPA_CLAP_ContactStop,
+        .BPA_CLAP_ContactTeardown            = BPA_CLAP_ContactTeardown,
+    };
 
-    /* EM */
-    BPLibStatus = BPLib_EM_Init();
-    if (BPLibStatus != BPLIB_SUCCESS)
+    /* MEM */
+    AppData.PoolMem = calloc(BPCAT_MEMPOOL_LEN, 1);
+    if (AppData.PoolMem == NULL)
     {
-        fprintf(stderr, "Failed to init EM\n");
+        fprintf(stderr, "Failed to calloc() memory for the BPLib Memory Pool\n");
         return;
     }
-
-    /* Time Management */
-    /* Without modifying the TIME module, I was unable to get this to work.
-    ** We need a follow-on ticket to abstract the TIME module and AS module's
-    ** use of OSAL. Because no data is being put into BPLib, nothing will break
-    ** by having this commented out.
-    BPLibStatus = BPLib_TIME_Init();
-    if (BPLibStatus != BPLIB_SUCCESS)
-    {
-        printf("Failed to init time\n");
-        return;
-    }
-    */
 
     /* Node Config */
-    Status = BPCat_NC_Init(&AppData.ConfigPtrs);
+    Status = BPCat_NC_Init(&AppData.ConfigPtrs, (void*) &Callbacks, &(AppData.BPLibInst), BPCAT_QM_MAX_JOBS, AppData.PoolMem, (size_t) BPCAT_MEMPOOL_LEN);
     if (Status != BPCAT_SUCCESS)
     {
         fprintf(stderr, "Failed to init NC\n");
         return;
     }
 
-    /* MEM */
-    AppData.PoolMem = (void *)calloc(BPCAT_MEMPOOL_LEN, 1);
-    if (AppData.PoolMem == NULL)
-    {
-        fprintf(stderr, "Failed to calloc() memory for the BPLib Memory Pool\n");
-        return;
-    }
-    BPLibStatus = BPLib_MEM_PoolInit(&AppData.BPLibInst.pool, AppData.PoolMem,
-        (size_t)BPCAT_MEMPOOL_LEN);
-    if (BPLibStatus != BPLIB_SUCCESS)
-    {
-        fprintf(stderr, "Failed to initialize MEM\n");
-        return;
-    }
-
-    /* QM */
-    BPLibStatus = BPLib_QM_QueueTableInit(&AppData.BPLibInst, BPCAT_QM_MAX_JOBS);
-    if (BPLibStatus != BPLIB_SUCCESS)
-    {
-        fprintf(stderr, "Failed to initialize QM\n");
-        return;
-    }
-
-    /* Start CLAs and Gen Workers */
+    /* Start child tasks */
     Status = BPCat_StartTasks();
     if (Status != BPCAT_SUCCESS)
     {
@@ -260,8 +317,8 @@ void BPCat_Main()
     }
 
     /* Enable Contacts */
-    if (BPLib_CLA_ContactSetup(0) != BPLIB_SUCCESS || 
-        BPLib_CLA_ContactStart(0) != BPLIB_SUCCESS)
+    if (BPLib_CLA_ContactSetup(&AppData.BPLibInst, 0) != BPLIB_SUCCESS || 
+        BPLib_CLA_ContactStart(&AppData.BPLibInst, 0) != BPLIB_SUCCESS)
     {
         fprintf(stderr, "Failed to setup and start contact 0\n");
     }
@@ -270,20 +327,6 @@ void BPCat_Main()
     while (AppData.Running)
     {
         sleep(BPCAT_CYCLE_TIME_SECS);
-
-        BPLibStatus = BPLib_STOR_FlushPending(&AppData.BPLibInst);
-
-        if (BPLibStatus != BPLIB_SUCCESS)
-        {
-            fprintf(stderr, "Error flushing storage\n");
-        }
-        
-        BPLibStatus = BPLib_STOR_GarbageCollect(&AppData.BPLibInst);
-        
-        if (BPLibStatus != BPLIB_SUCCESS)
-        {
-            fprintf(stderr, "Error garbage collecting\n");
-        }
     }   
 
     /* Exit Signal Received */

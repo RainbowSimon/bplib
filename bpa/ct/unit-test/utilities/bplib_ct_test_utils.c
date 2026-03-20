@@ -23,6 +23,14 @@
 */
 
 #include "bplib_ct_test_utils.h"
+#include "bplib_nc.h"
+
+/*
+** Global Data
+*/
+
+BPLib_Instance_t BplibInst;
+
 
 /*
 ** Function Definitions
@@ -32,6 +40,16 @@ void BPLib_CT_Test_Setup(void)
 {
     /* Initialize test environment to default state for every test */
     UT_ResetState(0);
+
+    memset(&BplibInst, 0, sizeof(BPLib_Instance_t));
+
+    BplibInst.ContCtxt[0].Config.CSSizeTrigger = 40;
+    BplibInst.ContCtxt[1].Config.CSSizeTrigger = 30;
+    BplibInst.ContCtxt[1].Config.CSTimeTrigger = 20;
+
+    UT_SetHandlerFunction(UT_KEY(BPLib_AS_Increment), UT_Handler_BPLib_AS_Increment, NULL);
+    UT_SetHandlerFunction(UT_KEY(BPLib_AS_Decrement), UT_Handler_BPLib_AS_Decrement, NULL);
+
 }
 
 void BPLib_CT_Test_Teardown(void)
@@ -42,4 +60,5 @@ void BPLib_CT_Test_Teardown(void)
 void UtTest_Setup(void)
 {
     TestBplibCt_Register();
+    TestBplibCtInternal_Register();
 }

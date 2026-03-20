@@ -32,10 +32,11 @@
  * Generated stub function for BPLib_EBP_InitializeExtensionBlocks()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_EBP_InitializeExtensionBlocks(BPLib_Bundle_t *Bundle, uint32_t ChanId)
+BPLib_Status_t BPLib_EBP_InitializeExtensionBlocks(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle, uint32_t ChanId)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_EBP_InitializeExtensionBlocks, BPLib_Status_t);
 
+    UT_GenStub_AddParam(BPLib_EBP_InitializeExtensionBlocks, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_EBP_InitializeExtensionBlocks, BPLib_Bundle_t *, Bundle);
     UT_GenStub_AddParam(BPLib_EBP_InitializeExtensionBlocks, uint32_t, ChanId);
 

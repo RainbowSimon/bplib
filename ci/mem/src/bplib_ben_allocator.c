@@ -17,32 +17,10 @@
  * National Aeronautics and Space Administration. All Rights Reserved.
  *
  */
-
-#include "bplib_ben_allocator.h"
-#include "bplib_em.h"
-#include "bplib_eventids.h"
+#include "bplib_mem_impl.h"
 
 #include <stdio.h>
 #include <string.h>
-
-/*
- * C implementation of Ben Kenwright's "Fast Efficient Fixed-Size Memory Pool"
- * https://arxiv.org/pdf/2210.16471
-*/
-
-/*******************************************************************************
- * Defines and Types
- */
-
-/* It is expected that the memory returned from this allocator will be cast
-** to structs with valid alignment. For these casts to work, the memory
-** that backs this pool needs to start on a boundary of the largest primitive
-** type. It is assumed that this alignment will be sizeof(uint64_t) because
-** many RFC 9171 fields require this type to be supported natively.
-*/
-#define BPLIB_BEN_ALLOC_LARGEST_ALIGNMENT  (8u)
-
-typedef uint64_t MemIndex_t;
 
 /*******************************************************************************
  * Static Functions
@@ -102,7 +80,7 @@ BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* pool, void* init_mem
     pool->mem_next = pool->mem_start;
     pool->num_free = pool->num_blocks;
     pool->num_init = 0;
-    printf("MEM: %lu blocks at init\n", pool->num_blocks);
+    printf("MEM BEN_ALLOC: %lu blocks at init\n", pool->num_blocks);
 
     return BPLIB_SUCCESS;
 }
@@ -116,7 +94,7 @@ void BPLib_MEM_PoolImplDestroy(BPLib_MEM_PoolImpl_t* pool)
     memset(pool, 0, sizeof(BPLib_MEM_PoolImpl_t));
 }
 
-void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* pool)
+void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* pool, size_t Size)
 {
     MemIndex_t* p;
     void* ret;
@@ -169,4 +147,14 @@ void BPLib_MEM_PoolImplFree(BPLib_MEM_PoolImpl_t* pool, void* to_free)
         pool->mem_next = (void*)(to_free);
     }
     pool->num_free++;
+}
+
+size_t BPLib_MEM_GetBytesInUseImpl(BPLib_MEM_PoolImpl_t *Pool)
+{
+    return ((Pool->num_blocks - Pool->num_free) * Pool->block_size);
+}
+
+size_t BPLib_MEM_GetBytesFreeImpl(BPLib_MEM_PoolImpl_t *Pool)
+{
+    return (Pool->num_free * Pool->block_size);
 }

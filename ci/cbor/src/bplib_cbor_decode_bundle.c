@@ -25,22 +25,17 @@
 
 #include <stdio.h>
 
-#define CBOR_INDEF_ARR_START          ((uint8_t)0x9F)
-#define CBOR_INDEF_ARR_END            ((uint8_t)0xFF)
-
-
 /*******************************************************************************
 * Exported Functions
 */
 
-BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundleLen, BPLib_Bundle_t* bundle)
+BPLib_Status_t BPLib_CBOR_DecodeBundle(BPLib_Instance_t *Inst, const void* CandBundle, 
+                                            size_t CandBundleLen, BPLib_Bundle_t* bundle)
 {
     BPLib_Status_t Status;
     QCBORDecodeContext ctx;
-    QCBORError QStatus;
     QCBORError NextElementType;
-    QCBORItem OuterArr;
-    QCBORItem PeekItem;
+    QCBORItem Item;
     UsefulBufC UBufC;
     uint32_t CanonicalBlockIndex = 0;
 
@@ -57,13 +52,10 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundle
     }
 
     /* Verify bundle is not longer than maximum allowed length */
-    BPLib_NC_ReaderLock();
-    if (CandBundleLen > BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SET_MAX_BUNDLE_LENGTH])
+    if (CandBundleLen > BPLib_NC_GetNodeConfigValue(PARAM_SET_MAX_BUNDLE_LENGTH))
     {
-        BPLib_NC_ReaderUnlock();
         return BPLIB_CBOR_DEC_BUNDLE_TOO_LONG_DEC_ERR;
     }
-    BPLib_NC_ReaderUnlock();
 
     #if (BPLIB_CBOR_DEBUG_PRINTS_ENABLED)
     printf("Candidate bundle received with size %lu: \n", CandBundleLen);
@@ -84,9 +76,8 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundle
     QCBORDecode_Init(&ctx, UBufC, QCBOR_DECODE_MODE_NORMAL);
 
     /* Enter Array */
-    QCBORDecode_EnterArray(&ctx, &OuterArr);
-    QStatus = QCBORDecode_GetError(&ctx);
-    if (QStatus != QCBOR_SUCCESS)
+    Status = BPLib_QCBOR_EnterIndefiniteArray(&ctx, &Item);
+    if (Status != BPLIB_SUCCESS)
     {
         return BPLIB_CBOR_DEC_BUNDLE_ENTER_ARRAY_ERR;
     }
@@ -105,14 +96,14 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundle
     for (CanonicalBlockIndex = 0; CanonicalBlockIndex < BPLIB_MAX_NUM_CANONICAL_BLOCKS; CanonicalBlockIndex++)
     {
         /* If we're out of elements, break */
-        NextElementType = QCBORDecode_PeekNext(&ctx, &PeekItem);
+        NextElementType = QCBORDecode_PeekNext(&ctx, &Item);
         if (NextElementType == QCBOR_ERR_NO_MORE_ITEMS)
         {
             break;
         }
 
         /* Decode the next canonical block */
-        Status = BPLib_CBOR_DecodeCanonical(&ctx, bundle, CanonicalBlockIndex, CandBundle);
+        Status = BPLib_CBOR_DecodeCanonical(Inst, &ctx, bundle, CanonicalBlockIndex, CandBundle);
         if (Status != BPLIB_SUCCESS)
         {
             break;
@@ -122,15 +113,14 @@ BPLib_Status_t BPLib_CBOR_DecodeBundle(const void* CandBundle, size_t CandBundle
     if (Status == BPLIB_SUCCESS)
     {
         /* Sanity check that we didn't have extra data left after decoding the canonical blocks */
-        NextElementType = QCBORDecode_PeekNext(&ctx, &PeekItem);
+        NextElementType = QCBORDecode_PeekNext(&ctx, &Item);
         if (NextElementType != QCBOR_ERR_NO_MORE_ITEMS)
         {
             return BPLIB_CBOR_DEC_BUNDLE_MAX_BLOCKS_ERR;
         }
 
-        QCBORDecode_ExitArray(&ctx);
-        QStatus = QCBORDecode_GetError(&ctx);
-        if (QStatus != QCBOR_SUCCESS)
+        Status = BPLib_QCBOR_ExitArray(&ctx);
+        if (Status != BPLIB_SUCCESS)
         {
             return BPLIB_CBOR_DEC_BUNDLE_EXIT_ARRAY_ERR;
         }

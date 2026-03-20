@@ -22,21 +22,11 @@
 
 #include "bplib_api_types.h"
 
-/* Important Note:
-** Load batch loads integers into memory. It does not load bundle blobs. You can
-** set this number north of 50k and everything works fine. The tradeoff is how much
-** system memory the array of integers takes up. For performance analysis, I reccommend setting
-** this to a higher value using a CMake variable.  In general, nothing can keep up with how
-** fast we egress (good problem to have right now). To perform rate limiting, BPNode or other
-** callee application needs to manage how fast it calls CLA/Channel Egress API.
-*/
-#ifndef BPLIB_STOR_LOADBATCHSIZE
-#define BPLIB_STOR_LOADBATCHSIZE 30000
-#endif
 
-typedef struct BPLib_STOR_LoadBatch
+
+typedef struct
 {
-    int64_t BundleIDs[BPLIB_STOR_LOADBATCHSIZE];
+    int64_t BundleRowIDs[BPLIB_STOR_LOADBATCHSIZE];
     size_t Size;
     size_t ReadIndex;
 } BPLib_STOR_LoadBatch_t;
@@ -49,9 +39,9 @@ bool BPLib_STOR_LoadBatch_IsEmpty(BPLib_STOR_LoadBatch_t* Batch);
 
 bool BPLib_STOR_LoadBatch_IsConsumed(BPLib_STOR_LoadBatch_t* Batch);
 
-BPLib_Status_t BPLib_STOR_LoadBatch_AddID(BPLib_STOR_LoadBatch_t* Batch, int64_t BundleID);
+BPLib_Status_t BPLib_STOR_LoadBatch_AddID(BPLib_STOR_LoadBatch_t* Batch, int64_t BundleRowID);
 
-BPLib_Status_t BPLib_STOR_LoadBatch_PeekNextID(BPLib_STOR_LoadBatch_t* Batch, int64_t *BundleID);
+BPLib_Status_t BPLib_STOR_LoadBatch_PeekNextID(BPLib_STOR_LoadBatch_t* Batch, int64_t *BundleRowID);
 
 BPLib_Status_t BPLib_STOR_LoadBatch_AdvanceReader(BPLib_STOR_LoadBatch_t* Batch);
 

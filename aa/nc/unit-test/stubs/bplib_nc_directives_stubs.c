@@ -32,8 +32,9 @@
  * Generated stub function for BPLib_NC_AddAllApplications()
  * ----------------------------------------------------
  */
-void BPLib_NC_AddAllApplications(void)
+void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst)
 {
+    UT_GenStub_AddParam(BPLib_NC_AddAllApplications, BPLib_Instance_t *, Inst);
 
     UT_GenStub_Execute(BPLib_NC_AddAllApplications, Basic, NULL);
 }
@@ -43,8 +44,9 @@ void BPLib_NC_AddAllApplications(void)
  * Generated stub function for BPLib_NC_AddApplication()
  * ----------------------------------------------------
  */
-void BPLib_NC_AddApplication(const BPLib_AddApplication_Payload_t Payload)
+void BPLib_NC_AddApplication(BPLib_Instance_t *Inst, const BPLib_AddApplication_Payload_t Payload)
 {
+    UT_GenStub_AddParam(BPLib_NC_AddApplication, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_NC_AddApplication, const BPLib_AddApplication_Payload_t, Payload);
 
     UT_GenStub_Execute(BPLib_NC_AddApplication, Basic, NULL);
@@ -136,6 +138,18 @@ void BPLib_NC_AddStorageAllocation(const BPLib_AddStorageAllocation_Payload_t Pa
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_NC_CleanupStorage()
+ * ----------------------------------------------------
+ */
+void BPLib_NC_CleanupStorage(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_AddParam(BPLib_NC_CleanupStorage, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_NC_CleanupStorage, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_NC_ClearVolatile()
  * ----------------------------------------------------
  */
@@ -150,8 +164,9 @@ void BPLib_NC_ClearVolatile(void)
  * Generated stub function for BPLib_NC_ContactSetup()
  * ----------------------------------------------------
  */
-void BPLib_NC_ContactSetup(const BPLib_ContactSetup_Payload_t Payload)
+void BPLib_NC_ContactSetup(BPLib_Instance_t *Inst, const BPLib_ContactSetup_Payload_t Payload)
 {
+    UT_GenStub_AddParam(BPLib_NC_ContactSetup, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_NC_ContactSetup, const BPLib_ContactSetup_Payload_t, Payload);
 
     UT_GenStub_Execute(BPLib_NC_ContactSetup, Basic, NULL);
@@ -162,8 +177,9 @@ void BPLib_NC_ContactSetup(const BPLib_ContactSetup_Payload_t Payload)
  * Generated stub function for BPLib_NC_ContactStart()
  * ----------------------------------------------------
  */
-void BPLib_NC_ContactStart(const BPLib_ContactStart_Payload_t Payload)
+void BPLib_NC_ContactStart(BPLib_Instance_t *Inst, const BPLib_ContactStart_Payload_t Payload)
 {
+    UT_GenStub_AddParam(BPLib_NC_ContactStart, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_NC_ContactStart, const BPLib_ContactStart_Payload_t, Payload);
 
     UT_GenStub_Execute(BPLib_NC_ContactStart, Basic, NULL);
@@ -174,8 +190,9 @@ void BPLib_NC_ContactStart(const BPLib_ContactStart_Payload_t Payload)
  * Generated stub function for BPLib_NC_ContactStop()
  * ----------------------------------------------------
  */
-void BPLib_NC_ContactStop(const BPLib_ContactStop_Payload_t Payload)
+void BPLib_NC_ContactStop(BPLib_Instance_t *Inst, const BPLib_ContactStop_Payload_t Payload)
 {
+    UT_GenStub_AddParam(BPLib_NC_ContactStop, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_NC_ContactStop, const BPLib_ContactStop_Payload_t, Payload);
 
     UT_GenStub_Execute(BPLib_NC_ContactStop, Basic, NULL);
@@ -409,8 +426,9 @@ void BPLib_NC_ResetSourceCounters(const BPLib_ResetSourceCounters_Payload_t Payl
  * Generated stub function for BPLib_NC_SendChannelContactStatHk()
  * ----------------------------------------------------
  */
-void BPLib_NC_SendChannelContactStatHk(void)
+void BPLib_NC_SendChannelContactStatHk(BPLib_Instance_t *Instance)
 {
+    UT_GenStub_AddParam(BPLib_NC_SendChannelContactStatHk, BPLib_Instance_t *, Instance);
 
     UT_GenStub_Execute(BPLib_NC_SendChannelContactStatHk, Basic, NULL);
 }
@@ -500,8 +518,9 @@ void BPLib_NC_SetMibItem(const BPLib_SetMibItem_Payload_t Payload)
  * Generated stub function for BPLib_NC_SetRegistrationState()
  * ----------------------------------------------------
  */
-void BPLib_NC_SetRegistrationState(const BPLib_SetRegistrationState_Payload_t Payload)
+void BPLib_NC_SetRegistrationState(BPLib_Instance_t *Inst, const BPLib_SetRegistrationState_Payload_t Payload)
 {
+    UT_GenStub_AddParam(BPLib_NC_SetRegistrationState, BPLib_Instance_t *, Inst);
     UT_GenStub_AddParam(BPLib_NC_SetRegistrationState, const BPLib_SetRegistrationState_Payload_t, Payload);
 
     UT_GenStub_Execute(BPLib_NC_SetRegistrationState, Basic, NULL);

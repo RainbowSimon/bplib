@@ -26,12 +26,13 @@
 #include "bplib_as_internal.h"
 #include "bplib_fwp.h"
 #include "bplib_time.h"
+#include "bplib_inst.h"
 
 /* ==================== */
 /* Function Definitions */
 /* ==================== */
 
-BPLib_Status_t BPLib_AS_Init(void)
+BPLib_Status_t BPLib_AS_Init(BPLib_Instance_t *Inst)
 {
     BPLib_Status_t Status;
 
@@ -39,7 +40,7 @@ BPLib_Status_t BPLib_AS_Init(void)
 
     /* Instantiate all payloads under the stewardship of AS */
     BPLib_AS_ResetAllCounters();
-    BPLib_AS_InitializeReportsHkTlm();
+    BPLib_AS_InitializeReportsHkTlm(Inst);
 
     return Status;
 }
@@ -120,6 +121,35 @@ void BPLib_AS_Decrement(BPLib_EID_t EID, BPLib_AS_Counter_t Counter, uint32_t Am
     //     /* Allow counters to be modified by other tasks after operation has finished */
     //     BPLib_AS_UnlockCounters();
     // }
+}
+
+void BPLib_AS_IncrementRate(BPLib_Instance_t *Inst, BPLib_EID_t *EID, BPLib_AS_RateReport_t Rate, uint64_t Amount)
+{
+    if (Inst == NULL || EID == NULL || Rate >= BPLIB_AS_NUM_RATES_TO_REPORT)
+    {
+        return;
+    }
+    else if (BPLib_EID_IsMatch(EID, &BPLIB_EID_INSTANCE))
+    {
+        BPLib_AS_LockCounters();
+
+        /* 
+        ** Base value of bits/bundles ingressed is tracked here and then when a reports
+        ** HK packet is requested, this value is divided by seconds elapsed to get actual
+        ** rate
+        */
+        Inst->As.CurrRates[Rate] += Amount;
+
+        BPLib_AS_UnlockCounters();
+    }
+    /* Potential future extension of per-source reports packet */
+    // else
+    // { 
+    //     BPLib_AS_LockCounters();
+
+    //     BPLib_AS_UnlockCounters();
+    // }
+
 }
 
 BPLib_Status_t BPLib_AS_ResetCounter(uint16_t MibArrayIndex, BPLib_AS_Counter_t Counter)
@@ -212,7 +242,6 @@ void BPLib_AS_ResetBundleCounters()
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED]                   = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED_EXPIRED]           = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED_HOP_EXCEEDED]      = 0;
-    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED_INVALID_PAYLOAD]   = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED_NO_STORAGE]        = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED_TOO_LONG]          = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED_TRAFFIC_PARED]     = 0;
@@ -231,9 +260,10 @@ void BPLib_AS_ResetBundleCounters()
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_FRAGMENT]        = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_REJECTED]        = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_MAX_BSR_RATE_EXCEEDED]     = 0;
-    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_NO_FURTHER_INFO]           = 0;
+    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_ACCEPTED_CUSTODY]          = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_REASSEMBLED]               = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_RECEIVED]                  = 0;
+    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_RECEIVED_ADMIN_RECORD]     = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_RECEIVED_BSR_ACCEPTED]     = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_RECEIVED_BSR_DELETED]      = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_RECEIVED_BSR_DELIVERED]    = 0;
@@ -251,7 +281,7 @@ void BPLib_AS_ResetBundleCounters()
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_UNINTELLIGIBLE_BLOCK]      = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_UNINTELLIGIBLE_EID]        = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_UNPROCESSED_BLOCKS]        = 0;
-    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_CUSTODY_SIGNAL_RECEIVED]   = 0;
+    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_CCS_RECEIVED]              = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_BSR_ACCEPTED]    = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_BSR_DELETED]     = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_BSR_DELIVERED]   = 0;
@@ -263,11 +293,9 @@ void BPLib_AS_ResetBundleCounters()
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CRS_DELIVERED]   = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CRS_FORWARDED]   = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CRS_RECEIVED]    = 0;
-    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CUSTODY]         = 0;
-    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_INVALID_PRIMARY_BLOCK]     = 0;
+    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_GENERATED_CCS]             = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_MAX_BSR_RATE_EXCEEDED]     = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_MAX_CRS_RATE_EXCEEDED]     = 0;
-    BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_NO_FURTHER_INFO]           = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_REASSEMBLED]               = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_RECEIVED]                  = 0;
     BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_RECEIVED_BSR_ACCEPTED]     = 0;
@@ -300,12 +328,6 @@ BPLib_Status_t BPLib_AS_ResetErrorCounters(uint16_t MibArrayIndex)
         BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_CUSTODY_REJECTED]                                      = 0;
         BPLib_AS_SourceCountersPayload.MibArray[MibArrayIndex].SourceCounters[BUNDLE_COUNT_CUSTODY_REJECTED]          = 0;
 
-        BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED_BAD_EID]                                       = 0;
-        BPLib_AS_SourceCountersPayload.MibArray[MibArrayIndex].SourceCounters[BUNDLE_COUNT_DELETED_BAD_EID]           = 0;
-
-        BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED_INVALID_PAYLOAD]                               = 0;
-        BPLib_AS_SourceCountersPayload.MibArray[MibArrayIndex].SourceCounters[BUNDLE_COUNT_DELETED_INVALID_PAYLOAD]   = 0;
-
         BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_DELETED_NO_STORAGE]                                    = 0;
         BPLib_AS_SourceCountersPayload.MibArray[MibArrayIndex].SourceCounters[BUNDLE_COUNT_DELETED_NO_STORAGE]        = 0;
 
@@ -335,7 +357,6 @@ BPLib_Status_t BPLib_AS_ResetErrorCounters(uint16_t MibArrayIndex)
 
         /* Reset the error counters that are node-only */
         BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_AGENT_REJECTED_DIRECTIVE_COUNT]                              = 0;
-        BPLib_AS_NodeCountersPayload.NodeCounters[BUNDLE_COUNT_INVALID_PRIMARY_BLOCK]                                 = 0;
 
         /* Allow counters to be modified by other tasks after operation has finished */
         BPLib_AS_UnlockCounters();
@@ -405,8 +426,12 @@ BPLib_Status_t BPLib_AS_SendNodeMibReportsHk(BPLib_Instance_t *Inst)
     {
         return BPLIB_NULL_PTR_ERROR;
     }
+
+    BPLib_AS_LockCounters();
     
     BPLib_AS_UpdateReportsHkTlm(Inst);
+
+    BPLib_AS_UnlockCounters();
 
     return BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendNodeMibReportsPkt(&BPLib_AS_NodeReportsPayload);
 }

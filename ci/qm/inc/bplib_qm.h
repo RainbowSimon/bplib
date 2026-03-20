@@ -24,48 +24,16 @@
 #include "bplib_api_types.h"
 #include "bplib_qm_waitqueue.h"
 #include "bplib_qm_job.h"
-#include "bplib_mem.h"
-#include "bplib_cfg.h"
-#include "bplib_stor.h"
 
-#define QM_NO_WAIT          0L  /**< Constant representing no wait */
-#define QM_WAIT_FOREVER    -1L /**< Constant representing an indefinite wait */
-#define QM_MAX_GEN_WORKERS  8L /**< Constant representing maximum allowed generic workers */
-
-#ifndef BPLIB_QM_TX_QUEUE_DEPTH
-#define BPLIB_QM_TX_QUEUE_DEPTH 2048
-#endif
+#define QM_STANDARD_WAIT    100L /**< Standard wait of 100msec */
+#define QM_NO_WAIT          0L   /**< Constant representing no wait */
+#define QM_WAIT_FOREVER    -1L   /**< Constant representing an indefinite wait */
+#define QM_MAX_GEN_WORKERS  8L   /**< Constant representing maximum allowed generic workers */
 
 typedef struct BPLib_QM_WorkerState
 {
     BPLib_QM_Job_t CurrJob;
 } BPLib_QM_WorkerState_t;
-
-/**
- * @struct BPLib_Instance
- * @brief Represents a QM instance with its associated job memory and wait queues.
- * 
- * This structure holds the necessary data for queue management, job states, 
- * and memory allocations within BPLib.
- */
-struct BPLib_Instance
-{
-    BPLib_MEM_Pool_t pool; /**< Memory pool for this BPLib Instance */
-
-    /* Worker Management */
-    pthread_mutex_t RegisteredWorkersLock; // Move to bplib_os
-    BPLib_QM_WorkerState_t RegisteredWorkers[QM_MAX_GEN_WORKERS];
-    size_t NumWorkers;
-
-    /* Queues */
-    BPLib_QM_WaitQueue_t GenericWorkerJobs; /**< Queue of jobs */
-    BPLib_QM_WaitQueue_t BundleCacheList; /**< Queue of bundles in cache */
-    BPLib_QM_WaitQueue_t ContactEgressJobs[BPLIB_MAX_NUM_CONTACTS]; /**< Queue of contact egress jobs */
-    BPLib_QM_WaitQueue_t ChannelEgressJobs[BPLIB_MAX_NUM_CHANNELS]; /**< Queue of channel egress jobs */
-
-    /* Bundle Storage */
-    BPLib_BundleCache_t BundleStorage;
-};
 
 /**
  * @brief Initializes the Queue Table for a specific instance.
@@ -115,11 +83,45 @@ BPLib_Status_t BPLib_QM_RegisterWorker(BPLib_Instance_t* inst, int32_t* WorkerID
  */
 BPLib_Status_t BPLib_QM_WorkerRunJob(BPLib_Instance_t* inst, int32_t WorkerID, int TimeoutMs);
 
+/**
+ * @brief Check if system is idle
+ * 
+ * This function checks if any of the ingress or egress queues are active and only returns
+ * true if they are all inactive.
+ * 
+ * @param[in] Inst The bplib instance
+ * 
+ * @return Whether the system is idle or not
+ */
+bool BPLib_QM_IsSystemIdle(BPLib_Instance_t* Inst);
 
+/**
+ * @brief Check if ingress is idle
+ * 
+ * This function checks if the jobs queue (effectively the ingress queue) is empty and if
+ * so, returns true
+ * 
+ * @param[in] Inst The bplib instance
+ * 
+ * @return Whether ingress is idle or not
+ */
 bool BPLib_QM_IsIngressIdle(BPLib_Instance_t* Inst);
 
-
-bool BPLib_QM_IsDuctEmpty(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery);
+/**
+ * @brief Check if a duct is active
+ * 
+ * This function checks if a given egress duct is set to a channel_started/contact_started
+ * state and if so, if the duct contains anything. If both cases are true, the duct is
+ * active
+ * 
+ * @param[in] Inst The bplib instance
+ * @param[in] EgressID Corresponds to either a contact or channel ID for an egress duct
+ * @param[in] LocalDelivery Identifies the duct as either a channel duct (local) or a 
+ *                          contact duct (remote)
+ * 
+ * @return Whether the duct is active or not
+ */
+bool BPLib_QM_IsDuctActive(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery);
 
 
 BPLib_Status_t BPLib_QM_DuctPull(BPLib_Instance_t* Inst, uint32_t EgressID, bool LocalDelivery,

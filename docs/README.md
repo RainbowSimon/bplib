@@ -1,6 +1,6 @@
 # BPLib Documentation
 
-Most official documentation on the GSFC Bundle Protocol v7 implementation can be found at: https://github.com/nasa/bp/tree/main/docs. This directory includes some legal forms, documentation for older versions of bplib, and doxygen source files.
+Most official documentation on the GSFC Bundle Protocol implementation can be found at: https://github.com/nasa/bp/tree/main/docs. This directory includes some legal forms, documentation for older versions of bplib, doxygen source files, and some supplemental design documents.
 
 ## Building Doxygen API Guide
 

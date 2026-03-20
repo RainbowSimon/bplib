@@ -23,6 +23,7 @@
 /* ======== */
 
 #include "bplib_eid.h"
+#include <stdio.h>
 
 /* =========== */
 /* Global Data */
@@ -60,7 +61,11 @@ bool BPLib_EID_IsValid(BPLib_EID_t* EID)
 {
     bool IsValid;
 
-    if (EID->Scheme == BPLIB_EID_SCHEME_DTN)
+    if (EID == NULL)
+    {
+        IsValid = false;
+    }
+    else if (EID->Scheme == BPLIB_EID_SCHEME_DTN)
     {
         /* Only dtn:none is accepted in the DTN scheme right now */
         IsValid = BPLib_EID_IsMatch(EID, &BPLIB_EID_DTN_NONE);
@@ -163,13 +168,51 @@ bool BPLib_EID_IsValid(BPLib_EID_t* EID)
 
 bool BPLib_EID_PatternIsValid(BPLib_EID_Pattern_t* EID_Pattern)
 {
-    return (EID_Pattern->MaxAllocator >= EID_Pattern->MinAllocator &&
-            EID_Pattern->MaxNode      >= EID_Pattern->MinNode      &&
-            EID_Pattern->MaxService   >= EID_Pattern->MinService);
+    if (EID_Pattern == NULL)
+    {
+        return false;
+    }
+    /* Pattern maximums must be greater than or equal to their relative minimums */
+    if (EID_Pattern->MaxAllocator  >= EID_Pattern->MinAllocator &&
+        EID_Pattern->MaxNode       >= EID_Pattern->MinNode      &&
+        EID_Pattern->MaxService    >= EID_Pattern->MinService)
+    {
+        /* Check if pattern corresponds to dtn:none/ipn:0.0.0/ipn:0.0 */
+        if (EID_Pattern->MinAllocator == 0 && EID_Pattern->MaxAllocator == 0 &&
+            EID_Pattern->MinNode      == 0 && EID_Pattern->MaxNode      == 0 &&
+            EID_Pattern->MinService   == 0 && EID_Pattern->MaxService   == 0)
+        {
+            return true;
+        }
+        /* Check for validity of non-null ipn EIDs (node range must always be nonzero) */
+        else if (EID_Pattern->Scheme == BPLIB_EID_SCHEME_IPN && EID_Pattern->MaxNode != 0)
+        {
+            /* Three digit ipn EIDs must have a nonzero allocator */
+            if (EID_Pattern->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_THREE_DIGIT &&
+                    EID_Pattern->MaxAllocator != 0)
+            {
+                return true;
+            }
+            /* Two digit ipn EIDs must have a zeroed out allocator */
+            else if (EID_Pattern->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT && 
+                     EID_Pattern->MinAllocator == 0 && EID_Pattern->MaxAllocator == 0)
+            {
+                return true;
+            }
+
+        }
+    }
+    
+    return false;
 }
 
 bool BPLib_EID_IsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID_Reference)
 {
+    if (EID_Actual == NULL || EID_Reference == NULL)
+    {
+        return false;
+    }
+
     return (EID_Actual->Scheme       == EID_Reference->Scheme       &&
             EID_Actual->IpnSspFormat == EID_Reference->IpnSspFormat &&
             EID_Actual->Allocator    == EID_Reference->Allocator    &&
@@ -179,24 +222,29 @@ bool BPLib_EID_IsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID_Ref
 
 bool BPLib_EID_NodeIsMatch(const BPLib_EID_t* EID_Actual, const BPLib_EID_t* EID_Reference)
 {
+    if (EID_Actual == NULL || EID_Reference == NULL)
+    {
+        return false;
+    }
+
     return (EID_Actual->Scheme       == EID_Reference->Scheme       &&
             EID_Actual->IpnSspFormat == EID_Reference->IpnSspFormat &&
             EID_Actual->Allocator    == EID_Reference->Allocator    &&
             EID_Actual->Node         == EID_Reference->Node);
 }
 
-void BPLib_EID_CopyEids(BPLib_EID_t *EID_Actual, BPLib_EID_t EID_Reference)
+void BPLib_EID_CopyEids(BPLib_EID_t *EID_Destination, BPLib_EID_t EID_Source)
 {
-    if (EID_Actual == NULL)
+    if (EID_Destination == NULL)
     {
         return;
     }
 
-    EID_Actual->Allocator = EID_Reference.Allocator;
-    EID_Actual->IpnSspFormat = EID_Reference.IpnSspFormat;
-    EID_Actual->Node = EID_Reference.Node;
-    EID_Actual->Scheme = EID_Reference.Scheme;
-    EID_Actual->Service = EID_Reference.Service;
+    EID_Destination->Allocator    = EID_Source.Allocator;
+    EID_Destination->IpnSspFormat = EID_Source.IpnSspFormat;
+    EID_Destination->Node         = EID_Source.Node;
+    EID_Destination->Scheme       = EID_Source.Scheme;
+    EID_Destination->Service      = EID_Source.Service;
 }
 
 void BPLib_EID_CopyEidPatterns(BPLib_EID_Pattern_t *EID_Actual, BPLib_EID_Pattern_t EID_Reference)
@@ -223,7 +271,11 @@ bool BPLib_EID_PatternIsMatch(BPLib_EID_t* EID_Actual, BPLib_EID_Pattern_t* EID_
     IsMatch = true;
 
     /* Input verification */
-    if (BPLib_EID_PatternIsValid(EID_Pattern))
+    if (EID_Actual == NULL || EID_Pattern == NULL)
+    {
+        IsMatch = false;
+    }
+    else if (BPLib_EID_PatternIsValid(EID_Pattern))
     { /* The pattern is considered valid */
         if (EID_Actual->Scheme == EID_Pattern->Scheme)
         { /* The EID schemes are compatible for comparison */
@@ -260,4 +312,94 @@ bool BPLib_EID_PatternIsMatch(BPLib_EID_t* EID_Actual, BPLib_EID_Pattern_t* EID_
     }
 
     return IsMatch;
+}
+
+bool BPLib_EID_PatternsAreMatch(BPLib_EID_Pattern_t* PatternActual, BPLib_EID_Pattern_t* PatternReference)
+{
+    if (PatternActual == NULL || PatternReference == NULL)
+    {
+        return false;
+    }
+
+    return (PatternActual->Scheme       == PatternReference->Scheme &&
+            PatternActual->IpnSspFormat == PatternReference->IpnSspFormat &&
+            PatternActual->MaxAllocator == PatternReference->MaxAllocator &&
+            PatternActual->MinAllocator == PatternReference->MinAllocator &&
+            PatternActual->MaxNode      == PatternReference->MaxNode &&
+            PatternActual->MinNode      == PatternReference->MinNode &&
+            PatternActual->MaxService   == PatternReference->MaxService &&
+            PatternActual->MinService   == PatternReference->MinService);
+}
+
+void BPLib_EID_GetPatternString(BPLib_EID_Pattern_t* Pattern, char* StrBuf, size_t StrLen)
+{
+    if (Pattern == NULL || StrBuf == NULL)
+    {
+        return;
+    }
+
+    if (Pattern->Scheme == BPLIB_EID_SCHEME_DTN)
+    {
+        strncpy(StrBuf, "dtn:none", StrLen);
+    }
+    else if (Pattern->Scheme == BPLIB_EID_SCHEME_IPN)
+    {
+        if (Pattern->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT)
+        {
+            snprintf(StrBuf, StrLen, "ipn:[%ld-%ld].[%ld-%ld]",
+                        Pattern->MinNode, Pattern->MaxNode, 
+                        Pattern->MinService, Pattern->MaxService);
+        }
+        else if (Pattern->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_THREE_DIGIT)
+        {
+            snprintf(StrBuf, StrLen, "ipn:[%ld-%ld].[%ld-%ld].[%ld-%ld]",
+                        Pattern->MinAllocator, Pattern->MaxAllocator,
+                        Pattern->MinNode, Pattern->MaxNode, 
+                        Pattern->MinService, Pattern->MaxService);            
+        }
+        else
+        {
+            strncpy(StrBuf, "INVALID EID", StrLen);
+        }
+    }
+    else
+    {
+        strncpy(StrBuf, "INVALID EID", StrLen);
+    }
+
+    return;
+}
+
+void BPLib_EID_GetString(BPLib_EID_t* EID, char* StrBuf, size_t StrLen)
+{
+    if (EID == NULL || StrBuf == NULL)
+    {
+        return;
+    }
+
+    if (EID->Scheme == BPLIB_EID_SCHEME_DTN)
+    {
+        strncpy(StrBuf, "dtn:none", StrLen);
+    }
+    else if (EID->Scheme == BPLIB_EID_SCHEME_IPN)
+    {
+        if (EID->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_TWO_DIGIT)
+        {
+            snprintf(StrBuf, StrLen, "ipn:%ld.%ld", EID->Node, EID->Service);
+        }
+        else if (EID->IpnSspFormat == BPLIB_EID_IPN_SSP_FORMAT_THREE_DIGIT)
+        {
+            snprintf(StrBuf, StrLen, "ipn:%ld.%ld.%ld", EID->Allocator, EID->Node, EID->Service);          
+        }
+        else
+        {
+            strncpy(StrBuf, "INVALID EID", StrLen);
+        }
+    }
+    else
+    {
+        strncpy(StrBuf, "INVALID EID", StrLen);
+    }
+
+    return;
 }

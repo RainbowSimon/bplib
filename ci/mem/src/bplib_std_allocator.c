@@ -18,28 +18,17 @@
  *
  */
 
-#include "bplib_std_allocator.h"
+#include "bplib_mem_impl.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* pool, const void* init_mem,
-    size_t mem_len, uint32_t block_size)
+BPLib_Status_t BPLib_MEM_PoolImplInit(BPLib_MEM_PoolImpl_t* pool, void* init_mem,
+    size_t mem_len, size_t block_size)
 {
-    if (pool == NULL)
-    {
-        return BPLIB_ERROR;
-    }
-    if (init_mem != NULL)
-    {
-        printf("WARNING: STDALLOC doesn't actually use the init_mem param: It just calls malloc()\n");
-    }
+    printf("WARNING: STDALLOC doesn't actually limit memory based on the parameters passed in, it just calls malloc()\n");
 
-    memset(pool, 0, sizeof(BPLib_MEM_PoolImpl_t));
-    pool->mem = (void*)init_mem;
-    pool->size = 0;
-    pool->block_size = block_size;
     return BPLIB_SUCCESS;
 }
 
@@ -49,15 +38,24 @@ void BPLib_MEM_PoolImplDestroy(BPLib_MEM_PoolImpl_t* pool)
     {
         return;
     }
-    memset(pool, 0, sizeof(BPLib_MEM_PoolImpl_t));
 }
 
-void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* pool)
+void* BPLib_MEM_PoolImplAlloc(BPLib_MEM_PoolImpl_t* Pool, size_t Size)
 {
-    return malloc(pool->block_size);
+    return malloc(Size);
 }
 
-void BPLib_MEM_PoolImplFree(BPLib_MEM_PoolImpl_t* pool, void* to_free)
+void BPLib_MEM_PoolImplFree(BPLib_MEM_PoolImpl_t* Pool, void* to_free)
 {
     free(to_free);
+}
+
+size_t BPLib_MEM_GetBytesInUseImpl(BPLib_MEM_PoolImpl_t *Pool)
+{
+    return 0;
+}
+
+size_t BPLib_MEM_GetBytesFreeImpl(BPLib_MEM_PoolImpl_t *Pool)
+{
+    return 0;
 }

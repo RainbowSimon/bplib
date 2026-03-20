@@ -28,6 +28,8 @@
 #include "bplib_fwp.h"
 #include "bplib_nc.h"
 #include "bplib_stor.h"
+#include "bplib_ct.h"
+#include "bplib_inst.h"
 
 /* =========== */
 /* Global Data */
@@ -42,6 +44,7 @@ volatile BPLib_CLA_ContactRunState_t BPLib_CLA_ContactRunStates[BPLIB_MAX_NUM_CO
 /* BPLib_CLA_Ingress - Received candidate bundles from CL */
 BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t* Inst, uint32_t ContId, const void *Bundle, size_t Size, uint32_t Timeout)
 {
+    BPLib_Status_t Status;
 
     if ((Inst == NULL) || (Bundle == NULL))
     {
@@ -57,8 +60,7 @@ BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t* Inst, uint32_t ContId, const 
     if (BPLib_CLA_IsAControlMsg((const uint8_t*)Bundle, Size))
     {
         /* Processes the control message and pass to BI*/
-        BPLib_CLA_ProcessControlMessage((BPLib_CLA_CtrlMsg_t*)Bundle);
-        return BPLIB_SUCCESS;
+        Status = BPLib_CLA_ProcessControlMessage((BPLib_CLA_CtrlMsg_t*)Bundle);
     }
     else
     {        
@@ -66,8 +68,22 @@ BPLib_Status_t BPLib_CLA_Ingress(BPLib_Instance_t* Inst, uint32_t ContId, const 
         /* Note: An argument can be made to simply implement RecvFullBundleIn here
         * and do away with BI_RecvFullBundleIn()
         */
-        return BPLib_BI_RecvFullBundleIn(Inst, Bundle, Size, ContId);
+        Status = BPLib_BI_RecvFullBundleIn(Inst, Bundle, Size, ContId);
+
+        if (Status == BPLIB_SUCCESS)
+        {
+            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_RECEIVED, 1);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_RATE_BITS_PER_SEC, Size * BPLIB_BITS_IN_BYTE);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_RATE_BUNDLES_PER_SEC, 1);
+        }
+        else
+        {
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_REJECT_RATE_BITS_PER_SEC, Size * BPLIB_BITS_IN_BYTE);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_INGRESS_REJECT_RATE_BUNDLES_PER_SEC, 1);
+        }
     }
+
+    return Status;
 }
 
 /* BPLib_CLA_Egress - Receive bundles from BI and send bundles out to CL */
@@ -87,17 +103,20 @@ BPLib_Status_t BPLib_CLA_Egress(BPLib_Instance_t* Inst, uint32_t ContId, void *B
         *Size = 0;
         return BPLIB_INVALID_CONT_ID_ERR;
     }
+
     *Size = 0;
 
     /* Try to pull bundle from the duct using user-specified timeout. */
     Status = BPLib_QM_DuctPull(Inst, ContId, false, Timeout, &Bundle);
-    if (Status == BPLIB_SUCCESS)
+    if (Status == BPLIB_SUCCESS && Bundle != NULL)
     {
         /* Copy the bundle to the CLA buffer */
         Status = BPLib_BI_BlobCopyOut(Bundle, BundleOut, BufLen, Size);
         if (Status == BPLIB_SUCCESS)
         {
             BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_FORWARDED, 1);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_EGRESS_RATE_BITS_PER_SEC, *Size * BPLIB_BITS_IN_BYTE);
+            BPLib_AS_IncrementRate(Inst, &BPLIB_EID_INSTANCE, BUNDLE_EGRESS_RATE_BUNDLES_PER_SEC, 1);
         }
 
         /* Free the bundle blocks */
@@ -118,42 +137,79 @@ BPLib_Status_t BPLib_CLA_ContactsTblValidateFunc(void *TblData)
     BPLib_CLA_ContactsTable_t *TblDataPtr = (BPLib_CLA_ContactsTable_t *)TblData;
     uint32_t ContId;
     uint32_t DestIdIdx;
+    BPLib_EID_Pattern_t* TempEidArr[BPLIB_MAX_NUM_CONTACTS * BPLIB_MAX_CONTACT_DEST_EIDS];
+    uint32_t ArrLen = 0;
+    uint32_t ArrIdx1;
+    uint32_t ArrIdx2;
+    char EidStr[BPLIB_MAX_STR_LENGTH];
 
     for (ContId = 0; ContId < BPLIB_MAX_NUM_CONTACTS; ContId++)
     {
         /* Validate destination EIDs */
         for (DestIdIdx = 0; DestIdIdx < BPLIB_MAX_CONTACT_DEST_EIDS; DestIdIdx++)
         {
-            if (TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx].Scheme == BPLIB_EID_SCHEME_DTN ||
-                !BPLib_EID_PatternIsValid(&TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx]))
+            /* Check only EIDs with a non-zero scheme */
+            if (TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx].Scheme != BPLIB_EID_SCHEME_RESERVED)
             {
-                return BPLIB_INVALID_CONFIG_ERR;
+                if (TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx].Scheme == BPLIB_EID_SCHEME_DTN ||
+                    !BPLib_EID_PatternIsValid(&TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx]))
+                {
+                    return BPLIB_INVALID_CONFIG_ERR;
+                }
+
+                /* Copy pattern reference into flat array */
+                TempEidArr[ArrLen] = &TblDataPtr->ContactSet[ContId].DestEIDs[DestIdIdx];
+                ArrLen++;
             }
         }
 
         /* Validate retransmit timeout */
-        if (TblDataPtr->ContactSet[ContId].RetransmitTimeout > BPLIB_MAX_RETRANSMIT_ALLOWED)
+        if (TblDataPtr->ContactSet[ContId].RetransmitTimeout > BPLIB_MAX_RETRANSMIT_ALLOWED ||
+            TblDataPtr->ContactSet[ContId].RetransmitTimeout < BPLIB_MIN_RETRANSMIT_ALLOWED)
         {
             return BPLIB_INVALID_CONFIG_ERR;
         }
 
         /* Validate CS time trigger */
-        if (TblDataPtr->ContactSet[ContId].CSTimeTrigger > BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED)
+        if (TblDataPtr->ContactSet[ContId].CSTimeTrigger > BPLIB_MAX_CS_TIME_TRIGGER_ALLOWED ||
+            TblDataPtr->ContactSet[ContId].CSTimeTrigger < BPLIB_MIN_CS_TIME_TRIGGER_ALLOWED)
         {
             return BPLIB_INVALID_CONFIG_ERR;
         }
 
         /* Validate CS size trigger */
-        if (TblDataPtr->ContactSet[ContId].CSSizeTrigger > BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED)
+        if (TblDataPtr->ContactSet[ContId].CSSizeTrigger > BPLIB_MAX_CS_SIZE_TRIGGER_ALLOWED ||
+            TblDataPtr->ContactSet[ContId].CSSizeTrigger < BPLIB_MIN_CS_SIZE_TRIGGER_ALLOWED)
         {
             return BPLIB_INVALID_CONFIG_ERR;
+        }
+
+        /* Custody signals must be generated at a faster rate than retransmissions */
+        if (TblDataPtr->ContactSet[ContId].CSTimeTrigger > TblDataPtr->ContactSet[ContId].RetransmitTimeout)
+        {
+            return BPLIB_INVALID_CONFIG_ERR;
+        }
+    }
+
+    /* Look for duplicate EIDs */
+    for (ArrIdx1 = 0; ArrIdx1 < ArrLen; ArrIdx1++)
+    {
+        for (ArrIdx2 = 0; ArrIdx2 < ArrIdx1; ArrIdx2++)
+        {
+            if (BPLib_EID_PatternsAreMatch(TempEidArr[ArrIdx1], TempEidArr[ArrIdx2]))
+            {
+                BPLib_EID_GetPatternString(TempEidArr[ArrIdx1], EidStr, BPLIB_MAX_STR_LENGTH);
+                BPLib_EM_SendEvent(BPLIB_CLA_DUPLICATE_EIDS_WRN_EID, BPLib_EM_EventType_WARNING,
+                                    "Duplicate destination EIDs detected in contact table, %s.",
+                                    EidStr);
+            }
         }
     }
 
     return BPLIB_SUCCESS;
 }
 
-BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactSetup(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     /*
     1) Checks if path is available for assignment
@@ -163,24 +219,41 @@ BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
     */
 
     BPLib_Status_t              Status;
-    BPLib_CLA_ContactsSet_t     ContactInfo;
     BPLib_CLA_ContactRunState_t RunState;
 
     if (ContactId < BPLIB_MAX_NUM_CONTACTS)
     {
-        BPLib_NC_ReaderLock();
-        ContactInfo = BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId];
-        BPLib_NC_ReaderUnlock();
-        
         (void) BPLib_CLA_GetContactRunState(ContactId, &RunState); /* Ignore return since ContactId is already valid */
 
         if (RunState == BPLIB_CLA_TORNDOWN)
-        { /* Contact has been not been setup if the state is anything other than torn down */
-            Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactSetup(ContactId, ContactInfo);
-
-            if (Status == BPLIB_SUCCESS)
+        { 
+            /* Contact has been not been setup if the state is anything other than torn down */
+            
+            BPLib_NC_ReaderLock();
+            if (BPLib_NC_ConfigPtrs.ContactsConfigPtr == NULL)
             {
-                (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_SETUP); /* Ignore return since pre-call run state is valid */
+                return BPLIB_NULL_PTR_ERROR;
+            }
+
+            memcpy(&Inst->ContCtxt[ContactId].Config, 
+                &BPLib_NC_ConfigPtrs.ContactsConfigPtr->ContactSet[ContactId], sizeof(BPLib_CLA_ContactsSet_t));
+            BPLib_NC_ReaderUnlock();
+
+            Status = BPLib_STOR_SetNewRetransmitTrigger(Inst, ContactId);            
+            if (Status != BPLIB_SUCCESS)
+            {
+                BPLib_EM_SendEvent(BPLIB_CLA_RESET_TRIGGERS_DBG_EID, BPLib_EM_EventType_DEBUG,
+                                    "Setting new retransmission triggers for stored bundles on contact %d failed, Status = %d.",
+                                    ContactId, Status);                
+            }
+            else
+            {
+                Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactSetup(ContactId);
+
+                if (Status == BPLIB_SUCCESS)
+                {
+                    (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_SETUP); /* Ignore return since pre-call run state is valid */
+                }                
             }
         }
         else if (RunState == BPLIB_CLA_SETUP)
@@ -213,55 +286,57 @@ BPLib_Status_t BPLib_CLA_ContactSetup(uint32_t ContactId)
     return Status;
 }
 
-BPLib_Status_t BPLib_CLA_ContactStart(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactStart(BPLib_Instance_t *Inst, uint32_t ContactId)
 {
     BPLib_Status_t              Status;
     BPLib_CLA_ContactRunState_t RunState;
 
-    if (ContactId < BPLIB_MAX_NUM_CONTACTS)
+    if (ContactId >= BPLIB_MAX_NUM_CONTACTS)
     {
-        (void) BPLib_CLA_GetContactRunState(ContactId, &RunState); /* Ignore return status since ContactId is valid */
-        if (RunState == BPLIB_CLA_SETUP || RunState == BPLIB_CLA_STOPPED)
-        { /* Contact must be set up before running */
-            Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactStart(ContactId);
-            if (Status == BPLIB_SUCCESS)
-            {
-                (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STARTED); /* Ignore return since pre-call run state is valid */
-            }
-        }
-        else if (RunState == BPLIB_CLA_STARTED)
-        {
-            Status = BPLIB_SUCCESS;
-            BPLib_EM_SendEvent(BPLIB_CLA_CONTACT_NO_STATE_CHG_DBG_EID,
-                                BPLib_EM_EventType_DEBUG,
-                                "Contact with ID #%d is already started",
-                                ContactId);
-        }
-        else
-        {
-            Status = BPLIB_CLA_INCORRECT_STATE;
-            BPLib_EM_SendEvent(BPLIB_CLA_CONTACT_NO_STATE_CHG_DBG_EID,
-                                BPLib_EM_EventType_DEBUG,
-                                "Contact with ID #%d must be setup before starting",
-                                ContactId);
-        }
-    }
-    else
-    {
-        Status = BPLIB_INVALID_CONT_ID_ERR;
         BPLib_EM_SendEvent(BPLIB_CLA_INVALID_CONTACT_ID_DBG_EID,
                             BPLib_EM_EventType_DEBUG,
                             "Contact ID %d is invalid",
+                            ContactId);
+        return BPLIB_INVALID_CONT_ID_ERR;
+    }
+
+    (void) BPLib_CLA_GetContactRunState(ContactId, &RunState); /* Ignore return status since ContactId is valid */
+
+    if (RunState == BPLIB_CLA_SETUP || RunState == BPLIB_CLA_STOPPED)
+    { /* Contact must be set up before running */
+        Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactStart(ContactId);
+        if (Status == BPLIB_SUCCESS)
+        {
+            (void) BPLib_CT_AssignSeqCounter(Inst, ContactId);
+
+            (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STARTED); /* Ignore return since pre-call run state is valid */
+        }
+    }
+    else if (RunState == BPLIB_CLA_STARTED)
+    {
+        Status = BPLIB_SUCCESS;
+        BPLib_EM_SendEvent(BPLIB_CLA_CONTACT_NO_STATE_CHG_DBG_EID,
+                            BPLib_EM_EventType_DEBUG,
+                            "Contact with ID #%d is already started",
+                            ContactId);
+    }
+    else
+    {
+        Status = BPLIB_CLA_INCORRECT_STATE;
+        BPLib_EM_SendEvent(BPLIB_CLA_CONTACT_NO_STATE_CHG_DBG_EID,
+                            BPLib_EM_EventType_DEBUG,
+                            "Contact with ID #%d must be setup before starting",
                             ContactId);
     }
 
     return Status;
 }
 
-BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId)
+BPLib_Status_t BPLib_CLA_ContactStop(BPLib_Instance_t* Instance, uint32_t ContactId)
 {
     BPLib_Status_t              Status;
     BPLib_CLA_ContactRunState_t RunState;
+    uint8_t                     OpenCcsCtrl;
 
     if (ContactId < BPLIB_MAX_NUM_CONTACTS)
     {
@@ -271,6 +346,16 @@ BPLib_Status_t BPLib_CLA_ContactStop(uint32_t ContactId)
             Status = BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactStop(ContactId);
             if (Status == BPLIB_SUCCESS)
             {
+                /* Send all remaining open CCSs */
+                for (OpenCcsCtrl = 0; OpenCcsCtrl < BPLIB_CT_MAX_OPEN_CCS; OpenCcsCtrl++)
+                {
+                    if (Instance->Ct.OpenCcss[OpenCcsCtrl].InProgress &&
+                        Instance->Ct.OpenCcss[OpenCcsCtrl].ContactId == ContactId)
+                    {
+                        BPLib_CT_BuildAndSendOpenCcs(Instance, &(Instance->Ct.OpenCcss[OpenCcsCtrl]));
+                    }
+                }
+
                 (void) BPLib_CLA_SetContactRunState(ContactId, BPLIB_CLA_STOPPED); /* Ignore return since pre-call run state is valid */
             }
         }
@@ -353,13 +438,12 @@ BPLib_Status_t BPLib_CLA_ContactTeardown(BPLib_Instance_t *Inst, uint32_t Contac
                                 "Contact with ID #%d failed to push a bundle back to storage, Status = %d",
                                 ContactId, Status);
 
-            /* Bundle is effectively getting dropped */
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DELETED, 1);
-            BPLib_AS_Increment(BPLIB_EID_INSTANCE, BUNDLE_COUNT_DISCARDED, 1);
-
             /* This is still considered a successful contact-teardown, just with some bundle loss */
         }
     }
+
+    /* Clear relevant load batch. Ignore return code since we've already done a null check */
+    (void) BPLib_STOR_LoadBatch_Reset(&Inst->BundleStorage.ContactLoadBatches[ContactId]);
 
     /* Do any framework-specific operations */
     BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactTeardown(ContactId);
@@ -386,4 +470,21 @@ BPLib_Status_t BPLib_CLA_GetContactRunState(uint32_t ContactId, BPLib_CLA_Contac
         *ReturnState = BPLIB_CLA_EXITED;
         return BPLIB_INVALID_CONT_ID_ERR;
     }
+}
+
+BPLib_Status_t BPLib_CLA_SetContactRunState(uint32_t ContactId, BPLib_CLA_ContactRunState_t RunState)
+{
+    BPLib_Status_t Status;
+
+    if (ContactId < BPLIB_MAX_NUM_CONTACTS)
+    {
+        BPLib_CLA_ContactRunStates[ContactId] = RunState;
+        Status = BPLIB_SUCCESS;
+    }
+    else
+    {
+        Status = BPLIB_INVALID_CONT_ID_ERR;
+    }
+
+    return Status;
 }

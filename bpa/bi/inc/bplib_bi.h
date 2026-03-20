@@ -101,4 +101,17 @@ BPLib_Status_t BPLib_BI_BlobCopyOut(BPLib_Bundle_t* StoredBundle,
                                     size_t OutputBufferSize,
                                     size_t* NumBytesCopied);
 
+/**
+ * \brief Get bundle information string
+ *
+ *  \par Assumptions, External Events, and Notes:
+ *       None
+ * 
+ *  \param[in] Bundle Pointer to bundle
+ *  \param[in] StrBuf Pointer to string buffer to populate
+ *  \param[in] StrLen Length of string buffer
+ *
+ */
+void BPLib_BI_GetBundleInfo(BPLib_Bundle_t *Bundle, char *StrBuf, size_t StrLen);
+
 #endif /* BPLIB_BI_H */

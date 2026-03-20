@@ -96,12 +96,11 @@ BPLib_Status_t BPA_ADUP_StopApplication(uint32_t ChanId)
  * Generated stub function for BPA_CLAP_ContactSetup()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPA_CLAP_ContactSetup(uint32_t ContactId, BPLib_CLA_ContactsSet_t ContactInfo)
+BPLib_Status_t BPA_CLAP_ContactSetup(uint32_t ContactId)
 {
     UT_GenStub_SetupReturnBuffer(BPA_CLAP_ContactSetup, BPLib_Status_t);
 
     UT_GenStub_AddParam(BPA_CLAP_ContactSetup, uint32_t, ContactId);
-    UT_GenStub_AddParam(BPA_CLAP_ContactSetup, BPLib_CLA_ContactsSet_t, ContactInfo);
 
     UT_GenStub_Execute(BPA_CLAP_ContactSetup, Basic, NULL);
 
@@ -206,6 +205,20 @@ void BPA_PERFLOGP_Exit(uint32_t PerfLogID)
     UT_GenStub_AddParam(BPA_PERFLOGP_Exit, uint32_t, PerfLogID);
 
     UT_GenStub_Execute(BPA_PERFLOGP_Exit, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPA_TABLEP_TableInit()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPA_TABLEP_TableInit(void)
+{
+    UT_GenStub_SetupReturnBuffer(BPA_TABLEP_TableInit, BPLib_Status_t);
+
+    UT_GenStub_Execute(BPA_TABLEP_TableInit, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPA_TABLEP_TableInit, BPLib_Status_t);
 }
 
 /*

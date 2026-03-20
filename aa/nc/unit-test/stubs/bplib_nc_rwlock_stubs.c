@@ -27,7 +27,6 @@
 #include "bplib_nc_rwlock.h"
 #include "utgenstub.h"
 
-
 /*
  * ----------------------------------------------------
  * Generated stub function for BPLib_NC_RWLock_Destroy()

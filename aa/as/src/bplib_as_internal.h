@@ -117,7 +117,7 @@ void BPLib_AS_UnlockCounters(void);
  * \brief     Set the initial node MIB reports telemetry
  * \return    void
  */
-void BPLib_AS_InitializeReportsHkTlm(void);
+void BPLib_AS_InitializeReportsHkTlm(BPLib_Instance_t *Inst);
 
 /**
  * \brief     Update the MIB reports telemetry with the latest data

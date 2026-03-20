@@ -17,7 +17,6 @@
  * National Aeronautics and Space Administration. All Rights Reserved.
  *
  */
-#define BPLIB_STOR_LOADBATCH_H
 
 /**
  * @file
@@ -33,12 +32,12 @@
  * Generated stub function for BPLib_STOR_LoadBatch_AddID()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_STOR_LoadBatch_AddID(BPLib_STOR_LoadBatch_t *Batch, int64_t BundleID)
+BPLib_Status_t BPLib_STOR_LoadBatch_AddID(BPLib_STOR_LoadBatch_t *Batch, int64_t BundleRowID)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_STOR_LoadBatch_AddID, BPLib_Status_t);
 
     UT_GenStub_AddParam(BPLib_STOR_LoadBatch_AddID, BPLib_STOR_LoadBatch_t *, Batch);
-    UT_GenStub_AddParam(BPLib_STOR_LoadBatch_AddID, int64_t, BundleID);
+    UT_GenStub_AddParam(BPLib_STOR_LoadBatch_AddID, int64_t, BundleRowID);
 
     UT_GenStub_Execute(BPLib_STOR_LoadBatch_AddID, Basic, NULL);
 
@@ -114,12 +113,12 @@ bool BPLib_STOR_LoadBatch_IsEmpty(BPLib_STOR_LoadBatch_t *Batch)
  * Generated stub function for BPLib_STOR_LoadBatch_PeekNextID()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_STOR_LoadBatch_PeekNextID(BPLib_STOR_LoadBatch_t *Batch, int64_t *BundleID)
+BPLib_Status_t BPLib_STOR_LoadBatch_PeekNextID(BPLib_STOR_LoadBatch_t *Batch, int64_t *BundleRowID)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_STOR_LoadBatch_PeekNextID, BPLib_Status_t);
 
     UT_GenStub_AddParam(BPLib_STOR_LoadBatch_PeekNextID, BPLib_STOR_LoadBatch_t *, Batch);
-    UT_GenStub_AddParam(BPLib_STOR_LoadBatch_PeekNextID, int64_t *, BundleID);
+    UT_GenStub_AddParam(BPLib_STOR_LoadBatch_PeekNextID, int64_t *, BundleRowID);
 
     UT_GenStub_Execute(BPLib_STOR_LoadBatch_PeekNextID, Basic, NULL);
 

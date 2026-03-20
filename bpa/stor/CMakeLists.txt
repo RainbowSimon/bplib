@@ -12,6 +12,7 @@ add_library(bplib_stor OBJECT
     src/bplib_stor_sql_store.c
     src/bplib_stor_sql_load.c
     src/bplib_stor_loadbatch.c
+    src/bplib_stor_sql_cust.c
 )
 
 target_include_directories(bplib_stor PUBLIC
@@ -20,6 +21,8 @@ target_include_directories(bplib_stor PUBLIC
     $<TARGET_PROPERTY:bplib_em,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:bplib_qm,INTERFACE_INCLUDE_DIRECTORIES>
     $<TARGET_PROPERTY:bplib_as,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:bplib_nc,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:bplib_pi,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 # Add unit tests

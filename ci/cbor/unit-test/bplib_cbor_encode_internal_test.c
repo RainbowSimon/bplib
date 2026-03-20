@@ -270,6 +270,25 @@ void Test_BPLib_CBOR_EncodeExtensionBlock_Skip(void)
     UtAssert_INT32_EQ(NumBytesCopied, 0);
 }
 
+void Test_BPLib_CBOR_EncodeExtensionBlock_CustodyBlock(void)
+{
+    BPLib_Status_t    Status;
+    BPLib_Bundle_t    Bundle;
+    char              OutputBuffer[512];
+    size_t            NumBytesCopied;
+    BPLib_MEM_Block_t Blob;
+
+    memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
+    Bundle.blob = &Blob;
+
+    Bundle.blocks.ExtBlocks[0].Header.BlockType       = BPLib_BlockType_CTEB;
+    Bundle.blocks.ExtBlocks[0].Header.RequiresDiscard = false;
+
+    Status = BPLib_CBOR_EncodeExtensionBlock(&Bundle, 0, OutputBuffer, sizeof(OutputBuffer), &NumBytesCopied);
+
+    UtAssert_EQ(BPLib_Status_t, Status, BPLIB_SUCCESS);
+}
+
 /* Test extension block encode when the block is unknown and needs to be copied out */
 void Test_BPLib_CBOR_EncodeExtensionBlock_UnknownBlk(void)
 {
@@ -343,19 +362,81 @@ void Test_BPLib_CBOR_EncodePayload_Nominal(void)
     UtAssert_INT32_EQ(ReturnStatus, BPLIB_SUCCESS);
 }
 
+void Test_BPLib_CBOR_EncodePayload_Ccs(void)
+{
+    BPLib_Status_t          Status;
+    BPLib_ARP_AdminRecord_t AdminRecord;
+    BPLib_Bundle_t          Bundle;
+    uint8_t                 OutputBuffer[BPLIB_MAX_PAYLOAD_SIZE];
+    size_t                  NumBytesCopied;
+    BPLib_MEM_Block_t       BundleBlob;
+    size_t                  SeqRangeSize;
+    uint8_t                 Collection;
+    size_t                  i;
+    uint8_t                 ExpectedBlock[] = {
+        0x86, 0x01, 0x01, 0x00, 0x02, 0x51, 0x82, 0x0d, 
+        0xa1, 0x01, 0x83, 0x0a, 0x19, 0x01, 0x90, 0x83, 
+        0x19, 0x03, 0xf2, 0x02, 0x19, 0x0b, 0xd6, 0x44, 
+        0xde, 0xad, 0xbe, 0xef
+    };
+
+    NumBytesCopied   = 0;
+    SeqRangeSize     = 0;
+    
+    AdminRecord.AdminRecordType                                             = BPLib_CT_CcsRecordTypeCode;
+    AdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections                 = 1;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].DispositionCode = BPLib_CT_CustodyAccepted;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRangeLen     = 3;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqId           = 10;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].FirstSeqNum     = 400;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[0]     = 1010;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[1]     = 2;
+    AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[0].SeqRange[2]     = 3030;
+
+    memset(&Bundle, 0, sizeof(BPLib_Bundle_t));
+    Bundle.blocks.PayloadHeader.BlockType      = BPLib_BlockType_Payload;
+    Bundle.blocks.PayloadHeader.BlockNum       = 1;
+    Bundle.blocks.PayloadHeader.CrcType        = BPLib_CRC_Type_CRC32C;
+
+    Bundle.blocks.PrimaryBlock.BundleProcFlags = BPLIB_BUNDLE_PROC_ADMIN_RECORD_FLAG;
+
+    Bundle.blob = &BundleBlob;
+
+    memcpy(Bundle.blob->user_data.BigData, &AdminRecord, sizeof(BPLib_ARP_AdminRecord_t));
+
+    for (Collection = 0; Collection < AdminRecord.AdminRecordBody.CCS.NumBundleSeqCollections; Collection++)
+    {
+        /* ATTN: Assumes all sequence range values are <= 0x17. See CBOR RFC for details */
+        SeqRangeSize += AdminRecord.AdminRecordBody.CCS.BundleSeqCollections[Collection].SeqRangeLen;
+    }
+
+    UT_SetDefaultReturnValue(UT_KEY(BPLib_CRC_Calculate), (BPLib_CRC_Val_t) 0xdeadbeef);
+    
+    Status = BPLib_CBOR_EncodePayload(&Bundle, OutputBuffer, sizeof(OutputBuffer), &NumBytesCopied);
+
+    UtAssert_INT32_EQ(Status, BPLIB_SUCCESS);
+    UtAssert_EQ(size_t, NumBytesCopied, sizeof(ExpectedBlock));
+
+    for (i = 0; i < NumBytesCopied; i++)
+    {
+        UtAssert_EQ(uint8_t, OutputBuffer[i], ExpectedBlock[i]);
+    }
+}
 
 void TestBplibCborEncodeInternal_Register(void)
 {
-    UtTest_Add(Test_BPLib_CBOR_EncodePrimary_NullInputErrors, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePrimary_NullInputErrors");
-    UtTest_Add(Test_BPLib_CBOR_EncodePrimary_Crc16, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePrimary_Crc16");
-    UtTest_Add(Test_BPLib_CBOR_EncodePrimary_Crc32, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePrimary_Crc32");
-    UtTest_Add(Test_BPLib_CBOR_EncodePrimary_CrcNone, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePrimary_CrcNone");
+    ADD_TEST(Test_BPLib_CBOR_EncodePrimary_NullInputErrors);
+    ADD_TEST(Test_BPLib_CBOR_EncodePrimary_Crc16);
+    ADD_TEST(Test_BPLib_CBOR_EncodePrimary_Crc32);
+    ADD_TEST(Test_BPLib_CBOR_EncodePrimary_CrcNone);
 
-    UtTest_Add(Test_BPLib_CBOR_EncodeExtensionBlock_NullInputErrors, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeExtensionBlock_NullInputErrors");
-    UtTest_Add(Test_BPLib_CBOR_EncodeExtensionBlock_Nominal, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeExtensionBlock_Nominal");
-    UtTest_Add(Test_BPLib_CBOR_EncodeExtensionBlock_Skip, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeExtensionBlock_Skip");
-    UtTest_Add(Test_BPLib_CBOR_EncodeExtensionBlock_UnknownBlk, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodeExtensionBlock_UnknownBlk");
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_NullInputErrors);
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_Nominal);
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_Skip);
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_CustodyBlock);
+    ADD_TEST(Test_BPLib_CBOR_EncodeExtensionBlock_UnknownBlk);
 
-    UtTest_Add(Test_BPLib_CBOR_EncodePayload_NullInputErrors, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePayload_NullInputErrors");
-    UtTest_Add(Test_BPLib_CBOR_EncodePayload_Nominal, BPLib_CBOR_Test_Setup, BPLib_CBOR_Test_Teardown, "Test_BPLib_CBOR_EncodePayload_Nominal");
+    ADD_TEST(Test_BPLib_CBOR_EncodePayload_NullInputErrors);
+    ADD_TEST(Test_BPLib_CBOR_EncodePayload_Nominal);
+    ADD_TEST(Test_BPLib_CBOR_EncodePayload_Ccs);
 }

@@ -10,6 +10,8 @@
 # Create stubs (for external use)
 add_library(bplib_stor_stubs STATIC
     stubs/bplib_stor_stubs.c
+    stubs/bplib_stor_loadbatch_stubs.c
+    stubs/bplib_stor_sql_stubs.c
 )
 
 target_include_directories(bplib_stor_stubs PUBLIC
@@ -25,6 +27,7 @@ add_library(utobj_bplib_stor OBJECT
    ../src/bplib_stor_sql_load.c
    ../src/bplib_stor_sql_store.c
    ../src/bplib_stor_loadbatch.c
+   ../src/bplib_stor_sql_cust.c
 )
 
 target_compile_definitions(utobj_bplib_stor PRIVATE
@@ -81,6 +84,8 @@ target_link_libraries(coverage-bplib_stor-testrunner PUBLIC
    bplib_mem_stubs
    bplib_time_stubs
    bplib_cla_stubs
+   bplib_ct_stubs
+   bplib_pi_stubs
    -lsqlite3
 )
 

@@ -81,12 +81,40 @@ void BPLib_EID_CopyEidPatterns(BPLib_EID_Pattern_t *EID_Actual, BPLib_EID_Patter
  * Generated stub function for BPLib_EID_CopyEids()
  * ----------------------------------------------------
  */
-void BPLib_EID_CopyEids(BPLib_EID_t *EID_Actual, BPLib_EID_t EID_Reference)
+void BPLib_EID_CopyEids(BPLib_EID_t *EID_Destination, BPLib_EID_t EID_Source)
 {
-    UT_GenStub_AddParam(BPLib_EID_CopyEids, BPLib_EID_t *, EID_Actual);
-    UT_GenStub_AddParam(BPLib_EID_CopyEids, BPLib_EID_t, EID_Reference);
+    UT_GenStub_AddParam(BPLib_EID_CopyEids, BPLib_EID_t *, EID_Destination);
+    UT_GenStub_AddParam(BPLib_EID_CopyEids, BPLib_EID_t, EID_Source);
 
     UT_GenStub_Execute(BPLib_EID_CopyEids, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_EID_GetPatternString()
+ * ----------------------------------------------------
+ */
+void BPLib_EID_GetPatternString(BPLib_EID_Pattern_t *Pattern, char *StrBuf, size_t StrLen)
+{
+    UT_GenStub_AddParam(BPLib_EID_GetPatternString, BPLib_EID_Pattern_t *, Pattern);
+    UT_GenStub_AddParam(BPLib_EID_GetPatternString, char *, StrBuf);
+    UT_GenStub_AddParam(BPLib_EID_GetPatternString, size_t, StrLen);
+
+    UT_GenStub_Execute(BPLib_EID_GetPatternString, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_EID_GetString()
+ * ----------------------------------------------------
+ */
+void BPLib_EID_GetString(BPLib_EID_t *EID, char *StrBuf, size_t StrLen)
+{
+    UT_GenStub_AddParam(BPLib_EID_GetString, BPLib_EID_t *, EID);
+    UT_GenStub_AddParam(BPLib_EID_GetString, char *, StrBuf);
+    UT_GenStub_AddParam(BPLib_EID_GetString, size_t, StrLen);
+
+    UT_GenStub_Execute(BPLib_EID_GetString, Basic, NULL);
 }
 
 /*
@@ -170,4 +198,21 @@ bool BPLib_EID_PatternIsValid(BPLib_EID_Pattern_t *EID_Pattern)
     UT_GenStub_Execute(BPLib_EID_PatternIsValid, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_EID_PatternIsValid, bool);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_EID_PatternsAreMatch()
+ * ----------------------------------------------------
+ */
+bool BPLib_EID_PatternsAreMatch(BPLib_EID_Pattern_t *PatternActual, BPLib_EID_Pattern_t *PatternReference)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_EID_PatternsAreMatch, bool);
+
+    UT_GenStub_AddParam(BPLib_EID_PatternsAreMatch, BPLib_EID_Pattern_t *, PatternActual);
+    UT_GenStub_AddParam(BPLib_EID_PatternsAreMatch, BPLib_EID_Pattern_t *, PatternReference);
+
+    UT_GenStub_Execute(BPLib_EID_PatternsAreMatch, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_EID_PatternsAreMatch, bool);
 }

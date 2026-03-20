@@ -81,6 +81,8 @@ void Test_BPLib_FWP_Init_Nominal(void)
                     "Same BPA_TLMP_SendPerSourceMibCounterPkt functions");
     UtAssert_True(TestCallbacks.BPA_TLMP_SendStoragePkt == BPLib_FWP_ProxyCallbacks.BPA_TLMP_SendStoragePkt,
                     "Same BPA_TLMP_SendStoragePkt functions");
+    UtAssert_True(TestCallbacks.BPA_TABLEP_TableInit == BPLib_FWP_ProxyCallbacks.BPA_TABLEP_TableInit,
+                    "Same BPA_TABLEP_TableInit functions");
     UtAssert_True(TestCallbacks.BPA_TABLEP_TableUpdate == BPLib_FWP_ProxyCallbacks.BPA_TABLEP_TableUpdate,
                     "Same BPA_TABLEP_TableUpdate functions");
     UtAssert_True(TestCallbacks.BPA_CLAP_ContactSetup == BPLib_FWP_ProxyCallbacks.BPA_CLAP_ContactSetup,

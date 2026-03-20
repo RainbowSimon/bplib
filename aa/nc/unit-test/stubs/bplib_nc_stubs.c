@@ -1,19 +1,19 @@
 /*
- * NASA Docket No. GSC-19,559-1, and identified as "Delay/Disruption Tolerant Networking 
+ * NASA Docket No. GSC-19,559-1, and identified as "Delay/Disruption Tolerant Networking
  * (DTN) Bundle Protocol (BP) v7 Core Flight System (cFS) Application Build 7.0
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this 
- * file except in compliance with the License. You may obtain a copy of the License at 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0 
  *
- * Unless required by applicable law or agreed to in writing, software distributed under 
- * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
- * ANY KIND, either express or implied. See the License for the specific language 
- * governing permissions and limitations under the License. The copyright notice to be 
- * included in the software is as follows: 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License. The copyright notice to be
+ * included in the software is as follows:
  *
- * Copyright 2025 United States Government as represented by the Administrator of the 
+ * Copyright 2025 United States Government as represented by the Administrator of the
  * National Aeronautics and Space Administration. All Rights Reserved.
  *
  */
@@ -30,6 +30,7 @@
 /* =========== */
 /* Global Data */
 /* =========== */
+
 BPLib_NC_ConfigPtrs_t BPLib_NC_ConfigPtrs;
 
 /*
@@ -37,9 +38,11 @@ BPLib_NC_ConfigPtrs_t BPLib_NC_ConfigPtrs;
  * Generated stub function for BPLib_NC_ConfigUpdate()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_NC_ConfigUpdate(void)
+BPLib_Status_t BPLib_NC_ConfigUpdate(BPLib_Instance_t *Inst)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_NC_ConfigUpdate, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_NC_ConfigUpdate, BPLib_Instance_t *, Inst);
 
     UT_GenStub_Execute(BPLib_NC_ConfigUpdate, Basic, NULL);
 
@@ -64,18 +67,57 @@ BPLib_NC_ApplicationState_t BPLib_NC_GetAppState(uint8_t ChanId)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_NC_GetNodeConfigValue()
+ * ----------------------------------------------------
+ */
+uint32_t BPLib_NC_GetNodeConfigValue(BPLib_NC_Config_t Config)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_NC_GetNodeConfigValue, uint32_t);
+
+    UT_GenStub_AddParam(BPLib_NC_GetNodeConfigValue, BPLib_NC_Config_t, Config);
+
+    UT_GenStub_Execute(BPLib_NC_GetNodeConfigValue, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_NC_GetNodeConfigValue, uint32_t);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_NC_Init()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t *ConfigPtrs)
+BPLib_Status_t BPLib_NC_Init(BPLib_NC_ConfigPtrs_t *ConfigPtrs, void *Callbacks, BPLib_Instance_t *Instance,
+                             uint16_t MaxUnsortedJobs, void *PoolMem, size_t PoolMemLen)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_NC_Init, BPLib_Status_t);
 
     UT_GenStub_AddParam(BPLib_NC_Init, BPLib_NC_ConfigPtrs_t *, ConfigPtrs);
+    UT_GenStub_AddParam(BPLib_NC_Init, void *, Callbacks);
+    UT_GenStub_AddParam(BPLib_NC_Init, BPLib_Instance_t *, Instance);
+    UT_GenStub_AddParam(BPLib_NC_Init, uint16_t, MaxUnsortedJobs);
+    UT_GenStub_AddParam(BPLib_NC_Init, void *, PoolMem);
+    UT_GenStub_AddParam(BPLib_NC_Init, size_t, PoolMemLen);
 
     UT_GenStub_Execute(BPLib_NC_Init, Basic, NULL);
 
     return UT_GenStub_GetReturnValue(BPLib_NC_Init, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_NC_InitImpl()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_NC_InitImpl(BPLib_Instance_t *Instance, BPLib_NC_ConfigPtrs_t *ConfigPtrs)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_NC_InitImpl, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_NC_InitImpl, BPLib_Instance_t *, Instance);
+    UT_GenStub_AddParam(BPLib_NC_InitImpl, BPLib_NC_ConfigPtrs_t *, ConfigPtrs);
+
+    UT_GenStub_Execute(BPLib_NC_InitImpl, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_NC_InitImpl, BPLib_Status_t);
 }
 
 /*
@@ -134,6 +176,18 @@ void BPLib_NC_ReaderUnlock(void)
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_NC_RunMaintenanceActivities()
+ * ----------------------------------------------------
+ */
+void BPLib_NC_RunMaintenanceActivities(BPLib_Instance_t *Inst)
+{
+    UT_GenStub_AddParam(BPLib_NC_RunMaintenanceActivities, BPLib_Instance_t *, Inst);
+
+    UT_GenStub_Execute(BPLib_NC_RunMaintenanceActivities, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_NC_SetAppState()
  * ----------------------------------------------------
  */
@@ -143,4 +197,39 @@ void BPLib_NC_SetAppState(uint8_t ChanId, BPLib_NC_ApplicationState_t State)
     UT_GenStub_AddParam(BPLib_NC_SetAppState, BPLib_NC_ApplicationState_t, State);
 
     UT_GenStub_Execute(BPLib_NC_SetAppState, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_NC_SetMibNodeConfig()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_NC_SetMibNodeConfig(uint32_t MibItem, uint32_t Value)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_NC_SetMibNodeConfig, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_NC_SetMibNodeConfig, uint32_t, MibItem);
+    UT_GenStub_AddParam(BPLib_NC_SetMibNodeConfig, uint32_t, Value);
+
+    UT_GenStub_Execute(BPLib_NC_SetMibNodeConfig, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_NC_SetMibNodeConfig, BPLib_Status_t);
+}
+
+/*
+ * ----------------------------------------------------
+ * Generated stub function for BPLib_NC_SetMibSourceConfig()
+ * ----------------------------------------------------
+ */
+BPLib_Status_t BPLib_NC_SetMibSourceConfig(const BPLib_EID_Pattern_t *EidPattern, uint32_t MibItem, uint32_t Value)
+{
+    UT_GenStub_SetupReturnBuffer(BPLib_NC_SetMibSourceConfig, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_NC_SetMibSourceConfig, const BPLib_EID_Pattern_t *, EidPattern);
+    UT_GenStub_AddParam(BPLib_NC_SetMibSourceConfig, uint32_t, MibItem);
+    UT_GenStub_AddParam(BPLib_NC_SetMibSourceConfig, uint32_t, Value);
+
+    UT_GenStub_Execute(BPLib_NC_SetMibSourceConfig, Basic, NULL);
+
+    return UT_GenStub_GetReturnValue(BPLib_NC_SetMibSourceConfig, BPLib_Status_t);
 }

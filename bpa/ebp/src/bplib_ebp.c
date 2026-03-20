@@ -25,12 +25,13 @@
 #include "bplib_ebp.h"
 #include "bplib_pi.h"
 #include "bplib_nc.h"
+#include "bplib_inst.h"
 
 /*
 ** Function Definitions
 */
 
-BPLib_Status_t BPLib_EBP_InitializeExtensionBlocks(BPLib_Bundle_t *Bundle, uint32_t ChanId)
+BPLib_Status_t BPLib_EBP_InitializeExtensionBlocks(BPLib_Instance_t *Inst, BPLib_Bundle_t *Bundle, uint32_t ChanId)
 {
     BPLib_PI_Config_t *CurrCanonConfig;
     uint8_t CurrExtBlkIdx = 0;
@@ -45,9 +46,7 @@ BPLib_Status_t BPLib_EBP_InitializeExtensionBlocks(BPLib_Bundle_t *Bundle, uint3
         return BPLIB_INVALID_CHAN_ID_ERR;
     }
 
-    BPLib_NC_ReaderLock();
-
-    CurrCanonConfig = &BPLib_NC_ConfigPtrs.ChanConfigPtr->Configs[ChanId];
+    CurrCanonConfig = &(Inst->ChanCtxt[ChanId].Config);
 
     /* Initialize previous node block */
     if (CurrCanonConfig->PrevNodeBlkConfig.IncludeBlock)
@@ -90,7 +89,19 @@ BPLib_Status_t BPLib_EBP_InitializeExtensionBlocks(BPLib_Bundle_t *Bundle, uint3
         CurrExtBlkIdx++;
     }
 
-    BPLib_NC_ReaderUnlock();
+    /* Initialize custody transfer block */
+    if (CurrCanonConfig->CustodyTransferBlkConfig.IncludeBlock &&
+        BPLib_NC_ConfigPtrs.MibPnConfigPtr->Configs[PARAM_SUPPORT_CUSTODY] == true)
+    {
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.BlockType = BPLib_BlockType_CTEB;
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.CrcType = CurrCanonConfig->CustodyTransferBlkConfig.CrcType;
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.BlockNum = CurrCanonConfig->CustodyTransferBlkConfig.BlockNum;
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.BlockProcFlags = CurrCanonConfig->CustodyTransferBlkConfig.BlockProcFlags;          
+
+        Bundle->blocks.ExtBlocks[CurrExtBlkIdx].Header.RequiresEncode = true;
+
+        CurrExtBlkIdx++;
+    }
 
     return BPLIB_SUCCESS;
 }
@@ -137,6 +148,8 @@ BPLib_Status_t BPLib_EBP_UpdateExtensionBlocks(BPLib_Bundle_t *Bundle)
                                 BPLIB_EID_INSTANCE);
             Bundle->blocks.ExtBlocks[ExtBlkIdx].Header.RequiresEncode = true;
         }
+
+        /* CTEB updates are handled by CT */
     }
     
     return Status;

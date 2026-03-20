@@ -23,12 +23,14 @@
  */
 #include "bplib_ebp_test_utils.h"
 
+
 /* Test that block initialization fails when the bundle is null */
 void Test_BPLib_EBP_InitBlocks_Null(void)
 {
     BPLib_Status_t Status;
 
-    Status = BPLib_EBP_InitializeExtensionBlocks(NULL, 0);
+
+    Status = BPLib_EBP_InitializeExtensionBlocks(&Inst, NULL, 0);
 
     UtAssert_INT32_EQ(Status, BPLIB_NULL_PTR_ERROR);
 }
@@ -40,7 +42,8 @@ void Test_BPLib_EBP_InitBlocks_ChanIdErr(void)
     BPLib_Bundle_t DeserializedBundle;
     uint32_t ChanId = BPLIB_MAX_NUM_CHANNELS;
 
-    Status = BPLib_EBP_InitializeExtensionBlocks(&DeserializedBundle, ChanId);
+
+    Status = BPLib_EBP_InitializeExtensionBlocks(&Inst, &DeserializedBundle, ChanId);
 
     UtAssert_INT32_EQ(Status, BPLIB_INVALID_CHAN_ID_ERR);
 }
@@ -56,22 +59,22 @@ void Test_BPLib_EBP_InitBlocks_PrevNode(void)
 
     DeserializedBundle.blocks.PrimaryBlock.Timestamp.CreateTime = 1000;
 
-    TestChanConfigPtr.Configs[ChanId].PrevNodeBlkConfig.IncludeBlock = true;
-    TestChanConfigPtr.Configs[ChanId].PrevNodeBlkConfig.CrcType = BPLib_CRC_Type_CRC16;
-    TestChanConfigPtr.Configs[ChanId].PrevNodeBlkConfig.BlockNum = 1;
-    TestChanConfigPtr.Configs[ChanId].PrevNodeBlkConfig.BlockProcFlags = 4;
+    Inst.ChanCtxt[ChanId].Config.PrevNodeBlkConfig.IncludeBlock = true;
+    Inst.ChanCtxt[ChanId].Config.PrevNodeBlkConfig.CrcType = BPLib_CRC_Type_CRC16;
+    Inst.ChanCtxt[ChanId].Config.PrevNodeBlkConfig.BlockNum = 1;
+    Inst.ChanCtxt[ChanId].Config.PrevNodeBlkConfig.BlockProcFlags = 4;
 
-    Status = BPLib_EBP_InitializeExtensionBlocks(&DeserializedBundle, ChanId);
+    Status = BPLib_EBP_InitializeExtensionBlocks(&Inst, &DeserializedBundle, ChanId);
 
     UtAssert_INT32_EQ(Status, BPLIB_SUCCESS);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockType, 
                             BPLib_BlockType_PrevNode);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.CrcType,
-                            TestChanConfigPtr.Configs[ChanId].PrevNodeBlkConfig.CrcType);
+                            Inst.ChanCtxt[ChanId].Config.PrevNodeBlkConfig.CrcType);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockNum,
-                            TestChanConfigPtr.Configs[ChanId].PrevNodeBlkConfig.BlockNum);
+                            Inst.ChanCtxt[ChanId].Config.PrevNodeBlkConfig.BlockNum);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockProcFlags,
-                            TestChanConfigPtr.Configs[ChanId].PrevNodeBlkConfig.BlockProcFlags);
+                            Inst.ChanCtxt[ChanId].Config.PrevNodeBlkConfig.BlockProcFlags);
     UtAssert_BOOL_TRUE(DeserializedBundle.blocks.ExtBlocks[0].Header.RequiresEncode);
 }
 
@@ -84,22 +87,22 @@ void Test_BPLib_EBP_InitBlocks_AgeCfg(void)
 
     memset(&DeserializedBundle, 0, sizeof(DeserializedBundle));
 
-    TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.IncludeBlock = true;
-    TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.CrcType = BPLib_CRC_Type_CRC16;
-    TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.BlockNum = 1;
-    TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.BlockProcFlags = 4;
+    Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.IncludeBlock = true;
+    Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.CrcType = BPLib_CRC_Type_CRC16;
+    Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.BlockNum = 1;
+    Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.BlockProcFlags = 4;
 
-    Status = BPLib_EBP_InitializeExtensionBlocks(&DeserializedBundle, ChanId);
+    Status = BPLib_EBP_InitializeExtensionBlocks(&Inst, &DeserializedBundle, ChanId);
 
     UtAssert_INT32_EQ(Status, BPLIB_SUCCESS);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockType, 
                             BPLib_BlockType_Age);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.CrcType,
-                            TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.CrcType);
+                            Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.CrcType);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockNum,
-                            TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.BlockNum);
+                            Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.BlockNum);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockProcFlags,
-                            TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.BlockProcFlags);
+                            Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.BlockProcFlags);
     UtAssert_BOOL_TRUE(DeserializedBundle.blocks.ExtBlocks[0].Header.RequiresEncode);
 }
 
@@ -113,22 +116,22 @@ void Test_BPLib_EBP_InitBlocks_AgeAuto(void)
     memset(&DeserializedBundle, 0, sizeof(DeserializedBundle));
 
     DeserializedBundle.blocks.PrimaryBlock.Timestamp.CreateTime = 0;
-    TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.IncludeBlock = false;
-    TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.CrcType = BPLib_CRC_Type_CRC16;
-    TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.BlockNum = 1;
-    TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.BlockProcFlags = 4;
+    Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.IncludeBlock = false;
+    Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.CrcType = BPLib_CRC_Type_CRC16;
+    Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.BlockNum = 1;
+    Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.BlockProcFlags = 4;
 
-    Status = BPLib_EBP_InitializeExtensionBlocks(&DeserializedBundle, ChanId);
+    Status = BPLib_EBP_InitializeExtensionBlocks(&Inst, &DeserializedBundle, ChanId);
 
     UtAssert_INT32_EQ(Status, BPLIB_SUCCESS);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockType, 
                             BPLib_BlockType_Age);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.CrcType,
-                            TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.CrcType);
+                            Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.CrcType);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockNum,
-                            TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.BlockNum);
+                            Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.BlockNum);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockProcFlags,
-                            TestChanConfigPtr.Configs[ChanId].AgeBlkConfig.BlockProcFlags);
+                            Inst.ChanCtxt[ChanId].Config.AgeBlkConfig.BlockProcFlags);
     UtAssert_BOOL_TRUE(DeserializedBundle.blocks.ExtBlocks[0].Header.RequiresEncode);
 }
 
@@ -143,25 +146,25 @@ void Test_BPLib_EBP_InitBlocks_HopCount(void)
 
     DeserializedBundle.blocks.PrimaryBlock.Timestamp.CreateTime = 1000;
 
-    TestChanConfigPtr.Configs[ChanId].HopCountBlkConfig.IncludeBlock = true;
-    TestChanConfigPtr.Configs[ChanId].HopCountBlkConfig.CrcType = BPLib_CRC_Type_CRC16;
-    TestChanConfigPtr.Configs[ChanId].HopCountBlkConfig.BlockNum = 1;
-    TestChanConfigPtr.Configs[ChanId].HopCountBlkConfig.BlockProcFlags = 4;
-    TestChanConfigPtr.Configs[ChanId].HopLimit = 10;
+    Inst.ChanCtxt[ChanId].Config.HopCountBlkConfig.IncludeBlock = true;
+    Inst.ChanCtxt[ChanId].Config.HopCountBlkConfig.CrcType = BPLib_CRC_Type_CRC16;
+    Inst.ChanCtxt[ChanId].Config.HopCountBlkConfig.BlockNum = 1;
+    Inst.ChanCtxt[ChanId].Config.HopCountBlkConfig.BlockProcFlags = 4;
+    Inst.ChanCtxt[ChanId].Config.HopLimit = 10;
 
-    Status = BPLib_EBP_InitializeExtensionBlocks(&DeserializedBundle, ChanId);
+    Status = BPLib_EBP_InitializeExtensionBlocks(&Inst, &DeserializedBundle, ChanId);
 
     UtAssert_INT32_EQ(Status, BPLIB_SUCCESS);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockType, 
                             BPLib_BlockType_HopCount);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.CrcType,
-                            TestChanConfigPtr.Configs[ChanId].HopCountBlkConfig.CrcType);
+                            Inst.ChanCtxt[ChanId].Config.HopCountBlkConfig.CrcType);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockNum,
-                            TestChanConfigPtr.Configs[ChanId].HopCountBlkConfig.BlockNum);
+                            Inst.ChanCtxt[ChanId].Config.HopCountBlkConfig.BlockNum);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].Header.BlockProcFlags,
-                            TestChanConfigPtr.Configs[ChanId].HopCountBlkConfig.BlockProcFlags);
+                            Inst.ChanCtxt[ChanId].Config.HopCountBlkConfig.BlockProcFlags);
     UtAssert_EQ(uint64_t, DeserializedBundle.blocks.ExtBlocks[0].BlockData.HopCountData.HopLimit,
-                            TestChanConfigPtr.Configs[ChanId].HopLimit);    
+                            Inst.ChanCtxt[ChanId].Config.HopLimit);    
     UtAssert_BOOL_TRUE(DeserializedBundle.blocks.ExtBlocks[0].Header.RequiresEncode);
 }
 

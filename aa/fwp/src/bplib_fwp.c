@@ -58,6 +58,7 @@ BPLib_Status_t BPLib_FWP_Init(BPLib_FWP_ProxyCallbacks_t* Callbacks)
         Callbacks->BPA_TLMP_SendPerSourceMibCounterPkt   == NULL ||
         Callbacks->BPA_TLMP_SendChannelContactPkt        == NULL ||
         Callbacks->BPA_TLMP_SendStoragePkt               == NULL ||
+        Callbacks->BPA_TABLEP_TableInit                  == NULL ||
         Callbacks->BPA_TABLEP_TableUpdate                == NULL ||
         Callbacks->BPA_CLAP_ContactSetup                 == NULL ||
         Callbacks->BPA_CLAP_ContactStart                 == NULL ||

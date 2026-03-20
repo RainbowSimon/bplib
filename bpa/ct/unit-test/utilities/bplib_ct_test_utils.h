@@ -31,6 +31,29 @@
 
 #include "bplib_api_types.h"
 #include "bplib_ct.h"
+#include "bplib_bblocks.h"
+#include "bplib_eid.h"
+#include "bplib_mem.h"
+#include "bplib_ct_db.h"
+#include "bplib_ct_ccs.h"
+#include "bplib_pdb.h"
+#include "bplib_inst.h"
+#include "bplib_as_handlers.h"
+
+
+/*
+** Macro Definitions 
+*/
+
+/* Macro to add test case */
+#define ADD_TEST(test) UtTest_Add(test, BPLib_CT_Test_Setup, BPLib_CT_Test_Teardown, #test)
+
+
+/*
+** Global Data
+*/
+
+extern BPLib_Instance_t BplibInst;
 
 
 /*
@@ -41,5 +64,6 @@ void BPLib_CT_Test_Setup(void);
 void BPLib_CT_Test_Teardown(void);
 
 void TestBplibCt_Register(void);
+void TestBplibCtInternal_Register(void);
 
 #endif /* BPLIB_CT_TEST_UTILS_H */

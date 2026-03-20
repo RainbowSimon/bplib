@@ -49,6 +49,20 @@ BPLib_Status_t BPLib_BI_BlobCopyOut(BPLib_Bundle_t *StoredBundle, void *OutputBu
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_BI_GetBundleInfo()
+ * ----------------------------------------------------
+ */
+void BPLib_BI_GetBundleInfo(BPLib_Bundle_t *Bundle, char *StrBuf, size_t StrLen)
+{
+    UT_GenStub_AddParam(BPLib_BI_GetBundleInfo, BPLib_Bundle_t *, Bundle);
+    UT_GenStub_AddParam(BPLib_BI_GetBundleInfo, char *, StrBuf);
+    UT_GenStub_AddParam(BPLib_BI_GetBundleInfo, size_t, StrLen);
+
+    UT_GenStub_Execute(BPLib_BI_GetBundleInfo, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_BI_RecvCtrlMsg()
  * ----------------------------------------------------
  */

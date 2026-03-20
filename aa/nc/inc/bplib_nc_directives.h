@@ -59,11 +59,10 @@ void BPLib_NC_Noop(void);
 /**
   * \brief     Run add-application for all applications configured to start at startup
   * \details   Node Configuration Add All Applications command
-  * \note      This command is currently unimplemented and only returns BPLIB_SUCCESS
-  * \param[in] void No arguments accepted
+  * \param[in] Inst Pointer to bplib instance
   * \return    void
   */
-void BPLib_NC_AddAllApplications(void);
+void BPLib_NC_AddAllApplications(BPLib_Instance_t *Inst);
 
 /**
   * \brief     Start accepting and delivering ADUs for all configured applications
@@ -182,10 +181,11 @@ void BPLib_NC_ResetErrorCounters(BPLib_ResetErrorCounters_Payload_t Payload);
   * \brief     Adds new application configurations from ADU Proxy and Channel Config Tables
   * \details   Node Configuration Add Application command
   * \note      Calls BPLib_PI_AddApplication
+  * \param[in] Inst Pointer to bplib instance
   * \param[in] Payload BPLib_AddApplication_Payload_t type found in bplib_nc_payloads.h
   * \return    void
   */
-void BPLib_NC_AddApplication(const BPLib_AddApplication_Payload_t Payload);
+void BPLib_NC_AddApplication(BPLib_Instance_t *Inst, const BPLib_AddApplication_Payload_t Payload);
 
 /**
   * \brief     Terminate given application’s connection, close its ADU channel, and empty its queues
@@ -201,10 +201,11 @@ void BPLib_NC_RemoveApplication(BPLib_Instance_t *Inst, const BPLib_RemoveApplic
   * \brief     Set given application's channel state to specified state
   * \details   Node Configuration Set Registration State command
   * \note      This command is currently unimplemented and only returns BPLIB_SUCCESS
+  * \param[in] Inst Pointer to bplib instance
   * \param[in] Payload BPLib_SetRegistrationState_Payload_t type found in bplib_nc_payloads.h
   * \return    void
   */
-void BPLib_NC_SetRegistrationState(const BPLib_SetRegistrationState_Payload_t Payload);
+void BPLib_NC_SetRegistrationState(BPLib_Instance_t *Inst, const BPLib_SetRegistrationState_Payload_t Payload);
 
 /**
   * \brief     Verify given application’s channel configuration and begin moving bundles bidirectionally between host and PI
@@ -318,28 +319,31 @@ void BPLib_NC_RemoveLatency(const BPLib_RemoveLatency_Payload_t Payload);
   * \brief     Establish connection, create output queue, and configure CLA for bundle exchange
   * \details   Node Configuration Contact Setup command
   * \note      This command is currently unimplemented and only returns BPLIB_SUCCESS
+  * \param[in] Inst Pointer to bplib instance
   * \param[in] Payload BPLib_ContactSetup_Payload_t type found in bplib_nc_payloads.h
   * \return    void
   */
-void BPLib_NC_ContactSetup(const BPLib_ContactSetup_Payload_t Payload);
+void BPLib_NC_ContactSetup(BPLib_Instance_t *Inst, const BPLib_ContactSetup_Payload_t Payload);
 
 /**
   * \brief     Start transferring bundles between underlying network and BI
   * \details   Node Configuration Contact Start command
   * \note      This command is currently unimplemented and only returns BPLIB_SUCCESS
+  * \param[in] Inst Pointer to bplib instance
   * \param[in] Payload BPLib_ContactStart_Payload_t type found in bplib_nc_payloads.h
   * \return    void
   */
-void BPLib_NC_ContactStart(const BPLib_ContactStart_Payload_t Payload);
+void BPLib_NC_ContactStart(BPLib_Instance_t *Inst, const BPLib_ContactStart_Payload_t Payload);
 
 /**
   * \brief     Stop transferring bundles, stop requesting BI for output queue bundles, and notify BI of incomplete actions
   * \details   Node Configuration Contact Stop command
   * \note      This command is currently unimplemented and only returns BPLIB_SUCCESS
+  * \param[in] Inst Pointer to BPLib instance that contains open CCSs to close
   * \param[in] Payload BPLib_ContactStop_Payload_t type found in bplib_nc_payloads.h
   * \return    void
   */
-void BPLib_NC_ContactStop(const BPLib_ContactStop_Payload_t Payload);
+void BPLib_NC_ContactStop(BPLib_Instance_t* Inst, const BPLib_ContactStop_Payload_t Payload);
 
 /**
   * \brief     Disestablish CLA, free all CLA resources, discard output queue, and delete custody timers
@@ -407,6 +411,16 @@ void BPLib_NC_RemoveStorageAllocation(const BPLib_RemoveStorageAllocation_Payloa
 void BPLib_NC_PerformSelfTest(void);
 
 /**
+  * \brief     Cleanup storage
+  * \details   Perform any storage cleanup operations
+  * \note      This command is just a call to BPLib_STOR_Cleanup()
+  * \param[in] Instance (BPLib_Instance_t *) The bplib instance that contains
+  *                     information needed for the storage database context
+  * \return    void
+  */
+void BPLib_NC_CleanupStorage(BPLib_Instance_t *Inst);
+
+/**
   * \brief     Send Per Node MIB Configuration telemetry packet
   * \details   Node Configuration Send Node MIB Configuration Housekeeping Packet command.
   * \note      This command is just a call to BPA_TLMP_SendNodeMibConfigPkt()
@@ -455,10 +469,10 @@ void BPLib_NC_SendStorageHk(BPLib_Instance_t* Instance);
   * \brief     Send channel/contact status telemetry packet
   * \details   Node Configuration Send Channel/Contact Status Housekeeping Packet command.
   * \note      This command is just a call to BPA_TLMP_SendChannelContactPkt()
-  * \param[in] void No arguments accepted
+  * \param[in] Inst Pointer to bplib instance data
   * \return    void
   */
-void BPLib_NC_SendChannelContactStatHk(void);
+void BPLib_NC_SendChannelContactStatHk(BPLib_Instance_t* Instance);
 
 /**
   * \brief     Send node MIB reports telemetry packet

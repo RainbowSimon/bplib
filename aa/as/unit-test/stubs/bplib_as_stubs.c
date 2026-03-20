@@ -90,12 +90,29 @@ void BPLib_AS_Increment(BPLib_EID_t EID, BPLib_AS_Counter_t Counter, uint32_t Am
 
 /*
  * ----------------------------------------------------
+ * Generated stub function for BPLib_AS_IncrementRate()
+ * ----------------------------------------------------
+ */
+void BPLib_AS_IncrementRate(BPLib_Instance_t *Inst, BPLib_EID_t *EID, BPLib_AS_RateReport_t Rate, uint64_t Amount)
+{
+    UT_GenStub_AddParam(BPLib_AS_IncrementRate, BPLib_Instance_t *, Inst);
+    UT_GenStub_AddParam(BPLib_AS_IncrementRate, BPLib_EID_t *, EID);
+    UT_GenStub_AddParam(BPLib_AS_IncrementRate, BPLib_AS_RateReport_t, Rate);
+    UT_GenStub_AddParam(BPLib_AS_IncrementRate, uint64_t, Amount);
+
+    UT_GenStub_Execute(BPLib_AS_IncrementRate, Basic, NULL);
+}
+
+/*
+ * ----------------------------------------------------
  * Generated stub function for BPLib_AS_Init()
  * ----------------------------------------------------
  */
-BPLib_Status_t BPLib_AS_Init(void)
+BPLib_Status_t BPLib_AS_Init(BPLib_Instance_t *Inst)
 {
     UT_GenStub_SetupReturnBuffer(BPLib_AS_Init, BPLib_Status_t);
+
+    UT_GenStub_AddParam(BPLib_AS_Init, BPLib_Instance_t *, Inst);
 
     UT_GenStub_Execute(BPLib_AS_Init, Basic, NULL);
 
