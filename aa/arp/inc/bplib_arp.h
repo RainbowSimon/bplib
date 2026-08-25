@@ -125,7 +125,7 @@ typedef struct
  *  \return Execution status
  *  \retval BPLIB_SUCCESS Initialization was successful
  */
-int BPLib_ARP_Init(void);
+BPLib_Status_t BPLib_ARP_Init(void);
 
 /**
  * \brief Validate CRS Table Table configurations
