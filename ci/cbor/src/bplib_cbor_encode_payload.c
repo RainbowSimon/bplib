@@ -144,9 +144,14 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     **  5. Block-Specific Data (ADU)
     **  6. CRC Value
     ** 0b100_00110 == 0x86
+    ** For CRC Type "None" no 6th item is needed => 0x85
     */
     CurrentOutputBufferAddr = (uintptr_t)(OutputBuffer);
-    *(uint8_t*)CurrentOutputBufferAddr = 0x86;
+    if (StoredBundle->blocks.PayloadHeader.CrcType == BPLib_CRC_Type_None) {
+        *(uint8_t*)CurrentOutputBufferAddr = 0x85;
+    } else {
+        *(uint8_t*)CurrentOutputBufferAddr = 0x86;
+    }
     TotalBytesCopied = 1;
     CurrentOutputBufferAddr++;
     BytesLeftInOutputBuffer = OutputBufferSize - TotalBytesCopied;
