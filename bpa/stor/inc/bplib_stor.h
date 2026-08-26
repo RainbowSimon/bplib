@@ -76,11 +76,10 @@ struct BPLib_BundleCache
 {
     mutex_t lock;
     int64_t                BundleRowsToDelete[BPLIB_STOR_DISCARDBATCHSIZE];
-    BPLib_Bundle_t*        InsertBatch[BPLIB_STOR_INSERTBATCHSIZE];
-    size_t                 InsertBatchSize;
     /* The load batches are removed for RIOT because they are very implementation dependent.
      * Loading the numbers (which iirc were the row numbers in the blob table) does not really
-     * help if the actual storage implementation uses some other indexing / storage medium. */
+     * help if the actual storage implementation uses some other indexing / storage medium.
+     * The same goes for the insert batches */
     BPLib_STOR_CtUpdateBatch_t CustodyUpdateBatch;
     int64_t                LastActiveTime;
     size_t                 BundleCountNotEgressed;  /* Number of bundles in storage that have not been marked as egressed */

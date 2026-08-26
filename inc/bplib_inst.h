@@ -55,7 +55,7 @@ struct BPLib_Instance
 
     /* Queues */
     BPLib_QM_WaitQueue_t GenericWorkerJobs[BPLIB_QM_NUM_PRIORITIES]; /**< Queue of jobs */
-    BPLib_QM_WaitQueue_t BundleCacheList; /**< Queue of bundles in cache */
+    /*BPLib_QM_WaitQueue_t BundleCacheList; *//**< Queue of bundles in cache */
     BPLib_QM_WaitQueue_t ContactEgressJobs[BPLIB_MAX_NUM_CONTACTS]; /**< Queue of contact egress jobs */
     BPLib_QM_WaitQueue_t ChannelEgressJobs[BPLIB_MAX_NUM_CHANNELS]; /**< Queue of channel egress jobs */
 
