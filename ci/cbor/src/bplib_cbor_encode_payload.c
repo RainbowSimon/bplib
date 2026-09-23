@@ -20,6 +20,12 @@
 
 #include "bplib_cbor_internal.h"
 
+#include "mutex.h"
+
+/* Allocated memory for the UsefulBuf, to prevent bplib from allocating this on stack */
+static uint8_t _useful_buf[BPLIB_MAX_PAYLOAD_SIZE];
+static mutex_t _useful_buf_lock = MUTEX_INIT;
+
 /**
  * \brief Add an "open byte string" CBOR head
  *
@@ -107,7 +113,7 @@ static size_t BPLib_CBOR_AddByteStringHead(uint64_t DataSize,
 }
 
 
-BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
+BPLib_Status_t BPLib_CBOR_EncodePayload_Unlocked(BPLib_Bundle_t* StoredBundle,
                                         void* OutputBuffer,
                                         size_t OutputBufferSize,
                                         size_t* NumBytesCopied)
@@ -124,8 +130,8 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     size_t ByteStringCborHeadSize;
     size_t PayloadSize;
     UsefulBufC EncodedAdminRecord;
-    
-    UsefulBuf_MAKE_STACK_UB(  AdminRecordBuffer, BPLIB_MAX_PAYLOAD_SIZE);
+
+    UsefulBuf AdminRecordBuffer = {_useful_buf, sizeof(_useful_buf)};
 
     if ((StoredBundle == NULL) ||
         (OutputBuffer == NULL) ||
@@ -309,6 +315,21 @@ BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
     }
 
     return BPLIB_SUCCESS;
+}
+
+BPLib_Status_t BPLib_CBOR_EncodePayload(BPLib_Bundle_t* StoredBundle,
+                                        void* OutputBuffer,
+                                        size_t OutputBufferSize,
+                                        size_t* NumBytesCopied)
+{
+    BPLib_Status_t status;
+
+    mutex_lock(&_useful_buf_lock);
+    status = BPLib_CBOR_EncodePayload_Unlocked(StoredBundle, OutputBuffer,
+                                        OutputBufferSize, NumBytesCopied);
+    mutex_unlock(&_useful_buf_lock);
+
+    return status;
 }
 
 
