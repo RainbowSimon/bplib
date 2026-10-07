@@ -114,7 +114,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(BPLib_Instance_t *Inst, QCBORDecodeCon
 {
     BPLib_Status_t          Status;
     BPLib_CanBlockHeader_t* CanonicalBlockHdr;
-    BPLib_CanBlockHeader_t  SpareCanonicalBlockHdr;
+    /* BPLib_CanBlockHeader_t  SpareCanonicalBlockHdr; removed because of OOB write */
     QCBORItem               ArrayItem;
     QCBORItem               HopCountItem;
     QCBORItem               CustodyTransferItem;
@@ -169,7 +169,7 @@ BPLib_Status_t BPLib_CBOR_DecodeCanonical(BPLib_Instance_t *Inst, QCBORDecodeCon
             ** eventually, we might want to throw an error here.
             ** however, for now, continue decoding the block data into a spare buffer, for debugging
             */
-            CanonicalBlockHdr = &SpareCanonicalBlockHdr;
+            return BPLIB_CBOR_DEC_BUNDLE_MAX_BLOCKS_ERR;
         }
         else
         {
